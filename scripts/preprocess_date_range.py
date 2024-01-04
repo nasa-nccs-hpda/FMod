@@ -1,9 +1,9 @@
-from fmbase.source.merra2.preprocess import MERRA2DataProcessor, StatsAccumulator
-from fmbase.util.config import configure, cfg
+from fmod.base.source.merra2.preprocess import MERRA2DataProcessor, StatsAccumulator
+from fmod.base.util.config import configure, cfg
 from typing import List, Tuple
 from datetime import date
-from fmbase.util.dates import date_range
-from fmbase.source.merra2.model import clear_const_file
+from fmod.base.util.dates import date_range
+from fmod.base.source.merra2.model import clear_const_file
 from multiprocessing import Pool, cpu_count
 import hydra, os
 
