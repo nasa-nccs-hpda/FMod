@@ -1,32 +1,30 @@
----
-title: ILAB TEMPLATE - Data Science
-purpose: Template for python projects tailored to scientific applications (e.g., machine learning)
----
 
-# ilab-template-python-data-science
+# FMod
 
-Template for python projects tailored to scientific applications (e.g., machine learning)
+Foundation Models based on the Nvidia Modulus Framework with MERRA2 fine tuning.
 
-## Objectives
+### Environment Creation
 
-- Establish common structure for similar ILAB projects
+    > conda create -n fmod -c conda-forge 
+    > conda activate fmod
 
-## Containers
 
-### TBD 
+#### OSX Local Development Installation
 
-## Quickstart
+    > conda install pytorch torchvision -c pytorch
+    > conda install -c dglteam dgl 
+    > conda install -c conda-forge s3fs tqdm    ipython h5py h5netcdf matplotlib scipy netCDF4 ipympl jupyterlab ipykernel ipywidgets numpy xarray dask  pandas typing_extensions
+    > pip install hydra-core --upgrade
+    > pip install --no-deps nvidia-modulus nvidia-modulus-sym
 
-### TBD
 
-## Dataset Generation and Training
+#### Production Server Installation
 
-### TBD
+    > pip install nvidia-modulus nvidia-modulus-sym
+    > conda install pytorch torchvision -c pytorch
+    > conda install -c dglteam/label/cu121 dgl
+    > conda install -c conda-forge ipython h5py h5netcdf netCDF4 ipympl jupyterlab ipykernel ipywidgets pandas typing_extensions
 
-## Full Data Pipeline Command
 
-### TBD
 
-## Contributors
 
-### TBD

@@ -1,0 +1,5 @@
+defaults:
+  - platform: explore
+  - preprocess: merra2-finetuning
+
+cid: merra2-finetuning

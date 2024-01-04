@@ -1,0 +1,8 @@
+root:   "/Volumes/archive/data/"
+results:   "{root}/results"
+cache:     "{root}/cache"
+processed: '{root}/processed'
+
+dataset_root:  '/Volumes/Shared/Data/SDM/MERRAMAX/2015/'
+dataset_files: "selection_set/*.asc"
+
