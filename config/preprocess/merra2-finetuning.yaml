@@ -1,6 +1,7 @@
 dataset_version:    'merra2.findtuning'
 year_range: [1984,2022]
 data_timestep: 6
+nc_format: 'dali'
 xres: 1.0
 yres: 1.0
 levels:  [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]

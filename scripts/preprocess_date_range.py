@@ -5,17 +5,19 @@ from datetime import date
 from fmod.base.util.dates import date_range
 from fmod.base.source.merra2.model import clear_const_file
 from multiprocessing import Pool, cpu_count
+from fmod.base.source.merra2.preprocess import ncFormat
 import hydra, os
 
 hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-finetuning' )
 reprocess=True
+nc_format = ncFormat( cfg().preprocess.get('nc_format','standard') )
 nproc = cpu_count()-2
 start: date = date(1990,4,1)
 end: date = date(1990,5,1)
 
 def process( d: date ) -> StatsAccumulator:
-	reader = MERRA2DataProcessor()
+	reader = MERRA2DataProcessor(nc_format)
 	reader.process_day( d, reprocess=reprocess)
 	return reader.stats
 
