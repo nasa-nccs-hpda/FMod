@@ -115,11 +115,17 @@ class FMBatch:
 		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
 
 	def load_dataset( self, d: date, **kwargs ):
+		nc_format: ncFormat = kwargs.get('format',ncFormat.Standard)
 		version = self.task_config['dataset_version']
-		filepath =  cache_var_filepath(version, d)
+		filepath =  cache_var_filepath(version, d, nc_format )
 		return self._open_dataset( filepath, **kwargs)
 
-	def _open_dataset(self, filepath: str, **kwargs) -> xa.Dataset:
+	def load_const_dataset( self, **kwargs ):
+		version = self.task_config['dataset_version']
+		filepath =  cache_const_filepath(version)
+		return self._open_dataset( filepath, **kwargs )
+
+	def _open_dataset(self, d: date, **kwargs) -> xa.Dataset:
 		dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
 		return self.rename_vars(dataset)
 
@@ -130,11 +136,6 @@ class FMBatch:
 		if 'coords' in self.task_config:
 			model_coord_map = {k: v for k, v in self.task_config['coords'].items() if k in dataset.coords}
 		return dataset.rename(**model_varname_map, **model_coord_map)
-
-	def load_const_dataset( self, **kwargs ):
-		version = self.task_config['dataset_version']
-		filepath =  cache_const_filepath(version)
-		return self._open_dataset( filepath, **kwargs )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
