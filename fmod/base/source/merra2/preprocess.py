@@ -150,8 +150,8 @@ class DailyFiles:
 
 class MERRA2DataProcessor:
 
-    def __init__(self, nc_format: ncFormat ):
-        self.format = nc_format
+    def __init__(self, specs: Dict ):
+        self.format = ncFormat( specs.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
@@ -216,23 +216,26 @@ class MERRA2DataProcessor:
         if self.format == ncFormat.Standard:
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
         else:
+            os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
                 hattrs[vid] = dict( list(var.attrs.items()) + [(vid,var.dims)] )
-                vfpath = filepath.replace("-header.nc",f"-{vid}.npy")
+                vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )
                     print( f"  > Saving variable {vid} to: {vfpath}")
             header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs )
-            header.to_netcdf(filepath, format="NETCDF4", mode="w")
+            hfpath = filepath + "/header.nc"
+            header.to_netcdf(hfpath, format="NETCDF4", mode="w")
+            print(f"  > Saving header to: {hfpath}")
 
     def process_day(self, d: date, **kwargs):
-        from .model import cache_var_filepath, cache_const_filepath
+        from .model import cache_filepath, VarType
         reprocess: bool = kwargs.pop('reprocess', False)
-        cache_fvpath: str = cache_var_filepath(cfg().preprocess.version, d, self.format)
+        cache_fvpath: str = cache_filepath( VarType.Dynamic, d )
         os.makedirs(os.path.dirname(cache_fvpath), mode=0o777, exist_ok=True)
         if (not os.path.exists(cache_fvpath)) or reprocess:
-            cache_fcpath: str = cache_const_filepath(cfg().preprocess.version, self.format)
+            cache_fcpath: str = cache_filepath( VarType.Constant )
             dset_files, const_files = self.get_daily_files(d)
             ncollections = len(dset_files.keys())
             if ncollections == 0:

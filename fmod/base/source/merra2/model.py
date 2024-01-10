@@ -17,31 +17,41 @@ _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 
 class BatchType(Enum):
-    Training = 'Training'
-    Forecast = 'Forecast'
+    Training = 'training'
+    Forecast = 'forecast'
+
+class VarType(Enum):
+    Constant = 'constant'
+    Dynamic = 'dynamic'
 
 def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
 
 def suffix( ncformat: ncFormat ) -> str:
-	return ".nc" if ncformat == ncformat.Standard else "-header.nc"
-def cache_var_filepath(version: str, d: date, ncformat: ncFormat=ncFormat.Standard) -> str:
-	return f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(ncformat)}"
-def cache_const_filepath(version: str, ncformat: ncFormat=ncFormat.Standard) -> str:
-	return f"{fmbdir('processed')}/{version}/const{suffix(ncformat)}"
+	return ".nc" if ncformat == ncformat.Standard else ".dali"
+
+def cache_filepath(vartype: VarType, d: date = None) -> str:
+	version = cfg().task.dataset_version
+	ncformat: ncFormat = ncFormat( cfg().task.nc_format )
+	if vartype == VarType.Dynamic:
+		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
+		return f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(ncformat)}"
+	else:
+		return f"{fmbdir('processed')}/{version}/const{suffix(ncformat)}"
 def stats_filepath(version: str, statname: str) -> str:
 	return f"{fmbdir('processed')}/{version}/stats/{statname}"
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def clear_const_file():
-	const_filepath = cache_const_filepath(cfg().preprocess.version)
+	const_filepath = cache_filepath(VarType.Constant)
 	if os.path.exists(const_filepath): os.remove( const_filepath )
 
 class FMBatch:
 
 	def __init__(self, task_config: Dict, btype: BatchType, **kwargs):
 		self.task_config = task_config
+		self.format = ncFormat( task_config.get('nc_format', 'standard') )
 		self.type: BatchType = btype
 		self.steps_per_day: float = 24/task_config['data_timestep']
 		assert self.steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
@@ -103,9 +113,19 @@ class FMBatch:
 		return xa.merge( [dynamics, constants], compat='override' )
 
 	def load_batch( self, d: date, **kwargs ):
-		bdays = date_list(d,self.days_per_batch)
-		time_slices: List[xa.Dataset] = [ self.load_dataset( d, **kwargs ) for d in bdays ]
-		self.current_batch: xa.Dataset =  self.merge_batch( time_slices, self.constants )
+		if self.format == ncFormat.Standard:
+			bdays = date_list(d,self.days_per_batch)
+			time_slices: List[xa.Dataset] = [ self.load_dataset( d, **kwargs ) for d in bdays ]
+			self.current_batch: xa.Dataset =  self.merge_batch( time_slices, self.constants )
+		else:
+			filepath = cache_filepath(VarType.Dynamic, d)
+			header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", **kwargs)
+			data_vars: List[str] = header.attrs['data_vars']
+			coords: Mapping[str, xa.DataArray] = header.data_vars
+			for vname in data_vars:
+
+
+
 	#	print( f"\n *********** Loaded batch, days_per_batch={self.days_per_batch}, batch_steps={self.batch_steps}, ndays={len(bdays)} *********** " )
 	#	print(f" >> times= {[str(Timestamp(t).date()) for t in self.current_batch.coords['time'].values.tolist()]} ")
 	#	for vn, dv in self.current_batch.data_vars.items():
@@ -115,17 +135,14 @@ class FMBatch:
 		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
 
 	def load_dataset( self, d: date, **kwargs ):
-		nc_format: ncFormat = kwargs.get('format',ncFormat.Standard)
-		version = self.task_config['dataset_version']
-		filepath =  cache_var_filepath(version, d, nc_format )
+		filepath =  cache_filepath( VarType.Dynamic, d )
 		return self._open_dataset( filepath, **kwargs)
 
 	def load_const_dataset( self, **kwargs ):
-		version = self.task_config['dataset_version']
-		filepath =  cache_const_filepath(version)
+		filepath =  cache_filepath(VarType.Constant)
 		return self._open_dataset( filepath, **kwargs )
 
-	def _open_dataset(self, d: date, **kwargs) -> xa.Dataset:
+	def _open_dataset(self, filepath, **kwargs) -> xa.Dataset:
 		dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
 		return self.rename_vars(dataset)
 

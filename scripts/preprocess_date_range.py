@@ -11,13 +11,12 @@ import hydra, os
 hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-finetuning' )
 reprocess=True
-nc_format = ncFormat( cfg().preprocess.get('nc_format','standard') )
 nproc = cpu_count()-2
 start: date = date(1990,4,1)
 end: date = date(1990,5,1)
 
 def process( d: date ) -> StatsAccumulator:
-	reader = MERRA2DataProcessor(nc_format)
+	reader = MERRA2DataProcessor( cfg().preprocess )
 	reader.process_day( d, reprocess=reprocess)
 	return reader.stats
 

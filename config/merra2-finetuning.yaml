@@ -1,5 +1,7 @@
 defaults:
   - platform: explore
   - preprocess: merra2-finetuning
+  - task: merra2-graphcast
+  - model: merra2-graphcast
 
 cid: merra2-finetuning
