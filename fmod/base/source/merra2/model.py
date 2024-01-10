@@ -123,6 +123,7 @@ class FMBatch:
 			data_vars: List[str] = header.attrs['data_vars']
 			coords: Mapping[str, xa.DataArray] = header.data_vars
 			for vname in data_vars:
+				pass
 
 
 
