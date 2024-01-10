@@ -16,7 +16,7 @@ start: date = date(1990,4,1)
 end: date = date(1990,5,1)
 
 def process( d: date ) -> StatsAccumulator:
-	reader = MERRA2DataProcessor( cfg().preprocess )
+	reader = MERRA2DataProcessor()
 	reader.process_day( d, reprocess=reprocess)
 	return reader.stats
 
