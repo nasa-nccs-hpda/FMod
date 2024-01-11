@@ -1,5 +1,5 @@
 import xarray as xa, pandas as pd
-import os, math, numpy as np
+import os, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.ops import fmbdir
 from fmod.base.source.merra2.preprocess import StatsAccumulator
@@ -46,7 +46,10 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 
 def clear_const_file():
 	const_filepath = cache_filepath(VarType.Constant)
-	if os.path.exists(const_filepath): os.remove( const_filepath )
+	if os.path.exists(const_filepath):
+		try: os.remove(const_filepath)
+		except IsADirectoryError:
+			shutil.rmtree(const_filepath)
 
 class FMBatch:
 
