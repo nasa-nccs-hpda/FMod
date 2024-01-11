@@ -21,9 +21,9 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
 #### Production Server Installation
 
     > pip install nvidia-modulus nvidia-modulus-sym
-    > conda install pytorch torchvision -c pytorch
     > conda install -c dglteam/label/cu121 dgl
-    > conda install -c conda-forge ipython h5py h5netcdf netCDF4 ipympl jupyterlab ipykernel ipywidgets pandas typing_extensions
+    > pip install hydra-core --upgrade
+    > conda install -c conda-forge ipython h5py h5netcdf xarray netCDF4 ipympl jupyterlab ipykernel ipywidgets pandas typing_extensions
 
 
 

@@ -219,7 +219,7 @@ class MERRA2DataProcessor:
             os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] = dict( list(var.attrs.items()) + [(vid,var.dims)] )
+                hattrs[vid] =  list(var.attrs.items()) + [('dims',var.dims)]
                 vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )

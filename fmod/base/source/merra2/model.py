@@ -6,6 +6,7 @@ from fmod.base.source.merra2.preprocess import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from datetime import date
 from fmod.base.util.config import cfg
+from nvidia.dali import fn
 from pandas import Timestamp
 from fmod.base.source.merra2.preprocess import ncFormat
 from enum import Enum
@@ -120,10 +121,9 @@ class FMBatch:
 		else:
 			filepath = cache_filepath(VarType.Dynamic, d)
 			header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", **kwargs)
-			data_vars: List[str] = header.attrs['data_vars']
+			files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
 			coords: Mapping[str, xa.DataArray] = header.data_vars
-			for vname in data_vars:
-				pass
+			data = fn.readers.numpy(device='gpu', file_root=filepath, files=files)
 
 
 
