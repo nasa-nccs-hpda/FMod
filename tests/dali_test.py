@@ -14,7 +14,7 @@ batch_size = 1
 
 @pipeline_def(batch_size=batch_size, num_threads=nproc, device_id=0)
 def get_dali_pipeline():
-	batch = load_batch( start, nproc=nproc )
+	batch = load_batch( start )
 	return batch
 
 p = get_dali_pipeline()
