@@ -10,6 +10,7 @@ from xarray.core.resample import DataArrayResample
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from enum import Enum
 
 _SEC_PER_HOUR = 3600
@@ -218,24 +219,23 @@ class MERRA2DataProcessor:
 
     def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset]):
         merged_dset: xa.Dataset = xa.merge(collection_dsets)
-        print(f"\n **** write_daily_files({self.format.value}): {filepath}")
+        lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", print=True )
         if self.format == ncFormat.Standard:
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
         else:
             os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
-                print( f"ATTR: {vid}= {var.name}")
-                hattrs[str(vid)] =  [ f"{k}={sformat(v)}" for k,v in var.attrs.items()] + [f"dims={','.join(var.dims)}"]
+                hattrs[vid] =  [ f"{k}={sformat(v)}" for k,v in var.attrs.items()] + [f"dims={','.join(var.dims)}"]
                 vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )
-                    print( f"  > Saving variable {vid} to: {vfpath}")
+                    lgm().log( f"  > Saving variable {vid} to: {vfpath}")
             hattrs['attrs'] = str(list(merged_dset.attrs.items()))
             header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs )
             hfpath = filepath + "/header.nc"
             header.to_netcdf(hfpath, format="NETCDF4", mode="w")
-            print(f"  > Saving header to: {hfpath}")
+            lgm().log(f"  > Saving header to: {hfpath}")
 
     def process_day(self, d: date, **kwargs):
         from .model import cache_filepath, VarType
