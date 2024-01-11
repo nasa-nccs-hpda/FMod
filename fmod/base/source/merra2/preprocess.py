@@ -19,6 +19,11 @@ _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 
+def sformat(aval: Any) -> str:
+    list_method = getattr(aval, "list", None)
+    if callable(list_method): return str(aval.list())
+    else: return str(aval)
+
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
     num_nodata = nnan(varray)
     assert num_nodata == 0, f"ERROR: {num_nodata} Nodata values found in variable {vname} for date {d}"
@@ -219,7 +224,7 @@ class MERRA2DataProcessor:
             os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] =  list(var.attrs.items()) + [('dims',var.dims)]
+                hattrs[vid] =  [(k,sformat(v)) for k,v in var.attrs.items()] + [('dims',str(var.dims))]
                 vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )
