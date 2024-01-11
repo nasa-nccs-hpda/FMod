@@ -185,7 +185,7 @@ class MERRA2DataProcessor:
         from fmod.base.source.merra2.model import stats_filepath
         self.merge_stats( ext_stats )
         for statname in self.stats.statnames:
-            filepath = stats_filepath( cfg().preprocess.version, statname )
+            filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
             self.stats.save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
