@@ -49,10 +49,6 @@ class QType(Enum):
     Intensive = 'intensive'
     Extensive = 'extensive'
 
-class ncFormat(Enum):
-    Standard = 'standard'
-    DALI = 'dali'
-
 class StatsEntry:
 
     def __init__(self, varname: str ):

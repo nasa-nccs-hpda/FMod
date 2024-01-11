@@ -1,13 +1,37 @@
 import xarray as xa, math
 from fmod.base.util.config import cfg
-from .model import cache_filepath, VarType
 from datetime import date
 from typing  import List, Tuple, Union, Optional, Mapping
-from fmod.base.source.merra2.preprocess import ncFormat
-from fmod.base.source.merra2.model import BatchType
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
+from enum import Enum
+from fmod.base.util.ops import fmbdir
+class ncFormat(Enum):
+    Standard = 'standard'
+    DALI = 'dali'
 
+class BatchType(Enum):
+    Training = 'training'
+    Forecast = 'forecast'
+
+class VarType(Enum):
+    Constant = 'constant'
+    Dynamic = 'dynamic'
+
+def suffix( ncformat: ncFormat ) -> str:
+	return ".nc" if ncformat == ncformat.Standard else ".dali"
+
+def cache_filepath(vartype: VarType, d: date = None) -> str:
+	version = cfg().task.dataset_version
+	ncformat: ncFormat = ncFormat( cfg().task.nc_format )
+	if vartype == VarType.Dynamic:
+		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
+		return f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(ncformat)}"
+	else:
+		return f"{fmbdir('processed')}/{version}/const{suffix(ncformat)}"
+
+def stats_filepath(version: str, statname: str) -> str:
+	return f"{fmbdir('processed')}/{version}/stats/{statname}"
 def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task['train_steps']
 	elif btype == BatchType.Forecast: return cfg().task['eval_steps']

@@ -1,15 +1,11 @@
 import xarray as xa, pandas as pd
 import os, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
-from fmod.base.util.ops import fmbdir
 from fmod.base.source.merra2.preprocess import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from datetime import date
 from fmod.base.util.config import cfg
-from .pipeline import rename_vars, get_days_per_batch, get_target_steps
-from pandas import Timestamp
-from fmod.base.source.merra2.preprocess import ncFormat
-from enum import Enum
+from .pipeline import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath, ncFormat
 
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24
@@ -17,30 +13,9 @@ SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 
-class BatchType(Enum):
-    Training = 'training'
-    Forecast = 'forecast'
-
-class VarType(Enum):
-    Constant = 'constant'
-    Dynamic = 'dynamic'
-
 def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
 
-def suffix( ncformat: ncFormat ) -> str:
-	return ".nc" if ncformat == ncformat.Standard else ".dali"
-
-def cache_filepath(vartype: VarType, d: date = None) -> str:
-	version = cfg().task.dataset_version
-	ncformat: ncFormat = ncFormat( cfg().task.nc_format )
-	if vartype == VarType.Dynamic:
-		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-		return f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(ncformat)}"
-	else:
-		return f"{fmbdir('processed')}/{version}/const{suffix(ncformat)}"
-def stats_filepath(version: str, statname: str) -> str:
-	return f"{fmbdir('processed')}/{version}/stats/{statname}"
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
