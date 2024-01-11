@@ -21,8 +21,9 @@ def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.v
 
 def sformat(aval: Any) -> str:
     list_method = getattr(aval, "list", None)
-    if callable(list_method): return str(aval.list())
-    else: return str(aval)
+    result = str(aval)
+    if callable(list_method): result = str(aval.list())
+    return result.replace(":","~")
 
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
     num_nodata = nnan(varray)
@@ -224,7 +225,7 @@ class MERRA2DataProcessor:
             os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] =  [(k,sformat(v)) for k,v in var.attrs.items()] + [('dims',str(var.dims))]
+                hattrs[vid] =  [ f"{k}:{sformat(v)}" for k,v in var.attrs.items()] + [f"dims:{var.dims}"]
                 vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )
