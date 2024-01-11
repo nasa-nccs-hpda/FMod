@@ -5,7 +5,6 @@ from datetime import date
 from fmod.base.util.dates import date_range
 from fmod.base.source.merra2.model import clear_const_file
 from multiprocessing import Pool, cpu_count
-from fmod.base.source.merra2.preprocess import ncFormat
 import hydra, os
 
 hydra.initialize( version_base=None, config_path="../config" )
