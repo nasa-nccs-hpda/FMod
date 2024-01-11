@@ -23,7 +23,7 @@ def sformat(aval: Any) -> str:
     list_method = getattr(aval, "list", None)
     result = str(aval)
     if callable(list_method): result = str(aval.list())
-    return result.replace(":","~")
+    return result.replace("=",":")
 
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
     num_nodata = nnan(varray)
@@ -225,11 +225,12 @@ class MERRA2DataProcessor:
             os.makedirs( filepath, exist_ok=True )
             hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
             for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] =  [ f"{k}:{sformat(v)}" for k,v in var.attrs.items()] + [f"dims:{var.dims}"]
+                hattrs[vid] =  [ f"{k}={sformat(v)}" for k,v in var.attrs.items()] + [f"dims={var.dims}"]
                 vfpath = filepath + f"/{vid}.npy"
                 with open( vfpath, 'w+b'  ) as fp:
                     write_array( fp, var.values, (1,0), allow_pickle=False )
                     print( f"  > Saving variable {vid} to: {vfpath}")
+            hattrs['attrs'] = str(list(merged_dset.attrs.items()))
             header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs )
             hfpath = filepath + "/header.nc"
             header.to_netcdf(hfpath, format="NETCDF4", mode="w")
