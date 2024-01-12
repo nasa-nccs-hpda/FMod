@@ -21,10 +21,19 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
 #### Production Server Installation
 
     > pip install nvidia-modulus nvidia-modulus-sym
+    > conda install cuda -c nvidia
     > conda install -c dglteam/label/cu121 dgl
     > pip install hydra-core --upgrade
     > pip install --extra-index-url https://pypi.nvidia.com --upgrade nvidia-dali-cuda120
     > conda install -c conda-forge ipython h5py h5netcdf xarray netCDF4 ipympl jupyterlab ipykernel ipywidgets pandas typing_extensions
+
+
+### Nvidia drivers installation
+
+    > python3 -m pip install nvidia-pyindex
+    > python3 -m pip install nvidia-cuda-runtime-cu12
+    > python3 -m pip install nvidia-npp-cu123
+    > python3 -m pip install nvidia-dali-cuda120 
 
 
 
