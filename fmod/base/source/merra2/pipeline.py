@@ -78,10 +78,11 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
 	return xa.merge( [dynamics, constants], compat='override' )
 
-def load_batch( d: date, **kwargs ):
+def load_batch( d: date, device: str, **kwargs ):
 	filepath = cache_filepath(VarType.Dynamic, d)
 	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", **kwargs)
 	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
 	coords: Mapping[str, xa.DataArray] = header.data_vars
-	data = fn.readers.numpy(device='gpu', file_root=filepath, files=files)
+	data = fn.readers.numpy(device=device, file_root=filepath, files=files)
 	print( f"loaded {len(files)}, result = {type(data)}")
+	return data
