@@ -1,5 +1,5 @@
 from fmod.base.util.config import configure, cfg
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 from datetime import date
 from multiprocessing import Pool, cpu_count
 import hydra, os, time, numpy as np
@@ -26,7 +26,7 @@ p.build()
 
 t1 = time.time()
 
-results: Tuple[TensorListCPU|TensorListGPU] = p.run()
+results: Tuple[Union[TensorListCPU,TensorListGPU]] = p.run()
 
 print( f"Completed run in {time.time()-t1} sec (build: {t1-t0} sec), results = {[type(r) for r in results]}")
 
