@@ -11,7 +11,7 @@ hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-finetuning' )
 nproc = cpu_count()-2
 start: date = date(1990,4,1)
-device = "cpu"
+device = "gpu"
 batch_size = 1
 
 @pipeline_def(batch_size=batch_size, num_threads=nproc, device_id=0)
