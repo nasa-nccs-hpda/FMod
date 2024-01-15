@@ -46,7 +46,7 @@ def cfg2meta(csection: str, meta: object, on_missing: str = "ignore") -> object:
         if (getattr(meta, k, None) is None) and (on_missing != "ignore"):
             msg = f"Attribute '{k}' does not exist in metadata object"
             if on_missing == "warn": print("Warning: " + msg)
-            elif on_missing == "exception": raise Exception(msg + "\n" + traceback.format_exc())
+            elif on_missing == "exception": raise Exception(msg)
             else: raise Exception(f"Unknown on_missing value: {on_missing}")
         setattr(meta, k, v)
     return meta
