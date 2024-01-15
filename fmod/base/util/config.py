@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from dataclasses import dataclass
 from datetime import date, timedelta
-import hydra
+import hydra, traceback
 
 def cfg() -> DictConfig:
     return Configuration.instance().cfg
@@ -39,9 +39,14 @@ class Configuration(ConfigBase):
     def get_parms(self, **kwargs) -> DictConfig:
         return hydra.compose(self.config_name, return_hydra_config=True)
 
-def cfg2meta(csection: str, meta: object) -> object:
+def cfg2meta(csection: str, meta: object, on_missing: str = "ignore") -> object:
     cmeta = cfg().get(csection)
     assert cmeta is not None, f"Section '{csection}' not found in hydra configuratrion"
     for k,v in cmeta.items():
+        if (getattr(meta, k, None) is None) and (on_missing != "ignore"):
+            msg = f"Attribute '{k}' does not exist in metadata object"
+            if on_missing == "warn": print("Warning: " + msg)
+            elif on_missing == "exception": raise Exception(msg + "\n" + traceback.format_exc())
+            else: raise Exception(f"Unknown on_missing value: {on_missing}")
         setattr(meta, k, v)
     return meta
