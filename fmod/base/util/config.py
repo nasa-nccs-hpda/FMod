@@ -38,3 +38,10 @@ class ConfigBase(ABC):
 class Configuration(ConfigBase):
     def get_parms(self, **kwargs) -> DictConfig:
         return hydra.compose(self.config_name, return_hydra_config=True)
+
+def cfg2meta(csection: str, meta: object) -> object:
+    cmeta = cfg().get(csection)
+    assert cmeta is not None, f"Section '{csection}' not found in hydra configuratrion"
+    for k,v in cmeta.items():
+        setattr(meta, k, v)
+    return meta
