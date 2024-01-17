@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional, Union
 from datetime import date
 from multiprocessing import Pool, cpu_count
 import hydra, os, time, numpy as np
-from fmod.base.source.merra2.pipeline import load_batch
+from fmod.base.source.merra2.batch import load_batch
 from nvidia.dali.pipeline import pipeline_def
 from nvidia.dali.backend import TensorCPU, TensorGPU, TensorListCPU, TensorListGPU
 

@@ -39,14 +39,16 @@ class Configuration(ConfigBase):
     def get_parms(self, **kwargs) -> DictConfig:
         return hydra.compose(self.config_name, return_hydra_config=True)
 
-def cfg2meta(csection: str, meta: object, on_missing: str = "ignore") -> object:
+def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
     cmeta = cfg().get(csection)
     assert cmeta is not None, f"Section '{csection}' not found in hydra configuratrion"
     for k,v in cmeta.items():
+        valid = True
         if (getattr(meta, k, None) is None) and (on_missing != "ignore"):
             msg = f"Attribute '{k}' does not exist in metadata object"
-            if on_missing == "warn": print("Warning: " + msg)
-            elif on_missing == "exception": raise Exception(msg)
-            else: raise Exception(f"Unknown on_missing value: {on_missing}")
-        setattr(meta, k, v)
+            if on_missing.startswith("warn"): print("Warning: " + msg)
+            elif on_missing == "skip": valid = False
+            elif on_missing.startswith("excep"): raise Exception(msg)
+            else: raise Exception(f"Unknown on_missing value in cfg2meta: {on_missing}")
+        if valid: setattr(meta, k, v)
     return meta

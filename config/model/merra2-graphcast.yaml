@@ -1,4 +1,4 @@
-mesh_size: 5
+ mesh_size: 5
 gnn_msg_steps: 16
 latent_size: 512
 hidden_layers: 1

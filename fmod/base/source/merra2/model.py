@@ -5,7 +5,7 @@ from fmod.base.source.merra2.preprocess import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from datetime import date
 from fmod.base.util.config import cfg
-from .pipeline import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath, ncFormat
+from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath, ncFormat
 
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24

@@ -3,5 +3,6 @@ defaults:
   - preprocess: merra2-finetuning
   - task: merra2-graphcast
   - model: merra2-graphcast
+  - pipeline: modulus1
 
 cid: merra2-finetuning
