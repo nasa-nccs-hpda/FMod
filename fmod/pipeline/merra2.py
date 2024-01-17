@@ -86,7 +86,7 @@ class MERRA2NCDatapipe(Datapipe):
             prefetch_queue_depth=2,
             py_num_workers=self.num_workers,
             device_id=self.device.index,
-            py_start_method="spawn",
+            py_start_method = "spawn",
         )
 
         with pipe:
