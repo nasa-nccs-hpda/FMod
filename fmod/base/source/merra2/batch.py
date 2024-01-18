@@ -319,17 +319,8 @@ def _process_target_lead_times_and_get_duration( target_lead_times: TargetLeadTi
 	return target_lead_times, target_duration
 
 
-def extract_inputs_targets_forcings(
-	idataset: xa.Dataset,
-	*,
-	input_variables: Tuple[str, ...],
-	target_variables: Tuple[str, ...],
-	forcing_variables: Tuple[str, ...],
-	pressure_levels: Tuple[int, ...],
-	input_duration: TimedeltaLike,
-	target_lead_times: TargetLeadTimes,
-) -> Tuple[xa.DataArray, xa.DataArray, xa.DataArray]:
-
+def extract_inputs_targets_forcings( idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
+	   pressure_levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs ) -> Tuple[xa.DataArray, xa.DataArray, xa.DataArray]:
 	idataset = idataset.sel(level=list(pressure_levels))
 	dvars = {}
 	for vname, varray in idataset.data_vars.items():
