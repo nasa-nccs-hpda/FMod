@@ -55,7 +55,8 @@ class MERRA2InputIterator(object):
             self.fmbatch.load( next_date )
             self.current_date = next_date
         train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
-        (inputs, targets, forcings) = batch.extract_inputs_targets_forcings(train_data, target_lead_times=self.target_lead_times, **cfg().task )
+        task_config = dict(cfg().task)
+        (inputs, targets, forcings) = batch.extract_inputs_targets_forcings(train_data, target_lead_times=self.target_lead_times, **task_config )
         self.i = (self.i + 1) % self.length
         return inputs, targets, forcings
 
