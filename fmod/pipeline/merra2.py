@@ -25,8 +25,10 @@ class MetaData(DatapipeMetaData):
 class MERRA2InputIterator(object):
     def __init__(self):
         self.train_steps = cfg().task.train_steps
+        self.input_steps = cfg().task.input_steps
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
+        self.input_duration = f"{self.dts*self.input_steps}h"
         self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
         self.train_dates = year_range(*cfg().task.year_range, randomize=True)
         self.nepochs = cfg().task.nepoch
@@ -55,7 +57,8 @@ class MERRA2InputIterator(object):
             self.fmbatch.load( next_date )
             self.current_date = next_date
         train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
-        (inputs, targets, forcings) = batch.extract_inputs_targets_forcings(train_data, target_lead_times=self.target_lead_times, **cfg().task )
+        task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
+        (inputs, targets, forcings) = batch.extract_inputs_targets_forcings(train_data, **task_config )
         self.i = (self.i + 1) % self.length
         return inputs, targets, forcings
 
