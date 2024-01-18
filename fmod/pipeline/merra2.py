@@ -33,7 +33,7 @@ class MERRA2InputIterator(object):
         self.max_iter = cfg().task.max_iter
         self.fmbatch: FMBatch = FMBatch(BatchType.Training)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
-        self.current_date = date(0,0,0 )
+        self.current_date = date(1,1,1 )
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
