@@ -86,7 +86,7 @@ class FMBatch:
 		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
 		self.type: BatchType = btype
 		self.days_per_batch = get_days_per_batch(btype)
-		self.target_steps = get_target_steps()
+		self.target_steps = get_target_steps(btype)
 		self.batch_steps: int = cfg().task['input_steps'] + self.target_steps
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
