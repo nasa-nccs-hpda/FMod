@@ -22,8 +22,6 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-pmeta: MetaData =cfg2meta('pipeline', MetaData(), on_missing="skip" )
-
 class MERRA2InputIterator(object):
     def __init__(self):
         self.train_steps = cfg().task.train_steps
