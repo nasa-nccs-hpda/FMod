@@ -69,7 +69,7 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
 def open_dataset( filepath, **kwargs) -> xa.Dataset:
-	dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
+	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
 	return rename_vars(dataset)
 
 def load_dataset(  d: date, **kwargs ):

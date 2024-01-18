@@ -63,8 +63,8 @@ class MERRA2NCDatapipe(Datapipe):
     """MERRA2 DALI data pipeline for NetCDF files"""
 
 
-    def __init__(self):
-        super().__init__(meta=pmeta)
+    def __init__(self,meta):
+        super().__init__(meta=meta)
         self.num_workers: int = cfg().platform.num_workers
         self.device = self.get_device()
         self.pipe = self._create_pipeline()
