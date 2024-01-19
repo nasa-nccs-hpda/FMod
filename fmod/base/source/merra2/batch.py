@@ -338,7 +338,7 @@ def extract_inputs_targets_forcings( idataset: xa.Dataset, *, input_variables: T
 	print( f" >> inputs{inputs.dims}: {inputs.shape}")
 	targets =  ds2array( targets[list(target_variables)] )
 	print(f" >> targets{targets.dims}: {targets.shape}")
-	forcings = ds2array( targets[list(forcing_variables)] )
+	forcings = ds2array( inputs[list(forcing_variables)] )
 	print(f" >> forcings{forcings.dims}: {forcings.shape}")
 
 	return array2tensor(inputs), array2tensor(targets), array2tensor(forcings)
