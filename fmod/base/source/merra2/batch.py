@@ -3,6 +3,7 @@ from fmod.base.util.config import cfg
 from datetime import date
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
+from dali.tensors import TensorCPU, TensorListCPU
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
 from fmod.base.util.ops import format_timedeltas, fmbdir
@@ -36,15 +37,18 @@ def get_timedeltas( dset: xa.Dataset ):
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
-def ds2array( dset: xa.Dataset ) -> xa.DataArray:
+def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
+	merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
 	sizes: Dict[str,int] = {}
 	for vn, v in dset.data_vars.items():
 		for cn, c in v.coords.items():
-			if (cn != "level") and (cn not in sizes):
+			if cn not in (merge_dims + list(sizes.keys())):
 				sizes[ cn ] = c.size
-
 	darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
 	return darray
+
+def array2tensor( darray: xa.DataArray ) -> TensorCPU:
+	return TensorCPU(darray.values)
 
 class ncFormat(Enum):
 	Standard = 'standard'
@@ -316,7 +320,7 @@ def _process_target_lead_times_and_get_duration( target_lead_times: TargetLeadTi
 
 
 def extract_inputs_targets_forcings( idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-	   levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs ) -> Tuple[xa.DataArray, xa.DataArray, xa.DataArray]:
+	   levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs ) -> Tuple[TensorCPU, TensorCPU, TensorCPU]:
 	idataset = idataset.sel(level=list(levels))
 	dvars = {}
 	for vname, varray in idataset.data_vars.items():
@@ -325,13 +329,16 @@ def extract_inputs_targets_forcings( idataset: xa.Dataset, *, input_variables: T
 	dataset = xa.Dataset( dvars, coords=idataset.coords, attrs=idataset.attrs )
 	dataset = dataset.drop_vars("datetime")
 	inputs, targets = extract_input_target_times( dataset, input_duration=input_duration, target_lead_times=target_lead_times )
-	# print( f"\nExtract Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}")
+	print( f"\nExtract Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}")
 
 	if set(forcing_variables) & set(target_variables):
 		raise ValueError( f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}." )
 
 	inputs   = ds2array( inputs[list(input_variables)] )
-	forcings = ds2array( targets[list(forcing_variables)] )
+	print( f" >> inputs{inputs.dims}: {inputs.shape}")
 	targets =  ds2array( targets[list(target_variables)] )
+	print(f" >> targets{targets.dims}: {targets.shape}")
+	forcings = ds2array( targets[list(forcing_variables)] )
+	print(f" >> forcings{forcings.dims}: {forcings.shape}")
 
-	return inputs, targets, forcings
+	return array2tensor(inputs), array2tensor(targets), array2tensor(forcings)

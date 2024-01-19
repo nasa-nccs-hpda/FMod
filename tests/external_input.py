@@ -9,5 +9,4 @@ pmeta: MetaData =cfg2meta('pipeline', MetaData(), on_missing="skip" )
 source = MERRA2InputIterator()
 
 for result in source:
-	print(result)
 	break
