@@ -168,8 +168,9 @@ def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 	parms = dict(pdict.items())
 	for irecur in range(8):
 		for pkey, pval in parms.items():
-			try: parms[pkey] = pformat(pval,parms)
-			except Exception as err: print( f"Error parsing {pkey}[{irecur}]: {pval} with parms = {parms}\n {err}")
+			if type(pval) == str:
+				try: parms[pkey] = pformat(pval,parms)
+				except Exception as err: print( f"Error parsing {pkey}[{irecur}]: {pval} with parms = {parms}\n {err}")
 	return parms[pkey]
 
 def fmbdir( dtype: str ) -> str:
