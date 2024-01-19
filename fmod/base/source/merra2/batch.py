@@ -6,6 +6,7 @@ from nvidia.dali import fn
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
 from fmod.base.util.ops import format_timedeltas, fmbdir
+from fmod.base.util.model import dataset_to_stacked
 import numpy as np
 import pandas as pd
 
@@ -36,18 +37,13 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def ds2array( dset: xa.Dataset ) -> xa.DataArray:
-	vnames: List[str] = list(dset.data_vars.keys())
-	vnames.sort()
-	print( "\n ---- ds2array: ---- ")
-	dvars: List[xa.DataArray] = [ ]
-	for vn in vnames:
-		dvar: xa.DataArray = dset.data_vars[vn]
-		print( f" ** {vn}: {dvar.dims} {dvar.shape} **" )
-		if 'level' not in dvar.dims:
-			dvar.expand_dims( dim='level', axis=-1 )
-		dvars.append( dvar )
-	darray: xa.DataArray = xa.concat( dvars, dim='level').rename( level='channels' )
-	darray.coords['channels'] = np.arange( darray.coords['channels'].size )
+	sizes: Dict[str,int] = {}
+	for vn, v in dset.data_vars.items():
+		for cn, c in v.coords.items():
+			if (cn != "level") and (cn not in sizes):
+				sizes[ cn ] = c.size
+
+	darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
 	return darray
 
 class ncFormat(Enum):
