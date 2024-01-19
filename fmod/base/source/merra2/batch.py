@@ -334,11 +334,16 @@ def extract_inputs_targets_forcings( idataset: xa.Dataset, *, input_variables: T
 	if set(forcing_variables) & set(target_variables):
 		raise ValueError( f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}." )
 
-	inputs   = ds2array( inputs[list(input_variables)] )
-	print( f" >> inputs{inputs.dims}: {inputs.shape}")
-	targets =  ds2array( targets[list(target_variables)] )
-	print(f" >> targets{targets.dims}: {targets.shape}")
-	forcings = ds2array( inputs[list(forcing_variables)] )
-	print(f" >> forcings{forcings.dims}: {forcings.shape}")
+	print(f" >> >> input variables: {input_variables}")
+	input_array: xa.DataArray   = ds2array( inputs[list(input_variables)] )
+	print( f" >> inputs{input_array.dims}: {input_array.shape}")
 
-	return array2tensor(inputs), array2tensor(targets), array2tensor(forcings)
+	print(f" >> >> target variables: {target_variables}")
+	target_array: xa.DataArray =  ds2array( targets[list(target_variables)] )
+	print(f" >> targets{target_array.dims}: {target_array.shape}")
+
+	print(f" >> >> forcing variables: {forcing_variables}")
+	forcing_array: xa.DataArray = ds2array( inputs[list(forcing_variables)] )
+	print(f" >> forcings{forcing_array.dims}: {forcing_array.shape}")
+
+	return array2tensor(input_array), array2tensor(target_array), array2tensor(forcing_array)
