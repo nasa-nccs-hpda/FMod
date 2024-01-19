@@ -3,7 +3,7 @@ from fmod.base.util.config import cfg
 from datetime import date
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
-from dali.tensors import TensorCPU, TensorListCPU
+from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
 from fmod.base.util.ops import format_timedeltas, fmbdir
