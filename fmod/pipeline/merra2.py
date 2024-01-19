@@ -232,12 +232,13 @@ class MERRA2NCDatapipe(Datapipe):
 
     def __init__(self,meta,**kwargs):
         super().__init__(meta=meta)
-        self.num_workers: int = cfg().platform.num_workers
-        self.device = self.get_device()
-        self.pipe = self._create_pipeline()
         self.batch_size = kwargs.get('batch_size', 1)
         self.parallel = kwargs.get('parallel', False)
         self.batch = kwargs.get('batch', False)
+        self.num_workers: int = cfg().platform.num_workers
+        self.device = self.get_device()
+        self.pipe = self._create_pipeline()
+
 
     @classmethod
     def get_device(cls) -> torch.device:
