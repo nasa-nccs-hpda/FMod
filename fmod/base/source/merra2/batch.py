@@ -40,14 +40,11 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
 	merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
 	sizes: Dict[str,int] = {}
-	print(f" ~~~~~~~~~~ ds2array:")
 	for vn, v in dset.data_vars.items():
-		print(f" >> {vn} strides: {v.values.__array_interface__['strides']}")
 		for cn, c in v.coords.items():
 			if cn not in (merge_dims + list(sizes.keys())):
 				sizes[ cn ] = c.size
 	darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-	print( f" >> result strides: {darray.values.__array_interface__['strides']}")
 	return darray
 
 def array2tensor( darray: xa.DataArray ) -> TensorCPU:

@@ -10,3 +10,5 @@ source = MERRA2InputIterator()
 
 for result in source:
 	break
+
+print( "TEST COMPLETE")
