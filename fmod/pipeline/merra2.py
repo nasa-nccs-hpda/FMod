@@ -4,6 +4,7 @@ import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
 from datetime import date, timedelta
 import nvidia.dali as dali
+from fmod.base.util.model import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range
 from fmod.base.util.config import cfg2meta, cfg
@@ -44,14 +45,16 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
-	merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
-	sizes: Dict[str,int] = {}
-	for vn, v in dset.data_vars.items():
-		for cn, c in v.coords.items():
-			if cn not in (merge_dims + list(sizes.keys())):
-				sizes[ cn ] = c.size
-	darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-	return darray
+    merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
+    sizes: Dict[str,int] = {}
+    vnames = list(dset.data_vars.keys()); vnames.sort()
+    for vname in vnames:
+        dvar: xa.DataArray = dset.data_vars[vname]
+        for (cname, coord) in dvar.coords.items():
+            if cname not in (merge_dims + list(sizes.keys())):
+                sizes[ cname ] = coord.size
+    darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
+    return darray
 
 def array2tensor( darray: xa.DataArray ) -> TensorCPU:
 	return TensorCPU( np.ravel(darray.values).reshape( darray.shape ) )
@@ -83,6 +86,9 @@ class MERRA2InputIterator(object):
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
         self.length = 1
+
+    def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
+        return dsnorm( vdata, self.sd, self.mu )
 
     def __iter__(self):
         self.i = 0
@@ -202,11 +208,11 @@ class MERRA2InputIterator(object):
         input_varlist: List[str] = list(input_variables)+list(forcing_variables)
 
         print(f" >> >> input variables: {input_varlist}")
-        input_array: xa.DataArray = ds2array(inputs[input_varlist])
+        input_array: xa.DataArray = ds2array( self.normalize(inputs[input_varlist]) )
         print(f" >> inputs{input_array.dims}: {input_array.shape}")
 
         print(f" >> >> target variables: {target_variables}")
-        target_array: xa.DataArray = ds2array(targets[list(target_variables)])
+        target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         print(f" >> targets{target_array.dims}: {target_array.shape}")
 
         return array2tensor(input_array), array2tensor(target_array)

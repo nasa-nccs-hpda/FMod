@@ -689,3 +689,38 @@ def stacked_to_dataset(
         name=template_var.name,
     )
   return type(template_dataset)(data_vars)  # pytype:disable=not-callable,wrong-arg-count
+
+def normalize(values: xarray.Dataset, scales: xarray.Dataset, means: Optional[xarray.Dataset], ) -> xarray.Dataset:
+  def normalize_array(array):
+    if array.name is None:
+      raise ValueError( "Can't look up normalization constants because array has no name.")
+    if means is not None:
+      if array.name in means:
+        array = array - means[array.name].astype(array.dtype)
+      else:
+        print('No normalization location found for %s', array.name)
+    if array.name in scales:
+      array = array / scales[array.name].astype(array.dtype)
+    else:
+      print('No normalization scale found for %s', array.name)
+    return array
+  data_vars = { vn: normalize_array(v) for vn, v in values.data_vars.items() }
+  return xarray.Dataset( data_vars, coords=values.coords, attrs=values.attrs )
+
+def unnormalize(values: xarray.Dataset, scales: xarray.Dataset, means: Optional[xarray.Dataset] ) -> xarray.Dataset:
+  """Unnormalize variables using the given scales and (optionally) means."""
+  def unnormalize_array(array):
+    if array.name is None:
+      raise ValueError( "Can't look up normalization constants because array has no name.")
+    if array.name in scales:
+      array = array * scales[array.name].astype(array.dtype)
+    else:
+      print('No normalization scale found for %s', array.name)
+    if means is not None:
+      if array.name in means:
+        array = array + means[array.name].astype(array.dtype)
+      else:
+        print('No normalization location found for %s', array.name)
+    return array
+  data_vars = { vn: unnormalize_array(v) for vn, v in values.data_vars.items() }
+  return xarray.Dataset( data_vars, coords=values.coords, attrs=values.attrs )
