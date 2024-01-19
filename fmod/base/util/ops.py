@@ -161,6 +161,8 @@ def parse_file_parts(file_name):
 def pformat( param: str, params: Dict[str,str] ) -> str:
 	try: return param.format(**params)
 	except KeyError: return param
+	except AttributeError as err:
+		raise ValueError(f" Invalid parameter in pformat: {param}, args: {params}, err: {err}")
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 	parms = dict(pdict.items())
