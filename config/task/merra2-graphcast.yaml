@@ -1,6 +1,8 @@
 dataset_version: 'merra2.findtuning'
 params: "small"
 nc_format: 'standard'
+device:     "cuda"
+num_workers: 4
 
 year_range: [1985,2021]
 year: 1985

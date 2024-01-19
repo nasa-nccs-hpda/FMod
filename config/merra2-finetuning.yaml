@@ -4,5 +4,6 @@ defaults:
   - task: merra2-graphcast
   - model: merra2-graphcast
   - pipeline: modulus1
+  - _self_
 
 cid: merra2-finetuning

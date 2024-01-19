@@ -72,8 +72,8 @@ class MERRA2NCDatapipe(Datapipe):
         patch_size: Union[Tuple[int, int], int, None] = cfg().platform.patch_size,
         num_samples_per_year: Optional[int] = cfg().platform.num_samples_per_year,
         shuffle: bool = cfg().platform.shuffle,
-        num_workers: int = cfg().platform.num_workers,
-        device: Union[str, torch.device] = cfg().platform.device,
+        num_workers: int = cfg().task.num_workers,
+        device: Union[str, torch.device] = cfg().task.device,
         process_rank: int = cfg().platform.process_rank,
         world_size: int = cfg().platform.world_size,
     ):

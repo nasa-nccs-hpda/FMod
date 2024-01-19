@@ -235,14 +235,14 @@ class MERRA2NCDatapipe(Datapipe):
         self.batch_size = kwargs.get('batch_size', 1)
         self.parallel = kwargs.get('parallel', False)
         self.batch = kwargs.get('batch', False)
-        self.num_workers: int = cfg().platform.num_workers
+        self.num_workers: int = cfg().task.num_workers
         self.device = self.get_device()
         self.pipe = self._create_pipeline()
 
 
     @classmethod
     def get_device(cls) -> torch.device:
-        device = torch.device( cfg().platform.device )
+        device = torch.device( cfg().task.device )
         if device.type == "cuda" and device.index is None:
             device = torch.device("cuda:0")
         return  device
