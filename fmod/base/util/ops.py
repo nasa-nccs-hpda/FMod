@@ -164,9 +164,10 @@ def pformat( param: str, params: Dict[str,str] ) -> str:
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 	parms = dict(pdict.items())
-	print( f"\n  *** resolve_links[{pkey}] ***\n ----> {parms}\n")
+	print( f"\n  *** resolve_links[{pkey}:{parms[pkey]}] ***\n ----> {parms}\n")
 	for irecur in range(8):
 		parms = { pkey: pformat(pval,parms) for pkey,pval in parms.items() }
+	print(f"\n ----> result = {parms[pkey]}\n")
 	return parms[pkey]
 
 def fmbdir( dtype: str ) -> str:
