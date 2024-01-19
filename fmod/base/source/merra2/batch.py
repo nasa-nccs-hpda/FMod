@@ -51,7 +51,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
 	return darray
 
 def array2tensor( darray: xa.DataArray ) -> TensorCPU:
-	return TensorCPU(darray.values)
+	return TensorCPU( np.ravel(darray.values).reshape( darray.shape ) )
 
 class ncFormat(Enum):
 	Standard = 'standard'
