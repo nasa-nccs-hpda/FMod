@@ -161,16 +161,11 @@ def parse_file_parts(file_name):
 def pformat( param: str, params: Dict[str,str] ) -> str:
 	try: return param.format(**params)
 	except KeyError: return param
-	except AttributeError as err:
-		raise ValueError(f" Invalid parameter in pformat: {param}, args: {params}, err: {err}")
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 	parms = dict(pdict.items())
 	for irecur in range(8):
-		for pkey, pval in parms.items():
-			if type(pval) == str:
-				try: parms[pkey] = pformat(pval,parms)
-				except Exception as err: print( f"Error parsing {pkey}[{irecur}]: {pval} with parms = {parms}\n {err}")
+		parms = { pkey: pformat(pval,parms) for pkey,pval in parms.items() }
 	return parms[pkey]
 
 def fmbdir( dtype: str ) -> str:
