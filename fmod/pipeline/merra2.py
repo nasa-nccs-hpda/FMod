@@ -82,6 +82,7 @@ class MERRA2InputIterator(object):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
+        self.length = 1
 
     def __iter__(self):
         self.i = 0
