@@ -230,12 +230,14 @@ class MERRA2NCDatapipe(Datapipe):
     """MERRA2 DALI data pipeline for NetCDF files"""
 
 
-    def __init__(self,meta):
+    def __init__(self,meta,**kwargs):
         super().__init__(meta=meta)
         self.num_workers: int = cfg().platform.num_workers
         self.device = self.get_device()
         self.pipe = self._create_pipeline()
-        self.batch_size = 1
+        self.batch_size = kwargs.get('batch_size', 1)
+        self.parallel = kwargs.get('parallel', False)
+        self.batch = kwargs.get('batch', False)
 
     @classmethod
     def get_device(cls) -> torch.device:
@@ -257,7 +259,7 @@ class MERRA2NCDatapipe(Datapipe):
         with pipe:
             source = MERRA2InputIterator()
             self.length = source.length
-            invar, outvar, forcing = dali.fn.external_source( source, num_outputs=2, parallel=True, batch=False )
+            invar, outvar = dali.fn.external_source( source, num_outputs=2, parallel=self.parallel, batch=self.batch )
             if self.device.type == "cuda":
                 invar = invar.gpu()
                 outvar = outvar.gpu()

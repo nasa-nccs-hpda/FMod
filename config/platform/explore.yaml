@@ -2,6 +2,7 @@ root:      "/explore/nobackup/projects/ilab/data/FMF"
 results:   "{root}/results"
 cache:     "{root}/cache"
 processed: '{root}/processed'
+device:     "cuda"
 
 dataset_root:  "/css/merra2/MERRA2_all/"
 dataset_files: "Y{year}/M{month}/MERRA2.{collection}.{year}{month}{day}.nc4"
