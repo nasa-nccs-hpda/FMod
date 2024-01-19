@@ -48,6 +48,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
 	return darray
 
 def array2tensor( darray: xa.DataArray ) -> TensorCPU:
+	print( f" ~~~~~~~~~~ array2tensor: strides: {darray.values.__array_interface__.get('strides','none')}")
 	return TensorCPU(darray.values)
 
 class ncFormat(Enum):
