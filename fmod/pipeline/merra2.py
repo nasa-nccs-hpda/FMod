@@ -246,6 +246,11 @@ class MERRA2NCDatapipe(Datapipe):
         self.device = self.get_device()
         self.pipe = self._create_pipeline()
 
+    def build(self):
+        return self.pipe.build()
+
+    def run(self):
+        return self.pipe.run()
 
     @classmethod
     def get_device(cls) -> torch.device:
