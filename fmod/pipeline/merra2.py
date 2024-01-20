@@ -271,11 +271,7 @@ class MERRA2NCDatapipe(Datapipe):
             if self.device.type == "cuda":
                 invar = invar.gpu()
                 outvar = outvar.gpu()
-
-            invar = dali.fn.normalize( invar, mean=source.mu, stddev=source.sd )
-            outvar = dali.fn.normalize( outvar, mean=source.mu, stddev=source.sd )
             pipe.set_outputs(invar, outvar)
-
         return pipe
 
     def __iter__(self):
