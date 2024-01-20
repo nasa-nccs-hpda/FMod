@@ -10,4 +10,4 @@ pipe = MERRA2NCDatapipe(pmeta)
 pipe.build()
 pipe_out = pipe.run()
 
-print( f"TEST COMPLETE: {[type(p) for p in pipe_out]}")
+print( f"TEST COMPLETE: {[type(p[0]) for p in pipe_out]}")
