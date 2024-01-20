@@ -9,5 +9,7 @@ pmeta: MetaData =cfg2meta('pipeline', MetaData(), on_missing="skip" )
 pipe = MERRA2NCDatapipe(pmeta)
 pipe.build()
 pipe_out = pipe.run()
+inputs = pipe_out[0][0]
+targets = pipe_out[1][0]
 
-print( f"TEST COMPLETE: {[type(p[0]) for p in pipe_out]}")
+print( f"TEST COMPLETE: {type(inputs)} {type(targets)}")
