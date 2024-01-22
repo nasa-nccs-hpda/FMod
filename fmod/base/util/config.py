@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from dataclasses import dataclass
 from datetime import date, timedelta
-import hydra, traceback
+import hydra, traceback, os
+os.environ["DGLBACKEND"] = "pytorch"
 
 def cfg() -> DictConfig:
     return Configuration.instance().cfg
