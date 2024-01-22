@@ -31,7 +31,7 @@ grad_clip_norm: 32.0
 jit: False
 amp: False
 amp_dtype: "bfloat16"
-full_bf16: True
+full_bf16: False
 watch_model: False
 lr: 1e-3
 lr_step3: 3e-7
