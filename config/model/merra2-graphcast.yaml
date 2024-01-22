@@ -1,8 +1,8 @@
-mesh_size: 5
-gnn_msg_steps: 16
-hidden_layers: 1
-res: 1.0
-radius_query_fraction_edge_length: 0.6
+#mesh_size: 5
+#gnn_msg_steps: 16
+#hidden_layers: 1
+#res: 1.0
+#radius_query_fraction_edge_length: 0.6
 
 processor_layers: 16
 hidden_dim: 512
