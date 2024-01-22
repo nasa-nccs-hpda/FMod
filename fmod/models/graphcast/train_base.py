@@ -8,10 +8,10 @@ from fmod.models.graphcast.constants import Constants
 class BaseTrainer:
 
     def __init__(self):
-        self.self.C: Constants = get_constants()
+        self.C: Constants = get_constants()
 
     def rollout(self, grid_nfeat, y):
-        with autocast(enabled=self.self.C.amp, dtype=self.amp_dtype):
+        with autocast(enabled=self.C.amp, dtype=self.amp_dtype):
             total_loss = 0
             pred_prev = grid_nfeat
             for i in range(y.size(dim=1)):
