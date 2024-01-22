@@ -3,7 +3,7 @@ from contextlib import nullcontext
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel
 import numpy as np
-import time
+import time, hydra
 import wandb as wb
 import torch.cuda.profiler as profiler
 from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR, LambdaLR
@@ -18,6 +18,7 @@ from fmod.models.graphcast.loss.utils import grid_cell_area
 from fmod.models.graphcast.train_base import BaseTrainer
 from fmod.models.graphcast.validation import Validation
 from fmod.models.graphcast.constants import Constants, get_constants
+from fmod.base.util.config import configure, cfg
 from modulus.distributed import DistributedManager
 try: import apex
 except: pass
@@ -139,6 +140,8 @@ class GraphCastTrainer(BaseTrainer):
 
 
 if __name__ == "__main__":
+    hydra.initialize(version_base=None, config_path="../config")
+    configure('merra2-finetuning')
     DistributedManager.initialize()
     dist = DistributedManager()
 
