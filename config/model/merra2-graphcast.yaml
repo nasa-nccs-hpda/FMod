@@ -1,6 +1,50 @@
 mesh_size: 5
 gnn_msg_steps: 16
-latent_size: 512
 hidden_layers: 1
 res: 1.0
 radius_query_fraction_edge_length: 0.6
+
+processor_layers: 16
+hidden_dim: 512
+segments: 1
+force_single_checkpoint: False
+checkpoint_encoder: True
+checkpoint_processor: False
+checkpoint_decoder: False
+force_single_checkpoint_finetune: False
+checkpoint_encoder_finetune: True
+checkpoint_processor_finetune: True
+checkpoint_decoder_finetune: True
+concat_trick: True
+cugraphops_encoder: False
+cugraphops_processor: False
+cugraphops_decoder: False
+recompute_activation: False
+wb_mode: "disabled"
+latlon_res: (721, 1440)
+num_workers: 0  # 8
+num_channels: 3  # 34
+num_channels_val: 3
+num_val_steps: 8
+num_val_spy: 1  # SPY: Samples Per Year
+grad_clip_norm: 32.0
+jit: False
+amp: False
+amp_dtype: "bfloat16"
+full_bf16: True
+watch_model: False
+lr: 1e-3
+lr_step3: 3e-7
+num_iters_step1: 1000
+num_iters_step2: 299000
+num_iters_step3: 11000
+step_change_freq: 1000
+save_freq: 1  # 500
+val_freq: 1  # 1000
+ckpt_path: "checkpoints_34var"
+val_dir: "validation_34var"
+ckpt_name: "model_34var.pt"
+pyt_profiler: False
+profile: False
+profile_range: (90, 110)
+

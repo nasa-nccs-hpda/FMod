@@ -25,7 +25,6 @@ except: pass
 
 C: Constants = get_constants()
 class GraphCastTrainer(BaseTrainer):
-    """GraphCast Trainer"""
 
     def __init__(self, wb, dist, rank_zero_logger):
         super().__init__()
@@ -120,42 +119,24 @@ class GraphCastTrainer(BaseTrainer):
         # instantiate loss, optimizer, and scheduler
         self.criterion = CellAreaWeightedLossFunction(self.area)
         try:
-            self.optimizer = apex.optimizers.FusedAdam(
-                self.model.parameters(), lr=C.lr, betas=(0.9, 0.95), weight_decay=0.1
-            )
+            self.optimizer = apex.optimizers.FusedAdam( self.model.parameters(), lr=C.lr, betas=(0.9, 0.95), weight_decay=0.1 )
             rank_zero_logger.info("Using FusedAdam optimizer")
         except:
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=C.lr)
-        scheduler1 = LinearLR(
-            self.optimizer,
-            start_factor=1e-3,
-            end_factor=1.0,
-            total_iters=C.num_iters_step1,
-        )
-        scheduler2 = CosineAnnealingLR(
-            self.optimizer, T_max=C.num_iters_step2, eta_min=0.0
-        )
-        scheduler3 = LambdaLR(
-            self.optimizer, lr_lambda=lambda epoch: (C.lr_step3 / C.lr)
-        )
-        self.scheduler = SequentialLR(
-            self.optimizer,
-            schedulers=[scheduler1, scheduler2, scheduler3],
-            milestones=[C.num_iters_step1, C.num_iters_step1 + C.num_iters_step2],
-        )
+
+        scheduler1 = LinearLR( self.optimizer, start_factor=1e-3, end_factor=1.0, total_iters=C.num_iters_step1 )
+        scheduler2 = CosineAnnealingLR( self.optimizer, T_max=C.num_iters_step2, eta_min=0.0 )
+        scheduler3 = LambdaLR( self.optimizer, lr_lambda=lambda epoch: (C.lr_step3 / C.lr) )
+
+        self.scheduler = SequentialLR( self.optimizer, schedulers=[scheduler1, scheduler2, scheduler3],
+            milestones=[C.num_iters_step1, C.num_iters_step1 + C.num_iters_step2] )
         self.scaler = GradScaler(enabled=self.enable_scaler)
 
         # load checkpoint
         if dist.world_size > 1:
             torch.distributed.barrier()
-        self.iter_init = load_checkpoint(
-            os.path.join(C.ckpt_path, C.ckpt_name),
-            models=self.model,
-            optimizer=self.optimizer,
-            scheduler=self.scheduler,
-            scaler=self.scaler,
-            device=dist.device,
-        )
+        self.iter_init = load_checkpoint( os.path.join(C.ckpt_path, C.ckpt_name),  models=self.model, optimizer=self.optimizer,
+            scheduler=self.scheduler, scaler=self.scaler, device=dist.device )
 
 
 if __name__ == "__main__":
@@ -164,17 +145,10 @@ if __name__ == "__main__":
 
     if dist.rank == 0:
         os.makedirs(C.ckpt_path, exist_ok=True)
-        with open(
-            os.path.join(C.ckpt_path, C.ckpt_name.replace(".pt", ".json")), "w"
-        ) as json_file:
+        with open( os.path.join(C.ckpt_path, C.ckpt_name.replace(".pt", ".json")), "w" ) as json_file:
             json_file.write(C.model_dump_json(indent=4))
 
-    initialize_wandb(
-        project="Modulus-Launch",
-        entity="Modulus",
-        name="GraphCast-Training",
-        group="GraphCast-DDP-Group",
-    )
+    initialize_wandb( project="Modulus-Launch", entity="Modulus", name="GraphCast-Training", group="GraphCast-DDP-Group" )
     logger = PythonLogger("main")  # General python logger
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
@@ -189,11 +163,8 @@ if __name__ == "__main__":
     with torch.autograd.profiler.emit_nvtx() if C.profile else nullcontext():
         # training loop
         while True:
-            assert (
-                iter < C.num_iters_step1 + C.num_iters_step2 + C.num_iters_step3
-            ), "Training is already finished!"
+            assert ( iter < C.num_iters_step1 + C.num_iters_step2 + C.num_iters_step3 ), "Training is already finished!"
             for i, data in enumerate(trainer.datapipe):
-                # profiling
                 if C.profile and iter == C.profile_range[0]:
                     rank_zero_logger.info("Starting profile", "green")
                     profiler.start()
@@ -224,26 +195,17 @@ if __name__ == "__main__":
                             trainer.model.module.set_checkpoint_decoder(True)
                         else:
                             trainer.model.set_checkpoint_encoder(True)
-                if (
-                    finetune
-                    and (iter - (C.num_iters_step1 + C.num_iters_step2))
-                    % C.step_change_freq
-                    == 0
-                    and iter != tagged_iter
-                ):
+                istep_change = iter - (C.num_iters_step1 + C.num_iters_step2)
+                if finetune and (istep_change % C.step_change_freq == 0) and (iter != tagged_iter):
                     update_dataloader = True
                     tagged_iter = iter
 
                 # update the dataloader for finetuning
                 if update_dataloader:
-                    num_rollout_steps = (
-                        iter - (C.num_iters_step1 + C.num_iters_step2)
-                    ) // C.step_change_freq + 2
+                    num_rollout_steps = istep_change // C.step_change_freq + 2
                     trainer.datapipe = MERRA2NCDatapipe( device=dist.device, process_rank=dist.rank, world_size=dist.world_size )
                     update_dataloader = False
-                    rank_zero_logger.info(
-                        f"Switching to {num_rollout_steps}-step rollout!"
-                    )
+                    rank_zero_logger.info( f"Switching to {num_rollout_steps}-step rollout!" )
                     break
 
                 # prepare the data
@@ -265,9 +227,7 @@ if __name__ == "__main__":
                     # free up GPU memory
                     del data_x, y
                     torch.cuda.empty_cache()
-                    error = trainer.validation.step(
-                        channels=list(np.arange(C.num_channels_val)), iter=iter
-                    )
+                    error = trainer.validation.step( channels=list(np.arange(C.num_channels_val)), iter=iter )
                     logger.log(f"iteration {iter}, Validation MSE: {error:.04f}")
 
                 # distributed barrier
@@ -285,17 +245,8 @@ if __name__ == "__main__":
                         epoch=iter,
                     )
                     logger.info(f"Saved model on rank {dist.rank}")
-                    logger.log(
-                        f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, \
-                            time per iter: {(time.time()-start)/C.save_freq:10.3e}"
-                    )
-                    wb.log(
-                        {
-                            "loss": loss_agg / C.save_freq,
-                            "learning_rate": trainer.scheduler.get_last_lr()[0],
-                        },
-                        step=iter,
-                    )
+                    logger.log( f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, time per iter: {(time.time()-start)/C.save_freq:10.3e}" )
+                    wb.log( dict( loss= loss_agg / C.save_freq, learning_rate= trainer.scheduler.get_last_lr()[0] ), step=iter )
                     loss_agg = 0
                     start = time.time()
                 iter += 1
@@ -307,9 +258,7 @@ if __name__ == "__main__":
                     if dist.rank == 0:
                         del data_x, y
                         torch.cuda.empty_cache()
-                        error = trainer.validation.step(
-                            channels=list(np.arange(C.num_channels_val)), iter=iter
-                        )
+                        error = trainer.validation.step( channels=list(np.arange(C.num_channels_val)), iter=iter )
                         logger.log(f"iteration {iter}, Validation MSE: {error:.04f}")
                         save_checkpoint(
                             os.path.join(C.ckpt_path, C.ckpt_name),
@@ -320,10 +269,7 @@ if __name__ == "__main__":
                             iter,
                         )
                         logger.info(f"Saved model on rank {dist.rank}")
-                        logger.log(
-                            f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, \
-                                time per iter: {(time.time()-start)/C.save_freq:10.3e}"
-                        )
+                        logger.log( f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, time per iter: {(time.time()-start)/C.save_freq:10.3e}" )
                     terminate_training = True
                     break
             if terminate_training:
