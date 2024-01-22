@@ -19,7 +19,7 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
     > conda create -n fmod-gds python=3.8 cudatoolkit libcufile dgl -c conda-forge -c nvidia -c dglteam/label/cu121
     > conda activate fmod-gds
     > pip install nvidia-modulus nvidia-modulus-sym
-    > pip install wandb pydantic quadpy orthopy ndim gdown netCDF4 h5py h5netcdf 
+    > pip install wandb pydantic quadpy orthopy ndim gdown netCDF4 h5py h5netcdf mlflow
 
 
 
