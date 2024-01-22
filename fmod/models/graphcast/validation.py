@@ -17,7 +17,7 @@ import sys
 import torch
 import matplotlib.pyplot as plt
 
-from constants import Constants
+from fmod.models.graphcast.constants import Constants
 from modulus.datapipes.climate import ERA5HDF5Datapipe
 
 C = Constants()
