@@ -1,59 +1,29 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-import torch, os
+import torch
 from contextlib import nullcontext
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel
 import numpy as np
 import time
+import wandb as wb
 import torch.cuda.profiler as profiler
 from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR, LambdaLR
+import os
 from modulus.models.graphcast.graph_cast_net import GraphCastNet
 from modulus.utils.graphcast.loss import CellAreaWeightedLossFunction
-from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
+from modulus.launch.logging import PythonLogger, initialize_wandb, RankZeroLoggingWrapper
 from modulus.launch.utils import load_checkpoint, save_checkpoint
-
-from train_utils import count_trainable_params
-from loss.utils import grid_cell_area
-from modulus.examples.weather.graphcast.train_base import BaseTrainer
-from validation import Validation
-from constants import Constants
-from modulus.datapipes.climate import ERA5HDF5Datapipe
+from fmod.pipeline.merra2 import MERRA2NCDatapipe
+from fmod.models.graphcast.train_utils import count_trainable_params
+from fmod.models.graphcast.loss.utils import grid_cell_area
+from fmod.models.graphcast.train_base import BaseTrainer
+from fmod.models.graphcast.validation import Validation
+from fmod.models.graphcast.constants import Constants, get_constants
 from modulus.distributed import DistributedManager
+try: import apex
+except: pass
 
-try:
-    import apex
-except:
-    pass
-
-
-# Instantiate constants, and save to JSON file
-C = Constants()
-
-if C.cugraphops_encoder or C.cugraphops_processor or C.cugraphops_decoder:
-    try:
-        import pylibcugraphops
-    except:
-        raise ImportError(
-            "pylibcugraphops is not installed. Refer the Dockerfile for instructions"
-            + "on how to install this package."
-        )
-
-
+C: Constants = get_constants()
 class GraphCastTrainer(BaseTrainer):
-    """GraphCast Trainer"""
 
     def __init__(self, wb, dist, rank_zero_logger):
         super().__init__()
@@ -125,25 +95,11 @@ class GraphCastTrainer(BaseTrainer):
                 gradient_as_bucket_view=True,
                 static_graph=True,
             )
-        rank_zero_logger.info(
-            f"Model parameter count is {count_trainable_params(self.model)}"
-        )
+        rank_zero_logger.info( f"Model parameter count is {count_trainable_params(self.model)}")
 
         # instantiate the training datapipe
-        self.datapipe = ERA5HDF5Datapipe(
-            data_dir=os.path.join(C.dataset_path, "train"),
-            stats_dir=os.path.join(C.dataset_path, "stats"),
-            channels=[i for i in range(C.num_channels)],
-            num_steps=1,
-            batch_size=1,
-            num_workers=C.num_workers,
-            device=dist.device,
-            process_rank=dist.rank,
-            world_size=dist.world_size,
-        )
-        rank_zero_logger.success(
-            f"Loaded training datapipe of size {len(self.datapipe)}"
-        )
+        self.datapipe = MERRA2NCDatapipe( device=dist.device, process_rank=dist.rank, world_size=dist.world_size )
+        rank_zero_logger.success(f"Loaded training datapipe of size {len(self.datapipe)}")
 
         # instantiate the validation
         if dist.rank == 0:
@@ -154,9 +110,7 @@ class GraphCastTrainer(BaseTrainer):
 
         # get area
         if hasattr(self.model, "module"):
-            self.area = grid_cell_area(
-                self.model.module.lat_lon_grid[:, :, 0], unit="deg"
-            )
+            self.area = grid_cell_area( self.model.module.lat_lon_grid[:, :, 0], unit="deg" )
         else:
             self.area = grid_cell_area(self.model.lat_lon_grid[:, :, 0], unit="deg")
         self.area = self.area.to(dtype=self.dtype).to(device=dist.device)
@@ -164,63 +118,36 @@ class GraphCastTrainer(BaseTrainer):
         # instantiate loss, optimizer, and scheduler
         self.criterion = CellAreaWeightedLossFunction(self.area)
         try:
-            self.optimizer = apex.optimizers.FusedAdam(
-                self.model.parameters(), lr=C.lr, betas=(0.9, 0.95), weight_decay=0.1
-            )
+            self.optimizer = apex.optimizers.FusedAdam( self.model.parameters(), lr=C.lr, betas=(0.9, 0.95), weight_decay=0.1 )
             rank_zero_logger.info("Using FusedAdam optimizer")
         except:
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=C.lr)
-        scheduler1 = LinearLR(
-            self.optimizer,
-            start_factor=1e-3,
-            end_factor=1.0,
-            total_iters=C.num_iters_step1,
-        )
-        scheduler2 = CosineAnnealingLR(
-            self.optimizer, T_max=C.num_iters_step2, eta_min=0.0
-        )
-        scheduler3 = LambdaLR(
-            self.optimizer, lr_lambda=lambda epoch: (C.lr_step3 / C.lr)
-        )
-        self.scheduler = SequentialLR(
-            self.optimizer,
-            schedulers=[scheduler1, scheduler2, scheduler3],
-            milestones=[C.num_iters_step1, C.num_iters_step1 + C.num_iters_step2],
-        )
+
+        scheduler1 = LinearLR( self.optimizer, start_factor=1e-3, end_factor=1.0, total_iters=C.num_iters_step1 )
+        scheduler2 = CosineAnnealingLR( self.optimizer, T_max=C.num_iters_step2, eta_min=0.0 )
+        scheduler3 = LambdaLR( self.optimizer, lr_lambda=lambda epoch: (C.lr_step3 / C.lr) )
+
+        self.scheduler = SequentialLR( self.optimizer, schedulers=[scheduler1, scheduler2, scheduler3],
+            milestones=[C.num_iters_step1, C.num_iters_step1 + C.num_iters_step2] )
         self.scaler = GradScaler(enabled=self.enable_scaler)
 
         # load checkpoint
         if dist.world_size > 1:
             torch.distributed.barrier()
-        self.iter_init = load_checkpoint(
-            os.path.join(C.ckpt_path, C.ckpt_name),
-            models=self.model,
-            optimizer=self.optimizer,
-            scheduler=self.scheduler,
-            scaler=self.scaler,
-            device=dist.device,
-        )
+        self.iter_init = load_checkpoint( os.path.join(C.ckpt_path, C.ckpt_name),  models=self.model, optimizer=self.optimizer,
+            scheduler=self.scheduler, scaler=self.scaler, device=dist.device )
 
 
 if __name__ == "__main__":
-    # initialize distributed manager
     DistributedManager.initialize()
     dist = DistributedManager()
 
     if dist.rank == 0:
         os.makedirs(C.ckpt_path, exist_ok=True)
-        with open(
-            os.path.join(C.ckpt_path, C.ckpt_name.replace(".pt", ".json")), "w"
-        ) as json_file:
+        with open( os.path.join(C.ckpt_path, C.ckpt_name.replace(".pt", ".json")), "w" ) as json_file:
             json_file.write(C.model_dump_json(indent=4))
 
-    # initialize loggers
-    initialize_wandb(
-        project="Modulus-Launch",
-        entity="Modulus",
-        name="GraphCast-Training",
-        group="GraphCast-DDP-Group",
-    )  # Wandb logger
+    initialize_wandb( project="Modulus-Launch", entity="Modulus", name="GraphCast-Training", group="GraphCast-DDP-Group" )
     logger = PythonLogger("main")  # General python logger
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
@@ -235,11 +162,8 @@ if __name__ == "__main__":
     with torch.autograd.profiler.emit_nvtx() if C.profile else nullcontext():
         # training loop
         while True:
-            assert (
-                iter < C.num_iters_step1 + C.num_iters_step2 + C.num_iters_step3
-            ), "Training is already finished!"
+            assert ( iter < C.num_iters_step1 + C.num_iters_step2 + C.num_iters_step3 ), "Training is already finished!"
             for i, data in enumerate(trainer.datapipe):
-                # profiling
                 if C.profile and iter == C.profile_range[0]:
                     rank_zero_logger.info("Starting profile", "green")
                     profiler.start()
@@ -270,36 +194,17 @@ if __name__ == "__main__":
                             trainer.model.module.set_checkpoint_decoder(True)
                         else:
                             trainer.model.set_checkpoint_encoder(True)
-                if (
-                    finetune
-                    and (iter - (C.num_iters_step1 + C.num_iters_step2))
-                    % C.step_change_freq
-                    == 0
-                    and iter != tagged_iter
-                ):
+                istep_change = iter - (C.num_iters_step1 + C.num_iters_step2)
+                if finetune and (istep_change % C.step_change_freq == 0) and (iter != tagged_iter):
                     update_dataloader = True
                     tagged_iter = iter
 
                 # update the dataloader for finetuning
                 if update_dataloader:
-                    num_rollout_steps = (
-                        iter - (C.num_iters_step1 + C.num_iters_step2)
-                    ) // C.step_change_freq + 2
-                    trainer.datapipe = ERA5HDF5Datapipe(
-                        data_dir=os.path.join(C.dataset_path, "train"),
-                        stats_dir=os.path.join(C.dataset_path, "stats"),
-                        channels=[i for i in range(C.num_channels)],
-                        num_steps=num_rollout_steps,
-                        batch_size=1,
-                        num_workers=C.num_workers,
-                        device=dist.device,
-                        process_rank=dist.rank,
-                        world_size=dist.world_size,
-                    )
+                    num_rollout_steps = istep_change // C.step_change_freq + 2
+                    trainer.datapipe = MERRA2NCDatapipe( device=dist.device, process_rank=dist.rank, world_size=dist.world_size )
                     update_dataloader = False
-                    rank_zero_logger.info(
-                        f"Switching to {num_rollout_steps}-step rollout!"
-                    )
+                    rank_zero_logger.info( f"Switching to {num_rollout_steps}-step rollout!" )
                     break
 
                 # prepare the data
@@ -321,9 +226,7 @@ if __name__ == "__main__":
                     # free up GPU memory
                     del data_x, y
                     torch.cuda.empty_cache()
-                    error = trainer.validation.step(
-                        channels=list(np.arange(C.num_channels_val)), iter=iter
-                    )
+                    error = trainer.validation.step( channels=list(np.arange(C.num_channels_val)), iter=iter )
                     logger.log(f"iteration {iter}, Validation MSE: {error:.04f}")
 
                 # distributed barrier
@@ -341,17 +244,8 @@ if __name__ == "__main__":
                         epoch=iter,
                     )
                     logger.info(f"Saved model on rank {dist.rank}")
-                    logger.log(
-                        f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, \
-                            time per iter: {(time.time()-start)/C.save_freq:10.3e}"
-                    )
-                    wb.log(
-                        {
-                            "loss": loss_agg / C.save_freq,
-                            "learning_rate": trainer.scheduler.get_last_lr()[0],
-                        },
-                        step=iter,
-                    )
+                    logger.log( f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, time per iter: {(time.time()-start)/C.save_freq:10.3e}" )
+                    wb.log( dict( loss= loss_agg / C.save_freq, learning_rate= trainer.scheduler.get_last_lr()[0] ), step=iter )
                     loss_agg = 0
                     start = time.time()
                 iter += 1
@@ -363,9 +257,7 @@ if __name__ == "__main__":
                     if dist.rank == 0:
                         del data_x, y
                         torch.cuda.empty_cache()
-                        error = trainer.validation.step(
-                            channels=list(np.arange(C.num_channels_val)), iter=iter
-                        )
+                        error = trainer.validation.step( channels=list(np.arange(C.num_channels_val)), iter=iter )
                         logger.log(f"iteration {iter}, Validation MSE: {error:.04f}")
                         save_checkpoint(
                             os.path.join(C.ckpt_path, C.ckpt_name),
@@ -376,10 +268,7 @@ if __name__ == "__main__":
                             iter,
                         )
                         logger.info(f"Saved model on rank {dist.rank}")
-                        logger.log(
-                            f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, \
-                                time per iter: {(time.time()-start)/C.save_freq:10.3e}"
-                        )
+                        logger.log( f"iteration: {iter}, loss: {loss_agg/C.save_freq:10.3e}, time per iter: {(time.time()-start)/C.save_freq:10.3e}" )
                     terminate_training = True
                     break
             if terminate_training:
