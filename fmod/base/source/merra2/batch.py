@@ -90,8 +90,9 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
 	return xa.merge( [dynamics, constants], compat='override' )
 
-def load_batch( d: date, device: str, **kwargs ):
+def load_batch( d: date, **kwargs ):
 	filepath = cache_filepath(VarType.Dynamic, d)
+	device = cfg().task.device.lower()
 	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", engine="netcdf4", **kwargs)
 	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
 	coords: Mapping[str, xa.DataArray] = header.data_vars
