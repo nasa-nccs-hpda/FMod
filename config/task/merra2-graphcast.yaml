@@ -1,7 +1,7 @@
 dataset_version: 'merra2.findtuning'
 params: "small"
-nc_format: 'dali'
-device:     "gpu"
+nc_format: 'standard' # 'dali'
+device:   "cuda" # "gpu"
 num_workers: 4
 
 year_range: [1985,2021]
