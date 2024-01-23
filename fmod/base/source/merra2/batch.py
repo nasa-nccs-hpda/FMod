@@ -8,6 +8,16 @@ from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
 from fmod.base.util.ops import format_timedeltas, fmbdir
 import numpy as np
 
+predef_norms = [ 'year_progress', 'year_progress_sin', 'year_progress_cos', 'day_progress', 'day_progress_sin', 'day_progress_cos' ]
+_SEC_PER_HOUR = 3600
+_HOUR_PER_DAY = 24
+SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
+_AVG_DAY_PER_YEAR = 365.24219
+AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
+
+DAY_PROGRESS = "day_progress"
+YEAR_PROGRESS = "year_progress"
+
 class ncFormat(Enum):
 	Standard = 'standard'
 	DALI = 'dali'
@@ -82,7 +92,7 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 
 def load_batch( d: date, device: str, **kwargs ):
 	filepath = cache_filepath(VarType.Dynamic, d)
-	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", **kwargs)
+	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", engine="netcdf4", **kwargs)
 	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
 	coords: Mapping[str, xa.DataArray] = header.data_vars
 	data = fn.readers.numpy(device=device, file_root=filepath, files=files)

@@ -35,8 +35,6 @@ AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
-predef_norms = [ 'year_progress', 'year_progress_sin', 'year_progress_cos', 'day_progress', 'day_progress_sin', 'day_progress_cos' ]
-
 def get_timedeltas( dset: xa.Dataset ):
 	return format_timedeltas( dset.coords["time"] )
 Tensor = torch.Tensor
