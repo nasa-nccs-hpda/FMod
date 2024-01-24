@@ -7,7 +7,7 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
 
 
 #### OSX Local Development Installation
-    * conda create -n fmod python=3.9 mamba -c conda-forge 
+    * conda create -n fmod python=3.10 mamba -c conda-forge 
     * conda activate fmod
     * mamba install pytorch torchvision -c pytorch
     * mamba install -c dglteam dgl 
@@ -21,20 +21,27 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
    *  Must have mpicc in PATH  (e.g. */app/openmpi/platform/x86_64/rhel/8.9/4.1.2_gcc-12.1.0/bin/mpicc* )
    
  * Install Packages:
-    >   * conda create -n fmod1 python=3.10 cudatoolkit-dev libcufile torchdata dgl -c conda-forge -c nvidia -c pytorch -c dglteam/label/cu121
-    >   * conda activate fmod1
-    >   * pip install --pre nvfuser-cu121 --extra-index-url https://pypi.nvidia.com
+
+    >   * conda create -n fmod python=3.10 cuda-python -c nvidia 
+    >   * conda activate fmod
+    >   * pip install ninja
+    >   * pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
+    >   * pip install lightning-bolts
+    >   * pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" pytorch-extension
     >   * pip install nvidia-modulus[all] nvidia-modulus-sym
     >   * pip install netCDF4 h5py h5netcdf
- 
 
-    >   * conda create -n fmod2 python=3.10 conda-forge::cudatoolkit-dev
-    >   * conda activate fmod2
-    >   * pip install nvidia-modulus[all] nvidia-modulus-sym
-    >   * pip install netCDF4 h5py h5netcdf
+* Alternate pytorch-extension installation
+  >  * cd /explore/nobackup/projects/ilab/software/pytorch-extension-0.2
+  >  * python setup.py egg_info
+  >  * python setup.py bdist_wheel 
+  >  * python setup.py install
+  >  * python setup.py clean
 
 
-
+ * For graphcast:
+    >   * pip install  dgl -f https://data.dgl.ai/wheels/cu121/repo.html
+    >   * pip install  dglgo -f https://data.dgl.ai/wheels-test/repo.html
 
 
     >   * pip install wandb pydantic quadpy orthopy ndim gdown netCDF4 h5py h5netcdf mlflow torch-harmonics 
