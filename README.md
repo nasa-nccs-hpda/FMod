@@ -26,6 +26,12 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
     >   * pip install --pre nvfuser-cu121 --extra-index-url https://pypi.nvidia.com
     >   * pip install nvidia-modulus[all] nvidia-modulus-sym
     >   * pip install netCDF4 h5py h5netcdf
+ 
+
+    >   * conda create -n fmod2 python=3.10 conda-forge::cudatoolkit-dev
+    >   * conda activate fmod2
+    >   * pip install nvidia-modulus[all] nvidia-modulus-sym
+    >   * pip install netCDF4 h5py h5netcdf
 
 
 
