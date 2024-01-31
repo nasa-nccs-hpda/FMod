@@ -1,5 +1,6 @@
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -10,6 +11,11 @@ def cfg() -> DictConfig:
 
 def configure(config_name: str):
     Configuration.init( config_name )
+
+def cfgdir() -> str:
+    cdir = Path(__file__).parent.parent.parent / "config"
+    print( f'cdir = {cdir}')
+    return str(cdir)
 
 class ConfigBase(ABC):
     _instance = None
@@ -40,8 +46,12 @@ class Configuration(ConfigBase):
         return hydra.compose(self.config_name, return_hydra_config=True)
 
 def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
-    cmeta = cfg().get(csection)
-    assert cmeta is not None, f"Section '{csection}' not found in hydra configuratrion"
+    csections = csection.split(".")
+    cmeta = cfg().get(csections[0])
+    if (len(csections) > 1) and (cmeta is not None): cmeta = cmeta.get(csections[1])
+    if cmeta is None:
+        print( f"Warning: section '{csection}' does not exist in configuration" )
+        return None
     for k,v in cmeta.items():
         valid = True
         if (getattr(meta, k, None) is None) and (on_missing != "ignore"):
