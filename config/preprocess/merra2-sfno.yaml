@@ -1,0 +1,35 @@
+dataset_version:    'merra2.findtuning'
+year_range: [1984,2022]
+data_timestep: 6
+nc_format: 'dali'
+
+xres: 1.0
+yres: 1.0
+levels:  [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]
+dims: { lon: x, lat: y, lev: z }
+coords: { x: "lon", y: "lat", z: "level" }
+vars: { inst3_3d_asm_Np: ['T', 'U', 'V', 'OMEGA', 'H', 'QV', 'PHIS' ],
+        inst1_2d_asm_Nx: ['SLP', 'T2M', 'V10M', 'U10M', 'TQI', 'TQL', 'TQV'],
+        const_2d_ctm_Nx: [ 'PHIS', 'FRACI', 'FRLAKE', 'FRLAND', 'FRLANDICE', 'FROCEAN'],
+        tavg1_2d_int_Nx: ['PRECLS', 'SWNETTOA'] }
+extensive: [ 'PRECLS' ]
+day_progress: "day_progress"
+year_progress: "year_progress"
+
+input_steps: 2
+train_steps: 2
+eval_steps: 2
+
+
+
+
+
+
+
+# input_variables=('2m_temperature', 'mean_sea_level_pressure', '10m_v_component_of_wind', '10m_u_component_of_wind', 'total_precipitation_6hr',
+# 'temperature', 'geopotential', 'u_component_of_wind', 'v_component_of_wind', 'vertical_velocity', 'specific_humidity', 'toa_incident_solar_radiation',
+# 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos', 'geopotential_at_surface', 'land_sea_mask'),
+
+# target_variables=('2m_temperature', 'mean_sea_level_pressure', '10m_v_component_of_wind', '10m_u_component_of_wind', 'total_precipitation_6hr', 'temperature',
+# geopotential', 'u_component_of_wind', 'v_component_of_wind', 'vertical_velocity', 'specific_humidity'),
+# forcing_variables=('toa_incident_solar_radiation', 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos'),
