@@ -1,6 +1,6 @@
 dataset_version: 'merra2.findtuning'
 params: "small"
-nc_format: 'dali'
+nc_format: 'standard'
 device: "gpu"
 num_workers: 4
 
