@@ -14,6 +14,7 @@ from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
+from torch.utils.data.dataset import IterableDataset
 from fmod.base.source.merra2 import batch
 import pandas as pd
 
@@ -66,7 +67,7 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-class MERRA2InputIterator(object):
+class MERRA2InputIterator(IterableDataset):
     def __init__(self):
         self.train_steps = cfg().task.train_steps
         self.input_steps = cfg().task.input_steps

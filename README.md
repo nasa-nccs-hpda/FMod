@@ -26,10 +26,11 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
     >   * conda activate fmod
     >   * pip install ninja
     >   * pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
-    >   * pip install lightning-bolts
+    >   * pip install lightning-bolts 
     >   * pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" pytorch-extension
     >   * pip install nvidia-modulus[all] nvidia-modulus-sym
-    >   * pip install netCDF4 h5py h5netcdf
+    >   * pip install netCDF4 h5py h5netcdf parameterized cartopy
+    >   * cd torch-harmonics; pip install .
 
 * Alternate pytorch-extension installation
   >  * cd /explore/nobackup/projects/ilab/software/pytorch-extension-0.2
