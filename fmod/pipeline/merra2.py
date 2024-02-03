@@ -204,26 +204,27 @@ class MERRA2InputIterator(IterableDataset):
     def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
         levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[TensorCPU, TensorCPU]:
         idataset = idataset.sel(level=list(levels))
-        dvars = {}
+        nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
+        dvars, verbose = {}, False
         for vname, varray in idataset.data_vars.items():
             missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         dataset = dataset.drop_vars("datetime")
         inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
-        print(f"\nExtract Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}")
+        print(f"\nExtract Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
         input_varlist: List[str] = list(input_variables)+list(forcing_variables)
 
-        print(f" >> >> input variables: {input_varlist}")
+        if verbose: print(f" >> >> input variables: {input_varlist}")
         input_array: xa.DataArray = ds2array( self.normalize(inputs[input_varlist]) )
-        print(f" >> inputs{input_array.dims}: {input_array.shape}")
+        if verbose: print(f" >> inputs{input_array.dims}: {input_array.shape}")
 
-        print(f" >> >> target variables: {target_variables}")
+        if verbose: print(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
-        print(f" >> targets{target_array.dims}: {target_array.shape}")
+        if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
 
         return array2tensor(input_array), array2tensor(target_array)
     def get_date(self):
