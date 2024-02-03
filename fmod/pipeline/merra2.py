@@ -49,7 +49,8 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
-    merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
+    coords = cfg().task.coords
+    merge_dims = kwargs.get( 'merge_dims', [coords['z'], coords['t']] )
     sizes: Dict[str,int] = {}
     vnames = list(dset.data_vars.keys()); vnames.sort()
     for vname in vnames:
@@ -58,7 +59,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-    return darray
+    return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
     tt = cfg().task.tensor_type.lower()
