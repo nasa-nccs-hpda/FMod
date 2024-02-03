@@ -21,7 +21,7 @@ class GridOps:
 		else:
 			raise Exception( f"Unknown grid: {self.grid}")
 
-		self.quad_weights = torch.as_tensor(quad_weights).reshape(-1, 1)
+		self.quad_weights = torch.as_tensor(quad_weights).reshape(-1, 1).cuda()
 
 		self.lats = -torch.as_tensor(np.arcsin(cost))
 		self.lons = torch.linspace(0, 2 * np.pi, self.nlon + 1, dtype=torch.float64)[:nlon]
