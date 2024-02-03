@@ -16,15 +16,21 @@ from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from torch.utils.data.dataset import IterableDataset
 from fmod.base.source.merra2 import batch
+from torch import FloatTensor
 import pandas as pd
+from enum import StrEnum
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
 
+class TensorType(StrEnum):
+    DALI = "dali"
+    TORCH = "torch"
+
 TargetLeadTimes = Union[
-	TimedeltaLike,
-	Sequence[TimedeltaLike],
-	slice  # with TimedeltaLike as its start and stop.
+    TimedeltaLike,
+    Sequence[TimedeltaLike],
+    slice  # with TimedeltaLike as its start and stop.
 ]
 
 _SEC_PER_HOUR = 3600
@@ -37,11 +43,11 @@ DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
 def get_timedeltas( dset: xa.Dataset ):
-	return format_timedeltas( dset.coords["time"] )
+    return format_timedeltas( dset.coords["time"] )
 Tensor = torch.Tensor
 
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
-	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
+    return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     merge_dims = kwargs.get( 'merge_dims', ["level", "time"] )
@@ -55,8 +61,13 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
     return darray
 
-def array2tensor( darray: xa.DataArray ) -> TensorCPU:
-	return TensorCPU( np.ravel(darray.values).reshape( darray.shape ) )
+def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
+    tt = cfg().task.tensor_type.lower()
+    array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
+    if   tt == TensorType.DALI:   return TensorCPU( array_data )
+    elif tt == TensorType.TORCH:  return FloatTensor( array_data )
+    else: raise Exception( f"Unsupported tensor type: {tt}")
+
 
 @dataclass
 class MetaData(DatapipeMetaData):

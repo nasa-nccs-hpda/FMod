@@ -1,6 +1,7 @@
 dataset_version: 'merra2.findtuning'
 params: "small"
 nc_format: 'standard' # 'dali'
+tensor_type: "torch"
 device:   "cuda" # "gpu"
 num_workers: 4
 
