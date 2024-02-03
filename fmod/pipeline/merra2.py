@@ -18,12 +18,11 @@ from torch.utils.data.dataset import IterableDataset
 from fmod.base.source.merra2 import batch
 from torch import FloatTensor
 import pandas as pd
-from enum import StrEnum
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
 
-class TensorType(StrEnum):
+class TensorType:
     DALI = "dali"
     TORCH = "torch"
 
