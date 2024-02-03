@@ -241,6 +241,8 @@ class MERRA2InputIterator(IterableDataset):
         task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
         (inputs, targets) = self.extract_inputs_targets(train_data, **task_config )
         self.i = (self.i + 1) % self.length
+        if (cfg().task.device == "gpu") and torch.cuda.is_available():
+            inputs, targets = inputs.cuda(), targets.cuda()
         return inputs, targets
 
 class MERRA2NCDatapipe(Datapipe):
