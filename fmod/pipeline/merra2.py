@@ -100,7 +100,7 @@ class MERRA2InputIterator(IterableDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def len(self):
+    def  __len__(self):
         return self.length
 
     def get_date(self):
