@@ -1,7 +1,3 @@
-lr: 3e-3
-nepochs: 10
-weight_decay: 0.0
-
 processor_layers: 16
 hidden_dim: 512
 segments: 1

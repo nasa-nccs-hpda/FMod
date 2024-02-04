@@ -15,9 +15,9 @@ train_steps: 1
 eval_steps: 100
 data_timestep: 6
 levels:  [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]
-lr: 0.0002
-nepoch: 20
-max_iter: 64
+lr: 3e-3
+nepochs: 50
+weight_decay: 0.0
 error_threshold: 1.0
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }
