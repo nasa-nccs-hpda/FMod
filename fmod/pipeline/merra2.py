@@ -100,6 +100,28 @@ class MERRA2InputIterator(IterableDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
+    def get_date(self):
+        return self.train_dates[ self.i // self.n_day_offsets ]
+
+    def get_day_offset(self):
+        return self.i % self.n_day_offsets
+
+    def __next__(self):
+        if self.i < self.length:
+            next_date = self.get_date()
+            if self.current_date != next_date:
+                self.fmbatch.load( next_date )
+                self.current_date = next_date
+            train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
+            task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
+            (inputs, targets) = self.extract_inputs_targets(train_data, **task_config )
+            self.i = self.i + 1
+            if (cfg().task.device == "gpu") and torch.cuda.is_available():
+                inputs, targets = inputs.cuda(), targets.cuda()
+            return inputs, targets
+        else:
+            raise StopIteration
+
     def __iter__(self):
         self.i = 0
         self.length = len(self.train_dates)*self.n_day_offsets
@@ -227,24 +249,7 @@ class MERRA2InputIterator(IterableDataset):
         if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
 
         return array2tensor(input_array), array2tensor(target_array)
-    def get_date(self):
-        return self.train_dates[ self.i // self.n_day_offsets ]
 
-    def get_day_offset(self):
-        return self.i % self.n_day_offsets
-
-    def __next__(self):
-        next_date = self.get_date()
-        if self.current_date != next_date:
-            self.fmbatch.load( next_date )
-            self.current_date = next_date
-        train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
-        task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
-        (inputs, targets) = self.extract_inputs_targets(train_data, **task_config )
-        self.i = (self.i + 1) % self.length
-        if (cfg().task.device == "gpu") and torch.cuda.is_available():
-            inputs, targets = inputs.cuda(), targets.cuda()
-        return inputs, targets
 
 class MERRA2NCDatapipe(Datapipe):
     """MERRA2 DALI data pipeline for NetCDF files"""
