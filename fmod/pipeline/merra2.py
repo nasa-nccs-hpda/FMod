@@ -87,8 +87,6 @@ class MERRA2InputIterator(IterableDataset):
         self.input_duration = f"{self.dts*self.input_steps}h"
         self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
         self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
-        self.nepochs = cfg().task.nepoch
-        self.max_iter = cfg().task.max_iter
         self.fmbatch: FMBatch = FMBatch(BatchType.Training)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.current_date = date(1,1,1 )
