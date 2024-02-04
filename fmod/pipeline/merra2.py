@@ -79,14 +79,14 @@ class MetaData(DatapipeMetaData):
     ddp_sharding: bool = True
 
 class MERRA2InputIterator(IterableDataset):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.train_steps = cfg().task.train_steps
         self.input_steps = cfg().task.input_steps
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
         self.input_duration = f"{self.dts*self.input_steps}h"
         self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
-        self.train_dates = year_range(*cfg().task.year_range, randomize=True)
+        self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
         self.nepochs = cfg().task.nepoch
         self.max_iter = cfg().task.max_iter
         self.fmbatch: FMBatch = FMBatch(BatchType.Training)
@@ -212,7 +212,7 @@ class MERRA2InputIterator(IterableDataset):
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         dataset = dataset.drop_vars("datetime")
         inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
-        print(f"\nExtract Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
+        print(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")

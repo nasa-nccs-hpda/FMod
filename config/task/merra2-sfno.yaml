@@ -5,7 +5,7 @@ tensor_type: "torch"
 device: "gpu"
 num_workers: 4
 
-year_range: [1985,2021]
+year_range:  [1985,2021]
 year: 1985
 month: 1
 day: 1

@@ -62,3 +62,7 @@ def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
             else: raise Exception(f"Unknown on_missing value in cfg2meta: {on_missing}")
         if valid: setattr(meta, k, v)
     return meta
+
+def cfg_date( csection: str ) -> date:
+    dcfg = cfg().get(csection)
+    return date( dcfg.year, dcfg.month, dcfg.day )

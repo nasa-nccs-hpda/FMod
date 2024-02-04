@@ -1,8 +1,6 @@
-#mesh_size: 5
-#gnn_msg_steps: 16
-#hidden_layers: 1
-#res: 1.0
-#radius_query_fraction_edge_length: 0.6
+lr: 3e-3
+nepochs: 10
+weight_decay: 0.0
 
 processor_layers: 16
 hidden_dim: 512
@@ -33,11 +31,6 @@ amp: False
 amp_dtype: "bfloat16"
 full_bf16: False
 watch_model: False
-lr: 1e-3
-lr_step3: 3e-7
-num_iters_step1: 1000
-num_iters_step2: 299000
-num_iters_step3: 11000
 step_change_freq: 1000
 save_freq: 1  # 500
 val_freq: 1  # 1000
