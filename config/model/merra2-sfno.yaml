@@ -1,4 +1,4 @@
-processor_layers: 16
+tomahmedprocessor_layers: 16
 hidden_dim: 512
 segments: 1
 force_single_checkpoint: False
