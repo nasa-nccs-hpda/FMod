@@ -95,10 +95,13 @@ class MERRA2InputIterator(IterableDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
-        self.length = 1
+        self.length = len(self.train_dates) * self.n_day_offsets
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
+
+    def len(self):
+        return self.length
 
     def get_date(self):
         return self.train_dates[ self.i // self.n_day_offsets ]
@@ -124,7 +127,6 @@ class MERRA2InputIterator(IterableDataset):
 
     def __iter__(self):
         self.i = 0
-        self.length = len(self.train_dates)*self.n_day_offsets
         return self
 
     def extract_input_target_times(self, dataset: xa.Dataset, input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes) -> Tuple[xa.Dataset, xa.Dataset]:
