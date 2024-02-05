@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from dataclasses import dataclass
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
 import hydra, traceback, os
 
@@ -11,6 +12,7 @@ def cfg() -> DictConfig:
 
 def configure(config_name: str):
     Configuration.init( config_name )
+    lgm().log(f"Config loaded: {config_name}")
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"

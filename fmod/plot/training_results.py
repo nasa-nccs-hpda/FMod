@@ -97,13 +97,16 @@ class ResultsPlotter:
 	@exception_handled
 	def step_update(self, change):
 		self.istep = change['new']
+		lgm().log(f"Step update: istep={self.istep}, ichannel={self.ichannel}")
 		self.refresh()
 
 	@exception_handled
 	def channel_update(self, change):
 		self.ichannel = change['new']
+		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}")
 		self.refresh()
 
+	@exception_handled
 	def refresh(self):
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
