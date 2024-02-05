@@ -1,7 +1,7 @@
 import math, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Union, Optional, Dict
-from fmbase.util.ops import xaformat_timedeltas, print_data_column
+from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
@@ -9,7 +9,7 @@ from torch import Tensor
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
-from fmbase.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
