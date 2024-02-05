@@ -90,7 +90,7 @@ class ResultsPlotter:
 			image_data: Tensor = pdata[self.istep][0,self.ichannel]
 			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
 			plot_args = dict( cmap=cmap, yincrease=yincrease, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
-			self.ims[ip] = plt.imshow( image_data.cpu().numpy(), ax=ax, x="lon", y="lat", **plot_args)
+			self.ims[ip] = ax.imshow( image_data.cpu().numpy(), x="lon", y="lat", **plot_args)
 			ax.set_title(f"")
 		return ipw.VBox([self.cslider, self.sslider, self.fig.canvas])
 
