@@ -65,7 +65,7 @@ class ResultsPlotter:
 		for ax in axs.flat: ax.set_aspect(0.5)
 		self.ichannel: int = 0
 		self.istep: int = 0
-		self.ptypes = [ "target", "prediction" ]
+		self.ptypes = [ "target",  "prediction" ]
 		print( f" Target shape: {targets[0].shape}" )
 		(nlat, nlon) = targets[0].shape[1:]
 		self.gridops = GridOps(nlat, nlon)
