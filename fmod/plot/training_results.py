@@ -111,7 +111,7 @@ class ResultsPlotter:
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
 			image_data: Tensor = pdata[self.istep][0,self.ichannel]
-			self.ims[ip].set_data(image_data.numpy())
+			self.ims[ip].set_data(image_data.cpu().numpy())
 			ax.set_title(f"{self.ptypes[ip]}")
 		self.format_plot()
 		self.fig.canvas.draw_idle()
