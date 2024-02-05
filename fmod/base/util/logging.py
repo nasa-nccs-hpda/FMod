@@ -16,6 +16,7 @@ def exception_handled(func):
             return func( *args, **kwargs )
         except:
             lgm().exception( f" Error in {func}:" )
+            traceback.print_exc()
     return wrapper
 
 def log_timing(f):
