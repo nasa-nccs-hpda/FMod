@@ -66,7 +66,8 @@ class ResultsPlotter:
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.ptypes = [ "target", "prediction" ]
-		(nlat, nlon) = targets[0].shape[2:]
+		print( f" Target shape: {targets[0].shape}" )
+		(nlat, nlon) = targets[0].shape[1:]
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
 		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=targets[0].shape[1] - 1, description='Channel Index:', )
