@@ -234,7 +234,7 @@ class MERRA2InputIterator(IterableDataset):
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         dataset = dataset.drop_vars("datetime")
         inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
-        print(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
+        if verbose: print(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
