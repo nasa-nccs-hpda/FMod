@@ -56,7 +56,8 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     channels = []
     for vname in vnames:
         dvar: xa.DataArray = dset.data_vars[vname]
-        channels.append( f"{vname}{dvar.shape}")
+        nlayers = 1 if len(dvar.shape) == 4 else dvar.shape[2]
+        channels.append( f"{vname}[{nlayers}]")
         for (cname, coord) in dvar.coords.items():
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
@@ -251,8 +252,9 @@ class MERRA2InputIterator(IterableDataset):
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
         print(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
-        print(f"  >>> Input  channels= {input_array.attrs['channels']}")
-        print(f"  >>> Target channels= {target_array.attrs['channels']}")
+        ichannels, tchannels = input_array.attrs['channels'], target_array.attrs['channels']
+        print(f"  >>> Input-channels[{len(ichannels)}] = {ichannels}")
+        print(f"  >>> Target-channels[{len(tchannels)}] = {tchannels}")
 
         return array2tensor(input_array), array2tensor(target_array)
 
