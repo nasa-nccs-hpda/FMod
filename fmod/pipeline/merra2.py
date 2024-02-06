@@ -56,7 +56,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     channels = []
     for vname in vnames:
         dvar: xa.DataArray = dset.data_vars[vname]
-        nlayers = 1 if len(dvar.shape) == 4 else dvar.shape[2]
+        nlayers = 1 if (len(dvar.shape)<5) else dvar.shape[2]
         channels.append( f"{vname}[{nlayers}]")
         for (cname, coord) in dvar.coords.items():
             if cname not in (merge_dims + list(sizes.keys())):
