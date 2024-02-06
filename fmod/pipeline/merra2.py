@@ -59,6 +59,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
+    darray.attrs['channels'] = vnames
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
@@ -247,6 +248,9 @@ class MERRA2InputIterator(IterableDataset):
         if verbose: print(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
+        print(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
+        print(f"  >>> Input  channels= {input_array.attrs['channels']}")
+        print(f"  >>> Target channels= {target_array.attrs['channels']}")
 
         return array2tensor(input_array), array2tensor(target_array)
 

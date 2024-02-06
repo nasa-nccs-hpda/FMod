@@ -56,24 +56,24 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 
 class ResultsPlotter:
 
-	def __init__(self, targets: List[Tensor], prediction: List[Tensor],  **kwargs ):
-		figsize = kwargs.pop('figsize',[10, 4])
+	def __init__(self, inputs: List[Tensor], targets: List[Tensor], prediction: List[Tensor],  **kwargs ):
+		figsize = kwargs.pop('figsize',[15, 5])
 		with plt.ioff():
-			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
+			fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		self.fig: plt.Figure = fig
 		self.axs: Axes = axs
 		for ax in axs.flat: ax.set_aspect(0.5)
 		self.ichannel: int = 0
 		self.istep: int = 0
-		self.ptypes = [ "target",  "prediction" ]
+		self.ptypes = [ "input", "target",  "prediction" ]
 		print( f" Target shape: {targets[0].shape}" )
 		(nlat, nlon) = targets[0].shape[2:]
 		self.gridops = GridOps(nlat, nlon)
-		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
+		self.plot_data: Tuple[List[Tensor],List[Tensor],List[Tensor]] = ( inputs, targets, prediction )
 		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=targets[0].shape[1] - 1, description='Channel Index:', )
 		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=len(targets) - 1, description='Step Index:', )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
-		self.ims: List[Optional[AxesImage]] = [None,None]
+		self.ims: List[Optional[AxesImage]] = [None,None,None]
 		self.cslider.observe(self.channel_update, names='value')
 		self.sslider.observe(self.step_update, names='value')
 		self.format_plot()
@@ -87,6 +87,7 @@ class ResultsPlotter:
 		origin = kwargs.pop('origin', 'lower' )
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
+			ax.set_title(f"{self.ptypes[ip]}")
 			image_data: Tensor = pdata[self.istep][0,self.ichannel]
 			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
@@ -109,10 +110,8 @@ class ResultsPlotter:
 	@exception_handled
 	def refresh(self):
 		for ip, pdata in enumerate(self.plot_data):
-			ax = self.axs[ip]
 			image_data: Tensor = pdata[self.istep][0,self.ichannel]
 			self.ims[ip].set_data(image_data.cpu().numpy())
-			ax.set_title(f"{self.ptypes[ip]}")
 		self.format_plot()
 		self.fig.canvas.draw_idle()
 
