@@ -53,13 +53,15 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     merge_dims = kwargs.get( 'merge_dims', [coords['z'], coords['t']] )
     sizes: Dict[str,int] = {}
     vnames = list(dset.data_vars.keys()); vnames.sort()
+    channels = []
     for vname in vnames:
         dvar: xa.DataArray = dset.data_vars[vname]
+        channels.append( f"{vname}{dvar.shape}")
         for (cname, coord) in dvar.coords.items():
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-    darray.attrs['channels'] = vnames
+    darray.attrs['channels'] = channels
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:

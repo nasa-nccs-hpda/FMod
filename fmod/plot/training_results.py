@@ -88,7 +88,8 @@ class ResultsPlotter:
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
 			ax.set_title(f"{self.ptypes[ip]}")
-			image_data: Tensor = pdata[self.istep][0,self.ichannel]
+			ic = 2*self.ichannel + 1 if (ip == 0) else self.ichannel
+			image_data: Tensor = pdata[self.istep][0,ic]
 			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data.cpu().numpy(), **plot_args)
