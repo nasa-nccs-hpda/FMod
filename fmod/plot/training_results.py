@@ -92,7 +92,6 @@ class ResultsPlotter:
 			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data.cpu().numpy(), **plot_args)
-			ax.set_title(f"")
 		return ipw.VBox([self.cslider, self.sslider, self.fig.canvas])
 
 	@exception_handled
