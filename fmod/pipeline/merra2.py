@@ -14,8 +14,8 @@ from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from torch.utils.data.dataset import IterableDataset
 from fmod.base.source.merra2 import batch
+from fmod.base.io.loader import BaseDataset
 from torch import FloatTensor
 import pandas as pd
 
@@ -82,28 +82,29 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-class MERRA2InputIterator(IterableDataset):
+class MERRAIterableDataset(BaseDataset):
     def __init__(self, **kwargs):
-        self.train_steps = cfg().task.train_steps
-        self.input_steps = cfg().task.input_steps
+        self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
+        super(MERRAIterableDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
+
+        self.train_steps = cfg().task.train_steps
+        self.input_steps = cfg().task.input_steps
         self.input_duration = f"{self.dts*self.input_steps}h"
         self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
-        self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
         self.fmbatch: FMBatch = FMBatch(BatchType.Training)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.current_date = date(1,1,1 )
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
-        self.length = len(self.train_dates) * self.n_day_offsets
+
+        self.chanIds = {}
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def  __len__(self):
-        return self.length
 
     def get_date(self):
         return self.train_dates[ self.i // self.n_day_offsets ]
@@ -252,8 +253,8 @@ class MERRA2InputIterator(IterableDataset):
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
         print(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
-        ichannels, tchannels = input_array.attrs['channels'], target_array.attrs['channels']
-        print(f"  >>> Target-channels[{len(tchannels)}] = {tchannels}")
+        self.chanIds['input']  = input_array.attrs['channels']
+        self.chanIds['target'] = target_array.attrs['channels']
 
         return array2tensor(input_array), array2tensor(target_array)
 
@@ -264,12 +265,13 @@ class MERRA2NCDatapipe(Datapipe):
 
     def __init__(self,meta,**kwargs):
         super().__init__(meta=meta)
-        self.batch_size = kwargs.get('batch_size', 1)
-        self.parallel = kwargs.get('parallel', False)
-        self.batch = kwargs.get('batch', False)
+        self.batch_size: int = kwargs.get('batch_size', 1)
+        self.paralle: bool = kwargs.get('parallel', False)
+        self.batch: bool = kwargs.get('batch', False)
         self.num_workers: int = cfg().task.num_workers
-        self.device = self.get_device()
-        self.pipe = self._create_pipeline()
+        self.device: torch.device = self.get_device()
+        self.pipe: dali.Pipeline = self._create_pipeline()
+        self.chanIds: List[str] = None
 
     def build(self):
         return self.pipe.build()
@@ -295,7 +297,7 @@ class MERRA2NCDatapipe(Datapipe):
         )
 
         with pipe:
-            source = MERRA2InputIterator()
+            source = MERRAIterableDataset()
             self.length = source.length
             invar, outvar = dali.fn.external_source( source, num_outputs=2, parallel=self.parallel, batch=self.batch )
             if self.device.type == "cuda":

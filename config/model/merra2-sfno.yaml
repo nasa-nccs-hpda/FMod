@@ -1,4 +1,10 @@
-tomahmedprocessor_layers: 16
+nfuture: 0
+loss_fn: 'l2'
+batch_size: 1
+num_workers: 0
+persistent_workers: False
+
+processor_layers: 16
 hidden_dim: 512
 segments: 1
 force_single_checkpoint: False
@@ -16,7 +22,6 @@ cugraphops_decoder: False
 recompute_activation: False
 wb_mode: "disabled"
 latlon_res: (721, 1440)
-num_workers: 0  # 8
 num_channels: 3  # 34
 num_channels_val: 3
 num_val_steps: 8
