@@ -1,7 +1,6 @@
 import torch, math
-import hydra, os
-from datetime import date, timedelta
-from fmod.base.util.dates import date_list
+from torch import Tensor
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.config import configure, cfg, cfg_date
 from torch.utils.data import DataLoader
 from fmod.base.util.grid import GridOps
@@ -111,3 +110,18 @@ class ModelTrainer(object):
 		print(f'--------------------------------------------------------------------------------')
 		print(f'done. Training took {train_time / 60:.2f} min.')
 		return acc_loss
+
+	def inference(self, **kwargs ) -> Tuple[ List[Tensor], List[Tensor], List[Tensor] ]:
+		seed = kwargs.get('seed',0)
+		max_step = kwargs.get('max_step',5)
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+		inputs, predictions, targets = [], [], []
+		with torch.inference_mode():
+			for istep, (inp, tar) in enumerate(self.data_iter):
+				if istep == max_step: break
+				out = self.model(inp).detach()
+				predictions.append(out)
+				targets.append(tar)
+				inputs.append(inp)
+		return inputs, targets, predictions

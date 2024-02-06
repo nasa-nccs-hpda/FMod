@@ -82,12 +82,12 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-class MERRAIterableDataset(BaseDataset):
+class MERRA2Dataset(BaseDataset):
     def __init__(self, **kwargs):
         self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
-        super(MERRAIterableDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
+        super(MERRA2Dataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
 
         self.train_steps = cfg().task.train_steps
         self.input_steps = cfg().task.input_steps
@@ -99,12 +99,10 @@ class MERRAIterableDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
-
         self.chanIds = {}
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
-
 
     def get_date(self):
         return self.train_dates[ self.i // self.n_day_offsets ]
@@ -121,6 +119,7 @@ class MERRAIterableDataset(BaseDataset):
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
             (inputs, targets) = self.extract_inputs_targets(train_data, **task_config )
+            print( f" >>> MERRA2Dataset.next: inputs={type(inputs)}")
             self.i = self.i + 1
             if (cfg().task.device == "gpu") and torch.cuda.is_available():
                 inputs, targets = inputs.cuda(), targets.cuda()
@@ -297,7 +296,7 @@ class MERRA2NCDatapipe(Datapipe):
         )
 
         with pipe:
-            source = MERRAIterableDataset()
+            source = MERRA2Dataset()
             self.length = source.length
             invar, outvar = dali.fn.external_source( source, num_outputs=2, parallel=self.parallel, batch=self.batch )
             if self.device.type == "cuda":
