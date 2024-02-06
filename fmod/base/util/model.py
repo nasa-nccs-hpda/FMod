@@ -573,8 +573,7 @@ def get_bipartite_relative_position_in_receiver_local_coordinates(
   return sender_pos_in_in_rotated_space - receiver_pos_in_rotated_space
 
 
-def variable_to_stacked( variable: xarray.Variable, sizes: Mapping[str, int],
-    preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), ) -> xarray.Variable:
+def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[str, int], preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), ) -> xarray.Variable:
   """Converts an xarray.Variable to preserved_dims + ("channels",).
 
   Any dimensions other than those included in preserved_dims get stacked into a
@@ -583,6 +582,7 @@ def variable_to_stacked( variable: xarray.Variable, sizes: Mapping[str, int],
   `sizes`.
 
   Args:
+    vname: Variable name.
     variable: An xarray.Variable.
     sizes: Mapping including sizes for any dimensions which are not present in
       `variable` but are needed for the output. This may be needed for example
@@ -598,11 +598,11 @@ def variable_to_stacked( variable: xarray.Variable, sizes: Mapping[str, int],
     variable = variable.stack(channels=stack_to_channels_dims)
   dims = {dim: variable.sizes.get(dim) or sizes[dim] for dim in preserved_dims}
   dims["channels"] = variable.sizes.get("channels", 1)
+  print( f"Variable {vname}: stack to channels {[ f'{d}[{dims[d]}]' for d in stack_to_channels_dims]}")
   return variable.set_dims(dims)
 
 
-def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None,
-    preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon") ) -> xarray.DataArray:
+def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon") ) -> xarray.DataArray:
   """Converts an xarray.Dataset to a single stacked array.
 
   This takes each consistuent data_var, converts it into BHWC layout
@@ -620,7 +620,7 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
     Existing coordinates for preserved_dims axes will be preserved, however
     there will be no coordinates for "channels".
   """
-  data_vars = [ variable_to_stacked(dataset.variables[name], sizes or dataset.sizes, preserved_dims) for name in sorted(dataset.data_vars.keys()) ]
+  data_vars = [ variable_to_stacked(name, dataset.variables[name], sizes or dataset.sizes, preserved_dims) for name in sorted(dataset.data_vars.keys()) ]
   coords = { dim: coord for dim, coord in dataset.coords.items() if dim in preserved_dims  }
   return xarray.DataArray( data=xarray.Variable.concat(data_vars, dim="channels"), coords=coords)
 
