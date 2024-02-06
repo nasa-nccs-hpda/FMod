@@ -253,7 +253,6 @@ class MERRA2InputIterator(IterableDataset):
         if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
         print(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
         ichannels, tchannels = input_array.attrs['channels'], target_array.attrs['channels']
-        print(f"  >>> Input-channels[{len(ichannels)}] = {ichannels}")
         print(f"  >>> Target-channels[{len(tchannels)}] = {tchannels}")
 
         return array2tensor(input_array), array2tensor(target_array)

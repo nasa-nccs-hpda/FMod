@@ -57,9 +57,9 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 class ResultsPlotter:
 
 	def __init__(self, targets: List[Tensor], prediction: List[Tensor],  **kwargs ):
-		figsize = kwargs.pop('figsize',[15, 5])
+		figsize = kwargs.pop('figsize',[10, 5])
 		with plt.ioff():
-			fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
+			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		self.fig: plt.Figure = fig
 		self.axs: Axes = axs
 		for ax in axs.flat: ax.set_aspect(0.5)
