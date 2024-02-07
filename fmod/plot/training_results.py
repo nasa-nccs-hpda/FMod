@@ -101,18 +101,22 @@ class ResultsPlotter:
 		sslider_box = ipw.HBox( [self.sslider, self.button_sback, self.button_sforward] )
 		return ipw.VBox( [self.fig.canvas, cslider_box, sslider_box] )
 
+	@exception_handled
 	def sforward(self, *args):
 		self.istep = (self.istep + 1) % self.nchan
 		self.refresh()
 
+	@exception_handled
 	def sback(self, *args):
 		self.istep = (self.istep - 1) % self.nchan
 		self.refresh()
 
+	@exception_handled
 	def cforward(self, *args):
 		self.ichannel = (self.ichannel + 1) % self.nchan
 		self.refresh()
 
+	@exception_handled
 	def cback(self, *args):
 		self.ichannel = (self.ichannel - 1) % self.nchan
 		self.refresh()
