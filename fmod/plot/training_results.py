@@ -88,8 +88,8 @@ class ResultsPlotter:
 			ax = self.axs[ip]
 			timeslce: Tensor = pdata[self.istep]
 			ax.set_title(f"{self.ptypes[ip]}")
-			image_data: Tensor = timeslce[0,self.ichannel]
-			print(f"plot[{self.ptypes[ip]}]({self.istep},{self.ichannel}): timeslce{timeslce.shape} image_data{image_data.shape}")
+			image_data: Tensor = timeslce[self.ichannel]
+			print(f"plot[{self.ptypes[ip]}]({self.istep},{self.ichannel}): timeslce{list(timeslce.shape)} image_data{list(image_data.shape)}")
 			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data.cpu().numpy(), **plot_args)
