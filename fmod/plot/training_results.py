@@ -56,8 +56,9 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 
 class ResultsPlotter:
 
-	def __init__(self, targets: List[Tensor], prediction: List[Tensor],  **kwargs ):
+	def __init__(self, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
 		figsize = kwargs.pop('figsize',[10, 5])
+		(nlat, nlon) = kwargs.pop('grid_shape', targets[0].shape[-2:] )
 		with plt.ioff():
 			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		self.fig: plt.Figure = fig
@@ -66,8 +67,6 @@ class ResultsPlotter:
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.ptypes = [ "target",  "prediction" ]
-		print( f" Target shape: {targets[0].shape}" )
-		(nlat, nlon) = kwargs.pop('grid_shape', targets[0].shape[-2:] )
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
 		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=targets[0].shape[1] - 1, description='Channel Index:', )
