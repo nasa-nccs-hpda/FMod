@@ -7,7 +7,7 @@ from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 import torch.nn as nn
-import time
+import time, os
 
 class ModelTrainer(object):
 
@@ -28,6 +28,20 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+
+	def save_state(self):
+		torch.save( self.model.state_dict(), self.checkpoint_path )
+
+	def load_state(self) -> bool:
+		if os.path.exists(self.checkpoint_path ):
+			self.model.load_state_dict( torch.load( self.checkpoint_path ) )
+			return True
+		else:
+			return False
+
+	@property
+	def checkpoint_path(self) -> str:
+		return str( os.path.join( cfg().platform.results, 'checkpoints/' + cfg().task.dataset_version) )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
@@ -66,6 +80,8 @@ class ModelTrainer(object):
 
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
+		load_state = kwargs.get( 'load_state', True )
+		save_state = kwargs.get('save_state', True)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get( 'scheduler', None )
@@ -73,6 +89,7 @@ class ModelTrainer(object):
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		nepochs = cfg().task.nepochs
 		train_start = time.time()
+		if load_state: self.load_state()
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -118,6 +135,7 @@ class ModelTrainer(object):
 
 		print(f'--------------------------------------------------------------------------------')
 		print(f'done. Training took {train_time / 60:.2f} min.')
+		if save_state: self.save_state()
 		return acc_loss
 
 	def inference(self, **kwargs ) -> Tuple[ List[Tensor], List[Tensor], List[Tensor] ]:
