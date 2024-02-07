@@ -86,13 +86,10 @@ class ResultsPlotter:
 		origin = kwargs.pop('origin', 'lower' )
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
-			timeslce: Tensor = pdata[self.istep]
 			ax.set_title(f"{self.ptypes[ip]}")
-			image_data: Tensor = timeslce[0,self.ichannel] if (timeslce.dim()==4) else timeslce[self.ichannel]
-			print(f"plot[{self.ptypes[ip]}]({self.istep},{self.ichannel}): timeslce{list(timeslce.shape)} image_data{list(image_data.shape)}")
-			if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
+			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
-			self.ims[ip] = ax.imshow( image_data.cpu().numpy(), **plot_args)
+			self.ims[ip] = ax.imshow( image_data, **plot_args)
 		return ipw.VBox([self.cslider, self.sslider, self.fig.canvas])
 
 	@exception_handled
@@ -110,10 +107,14 @@ class ResultsPlotter:
 	@exception_handled
 	def refresh(self):
 		for ip, pdata in enumerate(self.plot_data):
-			image_data: Tensor = pdata[self.istep][0,self.ichannel]
-			self.ims[ip].set_data(image_data.cpu().numpy())
+			self.ims[ip].set_data( self.image_data( ip, pdata[self.istep] ) )
 		self.format_plot()
 		self.fig.canvas.draw_idle()
+
+	def image_data(self, ip: int, timeslice: Tensor) -> np.ndarray:
+		image_data: Tensor = timeslice[0, self.ichannel] if (timeslice.dim() == 4) else timeslice[self.ichannel]
+		if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
+		return image_data.cpu().numpy()
 
 
 
