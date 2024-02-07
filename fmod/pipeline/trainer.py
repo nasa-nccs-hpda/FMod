@@ -18,7 +18,7 @@ class ModelTrainer(object):
 		self.dataloader = DataLoader( dataset, **self.loader_args )
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
-		self.grid_shape = inp.shape[1:]
+		self.grid_shape = inp.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
 		print(f"INPUT={type(inp)}, TARGET={type(tar)}")
 		print(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")

@@ -58,7 +58,7 @@ class ResultsPlotter:
 
 	def __init__(self, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
 		figsize = kwargs.pop('figsize',[10, 5])
-		(nlat, nlon) = kwargs.pop('grid_shape', targets[0].shape[-2:] )
+		(nlat, nlon) = targets[0].shape[-2:]
 		with plt.ioff():
 			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		self.fig: plt.Figure = fig
