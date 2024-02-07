@@ -110,7 +110,7 @@ class MERRA2Dataset(BaseDataset):
     def get_day_offset(self):
         return self.i % self.n_day_offsets
 
-    def __next__(self):
+    def __next__(self) -> Tuple[ Tensor, Tensor ]:
         if self.i < self.length:
             next_date = self.get_date()
             if self.current_date != next_date:
@@ -118,12 +118,11 @@ class MERRA2Dataset(BaseDataset):
                 self.current_date = next_date
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
-            (inputs, targets) = self.extract_inputs_targets(train_data, **task_config )
-            print( f" >>> MERRA2Dataset.next: inputs={type(inputs)}")
+            inputs_targets: Tuple[ Tensor, Tensor ] = self.extract_inputs_targets(train_data, **task_config )
             self.i = self.i + 1
             if (cfg().task.device == "gpu") and torch.cuda.is_available():
-                inputs, targets = inputs.cuda(), targets.cuda()
-            return inputs, targets
+                inputs_targets =  (inputs_targets[0].cuda(), inputs_targets[1].cuda())
+            return inputs_targets
         else:
             raise StopIteration
 
@@ -228,7 +227,7 @@ class MERRA2Dataset(BaseDataset):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[TensorCPU, TensorCPU]:
+        levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[Tensor, Tensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars, verbose = {}, False
