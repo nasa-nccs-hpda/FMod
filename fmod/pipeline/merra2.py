@@ -4,6 +4,7 @@ import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
 from datetime import date, timedelta
 import nvidia.dali as dali
+from fmod.base.util.logging import lgm
 from fmod.base.util.model import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range
@@ -234,27 +235,27 @@ class MERRA2Dataset(BaseDataset):
         levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[Tensor, Tensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
-        dvars, verbose = {}, False
+        dvars = {}
         for vname, varray in idataset.data_vars.items():
             missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         dataset = dataset.drop_vars("datetime")
         inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
-        if verbose: print(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
+        lgm().debug(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
         input_varlist: List[str] = list(input_variables)+list(forcing_variables)
 
-        if verbose: print(f" >> >> input variables: {input_varlist}")
+        lgm().debug(f" >> >> input variables: {input_varlist}")
         input_array: xa.DataArray = ds2array( self.normalize(inputs[input_varlist]) )
-        if verbose: print(f" >> inputs{input_array.dims}: {input_array.shape}")
+        lgm().debug(f" >> inputs{input_array.dims}: {input_array.shape}")
 
-        if verbose: print(f" >> >> target variables: {target_variables}")
+        lgm().debug(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
-        if verbose: print(f" >> targets{target_array.dims}: {target_array.shape}")
-        print(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
+        lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}")
+        lgm().log(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
         self.chanIds['input']  = input_array.attrs['channels']
         self.chanIds['target'] = target_array.attrs['channels']
 

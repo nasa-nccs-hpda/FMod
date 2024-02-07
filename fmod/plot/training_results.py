@@ -81,7 +81,7 @@ class ResultsPlotter:
 		self.format_plot()
 
 	def format_plot(self):
-		self.fig.suptitle(f'step index={self.istep}, channel index={self.ichannel}', fontsize=10, va="top", y=1.0)
+		self.fig.suptitle(f'step[{self.istep}]: channel[{self.ichannel}] {self.channel_title}', fontsize=12, va="top", y=1.0)
 
 	@exception_handled
 	def plot(self, **kwargs):
@@ -104,8 +104,7 @@ class ResultsPlotter:
 	@exception_handled
 	def channel_update(self, change):
 		self.ichannel = change['new']
-		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}")
-		self.fig.suptitle(self.channel_title, fontsize=12)
+		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}, title={self.channel_title}")
 		self.refresh()
 
 	@property
