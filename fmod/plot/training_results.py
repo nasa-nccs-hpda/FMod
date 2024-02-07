@@ -59,25 +59,29 @@ class ResultsPlotter:
 	tensor_roles = ["target", "prediction"]
 
 	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
-		figsize = kwargs.pop('figsize',[10, 5])
-		(nchan, nlat, nlon) = targets[0].shape[-3:]
+		figsize = kwargs.pop('figsize',(10, 5))
+		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
+		self.nsteps = len(targets)
 		self.dataset: BaseDataset = dataset
 		self.chanids: List[str] = self.dataset.chanIds['target']
 		with plt.ioff():
-			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
-		self.fig: plt.Figure = fig
-		self.axs: Axes = axs
-		for ax in axs.flat: ax.set_aspect(0.5)
+			with plt.ioff():
+				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
+			for ax in self.axs.flat: ax.set_aspect(0.5)
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
-		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=nchan-1, description='Channel Index:', )
-		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=len(targets)-1, description='Step Index:', )
+		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nchan-1, description='Channel Index:', )
+		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nsteps-1, description='Step Index:', )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
 		self.cslider.observe(self.channel_update, names='value')
 		self.sslider.observe(self.step_update, names='value')
+		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.cback )
+		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.cforward )
+		self.button_sback    = ipw.Button(description='<', button_style='info', on_click=self.sback )
+		self.button_sforward = ipw.Button(description='>', button_style='info', on_click=self.sforward )
 		self.format_plot()
 
 	def format_plot(self):
@@ -93,7 +97,25 @@ class ResultsPlotter:
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
-		return ipw.VBox([self.cslider, self.sslider, self.fig.canvas])
+		cslider_box = ipw.HBox( self.cslider, self.button_cback, self.button_cforward )
+		sslider_box = ipw.HBox( self.sslider, self.button_sback, self.button_sforward )
+		return ipw.VBox( [self.fig.canvas, cslider_box, sslider_box] )
+
+	def sforward(self, *args):
+		self.istep = (self.istep + 1) % self.nchan
+		self.refresh()
+
+	def sback(self, *args):
+		self.istep = (self.istep - 1) % self.nchan
+		self.refresh()
+
+	def cforward(self, *args):
+		self.ichannel = (self.ichannel + 1) % self.nchan
+		self.refresh()
+
+	def cback(self, *args):
+		self.ichannel = (self.ichannel - 1) % self.nchan
+		self.refresh()
 
 	@exception_handled
 	def step_update(self, change):
