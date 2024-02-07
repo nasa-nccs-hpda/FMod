@@ -11,20 +11,21 @@ import time
 
 class ModelTrainer(object):
 
-	def __init__(self, model: nn.Module, dataset: BaseDataset):
-		self.model = model
+	def __init__(self,  dataset: BaseDataset):
 		self.dataset = dataset
 		self.dataloader = DataLoader( dataset, cfg().model.batch_size, cfg().model.num_workers, cfg().model.persistent_workers )
-		self.optimizer = torch.optim.Adam(model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
+		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
-		inp, tar = next(self.data_iter)
-		(nlat, nlon) = inp.shape[1:]
-		self.gridops = GridOps(nlat, nlon)
+		self.grid_shape = inp.shape[1:]
+		self.gridops = GridOps(*self.grid_shape)
 		print(f"INPUT={type(inp)}, TARGET={type(tar)}")
-		print(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={nlat, nlon}")
-		lmax = math.ceil(nlat / 3)
-		self.sht = harmonics.RealSHT(nlat, nlon, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
-		self.isht = harmonics.InverseRealSHT(nlat, nlon, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+		print(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
+		lmax = math.ceil(self.grid_shape[0] / 3)
+		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+		self.scheduler = None
+		self.optimizer = None
+		self.model = None
 
 	def l2loss_sphere(self, prd, tar, relative=False, squared=True):
 		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
@@ -57,11 +58,13 @@ class ModelTrainer(object):
 
 		return loss
 
-	def train_model(self, **kwargs ):
+	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		scheduler = kwargs.get( 'scheduler', None )
+		self.scheduler = kwargs.get( 'scheduler', None )
+		self.model = model
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		nepochs = cfg().task.nepochs
 		train_start = time.time()
 		for epoch in range(nepochs):
@@ -91,8 +94,8 @@ class ModelTrainer(object):
 				self.optimizer.step()
 			# gscaler.update()
 
-			if scheduler is not None:
-				scheduler.step()
+			if self.scheduler is not None:
+				self.scheduler.step()
 
 			acc_loss = acc_loss / len(self.dataset)
 			epoch_time = time.time() - epoch_start
