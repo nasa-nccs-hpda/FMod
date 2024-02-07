@@ -22,6 +22,11 @@ import pandas as pd
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
 
+class TensorRole:
+    INPUT = "input"
+    TARGET = "target"
+    PREDICTION = "prediction"
+
 class TensorType:
     DALI = "dali"
     TORCH = "torch"
@@ -99,7 +104,6 @@ class MERRA2Dataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
-        self.chanIds = {}
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )

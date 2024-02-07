@@ -9,6 +9,7 @@ from torch import Tensor
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
+from fmod.base.io.loader import BaseDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
@@ -55,10 +56,13 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 	return fig.canvas
 
 class ResultsPlotter:
+	tensor_roles = ["target", "prediction"]
 
-	def __init__(self, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
+	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
 		figsize = kwargs.pop('figsize',[10, 5])
-		(nlat, nlon) = targets[0].shape[-2:]
+		(nchan, nlat, nlon) = targets[0].shape[-3:]
+		self.dataset: BaseDataset = dataset
+		self.chanids: List[str] = self.dataset.chanIds['target']
 		with plt.ioff():
 			fig, axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		self.fig: plt.Figure = fig
@@ -66,11 +70,10 @@ class ResultsPlotter:
 		for ax in axs.flat: ax.set_aspect(0.5)
 		self.ichannel: int = 0
 		self.istep: int = 0
-		self.ptypes = [ "target",  "prediction" ]
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
-		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=targets[0].shape[1] - 1, description='Channel Index:', )
-		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=len(targets) - 1, description='Step Index:', )
+		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=nchan-1, description='Channel Index:', )
+		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=len(targets)-1, description='Step Index:', )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
 		self.cslider.observe(self.channel_update, names='value')
@@ -86,7 +89,7 @@ class ResultsPlotter:
 		origin = kwargs.pop('origin', 'lower' )
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
-			ax.set_title(f"{self.ptypes[ip]}")
+			ax.set_title(f"{self.tensor_roles[ip]}")
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
@@ -102,7 +105,12 @@ class ResultsPlotter:
 	def channel_update(self, change):
 		self.ichannel = change['new']
 		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}")
+		self.fig.suptitle(self.channel_title, fontsize=12)
 		self.refresh()
+
+	@property
+	def channel_title(self) -> str:
+		return self.chanids[self.ichannel]
 
 	@exception_handled
 	def refresh(self):
