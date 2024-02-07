@@ -97,8 +97,8 @@ class ResultsPlotter:
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
-		cslider_box = ipw.HBox( self.cslider, self.button_cback, self.button_cforward )
-		sslider_box = ipw.HBox( self.sslider, self.button_sback, self.button_sforward )
+		cslider_box = ipw.HBox( [self.cslider, self.button_cback, self.button_cforward] )
+		sslider_box = ipw.HBox( [self.sslider, self.button_sback, self.button_sforward] )
 		return ipw.VBox( [self.fig.canvas, cslider_box, sslider_box] )
 
 	def sforward(self, *args):
