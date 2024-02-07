@@ -11,9 +11,11 @@ import time
 
 class ModelTrainer(object):
 
+	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
+
 	def __init__(self,  dataset: BaseDataset):
 		self.dataset = dataset
-		self.dataloader = DataLoader( dataset, cfg().model.batch_size, cfg().model.num_workers, cfg().model.persistent_workers )
+		self.dataloader = DataLoader( dataset, **self.loader_args )
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
 		self.grid_shape = inp.shape[1:]
@@ -26,6 +28,10 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+
+	@property
+	def loader_args(self) -> Dict[str, Any]:
+		return { k: cfg().model.get(k) for k in self.model_cfg }
 
 	def l2loss_sphere(self, prd, tar, relative=False, squared=True):
 		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
