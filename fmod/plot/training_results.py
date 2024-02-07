@@ -81,7 +81,7 @@ class ResultsPlotter:
 		self.format_plot()
 
 	def format_plot(self):
-		self.fig.suptitle(f'step[{self.istep}]: channel[{self.ichannel}] {self.channel_title}', fontsize=12, va="top", y=1.0)
+		self.fig.suptitle( self.channel_title, fontsize=10, va="top", y=1.0 )
 
 	@exception_handled
 	def plot(self, **kwargs):
