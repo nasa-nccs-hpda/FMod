@@ -28,12 +28,11 @@ class StepSlider:
 
 	@exception_handled
 	def bminus(self,b):
-		self.counter.value  ( self.counter.value - 1 ) % (self.maxval+1)
+		self.counter.value = ( self.counter.value - 1 ) % (self.maxval+1)
 
 	@exception_handled
 	def update(self, change):
-		self.value = change['new']
-		self.executable(self.value)
+		self.executable( change['new'] )
 
 	def gui(self):
 		return ipw.HBox([self.slider, self.button_cback, self.button_cforward])
