@@ -71,8 +71,8 @@ class ResultsPlotter:
 		self.istep: int = 0
 		self.create_figure(**kwargs)
 		self.gridops = GridOps(nlat, nlon)
-		self.cslider: StepSlider = StepSlider( 'Channel Index:', self.nchan-1,  self.channel_update )
-		self.sslider: StepSlider = StepSlider( 'Step Index:', self.nsteps-1,  self.step_update )
+		self.cslider: StepSlider = StepSlider( 'Channel:', self.nchan,  self.channel_update )
+		self.sslider: StepSlider = StepSlider( 'Step:', self.nsteps,  self.step_update )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
 		self.format_plot()
@@ -119,7 +119,7 @@ class ResultsPlotter:
 
 	@property
 	def channel_title(self) -> str:
-		return self.chanids[self.ichannel]
+		return f"{self.chanids[self.ichannel]}:  step={self.istep}"
 
 	@exception_handled
 	def refresh(self):

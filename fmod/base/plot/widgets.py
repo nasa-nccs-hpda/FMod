@@ -4,31 +4,32 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from ipywidgets import GridspecLayout
 
 class Counter(ipw.DOMWidget):
-    value = tl.CInt(0, sync=True)
+	value = tl.CInt(0, sync=True)
+
+	def __init__(self, nval: int ):
+		super(Counter,self).__init__()
+		self.nval = nval
+
+	def plus(self, *args):
+		self.value = (self.value + 1) % self.nval
+
+	def minus(self, *args):
+		self.value = (self.value - 1) % self.nval
 
 class StepSlider:
 
-	def __init__(self, label: str, maxval: int, callback: Callable[[int], int], **kwargs):
+	def __init__(self, label: str, nval: int, callback: Callable[[int], int], **kwargs):
 		self.bsize = kwargs.get('bsize','30px')
 		self.ssize = kwargs.get('ssize', '920px')
-		self.maxval = maxval
 		self.executable: Callable[[int], int] = callback
-		self.counter = Counter()
-		self.slider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=maxval, description=label, layout=ipw.Layout(width=self.ssize, height=self.bsize) )
+		self.counter = Counter(nval)
+		self.slider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=nval-1, description=label, layout=ipw.Layout(width=self.ssize, height=self.bsize) )
 		self.slider.observe(self.update, names='value')
 		self.button_cback    = ipw.Button(description='<', button_style='info', layout=ipw.Layout(width=self.bsize, height=self.bsize) )
 		self.button_cforward = ipw.Button(description='>', button_style='info', layout=ipw.Layout(width=self.bsize, height=self.bsize) )
 		tl.link((self.slider, 'value'), (self.counter, 'value'))
-		self.button_cback.on_click(self.bminus)
-		self.button_cforward.on_click(self.bplus)
-
-	@exception_handled
-	def bplus(self,b):
-		self.counter.value = ( self.counter.value + 1 ) % (self.maxval+1)
-
-	@exception_handled
-	def bminus(self,b):
-		self.counter.value = ( self.counter.value - 1 ) % (self.maxval+1)
+		self.button_cback.on_click(self.counter.minus)
+		self.button_cforward.on_click(self.counter.plus)
 
 	@exception_handled
 	def update(self, change):
