@@ -62,23 +62,15 @@ class ResultsPlotter:
 	tensor_roles = ["target", "prediction"]
 
 	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
-		figsize = kwargs.pop('figsize',(12, 5))
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
+		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
 		self.nsteps = len(targets)
 		self.dataset: BaseDataset = dataset
 		self.chanids: List[str] = self.dataset.chanIds['target']
-		with plt.ioff():
-			with plt.ioff():
-				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
-			for ax in self.axs.flat:
-				ax.set_aspect(0.5)
-				ax.set_axis_off()
-		tbar = self.fig.get_navigation_toolbar()
-		print( tbar.__class__ )
 		self.ichannel: int = 0
 		self.istep: int = 0
+		self.create_figure(**kwargs)
 		self.gridops = GridOps(nlat, nlon)
-		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
 		self.cslider: StepSlider = StepSlider( 'Channel Index:', self.nchan-1,  self.channel_update )
 		self.sslider: StepSlider = StepSlider( 'Step Index:', self.nsteps-1,  self.step_update )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
@@ -87,6 +79,17 @@ class ResultsPlotter:
 
 	def format_plot(self):
 		self.fig.suptitle( self.channel_title, fontsize=10, va="top", y=1.0 )
+
+	def create_figure(self, **kwargs ):
+		figsize = kwargs.pop('figsize',(12, 5))
+		with plt.ioff():
+			with plt.ioff():
+				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
+		for ax in self.axs.flat:
+			ax.set_aspect(0.5)
+			ax.set_axis_off()
+		tbar = self.fig.get_navigation_toolbar()
+		print( tbar.__class__ )
 
 	@exception_handled
 	def plot(self, **kwargs):
