@@ -10,7 +10,7 @@ class Counter(ipw.DOMWidget):
 class StepSlider:
 
 	def __init__(self, label: str, maxval: int, callback: Callable[[int], int], **kwargs):
-		self.grid = GridspecLayout(1, 12 )
+		self.grid = GridspecLayout(1, 12, height='50px', width='600px' )
 		self.layout = ipw.Layout(height='auto', width='auto')
 		self.value = kwargs.get('ival',0)
 		self.maxval = maxval
