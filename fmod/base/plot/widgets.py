@@ -10,20 +10,15 @@ class Counter(ipw.DOMWidget):
 class StepSlider:
 
 	def __init__(self, label: str, maxval: int, callback: Callable[[int], int], **kwargs):
-		self.grid = GridspecLayout(1, 12, height='50px', width='600px' )
-		self.layout = ipw.Layout(height='auto', width='auto')
 		self.value = kwargs.get('ival',0)
 		self.maxval = maxval
 		self.executable: Callable[[int], int] = callback
 		self.counter = Counter()
-		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=self.layout )
+		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=ipw.Layout(width='600px', height='50px') )
 		self.slider.observe(self.update, names='value')
-		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=self.layout )
-		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=self.layout )
-		self.box_layout = ipw.Layout(display='flex', align_items='stretch', border='solid', width='100%')
-		self.grid[0, :10] = self.slider
-		self.grid[0, 10] = self.button_cback
-		self.grid[0, 11] = self.button_cforward
+		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=ipw.Layout(width='50px', height='50px') )
+		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=ipw.Layout(width='50px', height='50px') )
+
 	def bplus(self,name):
 		self.counter.value += 1 if self.counter.value < self.maxval else 0
 		lgm().log(f"button_plus: {self.counter.value}")
@@ -38,4 +33,4 @@ class StepSlider:
 		self.executable(self.value)
 
 	def gui(self):
-		return self.grid
+		return ipw.HBox([self.slider, self.button_cback, self.button_cforward])
