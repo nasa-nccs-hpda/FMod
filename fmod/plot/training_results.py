@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import ipywidgets as ipw
 from torch import Tensor
 from matplotlib.axes import Axes
+from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.io.loader import BaseDataset
@@ -74,19 +75,11 @@ class ResultsPlotter:
 		self.istep: int = 0
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
-		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nchan-1, description='Channel Index:', layout=flex(10) )
-		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nsteps-1, description='Step Index:', layout=flex(10) )
+		self.cslider: StepSlider = StepSlider( 'Channel Index:', self.nchan-1,  self.channel_update )
+		self.sslider: StepSlider = StepSlider( 'Step Index:', self.nsteps-1,  self.step_update )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
-		self.cslider.observe(self.channel_update, names='value')
-		self.sslider.observe(self.step_update, names='value')
-		self.button_cback    = ipw.Button(description='<', button_style='info', layout=flex(1), on_click=self.cback )
-		self.button_cforward = ipw.Button(description='>', button_style='info', layout=flex(1), on_click=self.cforward )
-		self.button_sback    = ipw.Button(description='<', button_style='info', layout=flex(1), on_click=self.sback )
-		self.button_sforward = ipw.Button(description='>', button_style='info', layout=flex(1), on_click=self.sforward )
 		self.format_plot()
-
-
 
 	def format_plot(self):
 		self.fig.suptitle( self.channel_title, fontsize=10, va="top", y=1.0 )
@@ -101,45 +94,21 @@ class ResultsPlotter:
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
-		cslider_box = ipw.HBox( [self.cslider, self.button_cback, self.button_cforward] )
-		sslider_box = ipw.HBox( [self.sslider, self.button_sback, self.button_sforward] )
-		return ipw.VBox( [self.fig.canvas, cslider_box, sslider_box] )
+		return ipw.VBox( [self.fig.canvas, self.cslider.gui(), self.sslider.gui()] )
 
 	@exception_handled
-	def sforward(self, b):
-		self.istep = (self.istep + 1) % self.nchan
-		lgm().log( f"sforward: {self.istep}" )
-		self.refresh()
-
-	@exception_handled
-	def sback(self, b):
-		self.istep = (self.istep - 1) % self.nchan
-		lgm().log(f"sback: {self.istep}")
-		self.refresh()
-
-	@exception_handled
-	def cforward(self, b):
-		self.ichannel = (self.ichannel + 1) % self.nchan
-		lgm().log(f"cforward: {self.ichannel}")
-		self.refresh()
-
-	@exception_handled
-	def cback(self, b):
-		self.ichannel = (self.ichannel - 1) % self.nchan
-		lgm().log(f"cback: {self.ichannel}")
-		self.refresh()
-
-	@exception_handled
-	def step_update(self, change):
-		self.istep = change['new']
+	def step_update(self, istep: int ) -> int:
+		self.istep = istep
 		lgm().log(f"Step update: istep={self.istep}, ichannel={self.ichannel}")
 		self.refresh()
+		return self.ichannel
 
 	@exception_handled
-	def channel_update(self, change):
-		self.ichannel = change['new']
+	def channel_update(self, ichannel: int ) -> int:
+		self.ichannel = ichannel
 		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}, title={self.channel_title}")
 		self.refresh()
+		return self.istep
 
 	@property
 	def channel_title(self) -> str:
