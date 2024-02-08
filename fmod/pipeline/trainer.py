@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
+from fmod.base.util.ops import fmbdir
 import torch.nn as nn
 import time, os
 
@@ -41,7 +42,7 @@ class ModelTrainer(object):
 
 	@property
 	def checkpoint_path(self) -> str:
-		return str( os.path.join( cfg().platform.results, 'checkpoints/' + cfg().task.dataset_version) )
+		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().task.training_version) )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:

@@ -1,4 +1,5 @@
 dataset_version: 'merra2.findtuning'
+training_version: 'merra2-sfno.1'
 params: "small"
 nc_format: 'standard'
 tensor_type: "torch"
