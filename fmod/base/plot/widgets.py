@@ -21,7 +21,9 @@ class StepSlider:
 		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=self.layout )
 		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=self.layout )
 		self.box_layout = ipw.Layout(display='flex', align_items='stretch', border='solid', width='100%')
-
+		self.grid[0, :10] = self.slider
+		self.grid[0, 10] = self.button_cback
+		self.grid[0, 11] = self.button_cforward
 	def bplus(self,name):
 		self.counter.value += 1 if self.counter.value < self.maxval else 0
 		lgm().log(f"button_plus: {self.counter.value}")
@@ -36,7 +38,4 @@ class StepSlider:
 		self.executable(self.value)
 
 	def gui(self):
-		self.grid[0, :10] = self.slider
-		self.grid[0, 10] = self.button_cback
-		self.grid[0, 11] = self.button_cforward
 		return self.grid
