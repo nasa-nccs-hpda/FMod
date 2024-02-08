@@ -11,20 +11,24 @@ class StepSlider:
 
 	def __init__(self, label: str, maxval: int, callback: Callable[[int], int], **kwargs):
 		self.value = kwargs.get('ival',0)
+		self.bsize = kwargs.get('bsize','30px')
+		self.ssize = kwargs.get('ssize', '900px')
 		self.maxval = maxval
 		self.executable: Callable[[int], int] = callback
 		self.counter = Counter()
-		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=ipw.Layout(width='600px', height='50px') )
+		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=ipw.Layout(width=self.ssize, height=self.bsize) )
 		self.slider.observe(self.update, names='value')
-		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=ipw.Layout(width='50px', height='50px') )
-		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=ipw.Layout(width='50px', height='50px') )
+		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=ipw.Layout(width=self.bsize, height=self.bsize) )
+		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=ipw.Layout(width=self.bsize, height=self.bsize) )
 
+	@exception_handled
 	def bplus(self,name):
-		self.counter.value += 1 if self.counter.value < self.maxval else 0
+		self.counter.value = ( self.counter.value + 1 ) % (self.maxval+1)
 		lgm().log(f"button_plus: {self.counter.value}")
 
+	@exception_handled
 	def bminus(self,name):
-		self.counter.value -= 1 if self.counter.value > 0 else 0
+		self.counter.value  ( self.counter.value - 1 ) % (self.maxval+1)
 		lgm().log(f"button_minus: {self.counter.value}")
 
 	@exception_handled
