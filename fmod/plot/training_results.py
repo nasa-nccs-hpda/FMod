@@ -14,6 +14,8 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
+def flex(weight: int) -> ipw.Layout:
+	return ipw.Layout(flex=f'1 {weight} auto', width='auto')
 def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	varray: np.ndarray = dvar.isel( **kwargs, missing_dims="ignore", drop=True ).values
 	return np.sqrt( np.mean( np.square( varray ) ) )
@@ -72,17 +74,19 @@ class ResultsPlotter:
 		self.istep: int = 0
 		self.gridops = GridOps(nlat, nlon)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
-		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nchan-1, description='Channel Index:', )
-		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nsteps-1, description='Step Index:', )
+		self.cslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nchan-1, description='Channel Index:', layout=flex(10) )
+		self.sslider: ipw.IntSlider = ipw.IntSlider(value=0, min=0, max=self.nsteps-1, description='Step Index:', layout=flex(10) )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
 		self.cslider.observe(self.channel_update, names='value')
 		self.sslider.observe(self.step_update, names='value')
-		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.cback )
-		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.cforward )
-		self.button_sback    = ipw.Button(description='<', button_style='info', on_click=self.sback )
-		self.button_sforward = ipw.Button(description='>', button_style='info', on_click=self.sforward )
+		self.button_cback    = ipw.Button(description='<', button_style='info', layout=flex(1), on_click=self.cback )
+		self.button_cforward = ipw.Button(description='>', button_style='info', layout=flex(1), on_click=self.cforward )
+		self.button_sback    = ipw.Button(description='<', button_style='info', layout=flex(1), on_click=self.sback )
+		self.button_sforward = ipw.Button(description='>', button_style='info', layout=flex(1), on_click=self.sforward )
 		self.format_plot()
+
+
 
 	def format_plot(self):
 		self.fig.suptitle( self.channel_title, fontsize=10, va="top", y=1.0 )
@@ -102,23 +106,27 @@ class ResultsPlotter:
 		return ipw.VBox( [self.fig.canvas, cslider_box, sslider_box] )
 
 	@exception_handled
-	def sforward(self, *args):
+	def sforward(self, b):
 		self.istep = (self.istep + 1) % self.nchan
+		lgm().log( f"sforward: {self.istep}" )
 		self.refresh()
 
 	@exception_handled
-	def sback(self, *args):
+	def sback(self, b):
 		self.istep = (self.istep - 1) % self.nchan
+		lgm().log(f"sback: {self.istep}")
 		self.refresh()
 
 	@exception_handled
-	def cforward(self, *args):
+	def cforward(self, b):
 		self.ichannel = (self.ichannel + 1) % self.nchan
+		lgm().log(f"cforward: {self.ichannel}")
 		self.refresh()
 
 	@exception_handled
-	def cback(self, *args):
+	def cback(self, b):
 		self.ichannel = (self.ichannel - 1) % self.nchan
+		lgm().log(f"cback: {self.ichannel}")
 		self.refresh()
 
 	@exception_handled
