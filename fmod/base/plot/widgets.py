@@ -36,7 +36,7 @@ class StepSlider:
 		self.executable(self.value)
 
 	def gui(self):
-		self.grid[1, :10] = self.slider
-		self.grid[1, 10] = self.button_cback
-		self.grid[1, 11] = self.button_cforward
+		self.grid[0, :10] = self.slider
+		self.grid[0, 10] = self.button_cback
+		self.grid[0, 11] = self.button_cforward
 		return self.grid
