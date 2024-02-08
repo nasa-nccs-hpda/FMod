@@ -1,42 +1,34 @@
-import math, numpy as np
-import xarray as xa
 from typing  import List, Tuple, Union, Optional, Dict, Callable
-from fmod.base.util.ops import xaformat_timedeltas, print_data_column
-import matplotlib.ticker as ticker
-import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from torch import Tensor
-from matplotlib.axes import Axes
-from matplotlib.image import AxesImage
-from fmod.base.util.grid import GridOps
-from fmod.base.io.loader import BaseDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from traitlets import CInt, link
+from ipywidgets import GridspecLayout
 
-
+class Counter(ipw.DOMWidget):
+    value = CInt(0, sync=True)
 
 class StepSlider:
 
 	def __init__(self, label: str, maxval: int, callback: Callable[[int], int], **kwargs):
+		self.grid = GridspecLayout(1, 12 )
+		self.layout = ipw.Layout(height='auto', width='auto')
 		self.value = kwargs.get('ival',0)
 		self.maxval = maxval
 		self.executable: Callable[[int], int] = callback
-		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=ipw.Layout(flex_grow=10) )
+		self.counter = Counter()
+		self.slider: ipw.IntSlider = ipw.IntSlider(value=self.value, min=0, max=maxval, description=label, layout=self.layout )
 		self.slider.observe(self.update, names='value')
-		self.button_cback    = ipw.Button(description='<', button_style='info', layout=ipw.Layout(flex_shrink=1), on_click=self.sback )
-		self.button_cforward = ipw.Button(description='>', button_style='info', layout=ipw.Layout(flex_shrink=1), on_click=self.sforward )
+		self.button_cback    = ipw.Button(description='<', button_style='info', on_click=self.bplus, layout=self.layout )
+		self.button_cforward = ipw.Button(description='>', button_style='info', on_click=self.bminus, layout=self.layout )
 		self.box_layout = ipw.Layout(display='flex', align_items='stretch', border='solid', width='100%')
 
-	@exception_handled
-	def sback(self, b):
-		self.value = (self.value - 1) % ( self.maxval + 1 )
-		lgm().log(f"sback: {self.value}")
-		self.slider.value = self.value
+	def bplus(self,name):
+		self.counter.value += 1 if self.counter.value < self.maxval else 0
+		lgm().log(f"button_plus: {self.counter.value}")
 
-	@exception_handled
-	def sforward(self, b):
-		self.value = (self.value + 1) % ( self.maxval + 1 )
-		lgm().log(f"sforward: {self.value}")
-		self.slider.value = self.value
+	def bminus(self,name):
+		self.counter.value -= 1 if self.counter.value > 0 else 0
+		lgm().log(f"button_minus: {self.counter.value}")
 
 	@exception_handled
 	def update(self, change):
@@ -44,4 +36,7 @@ class StepSlider:
 		self.executable(self.value)
 
 	def gui(self):
-		return ipw.HBox( [self.slider, self.button_cforward, self.button_cback], layout=self.box_layout )
+		self.grid[1, :10] = self.slider
+		self.grid[1, 10] = self.button_cback
+		self.grid[1, 11] = self.button_cforward
+		return self.grid
