@@ -23,11 +23,13 @@ class StepSlider:
 
 	@exception_handled
 	def bplus(self,name):
+		lgm().log(f"button_plus clicked!")
 		self.counter.value = ( self.counter.value + 1 ) % (self.maxval+1)
 		lgm().log(f"button_plus: {self.counter.value}")
 
 	@exception_handled
 	def bminus(self,name):
+		lgm().log(f"button_minus clicked!")
 		self.counter.value  ( self.counter.value - 1 ) % (self.maxval+1)
 		lgm().log(f"button_minus: {self.counter.value}")
 
