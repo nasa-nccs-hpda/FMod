@@ -62,16 +62,19 @@ class ResultsPlotter:
 	tensor_roles = ["target", "prediction"]
 
 	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
+		figsize = kwargs.pop('figsize',(12, 5))
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
 		self.nsteps = len(targets)
 		self.dataset: BaseDataset = dataset
 		self.chanids: List[str] = self.dataset.chanIds['target']
 		with plt.ioff():
 			with plt.ioff():
-				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, layout="tight", **kwargs)
+				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 			for ax in self.axs.flat:
 				ax.set_aspect(0.5)
 				ax.set_axis_off()
+		tbar = self.fig.get_navigation_toolbar()
+		print( tbar.__class__ )
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.gridops = GridOps(nlat, nlon)
