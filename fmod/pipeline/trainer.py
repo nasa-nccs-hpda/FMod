@@ -31,10 +31,11 @@ class ModelTrainer(object):
 		self.model = None
 
 	def save_state(self):
+		os.makedirs( self.checkpoint_path, 0o777, exist_ok=True )
 		torch.save( self.model.state_dict(), self.checkpoint_path )
 
 	def load_state(self) -> bool:
-		if os.path.exists(self.checkpoint_path ):
+		if os.path.exists( self.checkpoint_path ):
 			self.model.load_state_dict( torch.load( self.checkpoint_path ) )
 			return True
 		else:
