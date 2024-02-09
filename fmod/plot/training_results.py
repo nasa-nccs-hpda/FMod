@@ -89,8 +89,7 @@ class ResultsPlotter:
 		for ax in self.axs.flat:
 			ax.set_aspect(0.5)
 			ax.set_axis_off()
-		tbar = self.fig.get_navigation_toolbar()
-		print( tbar.__class__ )
+		print(self.fig.__class__)
 
 	@exception_handled
 	def plot(self, **kwargs):
