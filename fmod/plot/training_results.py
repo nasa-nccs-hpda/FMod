@@ -63,6 +63,7 @@ class ResultsPlotter:
 
 	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
+		(self.fig, self.axs) = (None,None)
 		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
 		self.nsteps = len(targets)
 		self.dataset: BaseDataset = dataset
@@ -101,7 +102,7 @@ class ResultsPlotter:
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
-		return ipw.VBox( [self.fig.canvas, self.cslider.gui(), self.sslider.gui()] )
+		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
 
 	@exception_handled
 	def step_update(self, istep: int ) -> int:
