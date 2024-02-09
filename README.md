@@ -29,7 +29,7 @@ Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / f
     >   * pip install lightning-bolts 
     >   * pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" pytorch-extension
     >   * pip install nvidia-modulus[all] nvidia-modulus-sym
-    >   * pip install netCDF4 h5py h5netcdf parameterized cartopy ipympl
+    >   * pip install tensorly tensorly-torch netCDF4 h5py h5netcdf parameterized cartopy ipympl 
     >   * cd torch-harmonics; pip install .
 
 * Alternate pytorch-extension installation
