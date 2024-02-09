@@ -33,10 +33,12 @@ class ModelTrainer(object):
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
 		torch.save( self.model.state_dict(), self.checkpoint_path )
+		print(f"Saved model to {self.checkpoint_path}")
 
 	def load_state(self) -> bool:
 		if os.path.exists( self.checkpoint_path ):
 			self.model.load_state_dict( torch.load( self.checkpoint_path ) )
+			print(f"Loaded model from {self.checkpoint_path}")
 			return True
 		else:
 			return False
