@@ -7,6 +7,7 @@ from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import time, os
 
@@ -21,8 +22,8 @@ class ModelTrainer(object):
 		self.data_iter = iter(dataset)
 		self.grid_shape = inp.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
-		print(f"INPUT={type(inp)}, TARGET={type(tar)}")
-		print(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
+		lgm().log(f"INPUT={type(inp)}, TARGET={type(tar)}")
+		lgm().log(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
 		lmax = math.ceil(self.grid_shape[0] / 3)
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)

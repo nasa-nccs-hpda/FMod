@@ -69,6 +69,17 @@ def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
         if valid: setattr(meta, k, v)
     return meta
 
+def cfg2args( csection: str, pnames: List[str] ) -> Dict[str,Any]:
+    csections = csection.split(".")
+    cmeta = cfg().get(csections[0])
+    if (len(csections) > 1) and (cmeta is not None): cmeta = cmeta.get(csections[1])
+    args = {}
+    if cmeta is None:
+        print( f"Warning: section '{csection}' does not exist in configuration" )
+    else:
+        for pn in pnames: args[pn] = cmeta.get(pn)
+    return args
+
 def cfg_date( csection: str ) -> date:
     dcfg = cfg().get(csection)
     return date( dcfg.year, dcfg.month, dcfg.day )

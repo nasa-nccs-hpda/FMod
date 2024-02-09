@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapp
 from fmod.base.source.merra2.preprocess import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from datetime import date
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
 from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath, ncFormat
 
@@ -64,8 +65,8 @@ def load_norm_data() -> Dict[str, xa.Dataset]:
 def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	predef_norm_data: Dict[str, xa.Dataset] = get_predef_norm_data()
 	m2_norm_data: Dict[str, xa.Dataset] = load_norm_data()
-	print( f"predef_norm_data: {list(predef_norm_data.keys())}")
-	print( f"m2_norm_data: {list(m2_norm_data.keys())}")
+	lgm().log( f"predef_norm_data: {list(predef_norm_data.keys())}")
+	lgm().log( f"m2_norm_data: {list(m2_norm_data.keys())}")
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
 def open_dataset( filepath, **kwargs) -> xa.Dataset:
