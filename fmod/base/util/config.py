@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
 import hydra, traceback, os
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
 
 def cfg() -> DictConfig:
     return Configuration.instance().cfg
