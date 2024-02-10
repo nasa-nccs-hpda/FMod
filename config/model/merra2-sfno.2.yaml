@@ -8,7 +8,7 @@ grid: "equiangular"
 in_chans: 178
 out_chans: 83
 pos_embed: "lat"
-use_mlp: False
+use_mlp: True
 normalization_layer: 'none'
 activation_function: 'relu'
 spectral_transform: 'sht'
@@ -25,6 +25,6 @@ big_skip:  False
 factorization: None
 separable: False
 rank:  128
-inner_skip: "none"
+inner_skip: "linear"
 outer_skip: "identity"
 

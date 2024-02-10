@@ -1,4 +1,5 @@
 from torch_harmonics import *
+from fmod.base.util.config import cfg
 from .layers import *
 from functools import partial
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -84,7 +85,8 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 			gain_factor /= 2.0
 
 		# convolution layer
-		self.filter = SpectralFilterLayer(forward_transform,
+		self.filter = SpectralFilterLayer(
+			forward_transform,
 			inverse_transform,
 			input_dim,
 			output_dim,
@@ -119,7 +121,7 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 		if outer_skip == "linear" or inner_skip == "identity":
 			gain_factor /= 2.
 
-		if use_mlp == True:
+		if use_mlp:
 			mlp_hidden_dim = int(output_dim * mlp_ratio)
 			self.mlp = MLP(in_features=output_dim,
 				out_features=input_dim,
@@ -179,7 +181,7 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 
 sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
 		        'scale_factor', 'embed_dim', 'embed_dim', 'num_layers', 'encoder_layers', 'mlp_ratio', 'drop_rate', 'drop_path_rate', 'hard_thresholding_fraction',
-		        'big_skip', 'factorization', 'separable', 'rank' ]
+		        'big_skip', 'factorization', 'separable', 'rank', 'activation_function', 'use_mlp' ]
 
 class SphericalFourierNeuralOperatorNet(nn.Module):
 
@@ -433,8 +435,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			forward_transform = self.trans_down if first_layer else self.trans
 			inverse_transform = self.itrans_up if last_layer else self.itrans
 
-			inner_skip = "none"
-			outer_skip = "identity"
+			inner_skip = cfg().model.get( 'inner_skip', "none" )
+			outer_skip = cfg().model.get( 'outer_skip', "identity" )
 
 			if first_layer:
 				norm_layer = norm_layer1
@@ -443,7 +445,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			else:
 				norm_layer = norm_layer1
 
-			block = SphericalFourierNeuralOperatorBlock(forward_transform,
+			block = SphericalFourierNeuralOperatorBlock(
+				forward_transform,
 				inverse_transform,
 				self.embed_dim,
 				self.embed_dim,
