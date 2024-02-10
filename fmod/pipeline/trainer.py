@@ -38,11 +38,13 @@ class ModelTrainer(object):
 
 	def load_state(self) -> bool:
 		if os.path.exists( self.checkpoint_path ):
-			self.model.load_state_dict( torch.load( self.checkpoint_path ) )
-			print(f"Loaded model from {self.checkpoint_path}")
-			return True
-		else:
-			return False
+			try:
+				self.model.load_state_dict( torch.load( self.checkpoint_path ) )
+				print(f"Loaded model from {self.checkpoint_path}")
+				return True
+			except Exception as e:
+				print(f"Unsble to load model from {self.checkpoint_path}")
+		return False
 
 	@property
 	def checkpoint_path(self) -> str:
