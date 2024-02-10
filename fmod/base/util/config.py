@@ -83,7 +83,7 @@ def cfg2args( csection: str, pnames: List[str] ) -> Dict[str,Any]:
         for pn in pnames:
             if pn in cmeta.keys():
                 aval = cmeta.get(pn)
-                if str(aval).lower() == "none": aval = None
+                if str(aval) == "None": aval = None
                 args[pn] = aval
     return args
 
