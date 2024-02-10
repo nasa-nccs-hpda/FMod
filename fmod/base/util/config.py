@@ -81,7 +81,10 @@ def cfg2args( csection: str, pnames: List[str] ) -> Dict[str,Any]:
         print( f"Warning: section '{csection}' does not exist in configuration" )
     else:
         for pn in pnames:
-            if pn in cmeta.keys(): args[pn] = cmeta.get(pn)
+            if pn in cmeta.keys():
+                aval = cmeta.get(pn)
+                if str(aval).lower() == "none": aval = None
+                args[pn] = aval
     return args
 
 def cfg_date( csection: str ) -> date:
