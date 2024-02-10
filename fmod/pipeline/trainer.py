@@ -43,7 +43,7 @@ class ModelTrainer(object):
 				print(f"Loaded model from {self.checkpoint_path}")
 				return True
 			except Exception as e:
-				print(f"Unsble to load model from {self.checkpoint_path}")
+				print(f"Unsble to load model from {self.checkpoint_path}: {e}")
 		return False
 
 	@property
