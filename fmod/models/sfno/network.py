@@ -177,10 +177,12 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 
 		return x
 
+sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
+		        'scale_factor', 'embed_dim', 'embed_dim', 'num_layers', 'encoder_layers', 'mlp_ratio', 'drop_rate', 'drop_path_rate', 'hard_thresholding_fraction',
+		        'big_skip', 'factorization', 'separable', 'rank' ]
+
 class SphericalFourierNeuralOperatorNet(nn.Module):
-	sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
-			        'scale_factor', 'embed_dim', 'embed_dim', 'num_layers', 'encoder_layers', 'mlp_ratio', 'drop_rate', 'drop_path_rate', 'hard_thresholding_fraction',
-			        'big_skip', 'factorization', 'separable', 'rank' ]
+
 
 	"""
 	SphericalFourierNeuralOperator module. Can use both FFTs and SHTs to represent either FNO or SFNO,
