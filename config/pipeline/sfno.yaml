@@ -1,6 +1,7 @@
 auto_device: true
 cuda_graphs: true
 ddp_sharding: true
+overwrite_log: True
 
 batch_size:  1
 num_steps:  1

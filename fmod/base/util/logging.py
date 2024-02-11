@@ -7,8 +7,8 @@ from time import time
 from datetime import datetime
 import threading, time, logging, sys, traceback
 
-def lgm(**kwargs) -> "LogManager":
-    return LogManager.instance(**kwargs)
+def lgm() -> "LogManager":
+    return LogManager.instance()
 
 def exception_handled(func):
     def wrapper( *args, **kwargs ):
@@ -47,10 +47,10 @@ class LogManager(object):
         self.log_file  = None
 
     @classmethod
-    def instance(cls,**kwargs) -> "LogManager":
+    def instance(cls) -> "LogManager":
         if cls._instance is None:
             logger = LogManager()
-            logger.init_logging(**kwargs)
+            logger.init_logging()
             cls._instance = logger
         return cls._instance
 
@@ -67,12 +67,12 @@ class LogManager(object):
     def set_level(self, level ):
         self._level = level
 
-    def init_logging(self,**kwargs):
+    def init_logging(self):
         from fmod.base.util.ops import fmbdir
         from fmod.base.util.config import cfg
         self.log_dir =  f"{fmbdir('cache')}/logs"
 
-        overwrite = kwargs.get("overwrite", True)
+        overwrite = cfg().task.get("overwrite_log", True)
         self._lid = "" if overwrite else f"-{os.getpid()}"
         self.log_file = f'{self.log_dir}/{cfg().cid}{self._lid}.log'
         self._log_stream = open(self.log_file, 'w')
