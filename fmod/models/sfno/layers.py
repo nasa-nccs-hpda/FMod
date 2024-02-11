@@ -239,6 +239,7 @@ class SpectralConvS2(nn.Module):
 			self.bias = nn.Parameter(torch.zeros(1, out_channels, 1, 1))
 
 	def forward(self, x):
+		print( f'SpectralConvS2.forward: x{tuple(x.shape)}' )
 		dtype = x.dtype
 		x = x.float()
 		residual = x
@@ -259,6 +260,7 @@ class SpectralConvS2(nn.Module):
 			x = x + self.bias
 		x = x.type(dtype)
 
+		print(f'SpectralConvS2.result: x{tuple(x.shape)} residual{tuple(residual.shape)}')
 		return x, residual
 
 class FactorizedSpectralConvS2(nn.Module):

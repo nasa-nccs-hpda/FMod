@@ -157,26 +157,34 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 	#         self.filter.filter.init_weights(scale)
 
 	def forward(self, x):
+		lgm().log( f" *** SphericalFourierNeuralOperatorBlock.forward: x{tuple(x.shape)}")
 		x, residual = self.filter(x)
 
 		x = self.norm0(x)
 
 		if hasattr(self, "inner_skip"):
-			x = x + self.inner_skip(residual)
+			isr = self.inner_skip(residual)
+			lgm().log(f" *** inner_skip: residual{tuple(residual.shape)}, isr{tuple(isr.shape)}")
+			x = x + isr
 
 		if hasattr(self, "act_layer"):
 			x = self.act_layer(x)
 
 		if hasattr(self, "mlp"):
+			xsh0 = tuple(x.shape)
 			x = self.mlp(x)
+			lgm().log(f" *** mlp: input{xsh0}, output{tuple(x.shape)}")
 
 		x = self.norm1(x)
 
 		x = self.drop_path(x)
 
 		if hasattr(self, "outer_skip"):
-			x = x + self.outer_skip(residual)
+			osr = self.outer_skip(residual)
+			lgm().log(f" *** outer_skip: residual{tuple(residual.shape)}, isr{tuple(osr.shape)}")
+			x = x + osr
 
+		lgm().log(f" *** SphericalFourierNeuralOperatorBlock.result: x{tuple(x.shape)}")
 		return x
 
 sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
