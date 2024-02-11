@@ -82,8 +82,8 @@ class LogManager(object):
     def ctime(self):
         return datetime.now().strftime("%H:%M:%S")
 
-    def log( self,  msg, **kwargs ):
-        if kwargs.get( 'print', False ): print( msg, flush=True )
+    def log( self,  msg, display=False ):
+        if display: print( msg, flush=True )
         self._log_stream.write(f"[{self.ctime}] {msg}\n")
         self._log_stream.flush()
 
@@ -93,15 +93,15 @@ class LogManager(object):
         self._log_stream.flush()
         sys.exit( status )
 
-    def debug(self, msg, **kwargs ):
+    def debug(self, msg ):
         if self._level == logging.DEBUG:
-            self.log( msg,  **kwargs )
+            self.log( msg )
 
-    def exception(self,  msg, **kwargs ):
+    def exception(self,  msg ):
         self._log_stream.write(f"\n{msg}\n{traceback.format_exc()}\n")
         self._log_stream.flush()
 
-    def trace(self,  msg, **kwargs ):
+    def trace(self,  msg ):
         strace = "".join(traceback.format_stack())
         self._log_stream.write(f"\n{msg}\n{strace}\n")
         self._log_stream.flush()
