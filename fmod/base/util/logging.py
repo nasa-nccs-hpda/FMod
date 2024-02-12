@@ -83,9 +83,9 @@ class LogManager(object):
         return datetime.now().strftime("%H:%M:%S")
 
     def log( self,  msg, display=False ):
-        if display: print( msg, flush=True )
         self._log_stream.write(f"[{self.ctime}] {msg}\n")
         self._log_stream.flush()
+        if display: print( msg, flush=True )
 
     def fatal(self, msg: str, status: int = 1 ):
         print( msg )

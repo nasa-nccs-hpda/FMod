@@ -100,7 +100,7 @@ class ModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
+			lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			acc_loss = 0
 			self.model.train()

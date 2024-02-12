@@ -127,6 +127,8 @@ class MLP(nn.Module):
 		else:
 			self.fwd = nn.Sequential(fc1, act, fc2)
 
+		lgm().log( f"MLP: W1{tuple(fc1.weight.shape)}, W2{tuple(fc2.weight.shape)}")
+
 	@torch.jit.ignore
 	def checkpoint_forward(self, x):
 		return checkpoint(self.fwd, x)
@@ -262,7 +264,6 @@ class SpectralConvS2(nn.Module):
 			x = x + self.bias
 		x = x.type(dtype)
 
-		lgm().log(f'SpectralConvS2.result: x{tuple(x.shape)} residual{tuple(residual.shape)}')
 		return x, residual
 
 class FactorizedSpectralConvS2(nn.Module):
