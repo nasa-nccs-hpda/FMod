@@ -10,7 +10,7 @@ def contract_diagonal(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     ac = torch.view_as_complex(a)
     bc = torch.view_as_complex(b)
     res = torch.einsum("bixy,kixy->bkxy", ac, bc)
-    lgm().log( f" ++++++++ contract diagonal: bixy{tuple(a.shape)}, kixy{tuple(b.shape)} -> bkxy{tuple(res.shape)}" )
+    print( f" ++++++++ contract diagonal: bixy{tuple(a.shape)}, kixy{tuple(b.shape)} -> bkxy{tuple(res.shape)}" )
     return torch.view_as_real(res)
 
 @torch.jit.script
@@ -18,7 +18,7 @@ def contract_dhconv(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     ac = torch.view_as_complex(a)
     bc = torch.view_as_complex(b)
     res = torch.einsum("bixy,kix->bkxy", ac, bc)
-    lgm().log(f" ++++++++ contract dhconv: bixy{tuple(a.shape)}, kix{tuple(b.shape)} -> bkxy{tuple(res.shape)}")
+    print(f" ++++++++ contract dhconv: bixy{tuple(a.shape)}, kix{tuple(b.shape)} -> bkxy{tuple(res.shape)}")
     return torch.view_as_real(res)
 
 @torch.jit.script
@@ -26,7 +26,7 @@ def contract_blockdiag(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     ac = torch.view_as_complex(a)
     bc = torch.view_as_complex(b)
     res = torch.einsum("bixy,kixyz->bkxz", ac, bc)
-    lgm().log(f" ++++++++ contract blockdiag: bixy{tuple(a.shape)}, kixyz{tuple(b.shape)} -> bkxy{tuple(res.shape)}")
+    print(f" ++++++++ contract blockdiag: bixy{tuple(a.shape)}, kixyz{tuple(b.shape)} -> bkxy{tuple(res.shape)}")
     return torch.view_as_real(res)
 
 # Helper routines for the non-linear FNOs (Attention-like)
