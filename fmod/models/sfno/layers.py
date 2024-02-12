@@ -1,7 +1,7 @@
 import torch.fft
 from torch.utils.checkpoint import checkpoint
 from torch.cuda import amp
-import math
+import math, time
 from .activations import *
 from tltorch.factorized_tensors.core import FactorizedTensor
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -252,13 +252,15 @@ class SpectralConvS2(nn.Module):
 				residual = self.inverse_transform(x)
 
 		x = torch.view_as_real(x)
+		t0 = time.time()
 		x = self._contract(x, self.weight)
+		dtc = time.time() - t0
 		x = torch.view_as_complex(x)
 
 		with amp.autocast(enabled=False):
 			xf = x
 			x = self.inverse_transform(xf)
-			lgm().log(f' <<<<< Inverse Spectral Transform: f{tuple(xf.shape)} -> x{tuple(x.shape)}')
+			lgm().log(f' <<<<< Inverse Spectral Transform: f{tuple(xf.shape)} -> x{tuple(x.shape)}, dtc={dtc:.3f} sec')
 
 		if hasattr(self, "bias"):
 			x = x + self.bias
