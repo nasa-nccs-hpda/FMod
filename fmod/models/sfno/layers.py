@@ -245,7 +245,7 @@ class SpectralConvS2(nn.Module):
 
 		with amp.autocast(enabled=False):
 			x = self.forward_transform(x)
-			lgm().log(f'Forward Spectral Transform: x{tuple(residual.shape)} -> f{tuple(x.shape)}')
+			lgm().log(f' >>>>> Forward Spectral Transform: x{tuple(residual.shape)} -> f{tuple(x.shape)}')
 			if self.scale_residual:
 				residual = self.inverse_transform(x)
 
@@ -256,7 +256,7 @@ class SpectralConvS2(nn.Module):
 		with amp.autocast(enabled=False):
 			xf = x
 			x = self.inverse_transform(xf)
-			lgm().log(f'Inverse Spectral Transform: f{tuple(xf.shape)} -> x{tuple(x.shape)}')
+			lgm().log(f' <<<<< Inverse Spectral Transform: f{tuple(xf.shape)} -> x{tuple(x.shape)}')
 
 		if hasattr(self, "bias"):
 			x = x + self.bias
