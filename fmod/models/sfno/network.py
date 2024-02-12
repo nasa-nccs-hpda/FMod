@@ -402,12 +402,12 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			encoder_layers.append(fc)
 			encoder_layers.append(self.activation_function())
 			current_dim = encoder_hidden_dim
-		fc = nn.Conv2d(current_dim, self.embed_dim, 1, bias=False)
+		self.efc = nn.Conv2d(current_dim, self.embed_dim, 1, bias=False)
 		scale = math.sqrt(1. / current_dim)
-		nn.init.normal_(fc.weight, mean=0., std=scale)
-		if fc.bias is not None:
-			nn.init.constant_(fc.bias, 0.0)
-		encoder_layers.append(fc)
+		nn.init.normal_(self.efc.weight, mean=0., std=scale)
+		if self.efc.bias is not None:
+			nn.init.constant_(self.efc.bias, 0.0)
+		encoder_layers.append(self.efc)
 		self.encoder = nn.Sequential(*encoder_layers)
 
 		# prepare the spectral transform
@@ -497,12 +497,12 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			decoder_layers.append(fc)
 			decoder_layers.append(self.activation_function())
 			current_dim = decoder_hidden_dim
-		fc = nn.Conv2d(current_dim, self.out_chans, 1, bias=False)
+		self.dfc = nn.Conv2d(current_dim, self.out_chans, 1, bias=False)
 		scale = math.sqrt(1. / current_dim)
-		nn.init.normal_(fc.weight, mean=0., std=scale)
-		if fc.bias is not None:
-			nn.init.constant_(fc.bias, 0.0)
-		decoder_layers.append(fc)
+		nn.init.normal_(self.dfc.weight, mean=0., std=scale)
+		if self.dfc.bias is not None:
+			nn.init.constant_(self.dfc.bias, 0.0)
+		decoder_layers.append(self.dfc)
 		self.decoder = nn.Sequential(*decoder_layers)
 
 	@torch.jit.ignore
@@ -518,10 +518,9 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		return x
 
 	def forward(self, x):
-		if self.big_skip:
-			residual = x
-
+		residual = x
 		x = self.encoder(x)
+		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}")
 
 		if self.pos_embed is not None:
 			x = x + self.pos_embed
@@ -531,7 +530,9 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		if self.big_skip:
 			x = torch.cat((x, residual), dim=1)
 
+		residual = x
 		x = self.decoder(x)
+		lgm().log(f"Decode: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.dfc.weight.shape)}")
 
 		return x
 
