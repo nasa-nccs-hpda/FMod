@@ -239,7 +239,6 @@ class SpectralConvS2(nn.Module):
 			self.bias = nn.Parameter(torch.zeros(1, out_channels, 1, 1))
 
 	def forward(self, x):
-		lgm().log( f'SpectralConvS2.forward: x{tuple(x.shape)}' )
 		dtype = x.dtype
 		x = x.float()
 		residual = x
