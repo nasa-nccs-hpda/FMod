@@ -9,9 +9,6 @@ from datetime import date
 from xarray.core.resample import DataArrayResample
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
-from numpy.lib.format import write_array
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.source.merra2.batch import ncFormat
 from enum import Enum
 
 _SEC_PER_HOUR = 3600
@@ -20,12 +17,6 @@ SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
-
-def sformat(aval: Any) -> str:
-    list_method = getattr(aval, "list", None)
-    result = str(aval)
-    if callable(list_method): result = str(aval.list())
-    return result.replace("=",":")
 
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
     num_nodata = nnan(varray)
@@ -155,7 +146,6 @@ class DailyFiles:
 class MERRA2DataProcessor:
 
     def __init__(self):
-        self.format = ncFormat( cfg().preprocess.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
@@ -183,7 +173,7 @@ class MERRA2DataProcessor:
         from fmod.base.source.merra2.model import stats_filepath
         self.merge_stats( ext_stats )
         for statname in self.stats.statnames:
-            filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
+            filepath = stats_filepath( cfg().preprocess.version, statname )
             self.stats.save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
@@ -214,34 +204,13 @@ class MERRA2DataProcessor:
                 dset_list[collection] = (file_path, vlist)
         return dset_files, const_files
 
-    def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset]):
-        merged_dset: xa.Dataset = xa.merge(collection_dsets)
-        lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", print=True )
-        if self.format == ncFormat.Standard:
-            merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
-            print(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
-        else:
-            os.makedirs( filepath, exist_ok=True )
-            hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
-            for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] =  [ f"{k}={sformat(v)}" for k,v in var.attrs.items()] + [f"dims={','.join(var.dims)}"]
-                vfpath = filepath + f"/{vid}.npy"
-                with open( vfpath, 'w+b'  ) as fp:
-                    write_array( fp, var.values, (1,0), allow_pickle=False )
-                    lgm().log( f"  > Saving variable {vid} to: {vfpath}")
-            hattrs['attrs'] = str(list(merged_dset.attrs.items()))
-            header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs )
-            hfpath = filepath + "/header.nc"
-            header.to_netcdf(hfpath, format="NETCDF4", mode="w")
-            lgm().log(f"  > Saving header to: {hfpath}")
-
     def process_day(self, d: date, **kwargs):
-        from .model import cache_filepath, VarType
+        from .model import cache_var_filepath, cache_const_filepath
         reprocess: bool = kwargs.pop('reprocess', False)
-        cache_fvpath: str = cache_filepath( VarType.Dynamic, d )
+        cache_fvpath: str = cache_var_filepath(cfg().preprocess.version, d)
         os.makedirs(os.path.dirname(cache_fvpath), mode=0o777, exist_ok=True)
         if (not os.path.exists(cache_fvpath)) or reprocess:
-            cache_fcpath: str = cache_filepath( VarType.Constant )
+            cache_fcpath: str = cache_const_filepath(cfg().preprocess.version)
             dset_files, const_files = self.get_daily_files(d)
             ncollections = len(dset_files.keys())
             if ncollections == 0:
@@ -252,7 +221,7 @@ class MERRA2DataProcessor:
                     collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     if collection_dset is not None: collection_dsets.append(collection_dset)
                 if len(collection_dsets) > 0:
-                    self.write_daily_files( cache_fvpath, collection_dsets)
+                    xa.merge(collection_dsets).to_netcdf(cache_fvpath, format="NETCDF4")
                     print(f" >> Saving collection data for {d} to file '{cache_fvpath}'")
                 else:
                     print(f" >> No collection data found for date {d}")
@@ -263,7 +232,7 @@ class MERRA2DataProcessor:
                         collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
                         if collection_dset is not None: const_dsets.append( collection_dset )
                     if len( const_dsets ) > 0:
-                        self.write_daily_files(cache_fcpath, const_dsets)
+                        xa.merge(const_dsets).to_netcdf(cache_fcpath, format="NETCDF4", mode="w")
                         print(f" >> Saving const data to file '{cache_fcpath}'")
                     else:
                         print(f" >> No constant data found")
