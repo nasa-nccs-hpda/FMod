@@ -1,4 +1,4 @@
-import xarray as xa, math
+import xarray as xa, math, os
 from fmod.base.util.config import cfg
 from datetime import date
 from fmod.base.util.dates import drepr, date_list
@@ -30,17 +30,21 @@ class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
 
-def suffix( ncformat: ncFormat ) -> str:
-	return ".nc" if ncformat == ncformat.Standard else ".dali"
+def suffix( vres: str, ncformat: ncFormat ) -> str:
+	res_suffix = "" if vres == "high" else "." + vres
+	format_suffix = ".nc" if ncformat == ncformat.Standard else ".dali"
+	return res_suffix + format_suffix
 
-def cache_filepath(vartype: VarType, d: date = None) -> str:
+def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
 	version = cfg().task.dataset_version
 	ncformat: ncFormat = ncFormat( cfg().task.nc_format )
 	if vartype == VarType.Dynamic:
 		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-		return f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(ncformat)}"
+		fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(vres,ncformat)}"
 	else:
-		return f"{fmbdir('processed')}/{version}/const{suffix(ncformat)}"
+		fpath = f"{fmbdir('processed')}/{version}/const{suffix(vres,ncformat)}"
+	os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
+	return fpath
 
 def stats_filepath(version: str, statname: str) -> str:
 	return f"{fmbdir('processed')}/{version}/stats/{statname}"
@@ -67,12 +71,12 @@ def _open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
 	return rename_vars(dataset)
 
-def load_dataset( d: date, **kwargs ):
-	filepath =  cache_filepath( VarType.Dynamic, d )
+def load_dataset( d: date, vres: str, **kwargs ):
+	filepath =  cache_filepath( VarType.Dynamic, vres, d )
 	return _open_dataset( filepath, **kwargs)
 
-def load_const_dataset( **kwargs ):
-	filepath =  cache_filepath(VarType.Constant)
+def load_const_dataset(  vres: str, **kwargs ):
+	filepath =  cache_filepath(VarType.Constant, vres)
 	return _open_dataset( filepath, **kwargs )
 
 def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:

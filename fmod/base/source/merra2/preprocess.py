@@ -12,6 +12,7 @@ np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.source.merra2.batch import ncFormat
+from .model import cache_filepath, VarType
 from enum import Enum
 
 _SEC_PER_HOUR = 3600
@@ -158,6 +159,7 @@ class MERRA2DataProcessor:
         self.format = ncFormat( cfg().preprocess.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
+        self.upscale_factor: int = cfg().preprocess.get('upscale_factor')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
         self.tstep = str(cfg().preprocess.data_timestep) + "H"
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])
@@ -214,9 +216,9 @@ class MERRA2DataProcessor:
                 dset_list[collection] = (file_path, vlist)
         return dset_files, const_files
 
-    def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset]):
+    def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset], vres: str):
         merged_dset: xa.Dataset = xa.merge(collection_dsets)
-        lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", print=True )
+        lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", display=True )
         if self.format == ncFormat.Standard:
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
             print(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
@@ -235,60 +237,69 @@ class MERRA2DataProcessor:
             header.to_netcdf(hfpath, format="NETCDF4", mode="w")
             lgm().log(f"  > Saving header to: {hfpath}")
 
+    def needs_update(self, vtype: VarType, d: date, reprocess: bool ) -> bool:
+        if reprocess: return True
+        cache_fvpath: str = cache_filepath(vtype, "high", d )
+        if not os.path.exists(cache_fvpath): return True
+        if self.format == "sres":
+            cache_fvpath: str = cache_filepath(vtype, "low", d)
+            if not os.path.exists(cache_fvpath): return True
+        lgm().log(f" ** Skipping date {d} due to existence of processed files",display=True)
+        return False
+
     def process_day(self, d: date, **kwargs):
-        from .model import cache_filepath, VarType
         reprocess: bool = kwargs.pop('reprocess', False)
-        cache_fvpath: str = cache_filepath( VarType.Dynamic, d )
-        os.makedirs(os.path.dirname(cache_fvpath), mode=0o777, exist_ok=True)
-        if (not os.path.exists(cache_fvpath)) or reprocess:
-            cache_fcpath: str = cache_filepath( VarType.Constant )
+        if self.needs_update( VarType.Dynamic, d, reprocess):
             dset_files, const_files = self.get_daily_files(d)
             ncollections = len(dset_files.keys())
             if ncollections == 0:
                 print( f"No collections found for date {d}")
             else:
-                collection_dsets: List[xa.Dataset] = []
+                vres_dsets: Dict[str,List[xa.Dataset]] = {}
                 for collection, (file_path, dvars) in dset_files.items():
-                    collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, **kwargs)
-                    if collection_dset is not None: collection_dsets.append(collection_dset)
-                if len(collection_dsets) > 0:
-                    self.write_daily_files( cache_fvpath, collection_dsets)
+                    daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
+                    for vres, dsets in daily_vres_dsets.items(): vres_dsets.setdefault(vres,[]).append(dsets)
+                for vres,collection_dsets in vres_dsets.items():
+                    cache_fvpath: str = cache_filepath(VarType.Dynamic, vres, d)
+                    self.write_daily_files( cache_fvpath, collection_dsets, vres)
                     print(f" >> Saving collection data for {d} to file '{cache_fvpath}'")
-                else:
-                    print(f" >> No collection data found for date {d}")
 
-                if not os.path.exists(cache_fcpath):
-                    const_dsets: List[xa.Dataset] = []
+                if self.needs_update(VarType.Constant, d, reprocess):
+                    const_vres_dsets: Dict[str,List[xa.Dataset]] = {}
                     for collection, (file_path, dvars) in const_files.items():
-                        collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
-                        if collection_dset is not None: const_dsets.append( collection_dset )
-                    if len( const_dsets ) > 0:
-                        self.write_daily_files(cache_fcpath, const_dsets)
+                        daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
+                        for vres, dsets in daily_vres_dsets.items(): const_vres_dsets.setdefault(vres,[]).append(dsets)
+                    for vres,const_dsets in const_vres_dsets.items():
+                        cache_fcpath: str = cache_filepath( VarType.Constant, vres )
+                        self.write_daily_files(cache_fcpath, const_dsets, vres)
                         print(f" >> Saving const data to file '{cache_fcpath}'")
                     else:
                         print(f" >> No constant data found")
-        else:
-            print( f" ** Skipping date {d} due to existence of processed file '{cache_fvpath}'")
 
-    def load_collection(self, collection: str, file_path: str, dvars: List[str], d: date, **kwargs) -> Optional[xa.Dataset]:
+    def load_collection(self, collection: str, file_path: str, dvars: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
         dset: xa.Dataset = xa.open_dataset(file_path)
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
-        mvars: Dict[str,xa.DataArray] = {}
+        mvars: Dict[str,Dict[str,xa.DataArray]] = {}
         for dvar in dvars:
             darray: xa.DataArray = dset.data_vars[dvar]
             qtype: QType = self.get_qtype(dvar)
-            mvar: xa.DataArray = self.subsample( darray, dset_attrs, qtype, isconst )
-            self.stats.add_entry(dvar, mvar)
-            nodata_test( dvar, mvar, d)
-            print(f" ** Processing variable {dvar}{mvar.dims}: {mvar.shape} for {d}")
-            mvars[dvar] = mvar
+            ssvars: Dict[str,List[xa.DataArray]] = self.subsample( darray, dset_attrs, qtype, isconst )
+            for vres, svars in ssvars.items():
+                dvars = mvars.setdefault( vres, {} )
+                for svar in svars:
+                    self.stats.add_entry(dvar, svar)
+                    nodata_test( dvar, svar, d)
+                    print(f" ** Processing {vres} res variable {dvar}{svar.dims}: {svar.shape} for {d}")
+                    dvars[dvar] = svar
         dset.close()
-        if len( mvars ) > 0:
-            result = xa.Dataset(mvars)
-            if not isconst:
-                self.add_derived_vars(result)
-            return result
+        return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars }
+
+    def create_dataset( self, mvars: List[xa.DataArray], isconst: bool ) -> xa.Dataset:
+        result = xa.Dataset(mvars)
+        if not isconst:
+            self.add_derived_vars(result)
+        return result
 
     @classmethod
     def get_year_progress(cls, seconds_since_epoch: np.ndarray) -> np.ndarray:
@@ -327,62 +338,59 @@ class MERRA2DataProcessor:
         with xa.open_dataset(dset_file) as dset:
             return list(dset.data_vars.keys())
 
-    def subsample_coords(self, dvar: xa.DataArray ) -> Dict[str,np.ndarray]:
-        subsample_coords: Dict[str,Any] = {}
+    def interp_axis(self, dvar: xa.DataArray, coords:Dict[str,Any], axis: str ):
+        assert axis in ['x', 'y'], f"Invalid axis: {axis}"
+        res, ext = (self.xres,self.xext) if (axis=='x') else (self.yres,self.yext)
+        if res is not None:
+            if ext is  None:
+                c0 = dvar.coords[axis].values
+                if axis=='x':   self.xext = [ c0[0], c0[-1] ]
+                else:           self.yext = [ c0[0], c0[-1] ]
+            ext1 = ext[1] if axis=='x' else ext[1]+res/2
+            coords[axis] = np.arange( ext[0], ext1, res )
+        elif ext is not None:
+            coords[axis] = slice( ext[0], ext[1])
+
+    def interp_axes(self, dvar: xa.DataArray, subsample_coords: Dict[str,Dict[str,np.ndarray]], vres: str):
+        coords: Dict[str, Any] = subsample_coords.setdefault(vres,{})
         if (self.levels is not None) and ('z' in dvar.dims):
-            subsample_coords['z'] = self.levels
-        if self.xres is not None:
-            if self.xext is  None:
-                xc0 = dvar.coords['x'].values
-                self.xext = [ xc0[0], xc0[-1] ]
-            subsample_coords['x'] = np.arange(self.xext[0],self.xext[1],self.xres)
-        elif self.xext is not None:
-            subsample_coords['x'] = slice(self.xext[0], self.xext[1])
+            coords['z'] = self.levels
+        for axis in ['x', 'y']:
+            if vres == "high":
+                self.interp_axis(dvar, coords, axis)
+            else:
+                hres_coords: Dict[str,np.ndarray] = subsample_coords['high']
+                coords[axis] =  hres_coords[axis][0::self.upscale_factor]
 
-        if self.yres is not None:
-            if self.yext is  None:
-                yc0 = dvar.coords['y'].values
-                self.yext = [ yc0[0], yc0[-1] ]
-            subsample_coords['y'] = np.arange(self.yext[0],self.yext[1]+self.yres/2,self.yres)
-        elif self.yext is not None:
-            subsample_coords['y'] = slice(self.yext[0], self.yext[1])
-        return subsample_coords
+    def subsample_coords(self, dvar: xa.DataArray ) -> Dict[str,Dict[str,np.ndarray]]:
+        sscoords: Dict[str,Dict[str,np.ndarray]] = {}
+        for vres in ["high","low"]:
+            if vres == "high" or self.format == "sr":
+                self.interp_axes( dvar, sscoords, vres )
+        return sscoords
 
-
-    def subsample_1d(self, variable: xa.DataArray, global_attrs: Dict ) -> xa.DataArray:
-        cmap: Dict[str,str] = { cn0:cn1 for (cn0,cn1) in self.dmap.items() if cn0 in list(variable.coords.keys()) }
-        varray: xa.DataArray = variable.rename(**cmap)
-        scoords: Dict[str,np.ndarray] = self.subsample_coords( varray )
-        newvar: xa.DataArray = varray
- #       print(f" **** subsample {variable.name}, dims={varray.dims}, shape={varray.shape}")
-        for cname, cval in scoords.items():
-            if cname == 'z':
-                newvar: xa.DataArray = newvar.interp(**{cname: cval}, assume_sorted=increasing(cval))
-                print(f" >> zdata: {varray.coords['z'].values.tolist()}" )
-                print(f" >> zconf: {cval.tolist()}")
-                print(f" >> znewv: {newvar.coords['z'].values.tolist()}" )
-            newvar.attrs.update( global_attrs )
-            newvar.attrs.update( varray.attrs )
-        return newvar.where( newvar != newvar.attrs['fmissing_value'], np.nan )
-
-    def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> xa.DataArray:
+    def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str,List[xa.DataArray]]:
+        ssvars = Dict[str,List] = {}
         cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
-        varray: xa.DataArray = variable.rename(**cmap)
-        if isconst and ("time" in varray.dims):
-            varray = varray.isel( time=0, drop=True )
-        scoords: Dict[str, np.ndarray] = self.subsample_coords(varray)
-        print(f" **** subsample {variable.name}, dims={varray.dims}, shape={varray.shape}, new sizes: { {cn:cv.size for cn,cv in scoords.items()} }")
-        varray = varray.interp( x=scoords['x'], y=scoords['y'], assume_sorted=True)
-        if 'z' in scoords:
-            varray = varray.interp( z=scoords['z'], assume_sorted=False )
-        if 'time' in varray.dims:
-            resampled: DataArrayResample = varray.resample(time=self.tstep)
-            varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
-        varray.attrs.update(global_attrs)
-        varray.attrs.update(varray.attrs)
-        for missing in [ 'fmissing_value', 'missing_value', 'fill_value' ]:
-            if missing in varray.attrs:
-                missing_value = varray.attrs.pop('fmissing_value')
-                varray = varray.where( varray != missing_value, np.nan )
-        return replace_nans(varray).transpose(*self.corder, missing_dims="ignore" )
+        variable: xa.DataArray = variable.rename(**cmap)
+        if isconst and ("time" in variable.dims):
+            variable = variable.isel( time=0, drop=True )
+        sscoords: Dict[str,Dict[str, np.ndarray]] = self.subsample_coords(variable)
+        for vres, vcoord in sscoords.items():
+            svars = ssvars.setdefault(vres,[])
+            print(f" **** subsample {variable.name}:{vres}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
+            varray = variable.interp( x=vcoord['x'], y=vcoord['y'], assume_sorted=True)
+            if 'z' in vcoord:
+                varray = varray.interp( z=vcoord['z'], assume_sorted=False )
+            if 'time' in varray.dims:
+                resampled: DataArrayResample = varray.resample(time=self.tstep)
+                varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
+            varray.attrs.update(global_attrs)
+            varray.attrs.update(varray.attrs)
+            for missing in [ 'fmissing_value', 'missing_value', 'fill_value' ]:
+                if missing in varray.attrs:
+                    missing_value = varray.attrs.pop('fmissing_value')
+                    varray = varray.where( varray != missing_value, np.nan )
+            svars.append( replace_nans(varray).transpose(*self.corder, missing_dims="ignore" ) )
+        return ssvars
 

@@ -20,8 +20,8 @@ def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.siz
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
-def clear_const_file():
-	const_filepath = cache_filepath(VarType.Constant)
+def clear_const_file(vres: str):
+	const_filepath = cache_filepath(VarType.Constant,vres)
 	if os.path.exists(const_filepath):
 		try: os.remove(const_filepath)
 		except IsADirectoryError:
@@ -73,12 +73,12 @@ def open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
 	return rename_vars(dataset)
 
-def load_dataset(  d: date, **kwargs ):
-	filepath =  cache_filepath( VarType.Dynamic, d )
+def load_dataset( vres: str,  d: date, **kwargs ):
+	filepath =  cache_filepath( VarType.Dynamic, vres, d )
 	return open_dataset( filepath, **kwargs)
 
-def load_const_dataset( **kwargs ):
-	filepath =  cache_filepath(VarType.Constant)
+def load_const_dataset( vres: str, **kwargs ):
+	filepath =  cache_filepath(VarType.Constant, vres )
 	return open_dataset( filepath, **kwargs )
 
 class FMBatch:

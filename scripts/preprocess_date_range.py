@@ -8,7 +8,7 @@ from multiprocessing import Pool, cpu_count
 import hydra, os
 
 hydra.initialize( version_base=None, config_path="../config" )
-configure( 'merra2-finetuning' )
+configure( 'merra2-preprocess' )
 reprocess=True
 nproc = cpu_count()-2
 start: date = date(1990,4,1)
