@@ -291,18 +291,21 @@ class MERRA2DataProcessor:
         for vres, vcoord in sscoords.items():
             svars = ssvars.setdefault(vres,[])
             print(f" **** subsample {variable.name}:{vres}, vc={list(vcoord.keys())}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
-            varray = variable.interp( x=vcoord['x'], y=vcoord['y'], assume_sorted=True)
-            if 'z' in vcoord:
-                varray = varray.interp( z=vcoord['z'], assume_sorted=False )
-            if 'time' in varray.dims:
-                resampled: DataArrayResample = varray.resample(time=self.tstep)
-                varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
-            varray.attrs.update(global_attrs)
-            varray.attrs.update(varray.attrs)
-            for missing in [ 'fmissing_value', 'missing_value', 'fill_value' ]:
-                if missing in varray.attrs:
-                    missing_value = varray.attrs.pop('fmissing_value')
-                    varray = varray.where( varray != missing_value, np.nan )
-            svars.append( replace_nans(varray).transpose(*self.corder, missing_dims="ignore" ) )
+            varray: xa.DataArray = self._interp( variable, vcoord, global_attrs, qtype )
+            svars.append( varray )
         return ssvars
 
+    def _interp( self, variable: xa.DataArray, vcoord: Dict[str,np.ndarray], global_attrs: Dict, qtype: QType ) -> xa.DataArray:
+        varray = variable.interp(x=vcoord['x'], assume_sorted=True ) if 'x' in vcoord else variable
+        varray =   varray.interp(y=vcoord['y'], assume_sorted=True ) if 'y' in vcoord else varray
+        varray =   varray.interp(z=vcoord['z'], assume_sorted=False) if 'z' in vcoord else varray
+        if 'time' in varray.dims:
+            resampled: DataArrayResample = varray.resample(time=self.tstep)
+            varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
+        varray.attrs.update(global_attrs)
+        varray.attrs.update(varray.attrs)
+        for missing in ['fmissing_value', 'missing_value', 'fill_value']:
+            if missing in varray.attrs:
+                missing_value = varray.attrs.pop('fmissing_value')
+                varray = varray.where(varray != missing_value, np.nan)
+        return  replace_nans(varray).transpose(*self.corder, missing_dims="ignore" )
