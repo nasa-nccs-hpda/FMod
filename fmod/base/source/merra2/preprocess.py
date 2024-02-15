@@ -290,7 +290,7 @@ class MERRA2DataProcessor:
         sscoords: Dict[str,Dict[str, np.ndarray]] = self.subsample_coords(variable)
         for vres, vcoord in sscoords.items():
             svars = ssvars.setdefault(vres,[])
-            print(f" **** subsample {variable.name}:{vres}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
+            print(f" **** subsample {variable.name}:{vres}, vc={list(vcoord.keys())}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
             varray = variable.interp( x=vcoord['x'], y=vcoord['y'], assume_sorted=True)
             if 'z' in vcoord:
                 varray = varray.interp( z=vcoord['z'], assume_sorted=False )
