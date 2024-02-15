@@ -282,7 +282,7 @@ class MERRA2DataProcessor:
         return sscoords
 
     def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str,List[xa.DataArray]]:
-        ssvars = Dict[str,List] = {}
+        ssvars: Dict[str,List] = {}
         cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
         variable: xa.DataArray = variable.rename(**cmap)
         if isconst and ("time" in variable.dims):
