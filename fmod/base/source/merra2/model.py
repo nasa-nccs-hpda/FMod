@@ -20,12 +20,13 @@ def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.siz
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
-def clear_const_file(vres: str):
-	const_filepath = cache_filepath(VarType.Constant,vres)
-	if os.path.exists(const_filepath):
-		try: os.remove(const_filepath)
-		except IsADirectoryError:
-			shutil.rmtree(const_filepath)
+def clear_const_file():
+	for vres in ["high", "low"]:
+		const_filepath = cache_filepath(VarType.Constant,vres)
+		if os.path.exists(const_filepath):
+			try: os.remove(const_filepath)
+			except IsADirectoryError:
+				shutil.rmtree(const_filepath)
 
 def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
