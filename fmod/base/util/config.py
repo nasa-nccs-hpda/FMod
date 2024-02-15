@@ -37,14 +37,11 @@ class ConfigBase(ABC):
     @classmethod
     def init(cls, config_name: str ):
         if cls._instance is None:
-            try:
-                inst = cls( config_name )
-                cls._instance = inst
-                cls._instantiated = cls
-                print(f' *** Configuration {config_name} initialized *** ')
-            except Exception as eX:
-                traceback.print_exc()
-                raise eX
+            inst = cls( config_name )
+            cls._instance = inst
+            cls._instantiated = cls
+            print(f' *** Configuration {config_name} initialized *** ')
+
 
     @classmethod
     def instance(cls) -> "Configuration":
