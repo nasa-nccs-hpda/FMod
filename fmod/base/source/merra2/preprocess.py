@@ -16,8 +16,8 @@ from fmod.base.source.merra2.batch import ncFormat
 from .model import cache_filepath, VarType
 from enum import Enum
 
-_SEC_PER_HOUR = 3600
-_HOUR_PER_DAY = 24
+_SEC_PER_HOUR =   3600
+_HOUR_PER_DAY =   24
 SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
