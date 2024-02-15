@@ -15,7 +15,6 @@ from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.source.merra2 import batch
 from fmod.base.io.loader import BaseDataset
 from torch import FloatTensor
 import pandas as pd

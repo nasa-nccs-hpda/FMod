@@ -1,7 +1,7 @@
 import xarray as xa, pandas as pd
 import os, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
-from fmod.base.source.merra2.preprocess import StatsAccumulator
+from fmod.pipeline.stats import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from datetime import date
 from fmod.base.util.logging import lgm, exception_handled, log_timing
