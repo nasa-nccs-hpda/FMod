@@ -169,6 +169,7 @@ class MERRA2DataProcessor:
             else:
                 vres_dsets: Dict[str,List[xa.Dataset]] = {}
                 for collection, (file_path, dvars) in dset_files.items():
+                    print(f" >> Loading collection {collection} from {file_path}: dvvars= {dvars}")
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets.setdefault(vres,[]).append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
@@ -179,6 +180,7 @@ class MERRA2DataProcessor:
                 if self.needs_update(VarType.Constant, d, reprocess):
                     const_vres_dsets: Dict[str,List[xa.Dataset]] = {}
                     for collection, (file_path, dvars) in const_files.items():
+                        print(f" >> Loading constants for {collection} from {file_path}: dvvars= {dvars}")
                         daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
                         for vres, dsets in daily_vres_dsets.items(): const_vres_dsets.setdefault(vres,[]).append(dsets)
                     for vres,const_dsets in const_vres_dsets.items():
