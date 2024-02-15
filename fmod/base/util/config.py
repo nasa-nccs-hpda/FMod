@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
 import hydra, traceback, os
+import warnings
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -15,6 +16,7 @@ def cfg() -> DictConfig:
 
 def configure(config_name: str):
     Configuration.init( config_name )
+    warnings.filterwarnings("error")
     lgm().log(f"Config loaded: {config_name}")
 
 def cfgdir() -> str:
