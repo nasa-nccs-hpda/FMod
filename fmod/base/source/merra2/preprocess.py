@@ -153,7 +153,7 @@ class MERRA2DataProcessor:
         if reprocess: return True
         cache_fvpath: str = cache_filepath(vtype, "high", d )
         if not os.path.exists(cache_fvpath): return True
-        if self.format == "sres":
+        if self.format == ncFormat.SRES:
             cache_fvpath: str = cache_filepath(vtype, "low", d)
             if not os.path.exists(cache_fvpath): return True
         lgm().log(f" ** Skipping date {d} due to existence of processed files",display=True)

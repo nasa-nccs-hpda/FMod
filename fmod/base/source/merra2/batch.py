@@ -21,6 +21,7 @@ YEAR_PROGRESS = "year_progress"
 class ncFormat(Enum):
 	Standard = 'standard'
 	DALI = 'dali'
+	SRES = "sres"
 
 class BatchType(Enum):
 	Training = 'training'
