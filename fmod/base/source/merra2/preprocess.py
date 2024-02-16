@@ -15,6 +15,7 @@ from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.source.merra2.batch import ncFormat
 from .model import cache_filepath, VarType
 from enum import Enum
+import warnings
 
 _SEC_PER_HOUR =   3600
 _HOUR_PER_DAY =   24
@@ -204,6 +205,7 @@ class MERRA2DataProcessor:
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
+        warnings.filterwarnings("error")
         for vname in dvnames:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
