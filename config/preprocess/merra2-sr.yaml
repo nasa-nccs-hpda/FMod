@@ -1,4 +1,4 @@
-dataset_version:    'merra2.sr'
+dataset_version:    'merra2.sr.1'
 year_range: [2000,2001]
 data_timestep: 6
 nc_format: 'sres'
