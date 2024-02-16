@@ -9,6 +9,7 @@ from datetime import date
 from xarray.core.resample import DataArrayResample
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from enum import Enum
 
 _SEC_PER_HOUR = 3600
@@ -204,41 +205,6 @@ class MERRA2DataProcessor:
                 dset_list[collection] = (file_path, vlist)
         return dset_files, const_files
 
-    def process_day(self, d: date, **kwargs):
-        from .model import cache_var_filepath, cache_const_filepath
-        reprocess: bool = kwargs.pop('reprocess', False)
-        cache_fvpath: str = cache_var_filepath(cfg().preprocess.version, d)
-        os.makedirs(os.path.dirname(cache_fvpath), mode=0o777, exist_ok=True)
-        if (not os.path.exists(cache_fvpath)) or reprocess:
-            cache_fcpath: str = cache_const_filepath(cfg().preprocess.version)
-            dset_files, const_files = self.get_daily_files(d)
-            ncollections = len(dset_files.keys())
-            if ncollections == 0:
-                print( f"No collections found for date {d}")
-            else:
-                collection_dsets: List[xa.Dataset] = []
-                for collection, (file_path, dvars) in dset_files.items():
-                    collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, **kwargs)
-                    if collection_dset is not None: collection_dsets.append(collection_dset)
-                if len(collection_dsets) > 0:
-                    xa.merge(collection_dsets).to_netcdf(cache_fvpath, format="NETCDF4")
-                    print(f" >> Saving collection data for {d} to file '{cache_fvpath}'")
-                else:
-                    print(f" >> No collection data found for date {d}")
-
-                if not os.path.exists(cache_fcpath):
-                    const_dsets: List[xa.Dataset] = []
-                    for collection, (file_path, dvars) in const_files.items():
-                        collection_dset: xa.Dataset = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
-                        if collection_dset is not None: const_dsets.append( collection_dset )
-                    if len( const_dsets ) > 0:
-                        xa.merge(const_dsets).to_netcdf(cache_fcpath, format="NETCDF4", mode="w")
-                        print(f" >> Saving const data to file '{cache_fcpath}'")
-                    else:
-                        print(f" >> No constant data found")
-        else:
-            print( f" ** Skipping date {d} due to existence of processed file '{cache_fvpath}'")
-
     def load_collection(self, collection: str, file_path: str, dvars: List[str], d: date, **kwargs) -> Optional[xa.Dataset]:
         dset: xa.Dataset = xa.open_dataset(file_path)
         isconst: bool = kwargs.pop( 'isconst', False )
@@ -276,7 +242,7 @@ class MERRA2DataProcessor:
     def featurize_progress(cls, name: str, dims: Sequence[str], progress: np.ndarray) -> Mapping[str, xa.Variable]:
         if len(dims) != progress.ndim:
             raise ValueError(f"Number of dimensions in feature {name}{dims} must be equal to the number of dimensions in progress{progress.shape}.")
-        else: print(f"featurize_progress: {name}{dims} --> progress{progress.shape} ")
+        else: lgm().log(f"featurize_progress: {name}{dims} --> progress{progress.shape} ")
         progress_phase = progress * (2 * np.pi)
         return {name: xa.Variable(dims, progress), name + "_sin": xa.Variable(dims, np.sin(progress_phase)), name + "_cos": xa.Variable(dims, np.cos(progress_phase))}
     @classmethod

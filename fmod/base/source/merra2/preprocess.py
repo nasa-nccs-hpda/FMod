@@ -241,7 +241,7 @@ class MERRA2DataProcessor:
     def featurize_progress(cls, name: str, dims: Sequence[str], progress: np.ndarray) -> Mapping[str, xa.Variable]:
         if len(dims) != progress.ndim:
             raise ValueError(f"Number of dimensions in feature {name}{dims} must be equal to the number of dimensions in progress{progress.shape}.")
-        else: print(f"featurize_progress: {name}{dims} --> progress{progress.shape} ")
+        else: lgm().log(f"featurize_progress: {name}{dims} --> progress{progress.shape} ")
         progress_phase = progress * (2 * np.pi)
         return {name: xa.Variable(dims, progress), name + "_sin": xa.Variable(dims, np.sin(progress_phase)), name + "_cos": xa.Variable(dims, np.cos(progress_phase))}
     @classmethod
