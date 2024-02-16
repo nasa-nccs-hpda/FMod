@@ -99,7 +99,7 @@ class MERRA2DataProcessor:
             res_stats = [ pstat[vres] for pstat in proc_stats ]
             self.merge_stats( vres, res_stats )
             for statname in self.stats[vres].statnames:
-                filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
+                filepath = stats_filepath( cfg().preprocess.dataset_version, statname, vres )
                 self.stats[vres].save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
@@ -182,7 +182,7 @@ class MERRA2DataProcessor:
                 for vres,collection_dsets in vres_dsets.items():
                     cache_fvpath: str = cache_filepath(VarType.Dynamic, vres, d)
                     self.write_daily_files( cache_fvpath, collection_dsets, vres)
-                    print(f" >> Saving collection data for {d} to file '{cache_fvpath}'")
+                    print(f" >> Saving {vres} res collection data for {d} to file '{cache_fvpath}'")
 
                 if self.needs_update(VarType.Constant, d, reprocess):
                     const_vres_dsets: Dict[str,List[xa.Dataset]] = {}
@@ -194,13 +194,13 @@ class MERRA2DataProcessor:
                         cache_fcpath: str = cache_filepath( VarType.Constant, vres )
                         if not os.path.exists( cache_fcpath ):
                             self.write_daily_files(cache_fcpath, const_dsets, vres)
-                            print(f" >> Saving const data to file '{cache_fcpath}'")
+                            print(f" >> Saving {vres} res const data to file '{cache_fcpath}'")
                     else:
                         print(f" >> No constant data found")
 
     def load_collection(self, collection: str, file_path: str, dvnames: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
         dset = xa.open_dataset(file_path)
-        print(f" >> Loading collection '{collection}' from file {file_path}")
+        lgm().log(f" >> Loading collection '{collection}' from file {file_path}")
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
@@ -213,7 +213,7 @@ class MERRA2DataProcessor:
                 for svar in svars:
                     self.stats[vres].add_entry(vname, svar)
                     nodata_test( vname, svar, d)
-                    print(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
+                    lgm().log(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
                     dvars[vname] = svar
         dset.close()
         return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars.items() }
