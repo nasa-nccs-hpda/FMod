@@ -33,7 +33,7 @@ class VarType(Enum):
 
 def suffix( vres: str, ncformat: ncFormat ) -> str:
 	res_suffix = "" if vres == "high" else "." + vres
-	format_suffix = ".nc" if ncformat == ncformat.Standard else ".dali"
+	format_suffix = ".dali" if ncformat == ncformat.DALI else ".nc"
 	return res_suffix + format_suffix
 
 def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
