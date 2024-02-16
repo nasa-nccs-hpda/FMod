@@ -25,10 +25,16 @@ class StatsEntry:
         return self._stats.get(statname)
 
 class StatsAccumulator:
-    statnames = ["mean", "std", "std_diff"]
+    _statnames = ["mean", "std", "std_diff"]
 
-    def __init__(self):
+    def __init__(self, vres: str ):
         self._entries: Dict[str, StatsEntry] = {}
+        self.vres: str = vres
+        self._suffix = "" if vres == "high" else "." + vres
+
+    @property
+    def statnames(self):
+        return [ s + self._suffix for s in self._statnames ]
 
     @property
     def entries(self) -> Dict[str, StatsEntry]:

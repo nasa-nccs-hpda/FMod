@@ -80,7 +80,7 @@ class MERRA2DataProcessor:
         self.corder = ['time','z','y','x']
         self.var_file_template =  cfg().platform.dataset_files
         self.const_file_template =  cfg().platform.constant_file
-        self.stats = { vres: StatsAccumulator() for vres in ["high",'low'] }
+        self.stats = { vres: StatsAccumulator(vres) for vres in ["high",'low'] }
 
     @classmethod
     def get_qtype( cls, vname: str) -> QType:
@@ -93,12 +93,14 @@ class MERRA2DataProcessor:
                 entry: StatsEntry = self.stats[vres].entry(varname)
                 entry.merge( new_entry )
 
-    def save_stats(self, vres: str, ext_stats: List[StatsAccumulator]=None ):
+    def save_stats(self,  proc_stats: List[Dict[str,StatsAccumulator]] ):
         from fmod.base.source.merra2.model import stats_filepath
-        self.merge_stats( vres, ext_stats )
-        for statname in self.stats[vres].statnames:
-            filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
-            self.stats[vres].save( statname, filepath )
+        for vres in ["high","low"]:
+            res_stats = [ pstat[vres] for pstat in proc_stats ]
+            self.merge_stats( vres, res_stats )
+            for statname in self.stats[vres].statnames:
+                filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
+                self.stats[vres].save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
         dsroot: str = fmbdir('dataset_root')
