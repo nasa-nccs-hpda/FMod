@@ -68,7 +68,7 @@ class DailyFiles:
 class MERRA2DataProcessor:
 
     def __init__(self):
-        self.format = ncFormat( cfg().preprocess.get('nc_format','standard') )
+        self.format = ncFormat( cfg().task.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
         self.upscale_factor: int = cfg().preprocess.get('upscale_factor')

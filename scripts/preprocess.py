@@ -12,7 +12,7 @@ hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-finetuning' )
 reprocess=False
 nproc = cpu_count()-2
-nc_format = ncFormat( cfg().preprocess.get('nc_format','standard') )
+nc_format = ncFormat( cfg().task.get('nc_format','standard') )
 yrange: Tuple[int,int] = cfg().preprocess.year_range
 
 def process( d: date ) -> StatsAccumulator:
