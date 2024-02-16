@@ -4,8 +4,9 @@ from typing import List, Tuple, Dict
 from datetime import date
 from fmod.base.util.dates import date_range
 from fmod.base.source.merra2.model import clear_const_file
+import hydra, os  
 from multiprocessing import Pool, cpu_count
-import hydra, os
+
 
 hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-sr' )
