@@ -138,7 +138,7 @@ class MERRA2DataProcessor:
             self.save_dali_dataset( filepath, merged_dset, vres )
         else:
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
-            print(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
+            lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
 
     @classmethod
     def save_dali_dataset(cls, filepath: str, merged_dset: xa.Dataset, vres: str ):
@@ -174,23 +174,25 @@ class MERRA2DataProcessor:
             if ncollections == 0:
                 print( f"No collections found for date {d}")
             else:
-                vres_dsets: Dict[str,List[xa.Dataset]] = {}
+                vres_dsets: Dict[str,List[xa.Dataset]] = dict( high=[], low=[])
                 for collection, (file_path, dvars) in dset_files.items():
                     print(f" >> Loading {collection} from {file_path}: dvvars= {dvars}")
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
-                    for vres, dsets in daily_vres_dsets.items(): vres_dsets.setdefault(vres,[]).append(dsets)
+                    for vres, dsets in daily_vres_dsets.items(): vres_dsets[vres].append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
+                    print(f"\n --------- Processing {vres} res variable data: {len(collection_dsets)} dsets --------- \n")
                     cache_fvpath: str = cache_filepath(VarType.Dynamic, vres, d)
                     self.write_daily_files( cache_fvpath, collection_dsets, vres)
                     print(f" >> Saving {vres} res collection data for {d} to file '{cache_fvpath}'")
 
                 if self.needs_update(VarType.Constant, d, reprocess):
-                    const_vres_dsets: Dict[str,List[xa.Dataset]] = {}
+                    const_vres_dsets: Dict[str,List[xa.Dataset]] = dict( high=[], low=[])
                     for collection, (file_path, dvars) in const_files.items():
                         print(f" >> Loading constants for {collection} from {file_path}: dvvars= {dvars}")
                         daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
-                        for vres, dsets in daily_vres_dsets.items(): const_vres_dsets.setdefault(vres,[]).append(dsets)
+                        for vres, dsets in daily_vres_dsets.items(): const_vres_dsets[vres].append(dsets)
                     for vres,const_dsets in const_vres_dsets.items():
+                        print(f"\n --------- Processing {vres} res const data: {len(const_dsets)} dsets --------- \n")
                         cache_fcpath: str = cache_filepath( VarType.Constant, vres )
                         if not os.path.exists( cache_fcpath ):
                             self.write_daily_files(cache_fcpath, const_dsets, vres)
