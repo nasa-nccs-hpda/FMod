@@ -200,7 +200,7 @@ class MERRA2DataProcessor:
 
     def load_collection(self, collection: str, file_path: str, dvnames: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
         dset = xa.open_dataset(file_path)
-        print(f" >> Loading collection '{collection}' from file {file_path}, dset = {dset}")
+        print(f" >> Loading collection '{collection}' from file {file_path}")
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
