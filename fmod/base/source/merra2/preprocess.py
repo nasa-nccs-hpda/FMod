@@ -208,7 +208,7 @@ class MERRA2DataProcessor:
                     print(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
                     dvars[vname] = svar
         dset.close()
-        return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars }
+        return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars.items() }
 
     def create_dataset( self, mvars: Dict[str,xa.DataArray], isconst: bool ) -> xa.Dataset:
         result = xa.Dataset(mvars)
