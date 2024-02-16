@@ -11,9 +11,9 @@ from multiprocessing import Pool, cpu_count
 hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-sr' )
 reprocess=True
-nproc = cpu_count()-2
+nproc = 1 # cpu_count()-2
 start: date = date(1990,4,1)
-end: date = date(1990,5,1)
+end: date = date(1990,4,3)
 
 def process( d: date ) -> Dict[str,StatsAccumulator]:
 	reader = MERRA2DataProcessor()
@@ -24,9 +24,14 @@ if __name__ == '__main__':
 	dates: List[date] = date_range( start, end )
 	print( f"Multiprocessing {len(dates)} days with {nproc} procs")
 	if reprocess: clear_const_file()
-	with Pool(processes=nproc) as pool:
-		proc_stats: List[Dict[str,StatsAccumulator]] = pool.map( process, dates )
-		MERRA2DataProcessor().save_stats(proc_stats)
+	if nproc > 1:
+		with Pool(processes=nproc) as pool:
+			proc_stats: List[Dict[str,StatsAccumulator]] = pool.map( process, dates )
+			MERRA2DataProcessor().save_stats(proc_stats)
+	else:
+		for d in  dates:
+			proc_stats: Dict[str,StatsAccumulator] = process(d)
+			MERRA2DataProcessor().save_stats( [proc_stats] )
 
 
 
