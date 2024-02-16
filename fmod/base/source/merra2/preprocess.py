@@ -15,7 +15,6 @@ from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.source.merra2.batch import ncFormat
 from .model import cache_filepath, VarType
 from enum import Enum
-import warnings
 
 _SEC_PER_HOUR =   3600
 _HOUR_PER_DAY =   24
@@ -74,7 +73,7 @@ class MERRA2DataProcessor:
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
         self.upscale_factor: int = cfg().preprocess.get('upscale_factor')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
-        self.tstep = str(cfg().preprocess.data_timestep) + "H"
+        self.tstep = str(cfg().preprocess.data_timestep) + "h"
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])
         self.vars: Dict[str, List[str]] = cfg().preprocess.vars
         self.dmap: Dict = cfg().preprocess.dims
@@ -177,7 +176,7 @@ class MERRA2DataProcessor:
             else:
                 vres_dsets: Dict[str,List[xa.Dataset]] = {}
                 for collection, (file_path, dvars) in dset_files.items():
-                    print(f" >>> Loading {collection} from {file_path}: dvvars= {dvars}")
+                    print(f" >> Loading {collection} from {file_path}: dvvars= {dvars}")
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets.setdefault(vres,[]).append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
@@ -201,11 +200,10 @@ class MERRA2DataProcessor:
 
     def load_collection(self, collection: str, file_path: str, dvnames: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
         dset = xa.open_dataset(file_path)
-        lgm().log(f" >> Loading collection '{collection}' from file {file_path}", display=True )
+        lgm().log(f" >> Loading collection '{collection}' from file {file_path}")
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
-        warnings.filterwarnings("error")
         for vname in dvnames:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
@@ -215,7 +213,7 @@ class MERRA2DataProcessor:
                 for svar in svars:
                     self.stats[vres].add_entry(vname, svar)
                     nodata_test( vname, svar, d)
-                    lgm().log(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}", display=True)
+                    lgm().log(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
                     dvars[vname] = svar
         dset.close()
         return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars.items() }
