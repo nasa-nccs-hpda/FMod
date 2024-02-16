@@ -80,25 +80,25 @@ class MERRA2DataProcessor:
         self.corder = ['time','z','y','x']
         self.var_file_template =  cfg().platform.dataset_files
         self.const_file_template =  cfg().platform.constant_file
-        self.stats = StatsAccumulator()
+        self.stats = { vres: StatsAccumulator() for vres in ["high",'low'] }
 
     @classmethod
     def get_qtype( cls, vname: str) -> QType:
         extensive_vars = cfg().preprocess.get('extensive',[])
         return QType.Extensive if vname in extensive_vars else QType.Intensive
 
-    def merge_stats( self, stats: List[StatsAccumulator] = None ):
+    def merge_stats( self, vres: str, stats: List[StatsAccumulator] = None ):
         for stats_accum in ([] if stats is None else stats):
             for varname, new_entry in stats_accum.entries.items():
-                entry: StatsEntry = self.stats.entry(varname)
+                entry: StatsEntry = self.stats[vres].entry(varname)
                 entry.merge( new_entry )
 
-    def save_stats(self, ext_stats: List[StatsAccumulator]=None ):
+    def save_stats(self, vres: str, ext_stats: List[StatsAccumulator]=None ):
         from fmod.base.source.merra2.model import stats_filepath
-        self.merge_stats( ext_stats )
-        for statname in self.stats.statnames:
+        self.merge_stats( vres, ext_stats )
+        for statname in self.stats[vres].statnames:
             filepath = stats_filepath( cfg().preprocess.dataset_version, statname )
-            self.stats.save( statname, filepath )
+            self.stats[vres].save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
         dsroot: str = fmbdir('dataset_root')
@@ -190,29 +190,30 @@ class MERRA2DataProcessor:
                     else:
                         print(f" >> No constant data found")
 
-    def load_collection(self, collection: str, file_path: str, dvars: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
+    def load_collection(self, collection: str, file_path: str, dvnames: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
+        dset: xa.Dataset = None
         try:
-            dset: xa.Dataset = xa.open_dataset(file_path)
+            dset = xa.open_dataset(file_path)
         except RuntimeWarning as w:
             lgm().log(f"Warning while loading file {file_path}: {w}")
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
-        for dvar in dvars:
-            darray: xa.DataArray = dset.data_vars[dvar]
-            qtype: QType = self.get_qtype(dvar)
+        for vname in dvnames:
+            darray: xa.DataArray = dset.data_vars[vname]
+            qtype: QType = self.get_qtype(vname)
             ssvars: Dict[str,List[xa.DataArray]] = self.subsample( darray, dset_attrs, qtype, isconst )
             for vres, svars in ssvars.items():
                 dvars = mvars.setdefault( vres, {} )
                 for svar in svars:
-                    self.stats.add_entry(dvar, svar)
-                    nodata_test( dvar, svar, d)
-                    print(f" ** Processing {vres} res variable {dvar}{svar.dims}: {svar.shape} for {d}")
-                    dvars[dvar] = svar
+                    self.stats[vres].add_entry(vname, svar)
+                    nodata_test( vname, svar, d)
+                    print(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
+                    dvars[vname] = svar
         dset.close()
         return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars }
 
-    def create_dataset( self, mvars: List[xa.DataArray], isconst: bool ) -> xa.Dataset:
+    def create_dataset( self, mvars: Dict[str,xa.DataArray], isconst: bool ) -> xa.Dataset:
         result = xa.Dataset(mvars)
         if not isconst:
             self.add_derived_vars(result)
