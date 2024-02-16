@@ -16,7 +16,7 @@ def cfg() -> DictConfig:
 
 def configure(config_name: str):
     Configuration.init( config_name )
-    warnings.filterwarnings("error")
+ #   warnings.filterwarnings("error")
     lgm().log(f"Config loaded: {config_name}")
 
 def cfgdir() -> str:

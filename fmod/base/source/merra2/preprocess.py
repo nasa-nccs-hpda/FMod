@@ -191,11 +191,7 @@ class MERRA2DataProcessor:
                         print(f" >> No constant data found")
 
     def load_collection(self, collection: str, file_path: str, dvnames: List[str], d: date, **kwargs) -> Dict[str,xa.Dataset]:
-        dset: xa.Dataset = None
-        try:
-            dset = xa.open_dataset(file_path)
-        except RuntimeWarning as w:
-            lgm().log(f"Warning while loading file {file_path}: {w}")
+        dset = xa.open_dataset(file_path)
         isconst: bool = kwargs.pop( 'isconst', False )
         dset_attrs: Dict = dict(collection=collection, **dset.attrs, **kwargs)
         mvars: Dict[str,Dict[str,xa.DataArray]] = {}
