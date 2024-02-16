@@ -8,6 +8,7 @@ from fmod.base.util.dates import skw, dstr
 from datetime import date
 from xarray.core.resample import DataArrayResample
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from enum import Enum
 
@@ -340,7 +341,7 @@ class MERRA2DataProcessor:
         if isconst and ("time" in varray.dims):
             varray = varray.isel( time=0, drop=True )
         scoords: Dict[str, np.ndarray] = self.subsample_coords(varray)
-        print(f" **** subsample {variable.name}, dims={varray.dims}, shape={varray.shape}, new sizes: { {cn:cv.size for cn,cv in scoords.items()} }")
+        lgm().log(f" **** subsample {variable.name}, dims={varray.dims}, shape={varray.shape}, new sizes: { {cn:cv.size for cn,cv in scoords.items()} }")
         varray = varray.interp( x=scoords['x'], y=scoords['y'], assume_sorted=True)
         if 'z' in scoords:
             varray = varray.interp( z=scoords['z'], assume_sorted=False )

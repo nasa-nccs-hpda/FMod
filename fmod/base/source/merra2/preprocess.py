@@ -301,7 +301,7 @@ class MERRA2DataProcessor:
         sscoords: Dict[str,Dict[str, np.ndarray]] = self.subsample_coords(variable)
         for vres, vcoord in sscoords.items():
             svars = ssvars.setdefault(vres,[])
-            print(f" **** subsample {variable.name}:{vres}, vc={list(vcoord.keys())}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
+            lgm().log(f" **** subsample {variable.name}:{vres}, vc={list(vcoord.keys())}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
             varray: xa.DataArray = self._interp( variable, vcoord, global_attrs, qtype )
             svars.append( varray )
         return ssvars

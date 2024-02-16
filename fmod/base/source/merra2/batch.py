@@ -47,8 +47,9 @@ def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
 	os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
 	return fpath
 
-def stats_filepath(version: str, statname: str) -> str:
-	return f"{fmbdir('processed')}/{version}/stats/{statname}"
+def stats_filepath(version: str, statname: str, vres: str) -> str:
+	res_suffix = "" if vres == "high" else "." + vres
+	return f"{fmbdir('processed')}/{version}/stats{res_suffix}/{statname}"
 def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task['train_steps']
 	elif btype == BatchType.Forecast: return cfg().task['eval_steps']
@@ -95,8 +96,8 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
 	return xa.merge( [dynamics, constants], compat='override' )
 
-def load_batch( d: date, **kwargs ):
-	filepath = cache_filepath(VarType.Dynamic, d)
+def load_batch( d: date, vres: str="high", **kwargs ):
+	filepath = cache_filepath(VarType.Dynamic, vres, d)
 	device = cfg().task.device.lower()
 	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", engine="netcdf4", **kwargs)
 	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
