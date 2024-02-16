@@ -190,8 +190,9 @@ class MERRA2DataProcessor:
                         for vres, dsets in daily_vres_dsets.items(): const_vres_dsets.setdefault(vres,[]).append(dsets)
                     for vres,const_dsets in const_vres_dsets.items():
                         cache_fcpath: str = cache_filepath( VarType.Constant, vres )
-                        self.write_daily_files(cache_fcpath, const_dsets, vres)
-                        print(f" >> Saving const data to file '{cache_fcpath}'")
+                        if not os.path.exists( cache_fcpath ):
+                            self.write_daily_files(cache_fcpath, const_dsets, vres)
+                            print(f" >> Saving const data to file '{cache_fcpath}'")
                     else:
                         print(f" >> No constant data found")
 
