@@ -131,23 +131,27 @@ class MERRA2DataProcessor:
     def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset], vres: str):
         merged_dset: xa.Dataset = xa.merge(collection_dsets)
         lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", display=True )
-        if self.format == ncFormat.Standard:
+        if self.format == ncFormat.DALI:
+            self.save_dali_dataset( filepath, merged_dset, vres )
+        else:
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
             print(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
-        else:
-            os.makedirs( filepath, exist_ok=True )
-            hattrs = dict( list(merged_dset.attrs.items()) + [('data_vars',list(merged_dset.data_vars.keys()))] )
-            for vid, var in merged_dset.data_vars.items():
-                hattrs[vid] =  [ f"{k}={sformat(v)}" for k,v in var.attrs.items()] + [f"dims={','.join(var.dims)}"]
-                vfpath = filepath + f"/{vid}.npy"
-                with open( vfpath, 'w+b'  ) as fp:
-                    write_array( fp, var.values, (1,0), allow_pickle=False )
-                    lgm().log( f"  > Saving variable {vid} to: {vfpath}")
-            hattrs['attrs'] = str(list(merged_dset.attrs.items()))
-            header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs )
-            hfpath = filepath + "/header.nc"
-            header.to_netcdf(hfpath, format="NETCDF4", mode="w")
-            lgm().log(f"  > Saving header to: {hfpath}")
+
+    @classmethod
+    def save_dali_dataset(cls, filepath: str, merged_dset: xa.Dataset, vres: str ):
+        os.makedirs(filepath, exist_ok=True)
+        hattrs = dict(list(merged_dset.attrs.items()) + [('data_vars', list(merged_dset.data_vars.keys()))])
+        for vid, var in merged_dset.data_vars.items():
+            hattrs[vid] = [f"{k}={sformat(v)}" for k, v in var.attrs.items()] + [f"dims={','.join(var.dims)}"]
+            vfpath = filepath + f"/{vid}.npy"
+            with open(vfpath, 'w+b') as fp:
+                write_array(fp, var.values, (1, 0), allow_pickle=False)
+                lgm().log(f"  > Saving variable {vid} to: {vfpath}")
+        hattrs['attrs'] = str(list(merged_dset.attrs.items()))
+        header: xa.Dataset = xa.Dataset(merged_dset.coords, attrs=hattrs)
+        hfpath = filepath + "/header.nc"
+        header.to_netcdf(hfpath, format="NETCDF4", mode="w")
+        lgm().log(f"  > Saving header to: {hfpath}")
 
     def needs_update(self, vtype: VarType, d: date, reprocess: bool ) -> bool:
         if reprocess: return True
