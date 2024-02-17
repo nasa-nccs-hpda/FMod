@@ -291,7 +291,7 @@ class MERRA2DataProcessor:
     def subsample_coords(self, dvar: xa.DataArray ) -> Dict[str,Dict[str,np.ndarray]]:
         sscoords: Dict[str,Dict[str,np.ndarray]] = {}
         for vres in ["high","low"]:
-            if vres == "high" or self.format == "sr":
+            if vres == "high" or self.format == ncFormat.SRES:
                 self.interp_axes( dvar, sscoords, vres )
         return sscoords
 
