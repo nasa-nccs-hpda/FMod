@@ -6,6 +6,7 @@ from nvidia.dali import fn
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
 from fmod.base.util.ops import format_timedeltas, fmbdir
+from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import numpy as np
 
@@ -32,25 +33,18 @@ class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
 
-def suffix( vres: str, ncformat: ncFormat ) -> str:
-	res_suffix = "" if vres == "high" else "." + vres
-	format_suffix = ".dali" if ncformat == ncformat.DALI else ".nc"
-	return res_suffix + format_suffix
-
 def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
 	version = cfg().task.dataset_version
-	ncformat: ncFormat = ncFormat( cfg().task.nc_format )
 	if vartype == VarType.Dynamic:
 		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-		fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{suffix(vres,ncformat)}"
+		fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{data_suffix(vres)}"
 	else:
-		fpath = f"{fmbdir('processed')}/{version}/const{suffix(vres,ncformat)}"
+		fpath = f"{fmbdir('processed')}/{version}/const{data_suffix(vres)}"
 	os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
 	return fpath
 
 def stats_filepath(version: str, statname: str, vres: str) -> str:
-	res_suffix = "" if vres == "high" else "." + vres
-	return f"{fmbdir('processed')}/{version}/stats{res_suffix}/{statname}"
+	return f"{fmbdir('processed')}/{version}/stats{path_suffix(vres)}/{statname}"
 def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task['train_steps']
 	elif btype == BatchType.Forecast: return cfg().task['eval_steps']

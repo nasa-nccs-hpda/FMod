@@ -1,6 +1,25 @@
 from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
+from fmod.base.util.config import configure, cfg
+from fmod.base.source.merra2.batch import ncFormat
 # from fmod.pipeline.merra2 import TensorRole
+
+def path_suffix(vres: str="high") -> str:
+	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
+	upscale_factor: int = cfg().preprocess.get('upscale_factor')
+	res_suffix = ""
+	if (vres == "low") and (ncformat == ncformat.SRES):
+		res_suffix = f".us{upscale_factor}"
+	return res_suffix
+
+def data_suffix(vres: str="high") -> str:
+	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
+	format_suffix = ".dali" if ncformat == ncformat.DALI else ".nc"
+	upscale_factor: int = cfg().preprocess.get('upscale_factor')
+	res_suffix = ""
+	if (vres == "low") and (ncformat == ncformat.SRES):
+		res_suffix = f".us{upscale_factor}"
+	return res_suffix + format_suffix
 
 class BaseDataset(IterableDataset):
 
