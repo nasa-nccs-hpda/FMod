@@ -12,7 +12,7 @@ np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.stats import StatsAccumulator, StatsEntry
-from fmod.base.source.merra2.batch import ncFormat
+from fmod.base.io.loader import ncFormat
 from .model import cache_filepath, VarType
 from enum import Enum
 
@@ -71,7 +71,7 @@ class MERRA2DataProcessor:
         self.format = ncFormat( cfg().task.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
-        self.upscale_factor: int = cfg().task.get('upscale_factor')
+        self.upscale_factor: int = cfg().preprocess.get('upscale_factor')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
         self.tstep = str(cfg().preprocess.data_timestep) + "h"
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])

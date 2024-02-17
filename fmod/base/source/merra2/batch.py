@@ -20,11 +20,6 @@ AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
-class ncFormat(Enum):
-	Standard = 'standard'
-	DALI = 'dali'
-	SRES = "sres"
-
 class BatchType(Enum):
 	Training = 'training'
 	Forecast = 'forecast'

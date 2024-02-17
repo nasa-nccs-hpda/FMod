@@ -1,8 +1,13 @@
 from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import configure, cfg
-from fmod.base.source.merra2.batch import ncFormat
+from enum import Enum
 # from fmod.pipeline.merra2 import TensorRole
+
+class ncFormat(Enum):
+	Standard = 'standard'
+	DALI = 'dali'
+	SRES = "sres"
 
 def path_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
