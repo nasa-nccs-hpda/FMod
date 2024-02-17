@@ -132,7 +132,7 @@ class MERRA2DataProcessor:
 
     def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset], vres: str):
         merged_dset: xa.Dataset = xa.merge(collection_dsets)
-        lgm().log(f"\n **** write_daily_files({self.format.value}): {filepath}", display=True )
+        lgm().log(f"**** write_daily_files({self.format.value}): {filepath}", display=True )
         os.makedirs( os.path.dirname(filepath), exist_ok=True )
         if self.format == ncFormat.DALI:
             self.save_dali_dataset( filepath, merged_dset, vres )
@@ -210,6 +210,7 @@ class MERRA2DataProcessor:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
             ssvars: Dict[str,List[xa.DataArray]] = self.subsample( darray, dset_attrs, qtype, isconst )
+            print( f" >> Subsampling variable '{vname}': { {res:len(vlist) for (res,vlist) in ssvars.items()} } ")
             for vres, svars in ssvars.items():
                 dvars = mvars.setdefault( vres, {} )
                 for svar in svars:
