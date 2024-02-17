@@ -286,6 +286,7 @@ class MERRA2DataProcessor:
                 self.interp_axis(dvar, coords, axis)
             else:
                 hres_coords: Dict[str,np.ndarray] = subsample_coords['high']
+                if axis == 'x': print( f"interp axes({dvar.name}) low-res: high-res-coords= {list(hres_coords.keys())}")
                 coords[axis] =  hres_coords[axis][0::self.upscale_factor]
 
     def subsample_coords(self, dvar: xa.DataArray ) -> Dict[str,Dict[str,np.ndarray]]:
