@@ -71,7 +71,7 @@ class MERRA2DataProcessor:
         self.format = ncFormat( cfg().task.get('nc_format','standard') )
         self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
         self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
-        self.upscale_factor: int = cfg().preprocess.get('upscale_factor')
+        self.upscale_factor: int = cfg().task.get('upscale_factor')
         self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
         self.tstep = str(cfg().preprocess.data_timestep) + "h"
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])
