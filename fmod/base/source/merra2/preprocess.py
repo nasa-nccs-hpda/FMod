@@ -180,7 +180,7 @@ class MERRA2DataProcessor:
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets[vres].append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
-                    print(f"\n --------- Processing {vres} res variable data: {len(collection_dsets)} dsets --------- \n")
+                    lgm().log(f" --------- Processing {vres} res variable data: {len(collection_dsets)} dsets --------- ")
                     cache_fvpath: str = cache_filepath(VarType.Dynamic, vres, d)
                     self.write_daily_files( cache_fvpath, collection_dsets, vres)
                     print(f" >> Saving {vres} res collection data for {d} to file '{cache_fvpath}'")
@@ -192,7 +192,7 @@ class MERRA2DataProcessor:
                         daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, isconst=True, **kwargs)
                         for vres, dsets in daily_vres_dsets.items(): const_vres_dsets[vres].append(dsets)
                     for vres,const_dsets in const_vres_dsets.items():
-                        print(f"\n --------- Processing {vres} res const data: {len(const_dsets)} dsets --------- \n")
+                        lgm().log(f" --------- Processing {vres} res const data: {len(const_dsets)} dsets --------- ")
                         cache_fcpath: str = cache_filepath( VarType.Constant, vres )
                         if not os.path.exists( cache_fcpath ):
                             self.write_daily_files(cache_fcpath, const_dsets, vres)
@@ -210,7 +210,7 @@ class MERRA2DataProcessor:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
             ssvars: Dict[str,List[xa.DataArray]] = self.subsample( darray, dset_attrs, qtype, isconst )
-            print( f" >> Subsampling variable '{vname}': { {res:len(vlist) for (res,vlist) in ssvars.items()} } ")
+            lgm().log( f" >> Subsampling variable {vname}({d}): { {res:len(vlist) for (res,vlist) in ssvars.items()} } ")
             for vres, svars in ssvars.items():
                 dvars = mvars.setdefault( vres, {} )
                 for svar in svars:
