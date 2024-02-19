@@ -75,13 +75,13 @@ def open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
 	return rename_vars(dataset)
 
-def load_dataset( vres: str,  d: date, **kwargs ) -> xa.Dataset:
+def load_dataset( vres: str,  d: date ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, vres, d )
-	return open_dataset( filepath, **kwargs)
+	return open_dataset( filepath )
 
-def load_const_dataset( vres: str, **kwargs ):
+def load_const_dataset( vres: str ):
 	filepath =  cache_filepath(VarType.Constant, vres )
-	return open_dataset( filepath, **kwargs )
+	return open_dataset( filepath )
 
 class FMBatch:
 

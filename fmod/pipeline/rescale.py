@@ -9,6 +9,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
 from fmod.base.source.merra2.batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath
 from fmod.base.io.loader import ncFormat
+from fmod.base.util.ops import print_norms, vars3d
 from xarray.core.resample import DataArrayResample
 import xarray as xa, pandas as pd
 import numpy as np
@@ -50,10 +51,16 @@ class DataLoader(object):
 	def constant_data(self, vres: str, **kwargs ):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
-	def load_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
+	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
 		dset: xa.Dataset = load_dataset( vres, d, **kwargs ).squeeze( drop=True )
 		merged: xa.Dataset = merge_batch( [dset], self.constant_data(vres,**kwargs) )
 		return merged
+
+	def get_channel_array(self, vres: str, d: date, **kwargs) -> xa.DataArray:
+		dset: xa.Dataset = self.get_dataset( vres, d )
+		cvars = kwargs.pop('vars', vars3d(dset))
+		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
+		return self.to_feature_array( dset )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:

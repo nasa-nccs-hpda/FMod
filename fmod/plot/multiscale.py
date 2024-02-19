@@ -40,95 +40,77 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 	stats: Dict[str,xa.DataArray] = { stat: statdata.data_vars[vname] for stat,statdata in norms.items()}
 	return (fvar-stats[ statnames['mean'] ]) / stats[ statnames['std'] ]
 
+
 @exception_handled
-def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str],  **kwargs ):
-	ftime: np.ndarray = xaformat_timedeltas( target.coords['time'], form="day", strf=False ).values
-	tvals = list( range( 1, round(float(ftime[-1]))+1, math.ceil(ftime.size/10) ) )
+def mplplot( images: Dict[str,xa.DataArray], task_spec: Dict, **kwargs ):
+	ims, pvars, nvars, ptypes = {}, {}, len(images), ['']
+	sample: xa.DataArray = list(images.values())[0]
+	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
+	levels: xa.DataArray = sample.coords['level']
+	lunits : str = levels.attrs.get('units','')
+	dayf = 24/task_spec['data_timestep']
+	ncols =  len( ptypes )
+	lslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=levels.size-1, description='Level Index:', )
+	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
+	errors: Dict[str,xa.DataArray] = {}
+
 	with plt.ioff():
-		fig, ax = plt.subplots(nrows=1, ncols=1,  figsize=[ 9, 6 ], layout="tight")
+		fig, axs = plt.subplots(nrows=nvars, ncols=ncols, sharex=True, sharey=True, figsize=[ncols*5, nvars*3], layout="tight")
 
 	for iv, vname in enumerate(vnames):
 		tvar: xa.DataArray = normalize(target,vname,**kwargs)
-		fvar: xa.DataArray = normalize(forecast,vname,**kwargs)
-		error: xa.DataArray = rmse(tvar-fvar).assign_coords(time=ftime).rename( time = "time (days)")
-		error.plot.line( ax=ax, color=colors[iv], label=vname )
-
-	ax.set_title(f"  Forecast Error  ")
-	ax.xaxis.set_major_locator(ticker.FixedLocator(tvals))
-	ax.legend()
-	return fig.canvas
-
-class RescalePlotter:
-
-	def __init__(self, datasets: Dict[str,xa.Dataset], **kwargs ):
-		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
-		(self.fig, self.axs) = (None,None)
-		self.chanids: List[str] = self.dataset.chanIds['target']
-		self.ichannel: int = 0
-		self.istep: int = 0
-		self.create_figure(**kwargs)
-		self.gridops = GridOps(nlat, nlon)
-		self.cslider: StepSlider = StepSlider( 'Channel:', self.nchan,  self.channel_update )
-		self.sslider: StepSlider = StepSlider( 'Step:', self.nsteps,  self.step_update )
-		self.vrange: Tuple[float,float] = (0.0,0.0)
-		self.ims: List[Optional[AxesImage]] = [None,None,None]
-		self.format_plot()
-
-	def format_plot(self):
-		self.fig.suptitle( self.channel_title, fontsize=10, va="top", y=1.0 )
-
-	def create_figure(self, **kwargs ):
-		figsize = kwargs.pop('figsize',(12, 5))
-		with plt.ioff():
-			with plt.ioff():
-				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
-		for ax in self.axs.flat:
+		plotvars = [ tvar ]
+		if forecast is not None:
+			fvar: xa.DataArray = normalize(forecast,vname,**kwargs)
+			diff: xa.DataArray = tvar - fvar
+			errors[vname] = rmse(diff)
+			plotvars = plotvars + [ fvar, diff ]
+		vrange = None
+		for it, pvar in enumerate( plotvars ):
+			ax = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 			ax.set_aspect(0.5)
-			ax.set_axis_off()
-		print(self.fig.__class__)
+			if it != 1: vrange = cscale( pvar, 2.0 )
+			tslice: xa.DataArray = pvar.isel(time=tslider.value)
+			if "level" in tslice.dims:
+				tslice = tslice.isel(level=lslider.value)
+			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			pvars[(iv,it)] =  pvar
+			ax.set_title(f"{vname} {ptypes[it]}")
 
 	@exception_handled
-	def plot(self, **kwargs):
-		cmap = kwargs.pop('cmap', 'jet')
-		origin = kwargs.pop('origin', 'lower' )
-		for ip, pdata in enumerate(self.plot_data):
-			ax = self.axs[ip]
-			ax.set_title(f"{self.tensor_roles[ip]}")
-			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
-			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
-			self.ims[ip] = ax.imshow( image_data, **plot_args)
-		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
+	def time_update(change):
+		sindex = change['new']
+		lindex = lslider.value
+		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
+		lgm().log( f"time_update: tindex={sindex}, lindex={lindex}")
+		for iv1, vname1 in enumerate(vnames):
+			for it1 in range(ncols):
+				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
+				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
+				im1.set_data( tslice1.values )
+				ax1.set_title(f"{vname1} {ptypes[it1]}")
+				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={tslice1.shape}")
+		fig.canvas.draw_idle()
 
 	@exception_handled
-	def step_update(self, istep: int ) -> int:
-		self.istep = istep
-		lgm().log(f"Step update: istep={self.istep}, ichannel={self.ichannel}")
-		self.refresh()
-		return self.ichannel
+	def level_update(change):
+		lindex = change['new']
+		tindex = tslider.value
+		fig.suptitle(f'Forecast day {tindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
+		lgm().log( f"level_update: lindex={lindex}, tindex={tslider.value}")
+		for iv1, vname1 in enumerate(vnames):
+			for it1 in range(ncols):
+				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
+				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
+				im1.set_data( tslice1.values )
+				ax1.set_title(f"{vname1} {ptypes[it1]}")
+				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, mean={tslice1.values.mean():.4f}, std={tslice1.values.std():.4f}")
+		fig.canvas.draw_idle()
 
-	@exception_handled
-	def channel_update(self, ichannel: int ) -> int:
-		self.ichannel = ichannel
-		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}, title={self.channel_title}")
-		self.refresh()
-		return self.istep
-
-	@property
-	def channel_title(self) -> str:
-		return f"{self.chanids[self.ichannel]}:  step={self.istep}"
-
-	@exception_handled
-	def refresh(self):
-		for ip, pdata in enumerate(self.plot_data):
-			self.ims[ip].set_data( self.image_data( ip, pdata[self.istep] ) )
-		self.format_plot()
-		self.fig.canvas.draw_idle()
-
-	def image_data(self, ip: int, timeslice: Tensor) -> np.ndarray:
-		image_data: Tensor = timeslice[0, self.ichannel] if (timeslice.dim() == 4) else timeslice[self.ichannel]
-		if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
-		return image_data.cpu().numpy()
-
-
-
+	tslider.observe( time_update,  names='value' )
+	lslider.observe( level_update, names='value' )
+	fig.suptitle(f' ** Forecast day 0, Level: {levels.values[0]:.1f} {lunits}', fontsize=10, va="top", y=1.0 )
+	return ipw.VBox([tslider, lslider, fig.canvas])
 
