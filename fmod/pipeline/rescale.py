@@ -50,13 +50,10 @@ class DataLoader(object):
 	def constant_data(self, vres: str, **kwargs ):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
-	def load_feature_array(self, vres: str,  d: date, **kwargs ) -> xa.DataArray:
-		dset: xa.Dataset = load_dataset( vres, d, **kwargs )
+	def load_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
+		dset: xa.Dataset = load_dataset( vres, d, **kwargs ).squeeze( drop=True )
 		merged: xa.Dataset = merge_batch( [dset], self.constant_data(vres,**kwargs) )
-		print( f'load_feature_array:')
-		for k, v in merged.data_vars.items():
-			print(f'{k}{v.dims}: {v.shape} ')
-		return self.to_feature_array( merged )
+		return merged
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
