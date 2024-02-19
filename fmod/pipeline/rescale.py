@@ -30,7 +30,7 @@ class QType(Enum):
 	Intensive = 'intensive'
 	Extensive = 'extensive'
 
-class Rescaler(object):
+class DataLoader(object):
 
 	def __init__(self,  **kwargs):
 		self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
@@ -41,12 +41,11 @@ class Rescaler(object):
 		self.tstep = str(cfg().preprocess.data_timestep) + "h"
 		self.dmap: Dict = cfg().preprocess.dims
 		self.upscale_factor: int = cfg().task.get('upscale_factor')
-		self.constants: xa.Dataset = load_const_dataset( **kwargs )
+		self._constant_data = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
-
-	def load(self, vres: str, d: date, **kwargs) -> xa.Dataset:
-		return load_dataset(vres, d, **kwargs)
+	def constant_data(self, vres: str, **kwargs ):
+		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:

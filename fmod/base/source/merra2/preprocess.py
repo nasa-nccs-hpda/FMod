@@ -6,7 +6,7 @@ import glob, sys, os, time, traceback
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.dates import skw, dstr
 from datetime import date
-from fmod.pipeline.rescale import Rescaler, QType
+from fmod.pipeline.rescale import DataLoader, QType
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
@@ -69,7 +69,7 @@ class MERRA2DataProcessor:
         self.var_file_template =  cfg().platform.dataset_files
         self.const_file_template =  cfg().platform.constant_file
         self.stats = { vres: StatsAccumulator(vres) for vres in ["high",'low'] }
-        self.rescaler = Rescaler()
+        self.rescaler = DataLoader()
 
     @classmethod
     def get_qtype( cls, vname: str) -> QType:
