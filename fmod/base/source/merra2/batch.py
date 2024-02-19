@@ -38,7 +38,7 @@ def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
 	os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
 	return fpath
 
-def stats_filepath(version: str, statname: str, vres: str) -> str:
+def stats_filepath(version: str, statname: str, vres: str="high") -> str:
 	return f"{fmbdir('processed')}/{version}/stats{path_suffix(vres)}/{statname}"
 def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task['train_steps']
