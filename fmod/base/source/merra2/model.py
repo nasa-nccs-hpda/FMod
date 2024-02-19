@@ -75,7 +75,7 @@ def open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
 	return rename_vars(dataset)
 
-def load_dataset( vres: str,  d: date, **kwargs ):
+def load_dataset( vres: str,  d: date, **kwargs ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, vres, d )
 	return open_dataset( filepath, **kwargs)
 
@@ -97,16 +97,29 @@ class FMBatch:
 
 	def load(self, d: date, **kwargs):
 		bdays = date_list(d, self.days_per_batch)
-		time_slices: List[xa.Dataset] = [ load_dataset(d, **kwargs) for d in bdays ]
+		time_slices: List[xa.Dataset] = [ load_dataset("high", d, **kwargs) for d in bdays ]
 		self.current_batch: xa.Dataset = merge_batch(time_slices, self.constants)
-
-	#	print( f"\n *********** Loaded batch, days_per_batch={self.days_per_batch}, batch_steps={self.batch_steps}, ndays={len(bdays)} *********** " )
-	#	print(f" >> times= {[str(Timestamp(t).date()) for t in self.current_batch.coords['time'].values.tolist()]} ")
-	#	for vn, dv in self.current_batch.data_vars.items():
-	#		print(f" >> {vn}{dv.dims}: {dv.shape}")
 
 	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
 		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
+
+	@classmethod
+	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
+		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
+		result = xa.concat( list(data_batch.data_vars.values()), dim=features )
+		result = result.transpose(..., "features")
+		return result
+
+class Batch:
+
+	def __init__(self,  **kwargs):
+		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
+		self.constants: xa.Dataset = load_const_dataset( **kwargs )
+		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
+
+
+	def load(self, vres: str, d: date, **kwargs) -> xa.Dataset:
+		return load_dataset(vres, d, **kwargs)
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
@@ -120,28 +133,6 @@ class FMBatch:
 
 
 
-	# def load_timestep( date: date, task: Dict, **kwargs ) -> xa.Dataset:
-	# 	vnames = kwargs.pop('vars',None)
-	# 	vlist: Dict[str, str] = task['input_variables']
-	# 	constants: List[str] = task['constants']
-	# 	levels: Optional[np.ndarray] = get_levels_config(task)
-	# 	version = task['dataset_version']
-	# 	cmap = task['coords']
-	# 	zc, yc, corder = cmap['z'], cmap['y'], [ cmap[cn] for cn in ['t','z','y','x'] ]
-	# 	tsdata = {}
-	# 	filepath = cache_var_filepath(version, date)
-	# #	if not os.path.exists( filepath ):
-	# 	dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
-	# 	print(f"  load_timestep({date}), constants={constants}, kwargs={kwargs} ")
-	# 	for vname,dsname in vlist.items():
-	# 		if (vnames is None) or (vname in vnames):
-	# 			varray: xa.DataArray = dataset.data_vars[vname]
-	# 			if (vname in constants) and ("time" in varray.dims):
-	# 				varray = varray.mean( dim="time", skipna=True, keep_attrs=True )
-	# 			varray.attrs['dset_name'] = dsname
-	# 			print( f" >> Load_var({dsname}): name={vname}, shape={varray.shape}, dims={varray.dims}, zc={zc}, mean={varray.values.mean()}, nnan={nnan(varray)} ({pctnan(varray)})")
-	# 			tsdata[vname] = varray
-	# 	return xa.Dataset( tsdata )
 
 
 

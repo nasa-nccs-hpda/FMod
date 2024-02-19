@@ -6,7 +6,7 @@ import glob, sys, os, time, traceback
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.dates import skw, dstr
 from datetime import date
-from xarray.core.resample import DataArrayResample
+from fmod.pipeline.rescale import Rescaler, QType
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
@@ -14,7 +14,6 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.io.loader import ncFormat
 from .model import cache_filepath, VarType
-from enum import Enum
 
 _SEC_PER_HOUR =   3600
 _HOUR_PER_DAY =   24
@@ -48,10 +47,6 @@ def get_day_from_filename( filename: str ) -> int:
     sdate = filename.split(".")[-2]
     return int(sdate[-2:])
 
-class QType(Enum):
-    Intensive = 'intensive'
-    Extensive = 'extensive'
-
 class DailyFiles:
 
     def __init__(self, collection: str, variables: List[str], day: int, month: int, year: int ):
@@ -68,19 +63,13 @@ class DailyFiles:
 class MERRA2DataProcessor:
 
     def __init__(self):
-        self.format = ncFormat( cfg().task.get('nc_format','standard') )
-        self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
-        self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
-        self.upscale_factor: int = cfg().task.get('upscale_factor')
-        self.levels: Optional[np.ndarray] = get_levels_config( cfg().preprocess )
-        self.tstep = str(cfg().preprocess.data_timestep) + "h"
+        self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])
         self.vars: Dict[str, List[str]] = cfg().preprocess.vars
-        self.dmap: Dict = cfg().preprocess.dims
-        self.corder = ['time','z','y','x']
         self.var_file_template =  cfg().platform.dataset_files
         self.const_file_template =  cfg().platform.constant_file
         self.stats = { vres: StatsAccumulator(vres) for vres in ["high",'low'] }
+        self.rescaler = Rescaler()
 
     @classmethod
     def get_qtype( cls, vname: str) -> QType:
@@ -209,7 +198,7 @@ class MERRA2DataProcessor:
         for vname in dvnames:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
-            ssvars: Dict[str,List[xa.DataArray]] = self.subsample( darray, dset_attrs, qtype, isconst )
+            ssvars: Dict[str,List[xa.DataArray]] = self.rescaler.subsample( darray, dset_attrs, qtype, isconst )
             lgm().log( f" >> Subsampling variable {vname}({d}): { {res:len(vlist) for (res,vlist) in ssvars.items()} } ")
             for vres, svars in ssvars.items():
                 dvars = mvars.setdefault( vres, {} )
@@ -264,63 +253,4 @@ class MERRA2DataProcessor:
         with xa.open_dataset(dset_file) as dset:
             return list(dset.data_vars.keys())
 
-    def interp_axis(self, dvar: xa.DataArray, coords:Dict[str,Any], axis: str ):
-        assert axis in ['x', 'y'], f"Invalid axis: {axis}"
-        res, ext = (self.xres,self.xext) if (axis=='x') else (self.yres,self.yext)
-        if res is not None:
-            if ext is  None:
-                c0 = dvar.coords[axis].values
-                if axis=='x':   self.xext = [ c0[0], c0[-1] ]
-                else:           self.yext = [ c0[0], c0[-1] ]
-            ext1 = ext[1] if axis=='x' else ext[1]+res/2
-            coords[axis] = np.arange( ext[0], ext1, res )
-        elif ext is not None:
-            coords[axis] = slice( ext[0], ext[1])
 
-    def interp_axes(self, dvar: xa.DataArray, subsample_coords: Dict[str,Dict[str,np.ndarray]], vres: str):
-        coords: Dict[str, Any] = subsample_coords.setdefault(vres,{})
-        if (self.levels is not None) and ('z' in dvar.dims):
-            coords['z'] = self.levels
-        for axis in ['x', 'y']:
-            if vres == "high":
-                self.interp_axis(dvar, coords, axis)
-            else:
-                hres_coords: Dict[str,np.ndarray] = subsample_coords['high']
-                hres_axis = hres_coords[axis] if axis in hres_coords else dvar.coords[axis]
-                coords[axis] =  hres_axis[0::self.upscale_factor]
-
-    def subsample_coords(self, dvar: xa.DataArray ) -> Dict[str,Dict[str,np.ndarray]]:
-        sscoords: Dict[str,Dict[str,np.ndarray]] = {}
-        for vres in ["high","low"]:
-            if vres == "high" or self.format == ncFormat.SRES:
-                self.interp_axes( dvar, sscoords, vres )
-        return sscoords
-
-    def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str,List[xa.DataArray]]:
-        ssvars: Dict[str,List] = {}
-        cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
-        variable: xa.DataArray = variable.rename(**cmap)
-        if isconst and ("time" in variable.dims):
-            variable = variable.isel( time=0, drop=True )
-        sscoords: Dict[str,Dict[str, np.ndarray]] = self.subsample_coords(variable)
-        for vres, vcoord in sscoords.items():
-            svars = ssvars.setdefault(vres,[])
-            lgm().log(f" **** subsample {variable.name}:{vres}, vc={list(vcoord.keys())}, dims={variable.dims}, shape={variable.shape}, new sizes: { {cn:cv.size for cn,cv in vcoord.items()} }")
-            varray: xa.DataArray = self._interp( variable, vcoord, global_attrs, qtype )
-            svars.append( varray )
-        return ssvars
-
-    def _interp( self, variable: xa.DataArray, vcoord: Dict[str,np.ndarray], global_attrs: Dict, qtype: QType ) -> xa.DataArray:
-        varray = variable.interp(x=vcoord['x'], assume_sorted=True ) if 'x' in vcoord else variable
-        varray =   varray.interp(y=vcoord['y'], assume_sorted=True ) if 'y' in vcoord else varray
-        varray =   varray.interp(z=vcoord['z'], assume_sorted=False) if 'z' in vcoord else varray
-        if 'time' in varray.dims:
-            resampled: DataArrayResample = varray.resample(time=self.tstep)
-            varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
-        varray.attrs.update(global_attrs)
-        varray.attrs.update(varray.attrs)
-        for missing in ['fmissing_value', 'missing_value', 'fill_value']:
-            if missing in varray.attrs:
-                missing_value = varray.attrs.pop('fmissing_value')
-                varray = varray.where(varray != missing_value, np.nan)
-        return  replace_nans(varray).transpose(*self.corder, missing_dims="ignore" )
