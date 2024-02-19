@@ -49,6 +49,10 @@ class DataLoader(object):
 	def constant_data(self, vres: str, **kwargs ):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
+	def load_feature_array(self, vres: str,  d: date, **kwargs ) -> xa.DataArray:
+		dset: xa.Dataset = load_dataset( vres, d, **kwargs )
+		return self.to_feature_array( dset )
+
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
 		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
