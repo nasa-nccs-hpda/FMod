@@ -23,6 +23,7 @@ np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.stats import StatsAccumulator, StatsEntry
+from fmod.base.source.merra2.model import merge_batch
 from fmod.base.io.loader import ncFormat
 from enum import Enum
 from xarray.core.types import InterpOptions
@@ -51,7 +52,11 @@ class DataLoader(object):
 
 	def load_feature_array(self, vres: str,  d: date, **kwargs ) -> xa.DataArray:
 		dset: xa.Dataset = load_dataset( vres, d, **kwargs )
-		return self.to_feature_array( dset )
+		merged: xa.Dataset = merge_batch( [dset], self.constant_data(vres,**kwargs) )
+		print( f'load_feature_array:')
+		for k, v in merged.data_vars.items():
+			print(f'{k}{v.dims}: {v.shape} ')
+		return self.to_feature_array( merged )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
