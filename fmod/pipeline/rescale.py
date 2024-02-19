@@ -25,6 +25,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.io.loader import ncFormat
 from enum import Enum
+from xarray.core.types import InterpOptions
 
 class QType(Enum):
 	Intensive = 'intensive'
@@ -34,6 +35,7 @@ class DataLoader(object):
 
 	def __init__(self,  **kwargs):
 		self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
+		self.interp_method =  cfg().task.get('interp_method','linear')
 		self.corder = ['time', 'z', 'y', 'x']
 		self.xext, self.yext = cfg().preprocess.get('xext'), cfg().preprocess.get('yext')
 		self.xres, self.yres = cfg().preprocess.get('xres'), cfg().preprocess.get('yres')
@@ -101,9 +103,9 @@ class DataLoader(object):
 		return ssvars
 
 	def _interp(self, variable: xa.DataArray, vcoord: Dict[str, np.ndarray], global_attrs: Dict, qtype: QType) -> xa.DataArray:
-		varray = variable.interp(x=vcoord['x'], assume_sorted=True) if 'x' in vcoord else variable
-		varray = varray.interp(y=vcoord['y'], assume_sorted=True) if 'y' in vcoord else varray
-		varray = varray.interp(z=vcoord['z'], assume_sorted=False) if 'z' in vcoord else varray
+		varray = variable.interp( x=vcoord['x'], assume_sorted=True,  method=self.interp_method ) if 'x' in vcoord else variable
+		varray =   varray.interp( y=vcoord['y'], assume_sorted=True,  method=self.interp_method ) if 'y' in vcoord else varray
+		varray =   varray.interp( z=vcoord['z'], assume_sorted=False, method=self.interp_method ) if 'z' in vcoord else varray
 		if 'time' in varray.dims:
 			resampled: DataArrayResample = varray.resample(time=self.tstep)
 			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
