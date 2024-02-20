@@ -48,6 +48,7 @@ class DataLoader(object):
 		self.upscale_factor: int = cfg().task.get('upscale_factor')
 		self._constant_data = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
+		print( f"Normalization data: {list(self.norm_data.keys())}")
 
 	def constant_data(self, vres: str ):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres ) )
