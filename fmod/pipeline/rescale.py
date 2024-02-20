@@ -14,7 +14,7 @@ from xarray.core.resample import DataArrayResample
 import xarray as xa, pandas as pd
 import numpy as np
 from fmod.base.util.config import cfg
-from fmod.pipeline.merra2 import ds2array
+from fmod.base.util.model import dataset_to_stacked
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping
 import glob, sys, os, time, traceback
 from fmod.base.util.ops import fmbdir
@@ -66,11 +66,31 @@ class DataLoader(object):
 		return self.to_feature_array( dset )
 
 	@classmethod
+	def ds2array( cls, dset: xa.Dataset, **kwargs) -> xa.DataArray:
+		coords = cfg().task.coords
+		merge_dims = kwargs.get('merge_dims', [coords['z'], coords['t']])
+		sizes: Dict[str, int] = {}
+		vnames = list(dset.data_vars.keys());
+		vnames.sort()
+		channels = []
+		for vname in vnames:
+			dvar: xa.DataArray = dset.data_vars[vname]
+			if len(dvar.shape) < 5: channels.append(vname)
+			else:                   channels.extend([f"{vname}~{iL}" for iL in range(dvar.shape[2])])
+			for (cname, coord) in dvar.coords.items():
+				if cname not in (merge_dims + list(sizes.keys())):
+					sizes[cname] = coord.size
+		print( f"ds2array: channels: {channels}, sizes: {sizes}, preserved_dims: {tuple(sizes.keys())} ")
+		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
+		darray.attrs['channels'] = channels
+		return darray.transpose("channels", coords['y'], coords['x'])
+
+	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
 		print("INPUTS:")
 		for nv, var in data_batch.data_vars.items():
-			print(f" ** {nv:>25} {var.dims} {var.shape}")
-		result: xa.DataArray = ds2array( data_batch, merge_dims=["level"] )
+			print(f" ** {nv:>20} {var.dims} {var.shape}")
+		result: xa.DataArray = cls.ds2array( data_batch, merge_dims=["level"] )
 		print(f"result shape: {result.shape}, dims: {result.dims}, channels: {result.coords['channels'].values.tolist()}")
 		return result
 
