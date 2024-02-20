@@ -48,14 +48,14 @@ class DataLoader(object):
 		self._constant_data = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
-	def constant_data(self, vres: str, **kwargs ):
-		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
+	def constant_data(self, vres: str ):
+		return self._constant_data.setdefault( vres,  load_const_dataset( vres ) )
 
 	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
 		time_index = kwargs.pop('time_index',-1)
 		dset: xa.Dataset = load_dataset( vres, d ).squeeze( drop=True )
 		if time_index >= 0: dset=dset.isel( time=time_index, drop=True )
-		merged: xa.Dataset = merge_batch( [ dset ], self.constant_data(vres,**kwargs) )
+		merged: xa.Dataset = merge_batch( [ dset ], self.constant_data(vres) )
 		return merged
 
 	def get_channel_array(self, vres: str, d: date, **kwargs) -> xa.DataArray:

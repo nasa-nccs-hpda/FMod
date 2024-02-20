@@ -46,10 +46,9 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	levels: xa.DataArray = sample.coords['level']
-	lunits : str = levels.attrs.get('units','')
+	channels: xa.DataArray = sample.coords['channels']
 	dayf = 24/ cfg().task.data_timestep
-	lslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=levels.size-1, description='Level Index:', )
+	cslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=channels.size-1, description='Channel Index:', )
 	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
 
 	with plt.ioff():
@@ -60,39 +59,38 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
 		tslice: xa.DataArray = image.isel(time=tslider.value)
-		if "level" in tslice.dims:
-			tslice = tslice.isel(level=lslider.value)
-		ims[itype] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+		cslice = tslice.isel(channels=cslider.value)
+		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		ax.set_title(f" {tname} ")
 
 	@exception_handled
 	def time_update(change):
 		sindex = change['new']
-		lindex = lslider.value
-		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"time_update: tindex={sindex}, lindex={lindex}")
+		cindex = cslider.value
+		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Channel: {channels.values[cindex]}', fontsize=10, va="top", y=1.0)
+		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore")
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
 
 	@exception_handled
-	def level_update(change):
-		lindex = change['new']
-		tindex = tslider.value
-		fig.suptitle(f'Forecast day {tindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"level_update: lindex={lindex}, tindex={tslider.value}")
+	def channel_update(change):
+		cindex = change['new']
+		sindex = tslider.value
+		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Channel: {channels.values[cindex]}', fontsize=10, va="top", y=1.0)
+		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( level=lindex, time=tindex, drop=True, missing_dims="ignore")
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore")
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
 
 	tslider.observe( time_update,  names='value' )
-	lslider.observe( level_update, names='value' )
-	fig.suptitle(f' ** Level: {levels.values[0]:.1f} {lunits}', fontsize=10, va="top", y=1.0 )
-	return ipw.VBox([tslider, lslider, fig.canvas])
+	cslider.observe( channel_update, names='value' )
+	fig.suptitle(f' ** Channel: {channels.values[0]}', fontsize=10, va="top", y=1.0 )
+	return ipw.VBox([tslider, cslider, fig.canvas])
 
