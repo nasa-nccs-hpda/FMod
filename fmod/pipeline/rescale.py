@@ -67,8 +67,8 @@ class DataLoader(object):
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
-		result: xa.DataArray = ds2array(data_batch)
-		print(f"result shape: {result.shape}, dims: {result.dims}, features: {result.coords['features'].values.tolist()}")
+		result: xa.DataArray = ds2array( data_batch.drop_vars("datetime") )
+		print(f"result shape: {result.shape}, dims: {result.dims}, channels: {result.coords['channels'].values.tolist()}")
 		return result
 
 	def interp_axis(self, dvar: xa.DataArray, coords: Dict[str, Any], axis: str):

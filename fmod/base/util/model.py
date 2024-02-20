@@ -593,6 +593,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
   Returns:
     An xarray.Variable with dimensions preserved_dims + ("channels",).
   """
+
   stack_to_channels_dims = [ d for d in variable.dims if d not in preserved_dims]
   dims = {dim: variable.sizes.get(dim) or sizes[dim] for dim in preserved_dims}
   # print( f"Variable {vname}{variable.dims}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}")
