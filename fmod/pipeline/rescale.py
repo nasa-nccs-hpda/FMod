@@ -63,15 +63,12 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		return self.to_feature_array( self.normalize( dset ) )
+		return self.ds2array( self.normalize( dset ) )
 
 	def normalize(self, dset: xa.Dataset ) -> xa.Dataset:
 		mean: xa.Dataset = self.norm_data['mean_by_level']
 		std: xa.Dataset = self.norm_data['stddev_by_level']
 		dvars = { vn: (var-mean[vn])/std[vn] for (vn,var) in dset.data_vars.items()}
-		print("NORMED DATA:")
-		for nv, var in dvars.items():
-			print(f" ** {nv:>20} {var.dims} {var.shape} mean={var.values.mean()} std={var.values.std()}")
 		return xa.Dataset( dvars, dset.coords, dset.attrs )
 
 	@classmethod
@@ -91,20 +88,10 @@ class DataLoader(object):
 				if cname not in (merge_dims + list(sizes.keys())):
 					sizes[cname] = coord.size
 		sizes.pop('datetime',None)
-		print( f"ds2array: channels: {channels}, sizes: {sizes}, preserved_dims: {tuple(sizes.keys())} ")
 		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
 		darray.attrs['channels'] = channels
 		if coords['t'] not in darray.dims: aux_dims.remove( "time" )
 		return darray.transpose( *aux_dims )
-
-	@classmethod
-	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
-		print("INPUTS:")
-		for nv, var in data_batch.data_vars.items():
-			print(f" ** {nv:>20} {var.dims} {var.shape}")
-		result: xa.DataArray = cls.ds2array( data_batch )
-		print(f"result shape: {result.shape}, dims: {result.dims}, channels: {result.coords['channels'].values.tolist()}")
-		return result
 
 	def interp_axis(self, dvar: xa.DataArray, coords: Dict[str, Any], axis: str):
 		assert axis in ['x', 'y'], f"Invalid axis: {axis}"

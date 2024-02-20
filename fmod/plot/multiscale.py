@@ -47,7 +47,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	sample: xa.DataArray = list(images.values())[0]
 	print( f"mplplot: image[{sample.dims}]: shape={sample.shape}")
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: xa.DataArray = sample.coords['channels']
+	channels: np.ndarray = sample.attrs['channels'].values
 	dayf = 24/ cfg().task.data_timestep
 	cslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=channels.size-1, description='Channel Index:', )
 	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
@@ -68,7 +68,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	def time_update(change):
 		sindex = change['new']
 		cindex = cslider.value
-		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Channel: {channels.values[cindex]}', fontsize=10, va="top", y=1.0)
+		fig.suptitle(f'Timestep: {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
@@ -81,7 +81,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	def channel_update(change):
 		cindex = change['new']
 		sindex = tslider.value
-		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Channel: {channels.values[cindex]}', fontsize=10, va="top", y=1.0)
+		fig.suptitle(f'Forecast day {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
@@ -92,6 +92,6 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 
 	tslider.observe( time_update,  names='value' )
 	cslider.observe( channel_update, names='value' )
-	fig.suptitle(f' ** Channel: {channels.values[0]}', fontsize=10, va="top", y=1.0 )
+	fig.suptitle(f' ** Channel: {channels[0]}', fontsize=10, va="top", y=1.0 )
 	return ipw.VBox([tslider, cslider, fig.canvas])
 
