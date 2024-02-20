@@ -45,11 +45,9 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 def mplplot( images: Dict[str,xa.DataArray] ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
-	print( f"mplplot: image[{sample.dims}]: shape={sample.shape}")
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: np.ndarray = sample.attrs['channels'].values
-	dayf = 24/ cfg().task.data_timestep
-	cslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=channels.size-1, description='Channel Index:', )
+	channels: List[str] = sample.attrs['channels']
+	cslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=len(channels), description='Channel Index:', )
 	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
 
 	with plt.ioff():
