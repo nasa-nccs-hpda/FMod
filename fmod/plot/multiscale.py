@@ -49,10 +49,10 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	channels: List[str] = sample.attrs['channels']
 
 	cslider: StepSlider = StepSlider( 'Channel Index:', len(channels)  )
-	tslider: StepSlider = StepSlider( 'Time Index:', time.size-1  )
+	tslider: StepSlider = StepSlider( 'Time Index:', time.size  )
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*6, nvars*4], layout="tight")
+		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*7, nvars*5], layout="tight")
 
 	for itype, (tname, image) in enumerate(images.items()):
 		ax = axs[ itype ]
