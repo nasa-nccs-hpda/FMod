@@ -67,7 +67,7 @@ class DataLoader(object):
 		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
 		print( f"features shape: {features.shape}, values: {features.values}" )
 		result: xa.DataArray = xa.concat( list(data_batch.data_vars.values()), dim=features )
-		print(f"result shape: {result.shape}, dims: {result.dims}")
+		print(f"result shape: {result.shape}, dims: {result.dims}, coord({result.dims[0]}): {result.coords[result.dims[0]].values.tolist()}")
 		result = result.transpose(..., "features" )
 		return result
 
