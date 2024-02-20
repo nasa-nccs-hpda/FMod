@@ -52,12 +52,14 @@ class DataLoader(object):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
 	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
-		dset: xa.Dataset = load_dataset( vres, d, **kwargs ).squeeze( drop=True )
-		merged: xa.Dataset = merge_batch( [dset], self.constant_data(vres,**kwargs) )
+		time_index = kwargs.get('time_index',-1)
+		dset: xa.Dataset = load_dataset( vres, d ).squeeze( drop=True )
+		if time_index >= 0: dset=dset.isel( time=time_index, drop=True )
+		merged: xa.Dataset = merge_batch( [ dset ], self.constant_data(vres,**kwargs) )
 		return merged
 
 	def get_channel_array(self, vres: str, d: date, **kwargs) -> xa.DataArray:
-		dset: xa.Dataset = self.get_dataset( vres, d )
+		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
 		return self.to_feature_array( dset )
