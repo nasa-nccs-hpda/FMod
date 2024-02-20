@@ -45,6 +45,7 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 def mplplot( images: Dict[str,xa.DataArray] ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
+	print( f"mplplot: image[{sample.dims}]: shape={sample.shape}")
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	channels: xa.DataArray = sample.coords['channels']
 	dayf = 24/ cfg().task.data_timestep
