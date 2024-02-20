@@ -68,10 +68,11 @@ class DataLoader(object):
 	def normalize(self, dset: xa.Dataset ) -> xa.Dataset:
 		mean: xa.Dataset = self.norm_data['mean_by_level']
 		std: xa.Dataset = self.norm_data['stddev_by_level']
-		print("NORM DATA:")
-		for nv, var in mean.data_vars.items():
-			print(f" ** {nv:>20} {var.dims} {var.shape}")
-		return dset
+		dvars = { vn: (var-mean[vn])/std[vn] for (vn,var) in dset.data_vars.items()}
+		print("NORMED DATA:")
+		for nv, var in dvars.items():
+			print(f" ** {nv:>20} {var.dims} {var.shape} mean={var.values.mean()} std={var.values.std()}")
+		return xa.Dataset( dvars, dset.coords, dset.attrs )
 
 	@classmethod
 	def ds2array( cls, dset: xa.Dataset, **kwargs) -> xa.DataArray:
