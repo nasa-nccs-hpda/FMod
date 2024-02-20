@@ -64,8 +64,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 		ax.set_title(f" {tname} ")
 
 	@exception_handled
-	def time_update(change):
-		sindex = change['new']
+	def time_update(sindex: int):
 		cindex = cslider.value
 		fig.suptitle(f'Timestep: {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
@@ -77,8 +76,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 		fig.canvas.draw_idle()
 
 	@exception_handled
-	def channel_update(change):
-		cindex = change['new']
+	def channel_update(cindex: int):
 		sindex = tslider.value
 		fig.suptitle(f'Forecast day {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
