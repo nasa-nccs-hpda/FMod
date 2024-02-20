@@ -63,7 +63,13 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		return self.to_feature_array( dset )
+		return self.to_feature_array( self.normalize( dset, self.norm_data[vres] ) )
+
+	def normalize(self, dset: xa.Dataset, norm_data: xa.Dataset ) -> xa.Dataset:
+		print("NORM DATA:")
+		for nv, var in norm_data.data_vars.items():
+			print(f" ** {nv:>20} {var.dims} {var.shape}")
+		return dset
 
 	@classmethod
 	def ds2array( cls, dset: xa.Dataset, **kwargs) -> xa.DataArray:
