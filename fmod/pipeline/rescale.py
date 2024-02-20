@@ -48,7 +48,6 @@ class DataLoader(object):
 		self.upscale_factor: int = cfg().task.get('upscale_factor')
 		self._constant_data = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
-		print( f"Normalization data: {list(self.norm_data.keys())}")
 
 	def constant_data(self, vres: str ):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres ) )
@@ -64,11 +63,13 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		return self.to_feature_array( self.normalize( dset, self.norm_data[vres] ) )
+		return self.to_feature_array( self.normalize( dset ) )
 
-	def normalize(self, dset: xa.Dataset, norm_data: xa.Dataset ) -> xa.Dataset:
+	def normalize(self, dset: xa.Dataset ) -> xa.Dataset:
+		mean: xa.Dataset = self.norm_data['mean_by_level']
+		std: xa.Dataset = self.norm_data['stddev_by_level']
 		print("NORM DATA:")
-		for nv, var in norm_data.data_vars.items():
+		for nv, var in mean.data_vars.items():
 			print(f" ** {nv:>20} {var.dims} {var.shape}")
 		return dset
 
