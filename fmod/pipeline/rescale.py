@@ -80,6 +80,7 @@ class DataLoader(object):
 			for (cname, coord) in dvar.coords.items():
 				if cname not in (merge_dims + list(sizes.keys())):
 					sizes[cname] = coord.size
+		sizes.pop('datetime',None)
 		print( f"ds2array: channels: {channels}, sizes: {sizes}, preserved_dims: {tuple(sizes.keys())} ")
 		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
 		darray.attrs['channels'] = channels
