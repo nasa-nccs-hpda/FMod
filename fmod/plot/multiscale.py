@@ -5,7 +5,7 @@ from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from torch import Tensor
+from fmod.base.util.config import cfg
 from matplotlib.axes import Axes
 from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
@@ -42,40 +42,28 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 
 
 @exception_handled
-def mplplot( images: Dict[str,xa.DataArray], task_spec: Dict, **kwargs ):
-	ims, pvars, nvars, ptypes = {}, {}, len(images), ['']
+def mplplot( images: Dict[str,xa.DataArray] ):
+	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	levels: xa.DataArray = sample.coords['level']
 	lunits : str = levels.attrs.get('units','')
-	dayf = 24/task_spec['data_timestep']
-	ncols =  len( ptypes )
+	dayf = 24/ cfg().task.data_timestep
 	lslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=levels.size-1, description='Level Index:', )
 	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
-	errors: Dict[str,xa.DataArray] = {}
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=nvars, ncols=ncols, sharex=True, sharey=True, figsize=[ncols*5, nvars*3], layout="tight")
+		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*5, nvars*3], layout="tight")
 
-	for iv, vname in enumerate(vnames):
-		tvar: xa.DataArray = normalize(target,vname,**kwargs)
-		plotvars = [ tvar ]
-		if forecast is not None:
-			fvar: xa.DataArray = normalize(forecast,vname,**kwargs)
-			diff: xa.DataArray = tvar - fvar
-			errors[vname] = rmse(diff)
-			plotvars = plotvars + [ fvar, diff ]
-		vrange = None
-		for it, pvar in enumerate( plotvars ):
-			ax = axs[ iv ] if ncols == 1 else axs[ iv, it ]
-			ax.set_aspect(0.5)
-			if it != 1: vrange = cscale( pvar, 2.0 )
-			tslice: xa.DataArray = pvar.isel(time=tslider.value)
-			if "level" in tslice.dims:
-				tslice = tslice.isel(level=lslider.value)
-			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			pvars[(iv,it)] =  pvar
-			ax.set_title(f"{vname} {ptypes[it]}")
+	for itype, (tname, image) in enumerate(images.items()):
+		ax = axs[ itype ]
+		ax.set_aspect(0.5)
+		vrange = cscale( image, 2.0 )
+		tslice: xa.DataArray = image.isel(time=tslider.value)
+		if "level" in tslice.dims:
+			tslice = tslice.isel(level=lslider.value)
+		ims[itype] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+		ax.set_title(f" {tname} ")
 
 	@exception_handled
 	def time_update(change):
@@ -83,14 +71,11 @@ def mplplot( images: Dict[str,xa.DataArray], task_spec: Dict, **kwargs ):
 		lindex = lslider.value
 		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}, lindex={lindex}")
-		for iv1, vname1 in enumerate(vnames):
-			for it1 in range(ncols):
-				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
-				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
-				im1.set_data( tslice1.values )
-				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={tslice1.shape}")
+		for itype, (tname, image) in enumerate(images.items()):
+			ax1 = axs[ itype ]
+			tslice1: xa.DataArray =  image.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
+			ims[itype].set_data( tslice1.values )
+			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
 
 	@exception_handled
@@ -99,18 +84,15 @@ def mplplot( images: Dict[str,xa.DataArray], task_spec: Dict, **kwargs ):
 		tindex = tslider.value
 		fig.suptitle(f'Forecast day {tindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"level_update: lindex={lindex}, tindex={tslider.value}")
-		for iv1, vname1 in enumerate(vnames):
-			for it1 in range(ncols):
-				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
-				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
-				im1.set_data( tslice1.values )
-				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, mean={tslice1.values.mean():.4f}, std={tslice1.values.std():.4f}")
+		for itype, (tname, image) in enumerate(images.items()):
+			ax1 = axs[ itype ]
+			tslice1: xa.DataArray =  image.isel( level=lindex, time=tindex, drop=True, missing_dims="ignore")
+			ims[itype].set_data( tslice1.values )
+			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
 
 	tslider.observe( time_update,  names='value' )
 	lslider.observe( level_update, names='value' )
-	fig.suptitle(f' ** Forecast day 0, Level: {levels.values[0]:.1f} {lunits}', fontsize=10, va="top", y=1.0 )
+	fig.suptitle(f' ** Level: {levels.values[0]:.1f} {lunits}', fontsize=10, va="top", y=1.0 )
 	return ipw.VBox([tslider, lslider, fig.canvas])
 
