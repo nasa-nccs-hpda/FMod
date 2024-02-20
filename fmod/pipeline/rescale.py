@@ -52,7 +52,7 @@ class DataLoader(object):
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres, **kwargs ) )
 
 	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
-		time_index = kwargs.get('time_index',-1)
+		time_index = kwargs.pop('time_index',-1)
 		dset: xa.Dataset = load_dataset( vres, d ).squeeze( drop=True )
 		if time_index >= 0: dset=dset.isel( time=time_index, drop=True )
 		merged: xa.Dataset = merge_batch( [ dset ], self.constant_data(vres,**kwargs) )
