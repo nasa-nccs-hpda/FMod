@@ -64,8 +64,8 @@ class DataLoader(object):
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
-		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
-		print( f"features shape: {features.shape}, values: {features.values}" )
+		features = xa.Variable('features', list(data_batch.data_vars.keys()) )
+	#	feature_index = xa.Index.from_variables( dict(features=features) )
 		result: xa.DataArray = xa.concat( list(data_batch.data_vars.values()), dim=features )
 		print(f"result shape: {result.shape}, dims: {result.dims}, coord({result.dims[0]}): {result.coords[result.dims[0]].values.tolist()}")
 		result = result.transpose(..., "features" )
