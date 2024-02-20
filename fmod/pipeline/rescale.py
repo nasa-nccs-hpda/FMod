@@ -125,9 +125,22 @@ class DataLoader(object):
 				self.interp_axes(dvar, sscoords, vres)
 		return sscoords
 
+	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
+		ssvars: Dict[str, List] = {}
+		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
+		variable: xa.DataArray = variable.rename(**cmap)
+		if isconst and ("time" in variable.dims):
+			variable = variable.isel(time=0, drop=True)
+
+		redop = np.mean if qtype == QType.Intensive else np.sum
+		resampled = variable.coarsen( x=cfg().task.upscale_factor ).reduce( redop, keep_attrs=True )
+
+#		output_ds.coarsen(x=6).mean().coarsen(y=6).mean()
+
 	def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
 		ssvars: Dict[str, List] = {}
 		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
+		print( f"Subsample input: cmap={cmap}, vdims={variable.dims}, vshape={variable.shape}")
 		variable: xa.DataArray = variable.rename(**cmap)
 		if isconst and ("time" in variable.dims):
 			variable = variable.isel(time=0, drop=True)
