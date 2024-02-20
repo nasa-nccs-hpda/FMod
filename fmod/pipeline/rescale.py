@@ -69,8 +69,8 @@ class DataLoader(object):
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
 		print("INPUTS:")
 		for nv, var in data_batch.data_vars.items():
-			print(f" ** {nv:>30} {var.dims} {var.shape}")
-		result: xa.DataArray = ds2array( data_batch, merge_dims="level" )
+			print(f" ** {nv:>25} {var.dims} {var.shape}")
+		result: xa.DataArray = ds2array( data_batch, merge_dims=["level"] )
 		print(f"result shape: {result.shape}, dims: {result.dims}, channels: {result.coords['channels'].values.tolist()}")
 		return result
 
