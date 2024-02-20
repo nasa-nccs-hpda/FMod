@@ -68,9 +68,10 @@ class DataLoader(object):
 	@classmethod
 	def ds2array( cls, dset: xa.Dataset, **kwargs) -> xa.DataArray:
 		coords = cfg().task.coords
-		merge_dims = kwargs.get('merge_dims', [coords['z'], coords['t']])
+		aux_dims: List[str] =  [ "channels", coords['t'], coords['y'], coords['x'] ]
+		merge_dims = kwargs.get('merge_dims', [coords['z']])
 		sizes: Dict[str, int] = {}
-		vnames = list(dset.data_vars.keys());
+		vnames = list(dset.data_vars.keys())
 		vnames.sort()
 		channels = []
 		for vname in vnames:
@@ -84,14 +85,15 @@ class DataLoader(object):
 		print( f"ds2array: channels: {channels}, sizes: {sizes}, preserved_dims: {tuple(sizes.keys())} ")
 		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
 		darray.attrs['channels'] = channels
-		return darray.transpose("channels", coords['y'], coords['x'])
+		if coords['t'] not in darray.dims: aux_dims.remove( "time" )
+		return darray.transpose( *aux_dims )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
 		print("INPUTS:")
 		for nv, var in data_batch.data_vars.items():
 			print(f" ** {nv:>20} {var.dims} {var.shape}")
-		result: xa.DataArray = cls.ds2array( data_batch, merge_dims=["level"] )
+		result: xa.DataArray = cls.ds2array( data_batch )
 		print(f"result shape: {result.shape}, dims: {result.dims}, channels: {result.coords['channels'].values.tolist()}")
 		return result
 
