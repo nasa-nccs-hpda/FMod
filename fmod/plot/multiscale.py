@@ -51,7 +51,7 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*5, nvars*3], layout="tight")
+		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*6, nvars*4], layout="tight")
 
 	for itype, (tname, image) in enumerate(images.items()):
 		ax = axs[ itype ]
