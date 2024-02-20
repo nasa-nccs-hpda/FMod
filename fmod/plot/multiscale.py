@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import ipywidgets as ipw
 from fmod.base.util.config import cfg
 from matplotlib.axes import Axes
-from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.io.loader import BaseDataset
+from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
@@ -47,8 +47,9 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	channels: List[str] = sample.attrs['channels']
-	cslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=len(channels), description='Channel Index:', )
-	tslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=time.size-1, description='Time Index:', )
+
+	cslider: StepSlider = StepSlider( 'Channel Index:', len(channels)  )
+	tslider: StepSlider = StepSlider( 'Time Index:', time.size-1  )
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*6, nvars*4], layout="tight")
@@ -88,8 +89,8 @@ def mplplot( images: Dict[str,xa.DataArray] ):
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
 
-	tslider.observe( time_update,  names='value' )
-	cslider.observe( channel_update, names='value' )
+	tslider.set_callback( time_update )
+	cslider.set_callback( channel_update )
 	fig.suptitle(f' ** Channel: {channels[0]}', fontsize=10, va="top", y=1.0 )
 	return ipw.VBox([tslider, cslider, fig.canvas])
 

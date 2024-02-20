@@ -24,7 +24,7 @@ class Counter(ipw.DOMWidget):
 
 class StepSlider(ipw.HBox):
 
-	def __init__(self, label: str, nval: int, callback: Callable[[int], int], **kwargs):
+	def __init__(self, label: str, nval: int, callback: Callable = None, **kwargs):
 		self.bsize = kwargs.get('bsize','30px')
 		self.ssize = kwargs.get('ssize', '920px')
 		self.executable: Callable[[int], int] = callback
@@ -36,6 +36,13 @@ class StepSlider(ipw.HBox):
 		self.button_cback.on_click(    self.counter.decrement )
 		self.button_cforward.on_click( self.counter.increment )
 		super(StepSlider,self).__init__( [self.slider, self.button_cback, self.button_cforward] )
+
+	def set_callback(self, callback: Callable):
+		self.executable = callback
+
+	@property
+	def value(self):
+		return self.slider.value
 
 	@exception_handled
 	def update(self, change):
