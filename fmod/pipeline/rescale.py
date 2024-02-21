@@ -125,7 +125,7 @@ class DataLoader(object):
 				self.interp_axes(dvar, sscoords, vres)
 		return sscoords
 
-	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, xa.DataArray]:
+	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
 		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
 		vhires: xa.DataArray = variable.rename(**cmap)
 		if isconst and ("time" in variable.dims):
@@ -138,8 +138,8 @@ class DataLoader(object):
 			vlores = vlores.coarsen( **cargs ).reduce( redop, keep_attrs=True )
 
 		result = dict(
-			high=self.process_attrs(vhires,vhires,global_attrs),
-			low= self.process_attrs(vlores,vhires,global_attrs) )
+			high=[self.process_attrs(vhires,vhires,global_attrs)],
+			low= [self.process_attrs(vlores,vhires,global_attrs)] )
 
 		return result
 
@@ -152,6 +152,10 @@ class DataLoader(object):
 				variable = variable.where(variable != missing_value, np.nan)
 		return replace_nans(variable).transpose(*self.corder, missing_dims="ignore")
 
+	def rescale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
+		ncformat: ncFormat = ncFormat(cfg().task.nc_format)
+		if ncformat == ncFormat.SRES:   return self.upscale(   variable, global_attrs, qtype, isconst )
+		else:                           return self.subsample( variable, global_attrs, qtype, isconst )
 	def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
 		ssvars: Dict[str, List] = {}
 		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}

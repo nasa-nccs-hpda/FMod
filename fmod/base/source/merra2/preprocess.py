@@ -198,7 +198,7 @@ class MERRA2DataProcessor:
         for vname in dvnames:
             darray: xa.DataArray = dset.data_vars[vname]
             qtype: QType = self.get_qtype(vname)
-            ssvars: Dict[str,List[xa.DataArray]] = self.rescaler.subsample( darray, dset_attrs, qtype, isconst )
+            ssvars: Dict[str,List[xa.DataArray]] = self.rescaler.rescale( darray, dset_attrs, qtype, isconst )
             lgm().log( f" >> Subsampling variable {vname}({d}): { {res:len(vlist) for (res,vlist) in ssvars.items()} } ")
             for vres, svars in ssvars.items():
                 dvars = mvars.setdefault( vres, {} )
