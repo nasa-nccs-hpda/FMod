@@ -125,17 +125,32 @@ class DataLoader(object):
 				self.interp_axes(dvar, sscoords, vres)
 		return sscoords
 
-	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
-		ssvars: Dict[str, List] = {}
+	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, xa.DataArray]:
 		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
-		variable: xa.DataArray = variable.rename(**cmap)
+		vhires: xa.DataArray = variable.rename(**cmap)
 		if isconst and ("time" in variable.dims):
-			variable = variable.isel(time=0, drop=True)
-
+			vhires = vhires.isel(time=0, drop=True)
 		redop = np.mean if qtype == QType.Intensive else np.sum
-		resampled = variable.coarsen( x=cfg().task.upscale_factor ).reduce( redop, keep_attrs=True )
+		vlores: xa.DataArray = vhires
 
-#		output_ds.coarsen(x=6).mean().coarsen(y=6).mean()
+		for dim in [ 'x', 'y']:
+			cargs = { dim: cfg().task.upscale_factor }
+			vlores = vlores.coarsen( **cargs ).reduce( redop, keep_attrs=True )
+
+		result = dict(
+			high=self.process_attrs(vhires,vhires,global_attrs),
+			low= self.process_attrs(vlores,vhires,global_attrs) )
+
+		return result
+
+	def process_attrs(self, variable: xa.DataArray, parent: xa.DataArray, global_attrs: Dict ) -> xa.DataArray:
+		variable.attrs.update(global_attrs)
+		variable.attrs.update(parent.attrs)
+		for missing in ['fmissing_value', 'missing_value', 'fill_value']:
+			if missing in variable.attrs:
+				missing_value = variable.attrs.pop('fmissing_value')
+				variable = variable.where(variable != missing_value, np.nan)
+		return replace_nans(variable).transpose(*self.corder, missing_dims="ignore")
 
 	def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
 		ssvars: Dict[str, List] = {}
