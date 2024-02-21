@@ -18,6 +18,10 @@ from xarray.core.types import InterpOptions
 from fmod.pipeline.rescale import DataLoader, QType
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
+def emag( error: xa.DataArray ) -> float:
+	ef = error.values.flatten()
+	return np.sqrt( (ef*ef).sum() / ef.size )
+
 class Downscaler(object):
 
 	def __init__(self):
@@ -28,7 +32,9 @@ class Downscaler(object):
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
 		if self.model == "interp":
-			result = self._interpolate( variable, target, qtype )
+			result = self._interpolate( variable, target )
+		elif self.model == "sfno":
+			result = self._sfno( variable, target )
 		else:
 			raise Exception( f"Unknown downscaling model '{self.model}'")
 
@@ -36,16 +42,22 @@ class Downscaler(object):
 			nx,ny = target.coords['x'].size, target.coords['y'].size
 			result = result/(nx*ny)
 
-		return dict( downscale=result, target=target, error = result - target)
+		error = result - target
 
-	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray, qtype: QType ) -> xa.DataArray:
+		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}")
+		return dict( downscale=result, target=target, error=error)
+
+	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		interp_method: InterpOptions = InterpOptions(self.method)
 		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
 		varray = variable.interp(x=xc, assume_sorted=True, method=interp_method)
 		varray =   varray.interp(y=yc, assume_sorted=True, method=interp_method)
 		varray.attrs.update(variable.attrs)
-		if qtype == QType.Extensive: varray = varray/(xc.size*yc.size)
 		return varray
+
+	def _sfno(self, variable: xa.DataArray, target: xa.DataArray, qtype: QType ) -> xa.DataArray:
+		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
+		return target
 
 
 
