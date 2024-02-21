@@ -55,9 +55,7 @@ class Downscaler(object):
 		varray.attrs.update(variable.attrs)
 		return varray
 
-	def _sfno(self, variable: xa.DataArray, target: xa.DataArray, qtype: QType ) -> xa.DataArray:
-		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
-		return target
+
 
 
 
