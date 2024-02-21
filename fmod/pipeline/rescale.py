@@ -1,34 +1,20 @@
 from fmod.base.source.merra2.model import load_const_dataset, load_merra2_norm_data, load_dataset
-import xarray as xa, pandas as pd
-import os, math, numpy as np, shutil
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
-from fmod.pipeline.stats import StatsAccumulator
-from fmod.base.util.dates import drepr, date_list
-from datetime import date
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.util.config import cfg
-from fmod.base.source.merra2.batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath
-from fmod.base.io.loader import ncFormat
 from fmod.base.util.ops import print_norms, vars3d
 from xarray.core.resample import DataArrayResample
 import xarray as xa, pandas as pd
 import numpy as np
 from fmod.base.util.config import cfg
 from fmod.base.util.model import dataset_to_stacked
-from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping
+from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
 import glob, sys, os, time, traceback
-from fmod.base.util.ops import fmbdir
-from fmod.base.util.dates import skw, dstr
 from datetime import date
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
-np.set_printoptions(precision=3, suppress=False, linewidth=150)
-from numpy.lib.format import write_array
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.source.merra2.model import merge_batch
 from fmod.base.io.loader import ncFormat
 from enum import Enum
 from xarray.core.types import InterpOptions
+np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
 class QType(Enum):
 	Intensive = 'intensive'

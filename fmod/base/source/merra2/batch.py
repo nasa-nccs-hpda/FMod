@@ -4,7 +4,7 @@ from datetime import date
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
 from enum import Enum
-from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict
+from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing

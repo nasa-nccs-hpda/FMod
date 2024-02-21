@@ -1,6 +1,6 @@
 import torch, math
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.base.util.config import configure, cfg, cfg_date
 from torch.utils.data import DataLoader
 from fmod.base.util.grid import GridOps
