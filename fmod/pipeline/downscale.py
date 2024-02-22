@@ -20,6 +20,7 @@ np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
 def emag( error: xa.DataArray ) -> float:
 	ef = error.values.flatten()
+	print( f"EF: shape={ef.shape}, size={ef.size}, max={ef.max()}, min={ef.min()}")
 	return np.sqrt( (ef*ef).sum() / ef.size )
 
 class Downscaler(object):
