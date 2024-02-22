@@ -75,7 +75,7 @@ class DataLoader(object):
 			dvar: xa.DataArray = dset.data_vars[vname]
 			if self.c['z'] in dvar.dims:    channels.extend([f"{vname}~{iL}" for iL in range(dvar.sizes[self.c['z']])])
 			else:                           channels.append(vname)
-			for (cname, coord) in dvar.self.c.items():
+			for (cname, coord) in dvar.coords.items():
 				if cname not in (merge_dims + list(sizes.keys())):
 					sizes[cname] = coord.size
 		sizes.pop('datetime',None)
