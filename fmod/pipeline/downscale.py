@@ -21,8 +21,9 @@ np.set_printoptions(precision=3, suppress=False, linewidth=150)
 def nnan(array: np.ndarray) -> int: return np.count_nonzero(np.isnan(array))
 def emag( error: xa.DataArray ) -> float:
 	ef = error.values.flatten()
-	print( f"EF: shape={ef.shape}, size={ef.size}, nnan={nnan(ef)}, max={ef.max()}, min={ef.min()}")
-	return np.sqrt( (ef*ef).sum() / ef.size )
+	N =  ef.size - nnan(ef)
+#	print( f"EF: shape={ef.shape}, size={ef.size}, nnan={nnan(ef)}, max={ef.max()}, min={ef.min()}")
+	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
 
