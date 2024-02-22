@@ -24,13 +24,14 @@ def emag( error: xa.DataArray ) -> float:
 
 class Downscaler(object):
 
-	def __init__(self):
+	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split('.')
-		self.model = downscale_method[0]
-		self.method = downscale_method[1]
+		self.model = kwargs.get('model',downscale_method[0])
+		self.method: InterpOptions = InterpOptions[kwargs.get('method',downscale_method[1])]
 		self.cn: Dict[str,str] = dict( x='x', y='y')
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
+		t0 = time.time()
 		if self.model == "interp":
 			result = self._interpolate( variable, target )
 		elif self.model == "sfno":
@@ -44,16 +45,18 @@ class Downscaler(object):
 
 		error = result - target
 
-		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}")
+		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}, time = {(time.time()-t0):.3f} sec")
 		return dict( downscale=result, target=target, error=error)
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
-		interp_method: InterpOptions = InterpOptions(self.method)
 		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
-		varray = variable.interp(x=xc, assume_sorted=True, method=interp_method)
-		varray =   varray.interp(y=yc, assume_sorted=True, method=interp_method)
+		varray = variable.interp(x=xc, assume_sorted=True, method=self.method)
+		varray =   varray.interp(y=yc, assume_sorted=True, method=self.method)
 		varray.attrs.update(variable.attrs)
 		return varray
+
+	def _sfno(self, variable: xa.DataArray, target: xa.DataArray) -> xa.DataArray:
+		return target
 
 
 
