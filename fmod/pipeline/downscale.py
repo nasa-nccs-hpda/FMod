@@ -21,7 +21,7 @@ class Downscaler(object):
 		self.c: Dict[str,str] = cfg().task.coords
 		self.kargs = dict(assume_sorted=True, method=self.method)
 		if self.method == "polynomial":
-			self.kargs['otder'] =  kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
+			self.kargs['order'] =  kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
 		t0 = time.time()
