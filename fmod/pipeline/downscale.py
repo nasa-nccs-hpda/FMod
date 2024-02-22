@@ -28,7 +28,7 @@ class Downscaler(object):
 		downscale_method: str = cfg().task.downscale_method.split('.')
 		self.model = kwargs.get( 'model',  downscale_method[0] )
 		self.method= kwargs.get( 'method', downscale_method[1] )
-		self.cn: Dict[str,str] = dict( x='x', y='y')
+		self.cn: Dict[str,str] = cfg().task.coords
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
 		t0 = time.time()
@@ -49,7 +49,7 @@ class Downscaler(object):
 		return dict( downscale=result, target=target, error=error)
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
-		print( F"Interpolating COORDS: {list(target.coords.keys())}")
+	#	print( F"Interpolating COORDS: {list(target.coords.keys())}")
 		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
 		varray = variable.interp(x=xc, assume_sorted=True, method=self.method)
 		varray =   varray.interp(y=yc, assume_sorted=True, method=self.method)
