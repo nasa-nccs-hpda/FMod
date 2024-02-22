@@ -44,8 +44,8 @@ class Downscaler(object):
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 
 		ic = [ { self.c[cn]: target.coords[ self.c[cn] ]  } for cn in ['x','y'] ]
-		varray = variable.interp( coords=ic[0], **self.kargs )
-		varray =   varray.interp( coords=ic[1], **self.kargs  )
+		varray = variable.interp( ic[0], **self.kargs )
+		varray =   varray.interp( ic[1], **self.kargs  )
 		varray.attrs.update(variable.attrs)
 		return varray
 
