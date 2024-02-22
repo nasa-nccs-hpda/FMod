@@ -46,7 +46,8 @@ class Downscaler(object):
 		varray = variable
 		for cn in ['x','y']:
 			coords =  { self.c[cn]: target.coords[ self.c[cn] ]  }
-			varray = varray.interp( coords, **self.kargs )
+			print( f"Interpolating({self.c[cn]}): input shape= {varray.shape}, args= {self.kargs}")
+			varray = varray.interp( coords, self.method, **self.kargs )
 		varray.attrs.update(variable.attrs)
 		return varray
 
