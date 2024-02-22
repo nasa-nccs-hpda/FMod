@@ -58,7 +58,7 @@ class DataLoader(object):
 		std: xa.Dataset = self.norm_data['stddev_by_level']
 		nvars: Dict[str,xa.DataArray] = {}
 		for (vn,var) in dset.data_vars.items():
-			if kwargs.get('interp',False):
+			if kwargs.get('interp_nan',False):
 				var = var.interpolate_na( dim=self.c['x'], method='linear', keep_attrs=True )
 			nvars[vn] = (var-mean[vn])/std[vn]
 		return xa.Dataset( nvars, dset.coords, dset.attrs )
