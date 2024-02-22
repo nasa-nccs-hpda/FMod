@@ -24,7 +24,7 @@ class QType(Enum):
 class DataLoader(object):
 
 	def __init__(self,  **kwargs):
-		self.c = cfg().task.self.c
+		self.c = cfg().task.coords
 		self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
 		self.interp_method =  cfg().task.get('interp_method','linear')
 		self.corder = ['time', 'z', 'y', 'x']
