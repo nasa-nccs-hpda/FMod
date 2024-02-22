@@ -15,9 +15,10 @@ def emag( error: xa.DataArray ) -> float:
 class Downscaler(object):
 
 	def __init__(self, **kwargs ):
-		downscale_method: str = cfg().task.downscale_method.split('.')
+		downscale_method: str = cfg().task.downscale_method.split(':')
 		self.model = kwargs.get( 'model',  downscale_method[0] )
 		self.method= kwargs.get( 'method', downscale_method[1] )
+		self.poly_order=  kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
 		self.c: Dict[str,str] = cfg().task.coords
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
@@ -40,8 +41,8 @@ class Downscaler(object):
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		ic = [ { self.c[cn]: target.coords[ self.c[cn] ]  } for cn in ['x','y'] ]
-		varray = variable.interp( **ic[0], assume_sorted=True, method=self.method )
-		varray =   varray.interp( **ic[1], assume_sorted=True, method=self.method )
+		varray = variable.interp( **ic[0], assume_sorted=True, method=self.method, order=self.poly_order )
+		varray =   varray.interp( **ic[1], assume_sorted=True, method=self.method, order=self.poly_order )
 		varray.attrs.update(variable.attrs)
 		return varray
 

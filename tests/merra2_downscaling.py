@@ -25,3 +25,5 @@ highres: xa.DataArray = data_loader.get_channel_array( "high", reference_date )
 for dsmethod in interpMethods:
     downscaler = Downscaler(method=dsmethod)
     results: Dict[str,xa.DataArray] = downscaler.process( lowres, highres )
+
+print("\n\n\n")
