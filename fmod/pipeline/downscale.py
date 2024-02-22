@@ -26,8 +26,8 @@ class Downscaler(object):
 
 	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split('.')
-		self.model = kwargs.get('model',downscale_method[0])
-		self.method: InterpOptions = InterpOptions[kwargs.get('method',downscale_method[1])]
+		self.model = kwargs.get( 'model',  downscale_method[0] )
+		self.method= kwargs.get( 'method', downscale_method[1] )
 		self.cn: Dict[str,str] = dict( x='x', y='y')
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
