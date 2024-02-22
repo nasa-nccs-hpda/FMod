@@ -1,28 +1,15 @@
-from fmod.base.source.merra2.model import load_const_dataset, load_merra2_norm_data, load_dataset
-from fmod.base.util.ops import print_norms, vars3d, nnan
-from xarray.core.resample import DataArrayResample
-import xarray as xa, pandas as pd
+import xarray as xa
 import numpy as np
 from fmod.base.util.config import cfg
-from xarray.core.types import T_DataArray
-from fmod.base.util.model import dataset_to_stacked
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal, Hashable
 import glob, sys, os, time, traceback
-from datetime import date
-from fmod.base.util.ops import get_levels_config, increasing, replace_nans
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.source.merra2.model import merge_batch
-from fmod.base.io.loader import ncFormat
-from enum import Enum
-from xarray.core.types import InterpOptions
-from fmod.pipeline.rescale import DataLoader, QType
+from fmod.pipeline.rescale import QType
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
 def nnan(array: np.ndarray) -> int: return np.count_nonzero(np.isnan(array))
 def emag( error: xa.DataArray ) -> float:
-	ef = error.values.flatten()
-	N =  ef.size - nnan(ef)
-#	print( f"EF: shape={ef.shape}, size={ef.size}, nnan={nnan(ef)}, max={ef.max()}, min={ef.min()}")
+	ef: np.ndarray = error.values.flatten()
+	N: int =  ef.size - nnan(ef)
 	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
@@ -48,7 +35,7 @@ class Downscaler(object):
 
 		error = result - target
 
-		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}, time = {(time.time()-t0):.3f} sec")
+		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.2f}, time = {(time.time()-t0):.2f} sec")
 		return dict( downscale=result, target=target, error=error)
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:

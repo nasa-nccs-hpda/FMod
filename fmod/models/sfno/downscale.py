@@ -14,7 +14,6 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.source.merra2.model import merge_batch
 from fmod.base.io.loader import ncFormat
 from enum import Enum
-from xarray.core.types import InterpOptions
 from fmod.pipeline.rescale import DataLoader, QType
 from torch_harmonics import *
 import torch

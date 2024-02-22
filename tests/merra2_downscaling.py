@@ -7,6 +7,7 @@ from fmod.base.util.config import configure, cfg, cfg_date, cfg2args, pp
 import xarray as xa
 from fmod.pipeline.rescale import DataLoader
 from datetime import date
+from xarray.core.types import InterpOptions, Interp1dOptions
 
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-sr')
@@ -20,5 +21,8 @@ data_loader = DataLoader()
 lowres: xa.DataArray  = data_loader.get_channel_array( "low",  reference_date )
 highres: xa.DataArray = data_loader.get_channel_array( "high", reference_date )
 
-downscaler = Downscaler()
-results: Dict[str,xa.DataArray] = downscaler.process( lowres, highres )
+print(Interp1dOptions.parameters)
+
+for dsmethod in ['linear']:
+    downscaler = Downscaler(method=dsmethod)
+    results: Dict[str,xa.DataArray] = downscaler.process( lowres, highres )
