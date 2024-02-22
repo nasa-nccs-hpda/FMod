@@ -7,6 +7,7 @@ from fmod.base.util.config import cfg
 from fmod.base.util.model import dataset_to_stacked
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
 import glob, sys, os, time, traceback
+from xarray.core.dataset import DataVariables
 from datetime import date
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -23,6 +24,7 @@ class QType(Enum):
 class DataLoader(object):
 
 	def __init__(self,  **kwargs):
+		self.c = cfg().task.self.c
 		self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
 		self.interp_method =  cfg().task.get('interp_method','linear')
 		self.corder = ['time', 'z', 'y', 'x']
@@ -49,34 +51,37 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		return self.ds2array( self.normalize( dset ) )
+		return self.ds2array( self.normalize( dset, **kwargs ) )
 
-	def normalize(self, dset: xa.Dataset ) -> xa.Dataset:
+	def normalize(self, dset: xa.Dataset, **kwargs ) -> xa.Dataset:
 		mean: xa.Dataset = self.norm_data['mean_by_level']
 		std: xa.Dataset = self.norm_data['stddev_by_level']
-		dvars = { vn: (var-mean[vn])/std[vn] for (vn,var) in dset.data_vars.items()}
-		return xa.Dataset( dvars, dset.coords, dset.attrs )
+		nvars: Dict[str,xa.DataArray] = {}
+		for (vn,var) in dset.data_vars.items():
+			if kwargs.get('interp',False):
+				var = var.interpolate_na( dim=self.c['x'], method='linear', keep_attrs=True )
+			nvars[vn] = (var-mean[vn])/std[vn]
+		return xa.Dataset( nvars, dset.coords, dset.attrs )
 
-	@classmethod
-	def ds2array( cls, dset: xa.Dataset, **kwargs) -> xa.DataArray:
-		coords = cfg().task.coords
-		aux_dims: List[str] =  [ "channels", coords['t'], coords['y'], coords['x'] ]
-		merge_dims = kwargs.get('merge_dims', [coords['z']])
+
+	def ds2array( self, dset: xa.Dataset, **kwargs) -> xa.DataArray:
+		aux_dims: List[str] =  [ "channels", self.c['t'], self.c['y'], self.c['x'] ]
+		merge_dims = kwargs.get('merge_dims', [self.c['z']])
 		sizes: Dict[str, int] = {}
 		vnames = list(dset.data_vars.keys())
 		vnames.sort()
 		channels = []
 		for vname in vnames:
 			dvar: xa.DataArray = dset.data_vars[vname]
-			if coords['z'] in dvar.dims:    channels.extend([f"{vname}~{iL}" for iL in range(dvar.sizes[coords['z']])])
+			if self.c['z'] in dvar.dims:    channels.extend([f"{vname}~{iL}" for iL in range(dvar.sizes[self.c['z']])])
 			else:                           channels.append(vname)
-			for (cname, coord) in dvar.coords.items():
+			for (cname, coord) in dvar.self.c.items():
 				if cname not in (merge_dims + list(sizes.keys())):
 					sizes[cname] = coord.size
 		sizes.pop('datetime',None)
 		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
 		darray.attrs['channels'] = channels
-		if coords['t'] not in darray.dims: aux_dims.remove( "time" )
+		if self.c['t'] not in darray.dims: aux_dims.remove( "time" )
 		return darray.transpose( *aux_dims )
 
 	def interp_axis(self, dvar: xa.DataArray, coords: Dict[str, Any], axis: str):

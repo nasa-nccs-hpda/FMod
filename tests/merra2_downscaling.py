@@ -19,8 +19,8 @@ if torch.cuda.is_available():
     torch.cuda.set_device(device.index)
 
 data_loader = DataLoader()
-lowres: xa.DataArray  = data_loader.get_channel_array( "low",  reference_date )
-highres: xa.DataArray = data_loader.get_channel_array( "high", reference_date )
+lowres: xa.DataArray  = data_loader.get_channel_array( "low",  reference_date, interp=True )
+highres: xa.DataArray = data_loader.get_channel_array( "high", reference_date, interp=True )
 
 for dsmethod in interpMethods:
     downscaler = Downscaler(method=dsmethod)
