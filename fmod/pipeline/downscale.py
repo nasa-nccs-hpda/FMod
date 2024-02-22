@@ -1,5 +1,5 @@
 from fmod.base.source.merra2.model import load_const_dataset, load_merra2_norm_data, load_dataset
-from fmod.base.util.ops import print_norms, vars3d
+from fmod.base.util.ops import print_norms, vars3d, nnan
 from xarray.core.resample import DataArrayResample
 import xarray as xa, pandas as pd
 import numpy as np
@@ -18,9 +18,10 @@ from xarray.core.types import InterpOptions
 from fmod.pipeline.rescale import DataLoader, QType
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
+def nnan(array: np.ndarray) -> int: return np.count_nonzero(np.isnan(array))
 def emag( error: xa.DataArray ) -> float:
 	ef = error.values.flatten()
-	print( f"EF: shape={ef.shape}, size={ef.size}, max={ef.max()}, min={ef.min()}")
+	print( f"EF: shape={ef.shape}, size={ef.size}, nnan={nnan(ef)}, max={ef.max()}, min={ef.min()}")
 	return np.sqrt( (ef*ef).sum() / ef.size )
 
 class Downscaler(object):
