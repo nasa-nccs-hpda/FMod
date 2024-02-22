@@ -49,6 +49,7 @@ class Downscaler(object):
 		return dict( downscale=result, target=target, error=error)
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
+		print( F"Interpolating COORDS: {list(target.coords.keys())}")
 		xc, yc = target.coords[self.cn['x']], target.coords[self.cn['y']]
 		varray = variable.interp(x=xc, assume_sorted=True, method=self.method)
 		varray =   varray.interp(y=yc, assume_sorted=True, method=self.method)
