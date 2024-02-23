@@ -7,19 +7,22 @@ import torch
 
 class SHTransform(object):
 
-	def __init__(self, target: xa.DataArray, source_shape: Tuple[int,...]=None, **kwargs):
+	def __init__(self, target: xa.DataArray, source: xa.DataArray=None, **kwargs):
 		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		self.c = cfg().task.coords
 		self.coords = target.coords
 		self.dims = target.dims
 		self.attrs = target.attrs
 		self.tname = target.name
-		self.target_shape = target.sizes[self.c['y']], target.sizes[self.c['x']]      # lat, lon6
-		self.source_shape = self.target_shape if source_shape is None else source_shape    # lat, lon
-		self.sht = sht.RealSHT( *self.source_shape, *self.target_shape, grid="equiangular").to(self.device)
-		self.isht = sht.InverseRealSHT( *self.target_shape, *self.target_shape, grid="equiangular").to(self.device)
+		self.grid = kwargs.get( 'grid', "equiangular" )
+		self.target_shape: Tuple[int,int] = self.gshape(target)
+		self.source_shape: Tuple[int,int] = self.target_shape if source is None else self.gshape(source)
+		self.sht = sht.RealSHT( *self.source_shape, *self.target_shape, grid=self.grid ).to(self.device)
+		self.isht = sht.InverseRealSHT( *self.target_shape, *self.target_shape, grid=self.grid ).to(self.device)
 		self.coef: torch.Tensor = None
 
+	def gshape(self, grid: xa.DataArray ) -> Tuple[int,int]:     # lat, lon
+		return grid.sizes[self.c['y']], grid.sizes[self.c['x']]
 
 	def process( self, variable: xa.DataArray ) -> xa.DataArray:
 		signal: torch.Tensor = torch.from_numpy(variable.values).to(self.device)
