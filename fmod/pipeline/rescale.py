@@ -51,7 +51,9 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		return self.ds2array( self.normalize( dset, **kwargs ) )
+		result: xa.DataArray = self.ds2array( self.normalize( dset, **kwargs ) )
+		dset.close()
+		return result
 
 	def normalize(self, dset: xa.Dataset, **kwargs ) -> xa.Dataset:
 		mean: xa.Dataset = self.norm_data['mean_by_level']

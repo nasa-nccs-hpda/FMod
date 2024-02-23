@@ -13,7 +13,7 @@ def emag( error: xa.DataArray ) -> float:
 	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
-	methods = [ "linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial",  "spline" ] # "barycentric", "krogh", "pchip", "akima",
+	methods = [ "linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial" ]
 
 	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split(':')
