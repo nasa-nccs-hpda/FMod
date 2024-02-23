@@ -4,7 +4,7 @@ from fmod.base.util.config import cfg
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal, Hashable
 import glob, sys, os, time, traceback
 from fmod.pipeline.rescale import QType
-from fmod.models.sfno.downscale import SFNODownscaler
+from fmod.models.sfno.downscale import SHTransform
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
 def emag( error: xa.DataArray ) -> float:
@@ -50,10 +50,9 @@ class Downscaler(object):
 		varray.attrs.update(variable.attrs)
 		return varray
 
-	def _sfno(self, variable: xa.DataArray, target: xa.DataArray) -> xa.DataArray:
-		ds = SFNODownscaler( target, method=self.method )
-	#	tslices = [ ds.process( variable.isel(time=it) ) for it in range()]
-		return ds.process( variable.isel(time=0,drop=True) )
+	def _sfno(self, source: xa.DataArray, target: xa.DataArray) -> xa.DataArray:
+		ds = SHTransform( target, source.shape, method=self.method )
+		return ds.process( source.isel(time=0,drop=True) )
 
 
 

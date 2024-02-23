@@ -5,9 +5,9 @@ from fmod.models.sfno import sht
 from typing import List, Union, Tuple, Optional, Dict, Type
 import torch
 
-class SFNODownscaler(object):
+class SHTransform(object):
 
-	def __init__(self, target: xa.DataArray, source_shape: List[int]=None, **kwargs):
+	def __init__(self, target: xa.DataArray, source_shape: Tuple[int,...]=None, **kwargs):
 		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		self.c = cfg().task.coords
 		self.coords = target.coords
