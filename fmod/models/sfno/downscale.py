@@ -1,7 +1,7 @@
 import xarray as xa
 import numpy as np
 from fmod.base.util.config import cfg
-from torch_harmonics import *
+from fmod.models.sfno import sht
 import torch
 
 class SFNODownscaler(object):
@@ -15,8 +15,8 @@ class SFNODownscaler(object):
 		self.tname = target.name
 		self.nlat, self.nlon = target.sizes[self.c['y']], target.sizes[self.c['x']]
 		self.n_theta, self.n_lambda = self.nlat, self.nlon
-		self.sht = RealVectorSHT(self.n_theta, self.n_lambda, grid="equiangular").to(self.device)
-		self.isht = InverseRealVectorSHT(self.nlat, self.nlon, grid="equiangular").to(self.device)
+		self.sht = sht.RealSHT(self.n_theta, self.n_lambda, grid="equiangular").to(self.device)
+		self.isht = sht.InverseRealSHT(self.nlat, self.nlon, grid="equiangular").to(self.device)
 		self.coef: torch.Tensor = None
 
 
