@@ -15,8 +15,8 @@ class SFNODownscaler(object):
 		self.tname = target.name
 		nlat, nlon = target.sizes[self.c['y']], target.sizes[self.c['x']]
 		n_theta, n_lambda = nlat, nlon
-		self.sht = RealSHT(n_theta, n_lambda, grid="equiangular").to(self.device)
-		self.isht = InverseRealSHT(nlat, nlon, grid="equiangular").to(self.device)
+		self.sht = RealVectorSHT(n_theta, n_lambda, grid="equiangular").to(self.device)
+		self.isht = InverseRealVectorSHT(nlat, nlon, grid="equiangular").to(self.device)
 		self.coef: torch.Tensor = None
 
 
