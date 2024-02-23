@@ -42,16 +42,17 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 
 
 @exception_handled
-def mplplot( images: Dict[str,xa.DataArray] ):
+def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	channels: List[str] = sample.attrs['channels']
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', time.size  )
+	fsize = kwargs.get( 'fsize', 5.0 )
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*7, nvars*5], layout="tight")
+		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*fsize*1.4, nvars*fsize], layout="tight")
 
 	for itype, (tname, image) in enumerate(images.items()):
 		ax = axs[ itype ]
