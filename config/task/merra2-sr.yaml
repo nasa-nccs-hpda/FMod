@@ -7,7 +7,7 @@ device: "gpu"
 num_workers: 4
 upscale_factor: 4
 downscale_method: 'interp:linear'
-poly_order: 4
+poly_order: 5
 
 year_range:  [1985,2021]
 year: 1991
