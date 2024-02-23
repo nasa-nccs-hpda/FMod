@@ -26,4 +26,5 @@ for dsmethod in Downscaler.methods:
     downscaler = Downscaler(method=dsmethod)
     results: Dict[str,xa.DataArray] = downscaler.process( lowres, highres )
 
+data_loader.close()
 print("\n\n\n")

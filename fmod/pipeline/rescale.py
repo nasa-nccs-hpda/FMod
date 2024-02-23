@@ -34,10 +34,14 @@ class DataLoader(object):
 		self.tstep = str(cfg().preprocess.data_timestep) + "h"
 		self.dmap: Dict = cfg().preprocess.dims
 		self.upscale_factor: int = cfg().task.get('upscale_factor')
-		self._constant_data = {}
+		self._constant_data: Dict[str, xa.Dataset] = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
-	def constant_data(self, vres: str ):
+	def close(self):
+		for dset in self.norm_data.values(): dset.close()
+		for dset in self._constant_data.values(): dset.close()
+
+	def constant_data(self, vres: str ) -> xa.Dataset:
 		return self._constant_data.setdefault( vres,  load_const_dataset( vres ) )
 
 	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
@@ -51,7 +55,7 @@ class DataLoader(object):
 		dset: xa.Dataset = self.get_dataset( vres, d, **kwargs )
 		cvars = kwargs.pop('vars', vars3d(dset))
 		dset = dset.drop_vars( set(dset.data_vars.keys()) - set(cvars) )
-		result: xa.DataArray = self.ds2array( self.normalize( dset, **kwargs ) )
+		result: xa.DataArray = self.ds2array( self.normalize( dset, **kwargs ) ).load()
 		dset.close()
 		return result
 

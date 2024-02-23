@@ -79,7 +79,7 @@ def load_dataset( vres: str,  d: date ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, vres, d )
 	return open_dataset( filepath )
 
-def load_const_dataset( vres: str ):
+def load_const_dataset( vres: str ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres )
 	return open_dataset( filepath )
 
