@@ -89,6 +89,7 @@ class RealSHT(nn.Module):
 		xout = torch.zeros(out_shape, dtype=x.dtype, device=x.device)
 
 		# contraction
+		print( f" ....... out_shape={out_shape}, wts_shape={self.weights.shape}, mmax={self.mmax}")
 		xout[..., 0] = torch.einsum('...km,mlk->...lm', x[..., :self.mmax, 0], self.weights.to(x.dtype))
 		xout[..., 1] = torch.einsum('...km,mlk->...lm', x[..., :self.mmax, 1], self.weights.to(x.dtype))
 		x = torch.view_as_complex(xout)
