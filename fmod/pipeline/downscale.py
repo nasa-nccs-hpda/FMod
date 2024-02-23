@@ -20,10 +20,9 @@ class Downscaler(object):
 		self.model = kwargs.get( 'model',  downscale_method[0] )
 		self.method= kwargs.get( 'method', downscale_method[1] )
 		self.c: Dict[str,str] = cfg().task.coords
-		self.order = kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
 		self.kargs = dict( fill_value="extrapolate" )
 		if self.method == "polynomial":
-			self.kargs['order'] = self.order
+			self.kargs['order'] = kwargs.get( 'order', cfg().task.get('poly_order', 5)  )
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
 		t0 = time.time()
