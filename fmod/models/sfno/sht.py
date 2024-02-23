@@ -72,6 +72,7 @@ class RealSHT(nn.Module):
 		return f'nlat={self.nlat}, nlon={self.nlon},\n lmax={self.lmax}, mmax={self.mmax},\n grid={self.grid}, csphase={self.csphase}'
 
 	def forward(self, x: torch.Tensor):
+		print( f" ---->>>> forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
 		assert (x.shape[-2] == self.nlat)
 		assert (x.shape[-1] == self.nlon)
 
