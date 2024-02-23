@@ -21,9 +21,9 @@ class Downscaler(object):
 		self.method= kwargs.get( 'method', downscale_method[1] )
 		self.c: Dict[str,str] = cfg().task.coords
 		self.order = kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
-		self.kargs = dict(assume_sorted=True, fill_value="extrapolate")
+		self.kargs = dict( fill_value="extrapolate" )
 		if self.method == "polynomial":
-			self.kargs['kwargs'] =  dict( order=self.order )
+			self.kargs['order'] = self.order
 
 	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
 		t0 = time.time()
@@ -45,9 +45,9 @@ class Downscaler(object):
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		varray, nn = variable, np.count_nonzero(np.isnan(variable.values))
-		print( f" ****************** Interpolating({self.method}) with nnan={nn}")
+		print( f" ****************** Interpolating({self.method}) with nnan={nn}, kargs={self.kargs}")
 		coords =  { self.c[cn]: target.coords[ self.c[cn] ] for cn in ['x','y']  }
-		varray = varray.interp( coords=coords, method=self.method, **self.kargs )
+		varray = varray.interp( coords, self.method, True, self.kargs )
 		varray.attrs.update(variable.attrs)
 		return varray
 
