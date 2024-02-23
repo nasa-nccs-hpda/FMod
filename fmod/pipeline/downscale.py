@@ -25,7 +25,7 @@ class Downscaler(object):
 		if self.method == "polynomial":
 			self.kargs['order'] = kwargs.get( 'order', cfg().task.get('poly_order', 5)  )
 
-	def process( self, variable: xa.DataArray, target: xa.DataArray, qtype: QType=QType.Intensive) -> Dict[str,xa.DataArray]:
+	def process( self, variable: xa.DataArray, target: xa.DataArray, ) -> Dict[str,xa.DataArray]:    # qtype: QType=QType.Intensive
 		t0 = time.time()
 		if self.model == "interp":
 			result = self._interpolate( variable, target )
@@ -34,9 +34,9 @@ class Downscaler(object):
 		else:
 			raise Exception( f"Unknown downscaling model '{self.model}'")
 
-		if qtype == QType.Extensive:
-			nx,ny = target.coords['x'].size, target.coords['y'].size
-			result = result/(nx*ny)
+		# if qtype == QType.Extensive:
+		# 	nx,ny = target.coords['x'].size, target.coords['y'].size
+		# 	result = result/(nx*ny)
 
 		error = result - target
 
@@ -52,7 +52,8 @@ class Downscaler(object):
 
 	def _sfno(self, variable: xa.DataArray, target: xa.DataArray) -> xa.DataArray:
 		ds = SFNODownscaler( target, method=self.method )
-		return ds.process( variable )
+	#	tslices = [ ds.process( variable.isel(time=it) ) for it in range()]
+		return ds.process( variable.isel(time=0,drop=True) )
 
 
 
