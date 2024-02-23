@@ -13,7 +13,7 @@ def emag( error: xa.DataArray ) -> float:
 	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
-	methods = ["linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial", "barycentric", "krogh", "pchip", "spline", "akima"]
+	methods = [ "linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial",  "spline" ] # "barycentric", "krogh", "pchip", "akima",
 
 	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split(':')
@@ -40,7 +40,7 @@ class Downscaler(object):
 
 		error = result - target
 
-		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.2f}, time = {(time.time()-t0):.2f} sec")
+		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}, time = {(time.time()-t0):.3f} sec")
 		return dict( downscale=result, target=target, error=error)
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
