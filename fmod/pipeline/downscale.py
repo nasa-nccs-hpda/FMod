@@ -6,10 +6,11 @@ import glob, sys, os, time, traceback
 from fmod.pipeline.rescale import QType
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
-def nnan(array: np.ndarray) -> int: return np.count_nonzero(np.isnan(array))
 def emag( error: xa.DataArray ) -> float:
 	ef: np.ndarray = error.values.flatten()
-	N: int =  ef.size - nnan(ef)
+	nn = np.count_nonzero(np.isnan(ef))
+	N: int =  ef.size - nn
+	print( f" ------------------------ emag: N={N}, nn={nn}, efmax={np.nanmax(ef)}, efmin={np.nanmin(ef)}")
 	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
@@ -45,9 +46,8 @@ class Downscaler(object):
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		varray = variable
 		print(f"           *** Interpolating({self.method}): nnan= {nnan(variable.values)}")
-		for cn in ['x','y']:
-			coords =  { self.c[cn]: target.coords[ self.c[cn] ]  }
-			varray = varray.interp( coords, self.method, **self.kargs )
+		coords =  { self.c[cn]: target.coords[ self.c[cn] ] for cn in ['x','y']  }
+		varray = varray.interp( coords, self.method, **self.kargs )
 		varray.attrs.update(variable.attrs)
 		return varray
 
