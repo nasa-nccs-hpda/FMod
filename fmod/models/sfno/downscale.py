@@ -13,15 +13,18 @@ class SFNODownscaler(object):
 		self.dims = target.dims
 		self.attrs = target.attrs
 		self.tname = target.name
-		nlat, nlon = target.sizes[self.c['y']], target.sizes[self.c['x']]
-		n_theta, n_lambda = nlat, nlon
-		self.sht = RealVectorSHT(n_theta, n_lambda, grid="equiangular").to(self.device)
-		self.isht = InverseRealVectorSHT(nlat, nlon, grid="equiangular").to(self.device)
+		self.nlat, self.nlon = target.sizes[self.c['y']], target.sizes[self.c['x']]
+		self.n_theta, self.n_lambda = self.nlat, self.nlon
+		self.sht = RealVectorSHT(self.n_theta, self.n_lambda, grid="equiangular").to(self.device)
+		self.isht = InverseRealVectorSHT(self.nlat, self.nlon, grid="equiangular").to(self.device)
 		self.coef: torch.Tensor = None
 
 
 	def process( self, variable: xa.DataArray ) -> xa.DataArray:
 		signal: torch.Tensor = torch.from_numpy(variable.values).to(self.device)
+		print( f"SFNO: signal.shape={signal.shape}, nlat,nlon={(self.nlat, self.nlon)}, n_theta,n_lambda={(self.n_theta,self.n_lambda)}" )
 		self.coef = self.sht(signal)
+		print(f" ---> coef.shape={self.coef.shape}")
 		downscaled: np.ndarray = self.isht( self.coef ).numpy()
+		print(f" ---> downscaled.shape={downscaled.shape}")
 		return xa.DataArray( data=downscaled, coords=self.coords, dims=self.dims, attrs=self.attrs, name=self.tname )
