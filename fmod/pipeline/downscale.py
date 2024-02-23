@@ -51,7 +51,7 @@ class Downscaler(object):
 		return varray
 
 	def _sfno(self, source: xa.DataArray, target: xa.DataArray) -> xa.DataArray:
-		ds = SHTransform( target, source.shape, method=self.method )
+		ds = SHTransform( target, source, method=self.method )
 		return ds.process( source.isel(time=0,drop=True) )
 
 
