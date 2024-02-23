@@ -10,10 +10,10 @@ def emag( error: xa.DataArray ) -> float:
 	ef: np.ndarray = error.values.flatten()
 	nn = np.count_nonzero(np.isnan(ef))
 	N: int =  ef.size - nn
-	print( f" ------------------------ emag: N={N}, nn={nn}, efmax={np.nanmax(ef)}, efmin={np.nanmin(ef)}")
 	return np.sqrt( np.nansum(ef*ef) / N )
 
 class Downscaler(object):
+	methods = ["linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial", "barycentric", "krogh", "pchip", "spline", "akima"]
 
 	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split(':')
@@ -45,7 +45,6 @@ class Downscaler(object):
 
 	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		varray, nn = variable, np.count_nonzero(np.isnan(variable.values))
-		print( f" ****************** Interpolating({self.method}) with nnan={nn}, kargs={self.kargs}")
 		coords =  { self.c[cn]: target.coords[ self.c[cn] ] for cn in ['x','y']  }
 		varray = varray.interp( coords, self.method, True, self.kargs )
 		varray.attrs.update(variable.attrs)

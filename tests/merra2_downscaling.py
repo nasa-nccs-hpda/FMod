@@ -12,7 +12,7 @@ from xarray.core.types import InterpOptions, Interp1dOptions
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-sr')
 reference_date = date(1990, 6, 1)
-interpMethods = [ "linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial" ]
+
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
@@ -22,7 +22,7 @@ data_loader = DataLoader()
 lowres: xa.DataArray  = data_loader.get_channel_array( "low",  reference_date, interp_nan=True )
 highres: xa.DataArray = data_loader.get_channel_array( "high", reference_date, interp_nan=True )
 
-for dsmethod in interpMethods:
+for dsmethod in Downscaler.methods:
     downscaler = Downscaler(method=dsmethod)
     results: Dict[str,xa.DataArray] = downscaler.process( lowres, highres )
 
