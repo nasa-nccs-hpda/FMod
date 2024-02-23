@@ -47,7 +47,7 @@ class Downscaler(object):
 		varray, nn = variable, np.count_nonzero(np.isnan(variable.values))
 		print( f" ****************** Interpolating({self.method}) with nnan={nn}")
 		coords =  { self.c[cn]: target.coords[ self.c[cn] ] for cn in ['x','y']  }
-		varray = varray.interp( coords, self.method, **self.kargs )
+		varray = varray.interp( coords=coords, method=self.method, **self.kargs )
 		varray.attrs.update(variable.attrs)
 		return varray
 

@@ -60,6 +60,7 @@ class DataLoader(object):
 		for (vn,var) in dset.data_vars.items():
 			if kwargs.get('interp_nan',False):
 				var = var.interpolate_na( dim=self.c['x'], method='linear', keep_attrs=True )
+				var = var.interpolate_na( dim=self.c['y'], method='linear', keep_attrs=True )
 			nvars[vn] = (var-mean[vn])/std[vn]
 		return xa.Dataset( nvars, dset.coords, dset.attrs )
 
