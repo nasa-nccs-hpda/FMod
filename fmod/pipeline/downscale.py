@@ -21,7 +21,7 @@ class Downscaler(object):
 		self.method= kwargs.get( 'method', downscale_method[1] )
 		self.c: Dict[str,str] = cfg().task.coords
 		self.order = kwargs.get( 'order', cfg().task.get('poly_order', 2)  )
-		self.kargs = dict(assume_sorted=True)
+		self.kargs = dict(assume_sorted=True, fill_value="extrapolate")
 		if self.method == "polynomial":
 			self.kargs['kwargs'] =  dict( order=self.order )
 
