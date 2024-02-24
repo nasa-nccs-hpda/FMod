@@ -28,6 +28,7 @@ class RealSHT(nn.Module):
 		"""
 
 		super().__init__()
+		print( f"Initializing RealSHT: nlat={nlat} nlon={nlon} lmax={lmax} mmax={mmax} grid={grid}")
 
 		self.nlat = nlat
 		self.nlon = nlon
