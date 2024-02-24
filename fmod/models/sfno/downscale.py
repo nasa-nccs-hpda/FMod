@@ -34,6 +34,6 @@ class SHTransform(object):
 		print( f"SFNO: signal.shape={signal.shape}, source_shape={self.source_shape}, target_shape={self.target_shape}" )
 		self.coef = self.sht(signal)
 		print(f" ---> coef.shape={self.coef.shape}")
-		downscaled: np.ndarray = self.isht( self.coef ).numpy()
+		downscaled: np.ndarray = self.isht( self.coef ).cpu().numpy()
 		print(f" ---> downscaled.shape={downscaled.shape}")
 		return xa.DataArray( data=downscaled, coords=self.coords, dims=self.dims, attrs=self.attrs, name=self.tname )
