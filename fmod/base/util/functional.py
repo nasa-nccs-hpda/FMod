@@ -376,6 +376,7 @@ def einsum(*args: Any) -> Tensor:
     if len(operands) <= 2 or not opt_einsum.enabled:
         # the path for contracting 0 or 1 time(s) is already optimized
         # or the user has disabled using opt_einsum
+        print(f'einsum(): len(operands)={len(operands)}, opt_einsum.enabled={opt_einsum.enabled}')
         return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
 
     path = None
