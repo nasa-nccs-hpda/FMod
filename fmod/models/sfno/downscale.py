@@ -18,7 +18,8 @@ class SHTransform(object):
 		self.method = kwargs.get('method', "rescale")
 		self.target_shape: Tuple[int,int] = self.gshape(target)
 		self.source_shape: Tuple[int,int] = self.target_shape if source is None else self.gshape(source)
-		self.sht = sht.RealSHT( *self.source_shape, *self.target_shape, grid=self.grid ).to(self.device)
+		print(f" SHTransform: source_shape = {self.source_shape}, target_shape = {self.target_shape} ")
+		self.sht = sht.RealSHT( nlat=self.source_shape[0], nlon=self.source_shape[1], lmax=self.target_shape[0], mmax=self.target_shape[1], grid=self.grid ).to(self.device)
 		self.isht = sht.InverseRealSHT( *self.target_shape, *self.target_shape, grid=self.grid ).to(self.device)
 		self.coef: torch.Tensor = None
 
