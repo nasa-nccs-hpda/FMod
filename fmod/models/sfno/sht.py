@@ -81,8 +81,12 @@ class RealSHT(nn.Module):
 		# apply real fft in the longitudinal direction
 		x = 2.0 * torch.pi * torch.fft.rfft(x, dim=-1, norm="forward")
 
+		print(f" ---->>>> X-FFT: shape={x.shape} ")
+
 		# do the Legendre-Gauss quadrature
 		x = torch.view_as_real(x)
+
+		print(f" ---->>>> X-LGq: shape={x.shape} ")
 
 		# distributed contraction: fork
 		out_shape = list(x.size())
@@ -91,7 +95,8 @@ class RealSHT(nn.Module):
 		xout = torch.zeros(out_shape, dtype=x.dtype, device=x.device)
 
 		# contraction
-		print( f" ....... out_shape={out_shape}, wts_shape={self.weights.shape}, mmax={self.mmax}")
+		print( f" ....... out_shape={out_shape}, wts_shape={self.weights.shape}, x_shape={x.shape}, mmax={self.mmax}")
+
 		xout[..., 0] = einsum('...km,mlk->...lm', x[..., :self.mmax, 0], self.weights.to(x.dtype))
 		xout[..., 1] = einsum('...km,mlk->...lm', x[..., :self.mmax, 1], self.weights.to(x.dtype))
 		x = torch.view_as_complex(xout)
