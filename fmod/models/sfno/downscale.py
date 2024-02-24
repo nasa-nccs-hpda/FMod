@@ -24,7 +24,7 @@ class SHTransform(object):
 		# self.sht = sht.RealSHT( nlat=self.source_shape[0], nlon=self.source_shape[1], lmax=self.target_shape[0], mmax=self.target_shape[1], grid=self.grid ).to(self.device)
 		# self.isht = sht.InverseRealSHT( *self.target_shape, *self.target_shape, grid=self.grid ).to(self.device)
 		self.sht = sht.RealSHT( ntheta_s, nlambda_s, grid=self.grid ).to(self.device)
-		self.isht = sht.InverseRealSHT( ntheta_t, nlambda_t, grid=self.grid ).to(self.device)
+		self.isht = sht.InverseRealSHT( ntheta_t, nlambda_t, ntheta_s, nlambda_s, grid=self.grid ).to(self.device)
 		self.coef: torch.Tensor = None
 
 	def gshape(self, grid: xa.DataArray ) -> Tuple[int,int]:     # lat, lon
