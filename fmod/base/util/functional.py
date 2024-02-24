@@ -7,12 +7,12 @@ import itertools
 import torch
 from torch._C import _add_docstr
 import torch.nn.functional as F
-from ._lowrank import svd_lowrank, pca_lowrank
-from .overrides import (
+from torch._lowrank import svd_lowrank, pca_lowrank
+from torch.overrides import (
     has_torch_function, has_torch_function_unary, has_torch_function_variadic,
     handle_torch_function)
-from ._jit_internal import boolean_dispatch
-from ._jit_internal import _overload as overload
+from torch._jit_internal import boolean_dispatch
+from torch._jit_internal import _overload as overload
 
 Tensor = torch.Tensor
 from torch import _VF
