@@ -5,7 +5,6 @@ import operator
 import itertools
 
 import torch
-from torch._C import _add_docstr
 import torch.nn.functional as F
 from torch._lowrank import svd_lowrank, pca_lowrank
 from torch.overrides import (
@@ -661,87 +660,7 @@ def stft(input: Tensor, n_fft: int, hop_length: Optional[int] = None,
                     normalized, onesided, return_complex)
 
 
-istft = _add_docstr(
-    torch.istft,
-    "istft(input, n_fft, hop_length=None, win_length=None, window=None, center=True, "
-    "normalized=False, onesided=None, length=None, return_complex=False) -> Tensor:\n"
-    r"""
-Inverse short time Fourier Transform. This is expected to be the inverse of :func:`~torch.stft`.
-
-.. warning::
-    From version 2.1, a warning will be provided if a :attr:`window` is
-    not specified. In a future release, this attribute will be required.
-    Please provide the same window used in the stft call.
-
-It has the same parameters (+ additional optional parameter of :attr:`length`) and it should return the
-least squares estimation of the original signal. The algorithm will check using the NOLA condition (
-nonzero overlap).
-
-Important consideration in the parameters :attr:`window` and :attr:`center` so that the envelop
-created by the summation of all the windows is never zero at certain point in time. Specifically,
-:math:`\sum_{t=-\infty}^{\infty} |w|^2[n-t\times hop\_length] \cancel{=} 0`.
-
-Since :func:`~torch.stft` discards elements at the end of the signal if they do not fit in a frame,
-``istft`` may return a shorter signal than the original signal (can occur if :attr:`center` is False
-since the signal isn't padded). If `length` is given in the arguments and is longer than expected,
-``istft`` will pad zeros to the end of the returned signal.
-
-If :attr:`center` is ``True``, then there will be padding e.g. ``'constant'``, ``'reflect'``, etc.
-Left padding can be trimmed off exactly because they can be calculated but right padding cannot be
-calculated without additional information.
-
-Example: Suppose the last window is:
-``[17, 18, 0, 0, 0]`` vs ``[18, 0, 0, 0, 0]``
-
-The :attr:`n_fft`, :attr:`hop_length`, :attr:`win_length` are all the same which prevents the calculation
-of right padding. These additional values could be zeros or a reflection of the signal so providing
-:attr:`length` could be useful. If :attr:`length` is ``None`` then padding will be aggressively removed
-(some loss of signal).
-
-[1] D. W. Griffin and J. S. Lim, "Signal estimation from modified short-time Fourier transform,"
-IEEE Trans. ASSP, vol.32, no.2, pp.236-243, Apr. 1984.
-
-Args:
-    input (Tensor): The input tensor. Expected to be in the format of :func:`~torch.stft`,
-        output. That is a complex tensor of shape `(B?, N, T)` where
-
-        - `B?` is an optional batch dimension
-        - `N` is the number of frequency samples, `(n_fft // 2) + 1`
-          for onesided input, or otherwise `n_fft`.
-        - `T` is the number of frames, `1 + length // hop_length` for centered stft,
-          or `1 + (length - n_fft) // hop_length` otherwise.
-
-        .. versionchanged:: 2.0
-            Real datatype inputs are no longer supported. Input must now have a
-            complex datatype, as returned by ``stft(..., return_complex=True)``.
-    n_fft (int): Size of Fourier transform
-    hop_length (Optional[int]): The distance between neighboring sliding window frames.
-        (Default: ``n_fft // 4``)
-    win_length (Optional[int]): The size of window frame and STFT filter. (Default: ``n_fft``)
-    window (Optional[torch.Tensor]): The optional window function.
-        Shape must be 1d and `<= n_fft`
-        (Default: ``torch.ones(win_length)``)
-    center (bool): Whether :attr:`input` was padded on both sides so that the :math:`t`-th frame is
-        centered at time :math:`t \times \text{hop\_length}`.
-        (Default: ``True``)
-    normalized (bool): Whether the STFT was normalized. (Default: ``False``)
-    onesided (Optional[bool]): Whether the STFT was onesided.
-        (Default: ``True`` if `n_fft != fft_size` in the input size)
-    length (Optional[int]): The amount to trim the signal by (i.e. the
-        original signal length). Defaults to `(T - 1) * hop_length` for
-        centered stft, or `n_fft + (T - 1) * hop_length` otherwise, where `T`
-        is the number of input frames.
-    return_complex (Optional[bool]):
-        Whether the output should be complex, or if the input should be
-        assumed to derive from a real signal and window.
-        Note that this is incompatible with ``onesided=True``.
-        (Default: ``False``)
-
-Returns:
-    Tensor: Least squares estimation of the original signal of shape `(B?, length)` where
-        `B?` is an optional batch dimension from the input tensor.
-""")
-
+istft = torch.istft
 
 if TYPE_CHECKING:
     # These _impl functions return a variable number of tensors as output with
