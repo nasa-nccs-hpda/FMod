@@ -24,7 +24,7 @@ dset: xa.Dataset = load_dataset( vres, reference_date )
 print(f"\n -------------------- Encodings -------------------- ")
 for vid in dset.data_vars.keys():
 	dvar: xa.DataArray = dset.data_vars[vid]
-	print( f"*** {vid:<30} {dvar.dims:<30} shape={str(dvar.shape):<25} chunks={dvar.encoding['preferred_chunks']}")
+	print( f"*** {vid:<30} {str(dvar.dims):<30} shape={str(dvar.shape):<25} chunks={dvar.encoding['preferred_chunks']}")
 
 
 
