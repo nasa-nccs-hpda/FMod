@@ -1,0 +1,44 @@
+dataset_version: 'merra2.findtuning'
+training_version: 'merra2-sfno.2'
+params: "small"
+nc_format: 'standard'
+tensor_type: "torch"
+device: "gpu"
+num_workers: 4
+upscale_factor: 4
+downscale_method: 'interp:linear'
+poly_order: 5
+
+year_range:  [1985,2021]
+year: 1990
+month: 1
+day: 1
+max_steps: 5
+
+input_steps: 2
+train_steps: 1
+eval_steps: 100
+data_timestep: 6
+levels:  [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]
+lr: 5e-4
+nepochs: 2
+weight_decay: 0.0
+error_threshold: 1.0
+
+coords: { x: "lon", y: "lat", z: "level", t: "time" }
+statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_mean_by_level", std_diff: "diffs_stddev_by_level" }
+
+input_variables: { 2m_temperature: 'T2M', mean_sea_level_pressure: 'SLP', 10m_v_component_of_wind: 'V10M', 10m_u_component_of_wind: 'U10M',
+                   total_precipitation_6hr: 'PRECLS', temperature: 'T', geopotential: 'H', u_component_of_wind: 'U', v_component_of_wind: 'V',
+                   vertical_velocity: 'OMEGA', specific_humidity: 'QV', toa_incident_solar_radiation: 'SWNETTOA', year_progress_sin: 'year_progress_sin',
+                   year_progress_cos: 'year_progress_cos', 'day_progress_sin': 'day_progress_sin', day_progress_cos: 'day_progress_cos',
+                   geopotential_at_surface: 'PHIS', land_sea_mask: 'FRLAND' }
+target_variables: [ '2m_temperature', 'mean_sea_level_pressure', '10m_v_component_of_wind', '10m_u_component_of_wind', 'total_precipitation_6hr',
+                    'temperature', 'geopotential', 'u_component_of_wind', 'v_component_of_wind', 'vertical_velocity', 'specific_humidity' ]
+forcing_variables: [ 'toa_incident_solar_radiation', 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos' ]
+constants: [ 'land_sea_mask', 'geopotential_at_surface' ]
+feature_list: [  '2m_temperature', 'mean_sea_level_pressure', '10m_v_component_of_wind', '10m_u_component_of_wind', 'total_precipitation_6hr',
+                 'temperature', 'geopotential', 'u_component_of_wind', 'v_component_of_wind', 'vertical_velocity', 'specific_humidity', 'toa_incident_solar_radiation',
+                 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos', 'geopotential_at_surface', 'land_sea_mask' ]
+
+
