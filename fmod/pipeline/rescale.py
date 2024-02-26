@@ -132,7 +132,7 @@ class DataLoader(object):
 		vlores: xa.DataArray = vhires
 
 		for dim in [ 'x', 'y']:
-			cargs = { dim: cfg().task.upscale_factor }
+			cargs = { dim: cfg().task.upscale_factor, 'boundary': "trim" }
 			vlores = vlores.coarsen( **cargs ).reduce( redop, keep_attrs=True )
 
 		result = dict(
