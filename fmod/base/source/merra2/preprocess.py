@@ -133,7 +133,7 @@ class MERRA2DataProcessor:
     def get_encoding(cls, dset: xa.Dataset) -> Dict[Hashable,Dict]:
         encoding = dict()
         for vid, var in dset.data_vars.items():
-            chunksizes = list(*var.shape)
+            chunksizes = list(var.shape).copy()
             try: chunksizes[ var.dims.index('time') ] = 1
             except ValueError: pass
             encoding[vid] = dict(zlib=True, chunksizes=chunksizes)
