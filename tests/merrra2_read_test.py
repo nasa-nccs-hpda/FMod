@@ -21,10 +21,10 @@ if torch.cuda.is_available():
 
 dset: xa.Dataset = load_dataset( vres, reference_date )
 
-print(f"\n -------------------- Encodings -------------------- ")
+print(f"\n -------------------- Encodings: D=dims, s=shape, C=chunks -------------------- ")
 for vid in dset.data_vars.keys():
 	dvar: xa.DataArray = dset.data_vars[vid]
-	print( f"*** {vid:<30} {str(dvar.dims):<35} shape={str(dvar.shape):<25} chunks={dvar.encoding['preferred_chunks']}")
+	print( f"*** {vid:<30} D{str(dvar.dims):<35} S{str(dvar.shape):<25} C{dvar.encoding['preferred_chunks']}")
 
 
 
