@@ -90,7 +90,7 @@ class MERRA2DataProcessor:
             for statname in self.stats[vres].statnames:
                 filepath = stats_filepath( cfg().preprocess.dataset_version, statname, vres )
                 if os.path.exists( filepath ):
-                    print( f"Skipping {vres}:{statname} write, stats file alread exists: {filepath}")
+                    print( f" ---------------->> Skipping {vres}:{statname} write, stats file alread exists: {filepath}")
                 else:
                     self.stats[vres].save( statname, filepath )
 
