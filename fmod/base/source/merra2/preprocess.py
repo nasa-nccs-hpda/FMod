@@ -89,7 +89,10 @@ class MERRA2DataProcessor:
             self.merge_stats( vres, res_stats )
             for statname in self.stats[vres].statnames:
                 filepath = stats_filepath( cfg().preprocess.dataset_version, statname, vres )
-                self.stats[vres].save( statname, filepath )
+                if os.path.exists( filepath ):
+                    print( f"Skipping {vres}:{statname} write, stats file alread exists: {filepath}")
+                else:
+                    self.stats[vres].save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
         dsroot: str = fmbdir('dataset_root')
