@@ -1,7 +1,7 @@
 import xarray as xa, pandas as pd
 import numpy as np
 from fmod.base.util.config import cfg
-from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
+from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal, Hashable
 import glob, sys, os, time, traceback
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.dates import skw, dstr
@@ -126,8 +126,20 @@ class MERRA2DataProcessor:
         if self.format == ncFormat.DALI:
             self.save_dali_dataset( filepath, merged_dset, vres )
         else:
-            merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w")
+            merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
+
+    @classmethod
+    def get_encoding(cls, dset: xa.Dataset) -> Dict[Hashable,Dict]:
+        encoding = dict()
+        for vid, var in dset.data_vars.items():
+            try:
+                chunksizes = list(*var.shape)
+                tindex = var.dims.index('time')
+                chunksizes[tindex] = 1
+                encoding[vid] = dict( zlib=True, chunksizes=chunksizes )
+            except ValueError: pass
+        return encoding
 
     @classmethod
     def save_dali_dataset(cls, filepath: str, merged_dset: xa.Dataset, vres: str ):

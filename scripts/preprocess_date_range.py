@@ -9,11 +9,11 @@ from multiprocessing import Pool, cpu_count
 
 
 hydra.initialize( version_base=None, config_path="../config" )
-configure( 'merra2-sr' )
+configure( 'merra2-sfno.3' )
 reprocess=True
 nproc = cpu_count()
 start: date = date(1992,1,1 )
-end: date = date(1992,1,3 )
+end: date = date(1992,6,1 )
 
 def process( d: date ) -> Dict[str,StatsAccumulator]:
 	reader = MERRA2DataProcessor()
