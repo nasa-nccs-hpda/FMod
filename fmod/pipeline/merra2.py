@@ -89,7 +89,7 @@ class MetaData(DatapipeMetaData):
 
 class MERRA2Dataset(BaseDataset):
     def __init__(self, **kwargs):
-        self.train_dates = kwargs.get( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
+        self.train_dates = kwargs.pop( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
         super(MERRA2Dataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
