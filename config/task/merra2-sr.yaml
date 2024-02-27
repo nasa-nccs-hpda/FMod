@@ -9,15 +9,15 @@ upscale_factor: 4
 downscale_method: 'interp:linear'
 poly_order: 5
 
-year_range:  [1985,2021]
-year: 1991
+year_range:  [1990,1991]
+year: 1990
 month: 1
 day: 1
 max_steps: 5
 
 input_steps: 2
 train_steps: 1
-eval_steps: 100
+eval_steps: 1
 data_timestep: 6
 levels:  [50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]
 lr: 5e-4
