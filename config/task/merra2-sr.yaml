@@ -5,7 +5,7 @@ nc_format: 'sres'
 tensor_type: "torch"
 device: "gpu"
 num_workers: 4
-upscale_factor: 4
+upscale_factor: 3
 downscale_method: 'interp:linear'
 poly_order: 5
 

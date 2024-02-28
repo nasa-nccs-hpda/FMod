@@ -33,7 +33,7 @@ class DataLoader(object):
 		self.levels: Optional[np.ndarray] = get_levels_config(cfg().preprocess)
 		self.tstep = str(cfg().preprocess.data_timestep) + "h"
 		self.dmap: Dict = cfg().preprocess.dims
-		self.upscale_factor: int = cfg().task.get('upscale_factor')
+		self.upscale_factor: int = cfg().model.get('scale_factor')
 		self._constant_data: Dict[str, xa.Dataset] = {}
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
@@ -132,7 +132,7 @@ class DataLoader(object):
 		vlores: xa.DataArray = vhires
 
 		for dim in [ 'x', 'y']:
-			cargs = { dim: cfg().task.upscale_factor }
+			cargs = { dim: cfg().model.scale_factor }
 			vlores = vlores.coarsen( boundary="trim", **cargs ).reduce( redop, keep_attrs=True )
 
 		result = dict(
