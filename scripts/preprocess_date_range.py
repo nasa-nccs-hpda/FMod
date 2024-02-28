@@ -12,7 +12,7 @@ hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-sr' )
 reprocess=True
 nproc = cpu_count()
-start: date = date(1992,1,3 )
+start: date = date(1992,1,1 )
 end: date = date(1992,1,5 )
 
 def process( d: date ) -> Dict[str,StatsAccumulator]:
