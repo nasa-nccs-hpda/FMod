@@ -88,6 +88,7 @@ class FMBatch:
 	def __init__(self, btype: BatchType, **kwargs):
 		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
 		self.type: BatchType = btype
+		self.vres = kwargs.get('vres', "high" )
 		self.days_per_batch = get_days_per_batch(btype)
 		self.target_steps = get_target_steps(btype)
 		self.batch_steps: int = cfg().task['input_steps'] + self.target_steps
@@ -97,7 +98,7 @@ class FMBatch:
 
 	def load(self, d: date, **kwargs):
 		bdays = date_list(d, self.days_per_batch)
-		time_slices: List[xa.Dataset] = [ load_dataset("high", d, **kwargs) for d in bdays ]
+		time_slices: List[xa.Dataset] = [ load_dataset(self.vres, d) for d in bdays ]
 		self.current_batch: xa.Dataset = merge_batch(time_slices, self.constants)
 
 	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
