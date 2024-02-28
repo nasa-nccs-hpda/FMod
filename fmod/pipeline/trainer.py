@@ -22,7 +22,6 @@ class ModelTrainer(object):
 		self.data_iter = iter(dataset)
 		self.grid_shape = inp.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"INPUT={type(inp)}, TARGET={type(tar)}")
 		lgm().log(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
 		lmax = math.ceil(self.grid_shape[0] / 3)
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
