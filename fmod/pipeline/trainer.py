@@ -85,6 +85,7 @@ class ModelTrainer(object):
 
 		return loss
 
+	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', True )
