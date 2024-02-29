@@ -1,6 +1,7 @@
 from typing import Mapping, Optional, Tuple
 import numpy as np
 from scipy.spatial import transform
+from fmod.base.util.logging import lgm
 import xarray
 
 def get_graph_spatial_features(
@@ -623,7 +624,9 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
   """
   data_vars = [ variable_to_stacked(name, dataset.variables[name], sizes or dataset.sizes, preserved_dims) for name in sorted(dataset.data_vars.keys()) ]
   coords = { dim: coord for dim, coord in dataset.coords.items() if dim in preserved_dims  }
-  return xarray.DataArray( data=xarray.Variable.concat(data_vars, dim="channels"), coords=coords)
+  stacked_data = xarray.Variable.concat(data_vars, dim="channels")
+  lgm().debug(f"stacked_data{stacked_data.dims}: shape = {stacked_data.shape}")
+  return xarray.DataArray( data=stacked_data.values, coords=coords)
 
 
 def stacked_to_dataset(
