@@ -397,7 +397,7 @@ class MERRA2InputIterator(object):
         self.train_steps = cfg().task.train_steps
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
-        self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
+        self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
         self.train_dates = year_range(*cfg().task.year_range, randomize=True)
         self.nepochs = cfg().task.nepoch
         self.max_iter = cfg().task.max_iter
