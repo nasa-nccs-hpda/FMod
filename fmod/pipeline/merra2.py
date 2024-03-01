@@ -96,7 +96,7 @@ class MERRA2Dataset(BaseDataset):
 
         self.train_steps = cfg().task.train_steps
         self.nsteps_input = cfg().task.nsteps_input
-        self.input_duration = f"{self.dts*(self.nsteps_input-1)}h"
+        self.input_duration = pd.Timedelta( self.dts*self.nsteps_input, unit="h" )
         self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
         self.fmbatch: FMBatch = FMBatch(BatchType.Training, **kwargs)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
@@ -136,7 +136,7 @@ class MERRA2Dataset(BaseDataset):
         self.i = 0
         return self
 
-    def extract_input_target_times(self, dataset: xa.Dataset, input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes) -> Tuple[xa.Dataset, xa.Dataset]:
+    def extract_input_target_times(self, dataset: xa.Dataset, input_duration: pd.Timedelta, target_lead_times: TargetLeadTimes) -> Tuple[xa.Dataset, xa.Dataset]:
         """Extracts inputs and targets for prediction, from a Dataset with a time dim.
 
         The input period is assumed to be contiguous (specified by a duration), but
@@ -200,11 +200,9 @@ class MERRA2Dataset(BaseDataset):
         time: xa.DataArray = dataset.coords["time"]
         dataset = dataset.assign_coords(time=time + target_duration - time[-1])
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
-        input_duration = pd.Timedelta(input_duration)
-        # Both endpoints are inclusive with label-based slicing, so we offset by a
-        # small epsilon to make one of the endpoints non-inclusive:
         zero = pd.Timedelta(0)
-        inputs: xa.Dataset = dataset.sel({"time": slice(-input_duration, zero)})
+        epsilon = pd.Timedelta(1, "s")
+        inputs: xa.Dataset = dataset.sel({"time": slice(-input_duration + epsilon, zero)})
         return inputs, targets
 
     @classmethod
@@ -232,7 +230,7 @@ class MERRA2Dataset(BaseDataset):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], input_duration: TimedeltaLike, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[Tensor, Tensor]:
+        levels: Tuple[int, ...], input_duration: pd.Timedelta, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[Tensor, Tensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
