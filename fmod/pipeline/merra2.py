@@ -162,7 +162,7 @@ class MERRA2Dataset(BaseDataset):
         dataset = dataset.assign_coords(time=time + target_duration - time[-1])
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
         zero_index = -(self.train_steps[-1] + 1)
-        input_bounds = [ zero_index-(self.nsteps_input-1), zero_index ]
+        input_bounds = [ zero_index-(self.nsteps_input-1), zero_index+1 ]
         inputs: xa.Dataset = dataset.isel( {"time": slice(*input_bounds)} )
         return inputs, targets
 
