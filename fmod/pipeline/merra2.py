@@ -160,11 +160,13 @@ class MERRA2Dataset(BaseDataset):
         # This means the time coordinates are now forecast lead times.
         time: xa.DataArray = dataset.coords["time"]
         dataset = dataset.assign_coords(time=time + target_duration - time[-1])
+        lgm().debug(f"extract_input_target_times: initial input-times={dataset.coords['time'].values.tolist()}")
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
         zero_index = -1-self.train_steps[-1]
         input_bounds = [ zero_index-(self.nsteps_input-1), zero_index ]
-        tslice = slice(*input_bounds) if input_bounds[1] < 0 else slice(input_bounds[1],)
+        tslice = slice(*input_bounds) if input_bounds[1] < 0 else slice(input_bounds[1])
         inputs: xa.Dataset = dataset.isel( {"time": tslice } )
+        lgm().debug(f" --> Input bounds={input_bounds}, tslice={tslice}, input-sizes={inputs.sizes}, final input-times={inputs.coords['time'].values.tolist()}")
         return inputs, targets
 
     def _process_target_lead_times_and_get_duration( self ) -> TimedeltaLike:
