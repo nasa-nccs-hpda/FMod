@@ -48,7 +48,7 @@ def get_days_per_batch(btype: BatchType):
 	steps_per_day: float = 24 / cfg().task['data_timestep']
 	assert steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
 	target_steps = get_target_steps( btype )
-	batch_steps: int = cfg().task['input_steps'] + target_steps
+	batch_steps: int = cfg().task.nsteps_input + len(target_steps)
 	if btype == BatchType.Training: return 1 + math.ceil((batch_steps - 1) / steps_per_day)
 	elif btype == BatchType.Forecast: return math.ceil(batch_steps / steps_per_day)
 def rename_vars( dataset: xa.Dataset ) -> xa.Dataset:

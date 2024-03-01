@@ -91,7 +91,7 @@ class FMBatch:
 		self.vres = kwargs.get('vres', "high" )
 		self.days_per_batch = get_days_per_batch(btype)
 		self.target_steps = get_target_steps(btype)
-		self.batch_steps: int = cfg().task['input_steps'] + self.target_steps
+		self.batch_steps: int = cfg().task.nsteps_input + len(self.target_steps)
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 		self.current_batch: xa.Dataset = None

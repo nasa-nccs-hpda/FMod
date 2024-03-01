@@ -16,8 +16,8 @@ extensive: [ 'PRECLS' ]
 day_progress: "day_progress"
 year_progress: "year_progress"
 
-input_steps: 2
-train_steps: 2
+nsteps_input: 2
+train_steps: [1,2]
 eval_steps: 2
 
 

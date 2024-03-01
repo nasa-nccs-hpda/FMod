@@ -61,7 +61,6 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     channels = []
     for vname in vnames:
         dvar: xa.DataArray = dset.data_vars[vname]
-        lgm().debug(f"ds2array-> {vname}{dvar.dims}: {dvar.shape}")
         if coords['z'] in dvar.dims:    channels.extend([f"{vname}~{iL}" for iL in range(dvar.sizes[coords['z']])])
         else:                           channels.append(vname)
         for (cname, coord) in dvar.coords.items():
@@ -98,7 +97,7 @@ class MERRA2Dataset(BaseDataset):
         self.train_steps = cfg().task.train_steps
         self.nsteps_input = cfg().task.nsteps_input
         self.input_duration = f"{self.dts*self.nsteps_input}h"
-        self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
+        self.target_lead_times = [f"{iS * self.dts}h" for iS in range(1, self.train_steps + 1)]
         self.fmbatch: FMBatch = FMBatch(BatchType.Training, **kwargs)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.current_date = date(1,1,1 )
@@ -207,9 +206,6 @@ class MERRA2Dataset(BaseDataset):
         zero = pd.Timedelta(0)
         epsilon = pd.Timedelta(1, "ns")
         inputs: xa.Dataset = dataset.sel({"time": slice(-input_duration + epsilon, zero)})
-        lgm().debug(f" ### Extract Input times, input_duration={input_duration}:")
-        for vname, dvar in inputs.data_vars.items():
-            lgm().debug(f"  ** {vname}{dvar.dims}: shape = {dvar.shape}")
         return inputs, targets
 
     @classmethod
