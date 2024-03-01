@@ -202,7 +202,7 @@ class MERRA2Dataset(BaseDataset):
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
         zero = pd.Timedelta(0)
         epsilon = pd.Timedelta(1, "s")
-        inputs: xa.Dataset = dataset.sel({"time": slice(-input_duration + epsilon, zero)})
+        inputs: xa.Dataset = dataset.sel( {"time": slice(-input_duration + epsilon, zero)} )
         return inputs, targets
 
     @classmethod
