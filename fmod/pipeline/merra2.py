@@ -123,8 +123,7 @@ class MERRA2Dataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            task_config = dict( target_lead_times=self.target_lead_times, input_duration=self.input_duration, **cfg().task )
-            inputs_targets: Tuple[ Tensor, Tensor ] = self.extract_inputs_targets(train_data, **task_config )
+            inputs_targets: Tuple[ Tensor, Tensor ] = self.extract_inputs_targets(train_data, **cfg().task )
             self.i = self.i + 1
             if (cfg().task.device == "gpu") and torch.cuda.is_available():
                 inputs_targets =  (inputs_targets[0].cuda(), inputs_targets[1].cuda())
@@ -136,49 +135,11 @@ class MERRA2Dataset(BaseDataset):
         self.i = 0
         return self
 
-    def extract_input_target_times(self, dataset: xa.Dataset, input_duration: pd.Timedelta, target_lead_times: TargetLeadTimes) -> Tuple[xa.Dataset, xa.Dataset]:
+    def extract_input_target_times(self, dataset: xa.Dataset) -> Tuple[xa.Dataset, xa.Dataset]:
         """Extracts inputs and targets for prediction, from a Dataset with a time dim.
 
         The input period is assumed to be contiguous (specified by a duration), but
         the targets can be a list of arbitrary lead times.
-
-        Examples:
-
-          # Use 18 hours of data as inputs, and two specific lead times as targets:
-          # 3 days and 5 days after the final input.
-          extract_inputs_targets(
-              dataset,
-              input_duration='18h',
-              target_lead_times=('3d', '5d')
-          )
-
-          # Use 1 day of data as input, and all lead times between 6 hours and
-          # 24 hours inclusive as targets. Demonstrates a friendlier supported string
-          # syntax.
-          extract_inputs_targets(
-              dataset,
-              input_duration='1 day',
-              target_lead_times=slice('6 hours', '24 hours')
-          )
-
-          # Just use a single target lead time of 3 days:
-          extract_inputs_targets(
-              dataset,
-              input_duration='24h',
-              target_lead_times='3d'
-          )
-
-        Args:
-          dataset: An xa.Dataset with a 'time' dimension whose coordinates are
-            timedeltas. It's assumed that the time coordinates have a fixed offset /
-            time resolution, and that the input_duration and target_lead_times are
-            multiples of this.
-          input_duration: pandas.Timedelta or something convertible to it (e.g. a
-            shorthand string like '6h' or '5d12h').
-          target_lead_times: Either a single lead time, a slice with start and stop
-            (inclusive) lead times, or a sequence of lead times. Lead times should be
-            Timedeltas (or something convertible to). They are given relative to the
-            final input timestep, and should be positive.
 
         Returns:
           inputs:
@@ -190,7 +151,7 @@ class MERRA2Dataset(BaseDataset):
             for targets the time coordinates will refer to the lead times requested.
         """
 
-        (target_lead_times, target_duration) = self._process_target_lead_times_and_get_duration(target_lead_times)
+        (target_lead_times, target_duration) = self._process_target_lead_times_and_get_duration()
 
         # Shift the coordinates for the time axis so that a timedelta of zero
         # corresponds to the forecast reference time. That is, the final timestep
@@ -200,37 +161,21 @@ class MERRA2Dataset(BaseDataset):
         time: xa.DataArray = dataset.coords["time"]
         dataset = dataset.assign_coords(time=time + target_duration - time[-1])
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
-        zero = pd.Timedelta(0)
-        epsilon = pd.Timedelta(1, "s")
-        inputs: xa.Dataset = dataset.sel( {"time": slice(-input_duration + epsilon, zero)} )
+        zero_index = -(self.train_steps[-1] + 1)
+        input_bounds = [ zero_index-(self.nsteps_input-1), zero_index ]
+        inputs: xa.Dataset = dataset.isel( {"time": slice(*input_bounds)} )
         return inputs, targets
 
-    @classmethod
-    def _process_target_lead_times_and_get_duration( cls, target_lead_times: TargetLeadTimes) -> TimedeltaLike:
-        """Returns the minimum duration for the target lead times."""
-        # print( f"process_target_lead_times: {target_lead_times}")
-        if isinstance(target_lead_times, slice):
-            # A slice of lead times. xa already accepts timedelta-like values for
-            # the begin/end/step of the slice.
-            if target_lead_times.start is None:
-                # If the start isn't specified, we assume it starts at the next timestep
-                # after lead time 0 (lead time 0 is the final input timestep):
-                target_lead_times = slice(pd.Timedelta(1, "ns"), target_lead_times.stop, target_lead_times.step)
-            target_duration = pd.Timedelta(target_lead_times.stop)
-        else:
-            if not isinstance(target_lead_times, (list, tuple, set)):
-                # A single lead time, which we wrap as a length-1 array to ensure there
-                # still remains a time dimension (here of length 1) for consistency.
-                target_lead_times = [target_lead_times]
-
-            # A list of multiple (not necessarily contiguous) lead times:
-            target_lead_times = [pd.Timedelta(x) for x in target_lead_times]
-            target_lead_times.sort()
-            target_duration = target_lead_times[-1]
+    def _process_target_lead_times_and_get_duration( self ) -> TimedeltaLike:
+        if not isinstance(self.target_lead_times, (list, tuple, set)):
+            self.target_lead_times = [self.target_lead_times]
+        target_lead_times = [pd.Timedelta(x) for x in self.target_lead_times]
+        target_lead_times.sort()
+        target_duration = target_lead_times[-1]
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], input_duration: pd.Timedelta, target_lead_times: TargetLeadTimes, **kwargs) -> Tuple[Tensor, Tensor]:
+        levels: Tuple[int, ...], **kwargs) -> Tuple[Tensor, Tensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
@@ -239,8 +184,7 @@ class MERRA2Dataset(BaseDataset):
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         dataset = dataset.drop_vars("datetime")
-        inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
-        lgm().debug(f"extract_inputs_targets: input_duration={input_duration}, target_lead_times={target_lead_times}")
+        inputs, targets = self.extract_input_target_times(dataset)
         for vname, varray in inputs.data_vars.items():
             if 'time' in varray.dims:
                 lgm().debug(f" ** INPUT {vname}: tcoord={varray.coords['time'].values.tolist()}")
