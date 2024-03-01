@@ -161,9 +161,10 @@ class MERRA2Dataset(BaseDataset):
         time: xa.DataArray = dataset.coords["time"]
         dataset = dataset.assign_coords(time=time + target_duration - time[-1])
         targets: xa.Dataset = dataset.sel({"time": target_lead_times})
-        zero_index = -(self.train_steps[-1] + 1)
-        input_bounds = [ zero_index-(self.nsteps_input-1), zero_index+1 ]
-        inputs: xa.Dataset = dataset.isel( {"time": slice(*input_bounds)} )
+        zero_index = -1-self.train_steps[-1]
+        input_bounds = [ zero_index-(self.nsteps_input-1), zero_index ]
+        tslice = slice(*input_bounds) if input_bounds[1] < 0 else slice(input_bounds[1],)
+        inputs: xa.Dataset = dataset.isel( {"time": tslice } )
         return inputs, targets
 
     def _process_target_lead_times_and_get_duration( self ) -> TimedeltaLike:
