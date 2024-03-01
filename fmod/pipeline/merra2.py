@@ -245,7 +245,9 @@ class MERRA2Dataset(BaseDataset):
         inputs, targets = self.extract_input_target_times(dataset, input_duration=input_duration, target_lead_times=target_lead_times)
         lgm().debug(f"extract_inputs_targets: input_duration={input_duration}, target_lead_times={target_lead_times}")
         for vname, varray in inputs.data_vars.items():
-            lgm().debug(f" ** {vname}: tcoord={targets.coords['time'].values.tolist()}")
+            lgm().debug(f" ** INPUT {vname}: tcoord={varray.coords['time'].values.tolist()}")
+        for vname, varray in targets.data_vars.items():
+            lgm().debug(f" ** TARGET {vname}: tcoord={varray.coords['time'].values.tolist()}")
         lgm().debug(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
