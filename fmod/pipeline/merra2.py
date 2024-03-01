@@ -96,7 +96,7 @@ class MERRA2Dataset(BaseDataset):
 
         self.train_steps = cfg().task.train_steps
         self.nsteps_input = cfg().task.nsteps_input
-        self.input_duration = f"{self.dts*(self.nsteps_input-0.55)}h"
+        self.input_duration = f"{self.dts*(self.nsteps_input-1)}h"
         self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
         self.fmbatch: FMBatch = FMBatch(BatchType.Training, **kwargs)
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
