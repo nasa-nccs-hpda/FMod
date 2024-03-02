@@ -8,22 +8,28 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from enum import Enum
 import torch.nn as nn
 import time, os
+
+class TaskType(Enum):
+	Upscaling = 'Upscaling'
+	Forecast = 'forecast'
 
 class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  dataset: BaseDataset):
+	def __init__(self,  dataset: BaseDataset, task_type: TaskType = TaskType.Forecast):
 		self.dataset = dataset
+		self.task_type: TaskType = task_type
 		self.dataloader = DataLoader( dataset, **self.loader_args )
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
 		self.grid_shape = inp.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
 		lgm().log(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
-		lmax = math.ceil(self.grid_shape[0] / 3)
+		lmax = self.grid_shape[0] if task_type==TaskType.Upscaling else math.ceil( self.grid_shape[0]/cfg().model.upscale_factor )
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None

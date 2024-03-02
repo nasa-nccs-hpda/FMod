@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.fft
+from fmod.base.util.logging import lgm
 
 from torch_harmonics.quadrature import legendre_gauss_weights, lobatto_weights, clenshaw_curtiss_weights
 from torch_harmonics.legendre import _precompute_legpoly, _precompute_dlegpoly
@@ -28,7 +29,7 @@ class RealSHT(nn.Module):
 		"""
 
 		super().__init__()
-		print( f"Initializing RealSHT: nlat={nlat} nlon={nlon} lmax={lmax} mmax={mmax} grid={grid}")
+		lgm().log( f"Initializing RealSHT: nlat={nlat} nlon={nlon} lmax={lmax} mmax={mmax} grid={grid}")
 
 		self.nlat = nlat
 		self.nlon = nlon
