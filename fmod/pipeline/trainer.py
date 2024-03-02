@@ -13,7 +13,7 @@ import torch.nn as nn
 import time, os
 
 class TaskType(Enum):
-	Upscaling = 'Upscaling'
+	Downscale = 'Downscale'
 	Forecast = 'forecast'
 
 class ModelTrainer(object):
@@ -29,7 +29,7 @@ class ModelTrainer(object):
 		self.grid_shape = inp.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
 		lgm().log(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
-		lmax = self.grid_shape[0] if task_type==TaskType.Upscaling else math.ceil( self.grid_shape[0]/cfg().model.upscale_factor )
+		lmax = self.grid_shape[0] if task_type==TaskType.Downscale else math.ceil( self.grid_shape[0]/cfg().model.upscale_factor )
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
