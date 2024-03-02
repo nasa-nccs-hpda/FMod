@@ -1,5 +1,5 @@
-from torch_harmonics import *
 from fmod.base.util.config import cfg
+from fmod.models.sfno.sht import InverseRealSHT, RealSHT
 from ..layers import *
 from functools import partial
 from fmod.base.util.logging import lgm, exception_handled, log_timing
