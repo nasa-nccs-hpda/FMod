@@ -3,6 +3,7 @@ from fmod.models.sfno.sht import InverseRealSHT, RealSHT
 from ..layers import *
 from functools import partial
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.pipeline.trainer import TaskType
 
 class SpectralFilterLayer(nn.Module):
 	"""
@@ -325,6 +326,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		self.factorization = factorization
 		self.separable = separable,
 		self.rank = rank
+		self.task_type: TaskType = TaskType(cfg().task.task_type)
 
 		# activation function
 		if activation_function == "relu":
@@ -338,8 +340,12 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			raise ValueError(f"Unknown activation function {activation_function}")
 
 		# compute downsampled image size
-		self.h = self.img_size[0] // scale_factor
-		self.w = self.img_size[1] // scale_factor
+		if self.task_type == TaskType.Forecast:
+			self.h = self.img_size[0] // scale_factor
+			self.w = self.img_size[1] // scale_factor
+		else:
+			self.h = self.img_size[0]
+			self.w = self.img_size[1]
 
 		lgm().log(f" -> downsampled image size: h={self.h}  w={self.w}, scale_factor={scale_factor}, imsge size={self.img_size}")
 

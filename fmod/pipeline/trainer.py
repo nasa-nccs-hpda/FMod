@@ -13,7 +13,7 @@ import torch.nn as nn
 import time, os
 
 class TaskType(Enum):
-	Downscale = 'Downscale'
+	Downscale = 'downscale'
 	Forecast = 'forecast'
 
 class ModelTrainer(object):
@@ -23,7 +23,7 @@ class ModelTrainer(object):
 	def __init__(self,  dataset: BaseDataset, task_type: TaskType = TaskType.Forecast ):
 		self.dataset = dataset
 		self.scale_factor = cfg().model.scale_factor
-		self.task_type: TaskType = task_type
+		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.dataloader = DataLoader( dataset, **self.loader_args )
 		self.scale_factor = cfg().model.scale_factor
 		inp, tar = next(iter(dataset))

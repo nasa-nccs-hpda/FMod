@@ -7,6 +7,7 @@ device: "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
 poly_order: 5
+task_type: "downscale"
 
 year_range:  [1992,1993]
 year: 1992
