@@ -341,7 +341,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		self.h = self.img_size[0] // scale_factor
 		self.w = self.img_size[1] // scale_factor
 
-		lgm().log(f" -> downsampled image size: h={self.h}  w={self.w}")
+		lgm().log(f" -> downsampled image size: h={self.h}  w={self.w}, scale_factor={scale_factor}, imsge size={self.img_size}")
 
 		# dropout
 		self.pos_drop = nn.Dropout(p=drop_rate) if drop_rate > 0. else nn.Identity()
@@ -416,7 +416,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			modes_lon = int(self.w // 2 * self.hard_thresholding_fraction)
 			modes_lat = modes_lon = min(modes_lat, modes_lon)
 
-			lgm().log(f" -> sht: modes_lat & modes_lon = {modes_lon}")
+			lgm().log(f" -> sht: modes_lat & modes_lon = {modes_lon}, image size = {self.img_size}")
 
 		#	self.trans_down = RealSHT(*self.img_size, lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
 			self.itrans_up = InverseRealSHT(*self.img_size, lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
