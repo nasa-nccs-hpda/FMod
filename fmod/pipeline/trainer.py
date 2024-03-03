@@ -20,20 +20,22 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  dataset: BaseDataset, task_type: TaskType = TaskType.Forecast):
+	def __init__(self,  dataset: BaseDataset, task_type: TaskType = TaskType.Forecast ):
 		self.dataset = dataset
-		self.task_type: TaskType = task_type
 		self.scale_factor = cfg().model.scale_factor
+		self.task_type: TaskType = task_type
 		self.dataloader = DataLoader( dataset, **self.loader_args )
-		self. up = cfg().task.u
+		self.scale_factor = cfg().model.scale_factor
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
-		self.grid_shape = inp.shape[-2:]
-		if task_type == TaskType.Downscale:
-			self.grid_shape = [gs*self.scale_factor for gs in self.grid_shape]
+		if self.task_type == TaskType.Downscale:
+			self.grid_shape = tar.shape[-2:]
+			lmax = inp.shape[-2]
+		else:
+			self.grid_shape = inp.shape[-2:]
+			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES= {inp.shape}, {tar.shape}, (nlat, nlon)={self.grid_shape}")
-		lmax = self.grid_shape[0] if task_type==TaskType.Downscale else math.ceil( self.grid_shape[0]/cfg().model.scale_factor )
+		lgm().log(f"SHAPES: input{inp.shape}, target{tar.shape}, (nlat, nlon)={self.grid_shape}, lmax={lmax}")
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
