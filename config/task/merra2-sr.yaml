@@ -9,8 +9,8 @@ downscale_method: 'interp:linear'
 poly_order: 5
 task_type: "downscale"
 
-year_range:  [1992,1993]
-year: 1992
+year_range:  [1990,1991]
+year: 1990
 month: 1
 day: 1
 max_steps: 5
