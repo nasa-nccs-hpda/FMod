@@ -170,4 +170,5 @@ class ModelTrainer(object):
 				predictions.append(out)
 				targets.append(tar)
 				inputs.append(inp)
+		lgm().log(f'\nINFERENCE complete, #predictions={len(predictions)}:\n  ----> prediction: {predictions[0].shape}, target: {targets[0].shape}', display=True )
 		return inputs, targets, predictions
