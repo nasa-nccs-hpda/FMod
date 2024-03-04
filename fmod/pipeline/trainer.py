@@ -9,9 +9,12 @@ from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from enum import Enum
+import numpy as np
 import torch.nn as nn
 import time, os
 
+def npa( tensor: Tensor ) -> np.ndarray:
+	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
 	Downscale = 'downscale'
 	Forecast = 'forecast'
@@ -157,7 +160,7 @@ class ModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
-	def inference(self, **kwargs ) -> Tuple[ List[Tensor], List[Tensor], List[Tensor] ]:
+	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
 		max_step = kwargs.get('max_step',5)
 		torch.manual_seed(seed)
@@ -166,9 +169,9 @@ class ModelTrainer(object):
 		with torch.inference_mode():
 			for istep, (inp, tar) in enumerate(self.data_iter):
 				if istep == max_step: break
-				out = self.model(inp).detach()
-				predictions.append(out)
-				targets.append(tar)
-				inputs.append(inp)
+				out: Tensor = self.model(inp)
+				predictions.append( npa(out) )
+				targets.append( npa(tar) )
+				inputs.append( npa(inp) )
 		lgm().log(f'\nINFERENCE complete, #predictions={len(predictions)}:\n  ----> prediction: {predictions[0].shape}, target: {targets[0].shape}', display=True )
 		return inputs, targets, predictions

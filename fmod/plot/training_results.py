@@ -61,10 +61,10 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 class ResultsPlotter:
 	tensor_roles = ["target", "prediction"]
 
-	def __init__(self, dataset: BaseDataset, targets: List[Tensor], prediction: List[Tensor], **kwargs ):
+	def __init__(self, dataset: BaseDataset, targets: List[np.ndarray], prediction: List[np.ndarray], **kwargs ):
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
 		(self.fig, self.axs) = (None,None)
-		self.plot_data: Tuple[List[Tensor],List[Tensor]] = ( targets, prediction )
+		self.plot_data: Tuple[List[np.ndarray],List[np.ndarray]] = ( targets, prediction )
 		self.nsteps = len(targets)
 		self.dataset: BaseDataset = dataset
 		self.chanids: List[str] = self.dataset.chanIds['target']
@@ -104,18 +104,16 @@ class ResultsPlotter:
 		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
 
 	@exception_handled
-	def step_update(self, istep: int ) -> int:
+	def step_update(self, istep: int ):
 		self.istep = istep
 		lgm().log(f"Step update: istep={self.istep}, ichannel={self.ichannel}")
 		self.refresh()
-		return self.ichannel
 
 	@exception_handled
-	def channel_update(self, ichannel: int ) -> int:
+	def channel_update(self, ichannel: int ):
 		self.ichannel = ichannel
 		lgm().log( f"Channel update: istep={self.istep}, ichannel={self.ichannel}, title={self.channel_title}")
 		self.refresh()
-		return self.istep
 
 	@property
 	def channel_title(self) -> str:
@@ -128,10 +126,10 @@ class ResultsPlotter:
 		self.format_plot()
 		self.fig.canvas.draw_idle()
 
-	def image_data(self, ip: int, timeslice: Tensor) -> np.ndarray:
-		image_data: Tensor = timeslice[0, self.ichannel] if (timeslice.dim() == 4) else timeslice[self.ichannel]
+	def image_data(self, ip: int, timeslice: np.ndarray) -> np.ndarray:
+		image_data: np.ndarray = timeslice[0, self.ichannel] if (timeslice.ndim == 4) else timeslice[self.ichannel]
 		if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
-		return image_data.cpu().numpy()
+		return image_data
 
 
 

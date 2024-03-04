@@ -28,8 +28,8 @@ class GridOps:
 		self.lons = torch.linspace(0, 2 * np.pi, self.nlon + 1, dtype=torch.float64)[:nlon]
 
 	@classmethod
-	def color_range(cls, image: torch.Tensor, stretch=2.0 ) -> Tuple[float,float]:
-		istd, imean = torch.std_mean(image)
+	def color_range(cls, image: np.ndarray, stretch=2.0 ) -> Tuple[float,float]:
+		istd, imean = image.std(), image.mean()
 		return imean - istd*stretch, imean + istd*stretch
 
 	def integrate_grid(self, ugrid, dimensionless=False, polar_opt=0):
