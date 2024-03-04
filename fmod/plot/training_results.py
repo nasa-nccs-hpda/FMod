@@ -15,6 +15,9 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
+def nnan(varray: np.ndarray) -> int: return np.count_nonzero(np.isnan(varray))
+def pctnan(varray: np.ndarray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
+
 def flex(weight: int) -> ipw.Layout:
 	return ipw.Layout(flex=f'1 {weight} auto', width='auto')
 def rms( dvar: xa.DataArray, **kwargs ) -> float:
@@ -100,6 +103,7 @@ class ResultsPlotter:
 			ax.set_title(f"{self.tensor_roles[ip]}")
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
+			lgm().log(f"Plotting image_data{image_data.shape}: args={plot_args}, pctnan={pctnan(image_data)}")
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
 		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
 
