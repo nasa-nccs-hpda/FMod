@@ -14,6 +14,9 @@ import numpy as np
 import torch.nn as nn
 import time, os
 
+def nnan(varray: torch.Tensor) -> int: return torch.isnan(varray.view(-1)).sum().item()
+def pctnan(varray: torch.Tensor) -> str: return f"{nnan(varray)*100.0/varray.size():.2f}%"
+
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
