@@ -131,9 +131,9 @@ class ModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnan(inp)}", display=True)
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnan(tar)}", display=True)
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnan(prd)}", display=True)
+				lgm().log(f" ** inp shape={inp.shape},  pct-nan= {pctnan(inp)}", display=True)
+				lgm().log(f" ** tar shape={tar.shape},  pct-nan= {pctnan(tar)}", display=True)
+				lgm().log(f" ** prd shape={prd.shape},  pct-nan= {pctnan(prd)}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
