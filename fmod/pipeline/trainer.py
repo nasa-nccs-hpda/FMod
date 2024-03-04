@@ -24,7 +24,7 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  dataset: BaseDataset, task_type: TaskType = TaskType.Forecast ):
+	def __init__(self,  dataset: BaseDataset ):
 		self.dataset = dataset
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
@@ -39,7 +39,7 @@ class ModelTrainer(object):
 			self.grid_shape = inp.shape[-2:]
 			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: input{inp.shape}, target{tar.shape}, (nlat, nlon)={self.grid_shape}, lmax={lmax}")
+		lgm().log(f"SHAPES: input{inp.shape}, target{tar.shape}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
@@ -130,6 +130,10 @@ class ModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
+				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnan(inp)}", display=True)
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnan(tar)}", display=True)
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnan(prd)}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
