@@ -8,6 +8,7 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.plot.training_results import pctnan
 from enum import Enum
 import numpy as np
 import torch.nn as nn
@@ -173,5 +174,8 @@ class ModelTrainer(object):
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
-		lgm().log(f'\nINFERENCE complete, #predictions={len(predictions)}:\n  ----> prediction: {predictions[0].shape}, target: {targets[0].shape}', display=True )
+		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}, target: {targets[0].shape}', display=True )
+		for prediction in predictions:
+			lgm().log(f' ---> prediction: {prediction.shape}, pctnan={pctnan(prediction)}', display=True)
+
 		return inputs, targets, predictions

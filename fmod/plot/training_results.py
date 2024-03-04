@@ -98,12 +98,13 @@ class ResultsPlotter:
 	def plot(self, **kwargs):
 		cmap = kwargs.pop('cmap', 'jet')
 		origin = kwargs.pop('origin', 'lower' )
+		lgm().log(f"PLOT {len(self.plot_data)} images:", display=True )
 		for ip, pdata in enumerate(self.plot_data):
 			ax = self.axs[ip]
 			ax.set_title(f"{self.tensor_roles[ip]}")
 			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
-			lgm().log(f"Plotting image_data{image_data.shape}: args={plot_args}, pctnan={pctnan(image_data)}")
+			lgm().log(f" ** image{ip}: shape={image_data.shape}: args={plot_args}, pctnan={pctnan(image_data)}",display=True)
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
 		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
 
