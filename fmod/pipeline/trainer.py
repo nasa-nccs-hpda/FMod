@@ -175,7 +175,7 @@ class ModelTrainer(object):
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}, target: {targets[0].shape}', display=True )
-		for prediction in predictions:
-			lgm().log(f' ---> prediction: {prediction.shape}, pctnan={pctnan(prediction)}', display=True)
+		for input1, prediction, target in zip(inputs,predictions,targets):
+			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}', display=True)
 
 		return inputs, targets, predictions
