@@ -71,7 +71,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			if "level" in tslice.dims:
 				tslice = tslice.isel(level=lslider.value)
 			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			lgm().log(f" >> Create image {vname} {ptypes[it]}: nnan={nnan(tslice.values)}")
+			lgm().log(f" >> Create image {vname} {ptypes[it]}:  nnan={nnan(tslice.values)}")
 			pvars[(iv,it)] =  pvar
 			ax.set_title(f"{vname} {ptypes[it]}")
 
