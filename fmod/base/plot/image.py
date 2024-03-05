@@ -9,6 +9,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
+def nnan(varray: np.ndarray) -> int: return np.count_nonzero(np.isnan(varray))
 def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	varray: np.ndarray = dvar.isel( **kwargs, missing_dims="ignore", drop=True ).values
 	return np.sqrt( np.mean( np.square( varray ) ) )
@@ -70,6 +71,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			if "level" in tslice.dims:
 				tslice = tslice.isel(level=lslider.value)
 			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			lgm().log(f" >> Create image {vname} {ptypes[it]}: nnan={nnan(tslice.values)}")
 			pvars[(iv,it)] =  pvar
 			ax.set_title(f"{vname} {ptypes[it]}")
 
@@ -86,7 +88,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={tslice1.shape}")
+				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={tslice1.shape}, nnan={nnan(tslice1.values)}")
 		fig.canvas.draw_idle()
 
 	@exception_handled
@@ -102,7 +104,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, mean={tslice1.values.mean():.4f}, std={tslice1.values.std():.4f}")
+				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, mean={tslice1.values.mean():.4f}, std={tslice1.values.std():.4f}, nnan={nnan(tslice1.values)}")
 		fig.canvas.draw_idle()
 
 	tslider.observe( time_update,  names='value' )
