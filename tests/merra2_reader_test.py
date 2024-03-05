@@ -1,4 +1,4 @@
-import torch
+import torch, logging
 import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_list
@@ -8,6 +8,8 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-sr')
+cfg().task.device = "cpu"
+lgm().set_level( logging.DEBUG )
 
 def nnan(varray: torch.Tensor) -> int: return torch.isnan(varray).sum().item()
 def pctnan(varray: torch.Tensor) -> str: return f"{nnan(varray)*100.0/torch.numel(varray):.2f}%"

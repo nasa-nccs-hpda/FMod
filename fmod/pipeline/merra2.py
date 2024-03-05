@@ -16,6 +16,7 @@ from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
+from fmod.base.util.ops import nnan
 from torch import FloatTensor
 import pandas as pd
 
@@ -204,11 +205,11 @@ class MERRA2Dataset(BaseDataset):
         lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
         lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
         input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
-        lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}")
+        lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, nnan={nnan(input_array)}")
 
         lgm().debug(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
-        lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}")
+        lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, nnan={nnan(target_array)}")
         lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
         self.chanIds['input']  = input_array.attrs['channels']
         self.chanIds['target'] = target_array.attrs['channels']
