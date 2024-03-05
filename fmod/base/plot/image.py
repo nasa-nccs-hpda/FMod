@@ -85,10 +85,11 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
+				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
 				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={tslice1.shape}, nnan={nnan(tslice1.values)}")
+
 		fig.canvas.draw_idle()
 
 	@exception_handled
@@ -101,10 +102,10 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
+				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
 				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
-				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, mean={tslice1.values.mean():.4f}, std={tslice1.values.std():.4f}, nnan={nnan(tslice1.values)}")
 		fig.canvas.draw_idle()
 
 	tslider.observe( time_update,  names='value' )
