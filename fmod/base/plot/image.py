@@ -80,7 +80,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 		sindex = change['new']
 		lindex = lslider.value
 		fig.suptitle(f'Forecast day {sindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"time_update: tindex={sindex}, lindex={lindex}")
+		lgm().log( f"time_update: tindex={sindex}, lindex={lindex}, vnames={vnames}, ncols={ncols}")
 		for iv1, vname1 in enumerate(vnames):
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
@@ -97,7 +97,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 		lindex = change['new']
 		tindex = tslider.value
 		fig.suptitle(f'Forecast day {tindex/dayf:.1f}, Level: {levels.values[lindex]:.1f} {lunits}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"level_update: lindex={lindex}, tindex={tslider.value}")
+		lgm().log( f"level_update: lindex={lindex}, tindex={tslider.value}, vnames={vnames}, ncols={ncols}")
 		for iv1, vname1 in enumerate(vnames):
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
