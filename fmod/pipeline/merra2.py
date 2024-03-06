@@ -18,6 +18,7 @@ from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import nnan
 from torch import FloatTensor
+from fmod.base.util.ops import ArrayOrTensor
 import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
@@ -115,7 +116,7 @@ class MERRA2Dataset(BaseDataset):
     def get_day_offset(self):
         return self.i % self.n_day_offsets
 
-    def __next__(self) -> Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ]:
+    def __next__(self) -> Tuple[ArrayOrTensor,ArrayOrTensor]:
 
         if self.i < self.length:
             next_date = self.get_date()
@@ -125,7 +126,7 @@ class MERRA2Dataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={cfg().task.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            inputs_targets: Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ] = self.extract_inputs_targets(train_data, **cfg().task )
+            inputs_targets: Tuple[ArrayOrTensor,ArrayOrTensor] = self.extract_inputs_targets(train_data, **cfg().task )
             self.i = self.i + 1
             return inputs_targets
         else:
@@ -176,8 +177,8 @@ class MERRA2Dataset(BaseDataset):
         target_duration = target_lead_times[-1]
         return target_lead_times, target_duration
 
-    def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], **kwargs) -> Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ]:
+    def extract_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
+                                      levels: Tuple[int, ...], **kwargs) -> Tuple[ArrayOrTensor,ArrayOrTensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}

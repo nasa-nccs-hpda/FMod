@@ -6,6 +6,9 @@ from .config import cfg
 import xarray as xa
 import numpy as np
 from collections.abc import Iterable
+from torch import Tensor
+
+ArrayOrTensor = Union[xa.DataArray,Tensor]
 
 def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
