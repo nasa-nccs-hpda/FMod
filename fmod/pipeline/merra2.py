@@ -121,7 +121,7 @@ class MERRA2Dataset(BaseDataset):
             if self.current_date != next_date:
                 self.fmbatch.load( next_date )
                 self.current_date = next_date
-            lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}")
+            lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={cfg().task.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
             inputs_targets: Tuple[ Tensor, Tensor ] = self.extract_inputs_targets(train_data, **cfg().task )
