@@ -129,7 +129,7 @@ class MERRA2DataProcessor:
         if self.format == ncFormat.DALI:
             self.save_dali_dataset( filepath, merged_dset, vres )
         else:
-            for vname, varray in merged_dset.data_arrays.items():
+            for vname, varray in merged_dset.data_vars.items():
                 lgm().log(f"   --- {vname}{varray.dims}: shape={varray.shape}, pctnan={pctnan(varray)}" )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
