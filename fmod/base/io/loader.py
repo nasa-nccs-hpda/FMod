@@ -28,9 +28,9 @@ def data_suffix(vres: str="high") -> str:
 
 class BaseDataset(IterableDataset):
 
-	def __init__(self, lenght: int ):
+	def __init__(self, length: int ):
 		super(BaseDataset, self).__init__()
-		self.length = lenght
+		self.length = length
 		self.chanIds: Dict[str,List[str]] = {}
 
 	def channel_ids(self, role: str) -> List[str]:
