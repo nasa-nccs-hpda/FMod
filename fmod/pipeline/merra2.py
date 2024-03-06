@@ -115,7 +115,8 @@ class MERRA2Dataset(BaseDataset):
     def get_day_offset(self):
         return self.i % self.n_day_offsets
 
-    def __next__(self) -> Tuple[ Tensor, Tensor ]:
+    def __next__(self) -> Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ]:
+
         if self.i < self.length:
             next_date = self.get_date()
             if self.current_date != next_date:
@@ -124,10 +125,8 @@ class MERRA2Dataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={cfg().task.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            inputs_targets: Tuple[ Tensor, Tensor ] = self.extract_inputs_targets(train_data, **cfg().task )
+            inputs_targets: Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ] = self.extract_inputs_targets(train_data, **cfg().task )
             self.i = self.i + 1
-            if (cfg().task.device == "gpu") and torch.cuda.is_available():
-                inputs_targets =  (inputs_targets[0].cuda(), inputs_targets[1].cuda())
             return inputs_targets
         else:
             raise StopIteration
@@ -178,7 +177,7 @@ class MERRA2Dataset(BaseDataset):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self, idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], **kwargs) -> Tuple[Tensor, Tensor]:
+        levels: Tuple[int, ...], **kwargs) -> Tuple[ Union[xa.DataArray,Tensor], Union[xa.DataArray,Tensor] ]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
@@ -210,11 +209,14 @@ class MERRA2Dataset(BaseDataset):
         lgm().debug(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, nnan={nnan(target_array)}")
-        lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}")
+        lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg()}")
         self.chanIds['input']  = input_array.attrs['channels']
         self.chanIds['target'] = target_array.attrs['channels']
 
-        return array2tensor(input_array), array2tensor(target_array)
+        if cfg().task.device == "gpu":
+            return array2tensor(input_array), array2tensor(target_array)
+        else:
+            return input_array, target_array
 
 
 class MERRA2NCDatapipe(Datapipe):
