@@ -12,16 +12,12 @@ configure('merra2-sr')
 reference_date = date(1990,1,1 )
 vres = "high"
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-if torch.cuda.is_available():
-    torch.cuda.set_device(device.index)
-
 dset: xa.Dataset = load_dataset( vres, reference_date )
 
 print(f"\n -------------------- Encodings: D=dims, S=shape, C=chunks, PN=%nan -------------------- ")
 for vid in dset.data_vars.keys():
 	dvar: xa.DataArray = dset.data_vars[vid]
-	print( f"*** {vid:<30} D{str(dvar.dims):<35} S{str(dvar.shape):<22} C{dvar.encoding['preferred_chunks']}, PN: {pctnan(dvar)}")
+	print( f"*** {vid:<30} D{str(dvar.dims):<35} S{str(dvar.shape):<22} C{dvar.encoding.get('preferred_chunks')}, PN: {pctnan(dvar)}")
 
 
 
