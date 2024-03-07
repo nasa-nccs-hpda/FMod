@@ -35,9 +35,10 @@ def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset
 	slices = [ vslice.drop_dims("datetime",errors="ignore") for vslice in slices ]
 	lgm().log(f" ----- merge_batch ----- ")
 	for vslice in slices:
-		lgm().log( f" **> slice coords: {list(vslice.coords.keys())} ----- ")
-	# 	for vname, dvar in vslice.data_vars.items():
-	# 		lgm().log( f" >>>>> {vname}{dvar.dims}: {dvar.shape}")
+		if 'datetime' in vslice.coords:
+			lgm().log( f" **> slice coords: {list(vslice.coords.keys())} ----- ")
+			for vname, dvar in vslice.data_vars.items():
+				lgm().log( f" >>>>> {vname}{dvar.dims}: {dvar.shape}")
 	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
 	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
