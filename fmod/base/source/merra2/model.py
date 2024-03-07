@@ -30,23 +30,25 @@ def clear_const_file():
 				shutil.rmtree(const_filepath)
 
 def furbish( dset: xa.Dataset ) -> xa.Dataset:
-	dvars = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
-	coords = { cname: cval for cname, cval in dset.coords.items() if cname != "datetime" }
-	return xa.Dataset( dvars, coords, dset.attrs )
+	dvars: Dict = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
+	coords: Dict = { cname: cval for cname, cval in dset.coords.items() }
+	attrs: Dict = { aname: aval for aname, aval in dset.attrs }
+	attrs['datetime'] = coords.pop('datetime', attrs.get('datetime',None) )
+	return xa.Dataset( dvars, coords, attrs )
 
 def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
-	slices = [ furbish(vslice) for vslice in slices ]
+	vslices = [ furbish(vslice) for vslice in slices ]
 	lgm().log(f" ----- merge_batch ----- ")
-	for vslice in slices:
+	for vslice in vslices:
 		if 'datetime' in vslice.coords:
 			lgm().log( f" **> slice coords: {list(vslice.coords.keys())} ----- ")
 			for vname, dvar in vslice.data_vars.items():
-				lgm().log( ' >>>>> {:25s} {:25s} {:25s} '.format(vname,str(dvar.dims),str(dvar.shape)) )
-	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
+				lgm().log( ' >>>>> {:25s} {:35s} {:25s} '.format(vname,str(dvar.dims),str(dvar.shape)) )
+	dynamics: xa.Dataset = xa.concat( vslices, dim="time", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
-	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
+	sample: xa.Dataset = vslices[0].drop_dims( 'time', errors='ignore' )
 	for vname, dvar in sample.data_vars.items():
 		if vname not in dynamics.data_vars.keys():
 			constants[vname] = dvar
