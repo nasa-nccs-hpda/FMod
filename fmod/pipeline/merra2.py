@@ -210,7 +210,7 @@ class MERRA2Dataset(BaseDataset):
         lgm().debug(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, nnan={nnan(target_array)}")
-        lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg().target.device}")
+        lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg().task.device}")
         self.chanIds['input']  = input_array.attrs['channels']
         self.chanIds['target'] = target_array.attrs['channels']
 
