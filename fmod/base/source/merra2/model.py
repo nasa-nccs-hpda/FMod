@@ -19,7 +19,7 @@ def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.v
 def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
 
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
-    return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
+	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def clear_const_file():
 	for vres in ["high", "low"]:
@@ -29,14 +29,15 @@ def clear_const_file():
 			except IsADirectoryError:
 				shutil.rmtree(const_filepath)
 
-# def purge( dset: xa.Dataset ) -> xa.Dataset:
-# 	dset = dset.drop_dims("datetime", errors="ignore")
-# 	dset.coords.
+def furbish( dset: xa.Dataset ) -> xa.Dataset:
+	dvars = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
+	coords = { cname: cval for cname, cval in dset.coords.items() if cname != "datetime" }
+	return xa.Dataset( dvars, coords, dset.attrs )
 
 def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
-#	slices = [ vslice.drop_dims("datetime",errors="ignore") for vslice in slices ]
+	slices = [ furbish(vslice) for vslice in slices ]
 	lgm().log(f" ----- merge_batch ----- ")
 	for vslice in slices:
 		if 'datetime' in vslice.coords:
