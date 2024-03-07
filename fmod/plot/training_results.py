@@ -5,8 +5,6 @@ from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from torch import Tensor
-from matplotlib.axes import Axes
 from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
