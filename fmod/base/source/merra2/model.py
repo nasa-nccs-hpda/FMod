@@ -33,11 +33,10 @@ def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
 	lgm().log(f" ----- merge_batch ----- ")
-	for vslice in slices:
-		lgm().log( f" **> dset coords: {list(vslice.coords.keys())}")
-	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
+	vslices = [	vslice.drop_vars("datetime") for vslice in slices ]
+	dynamics: xa.Dataset = xa.concat( vslices, dim="time", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
-	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
+	sample: xa.Dataset = vslices[0].drop_dims( 'time', errors='ignore' )
 	for vname, dvar in sample.data_vars.items():
 		if vname not in dynamics.data_vars.keys():
 			constants[vname] = dvar
