@@ -29,16 +29,20 @@ def clear_const_file():
 			except IsADirectoryError:
 				shutil.rmtree(const_filepath)
 
+# def purge( dset: xa.Dataset ) -> xa.Dataset:
+# 	dset = dset.drop_dims("datetime", errors="ignore")
+# 	dset.coords.
+
 def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
-	slices = [ vslice.drop_dims("datetime",errors="ignore") for vslice in slices ]
+#	slices = [ vslice.drop_dims("datetime",errors="ignore") for vslice in slices ]
 	lgm().log(f" ----- merge_batch ----- ")
 	for vslice in slices:
 		if 'datetime' in vslice.coords:
 			lgm().log( f" **> slice coords: {list(vslice.coords.keys())} ----- ")
 			for vname, dvar in vslice.data_vars.items():
-				lgm().log( f" >>>>> {vname}{dvar.dims}: {dvar.shape}")
+				lgm().log( f" >>>>> {vname: <25}{dvar.dims: <25}: {dvar.shape}")
 	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
 	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
