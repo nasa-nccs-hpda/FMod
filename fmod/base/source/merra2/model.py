@@ -32,11 +32,12 @@ def clear_const_file():
 def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
+	slices = [ vslice.drop_dims("datetime",errors="ignore") for vslice in slices ]
 	lgm().log(f" ----- merge_batch ----- ")
-	for vslice in slices:
-		lgm().log( f" **> dset datetime: {vslice.coords.get('datetime','None')} ----- ")
-		for vname, dvar in vslice.data_vars.items():
-			lgm().log( f" >>>>> {vname}{dvar.dims}: {dvar.shape}")
+	# for vslice in slices:
+	# 	lgm().log( f" **> dset datetime: {vslice.coords.get('datetime','None')} ----- ")
+	# 	for vname, dvar in vslice.data_vars.items():
+	# 		lgm().log( f" >>>>> {vname}{dvar.dims}: {dvar.shape}")
 	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
 	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
