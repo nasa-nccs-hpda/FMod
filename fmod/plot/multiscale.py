@@ -40,7 +40,6 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 	stats: Dict[str,xa.DataArray] = { stat: statdata.data_vars[vname] for stat,statdata in norms.items()}
 	return (fvar-stats[ statnames['mean'] ]) / stats[ statnames['std'] ]
 
-
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
@@ -59,7 +58,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
 		tslice: xa.DataArray = image.isel(time=tslider.value)
-		cslice = tslice.isel(channels=cslider.value)
+		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		ax.set_title(f" {tname} ")
 
@@ -70,7 +69,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore")
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
@@ -82,7 +81,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore")
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
