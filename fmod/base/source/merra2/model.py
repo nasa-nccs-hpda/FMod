@@ -8,7 +8,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
 from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath
 from fmod.base.io.loader import ncFormat
-from fmod.base.util.ops import nnan, pctnan
+from fmod.base.util.ops import nnan, pctnan, remove_filepath
 
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24
@@ -22,10 +22,7 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 def clear_const_file():
 	for vres in ["high", "low"]:
 		const_filepath = cache_filepath(VarType.Constant,vres)
-		if os.path.exists(const_filepath):
-			try: os.remove(const_filepath)
-			except IsADirectoryError:
-				shutil.rmtree(const_filepath)
+		remove_filepath(const_filepath)
 
 def furbish( dset: xa.Dataset ) -> xa.Dataset:
 	dvars: Dict = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
