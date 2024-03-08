@@ -224,7 +224,7 @@ class MERRA2DataProcessor:
                 for svar in svars:
                     self.stats[vres].add_entry(vname, svar)
                     nodata_test( vname, svar, d)
-                    lgm().log(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}")
+                    lgm().log(f" ** Processing {vres} res variable {vname}{svar.dims}: {svar.shape} for {d}, nnan={nnan(svar.values)}")
                     dvars[vname] = svar
         dset.close()
         return { vres: self.create_dataset(dvars,isconst) for vres,dvars in mvars.items() }
