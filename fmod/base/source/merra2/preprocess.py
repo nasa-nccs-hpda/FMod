@@ -135,9 +135,10 @@ class MERRA2DataProcessor:
             for vname, varray in merged_dset.data_vars.items():
                 lgm().log(f" > {vname:<25} {str(varray.dims):<25} {str(varray.shape):<20} {pctnan(varray.values):<20}" )
                 if vname == "T":
-                    itime = 0
-                    for ilev in range(varray.shape[1]):
-                        lgm().log(f" ----> Level {ilev}, Time {itime}: nnan= {nnan(varray.values[itime,ilev,:,:])}")
+                    for itime in range(varray.shape[0]):
+                        for ilev in range(varray.shape[1]):
+                            nn = nnan(varray.values[itime,ilev,:,:])
+                            if nn > 0: lgm().log(f" [T] ----> Level {ilev}, Time {itime}: nnan= {nn}")
             remove_filepath( filepath )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
