@@ -127,6 +127,9 @@ class DataLoader(object):
 		vhires = self.process_attrs( variable, global_attrs )
 		if isconst and ("time" in variable.dims):
 			vhires = vhires.isel(time=0, drop=True)
+		if 'time' in vhires.dims:
+			resampled: DataArrayResample = vhires.resample(time=self.tstep)
+			vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
 		vlores: xa.DataArray = vhires
 
