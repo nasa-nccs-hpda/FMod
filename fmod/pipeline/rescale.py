@@ -124,8 +124,7 @@ class DataLoader(object):
 		return sscoords
 
 	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
-		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
-		vhires: xa.DataArray = variable.rename(**cmap)
+		vhires = self.process_attrs( variable, global_attrs )
 		if isconst and ("time" in variable.dims):
 			vhires = vhires.isel(time=0, drop=True)
 		redop = np.mean if qtype == QType.Intensive else np.sum
@@ -135,15 +134,13 @@ class DataLoader(object):
 			cargs = { dim: cfg().model.scale_factor }
 			vlores = vlores.coarsen( boundary="trim", **cargs ).reduce( redop, keep_attrs=True )
 
-		result = dict(
-			high=[self.process_attrs(vhires,vhires,global_attrs)],
-			low= [self.process_attrs(vlores,vhires,global_attrs)] )
+		return dict( high=[vhires], low=[vlores] )
 
-		return result
-
-	def process_attrs(self, variable: xa.DataArray, parent: xa.DataArray, global_attrs: Dict ) -> xa.DataArray:
-		variable.attrs.update(global_attrs)
-		variable.attrs.update(parent.attrs)
+	def process_attrs(self, variable: xa.DataArray, attrs: Dict ) -> xa.DataArray:
+		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
+		attrs1 = dict(**variable.attrs, **attrs)
+		variable: xa.DataArray = variable.rename(**cmap)
+		variable.attrs.update(attrs1)
 		for missing in ['fmissing_value', 'missing_value', 'fill_value']:
 			if missing in variable.attrs:
 				missing_value = variable.attrs.pop('fmissing_value')
