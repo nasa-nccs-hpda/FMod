@@ -13,7 +13,7 @@ configure( 'merra2-sr' )
 reprocess=True
 nproc = cpu_count()
 start: date = date(1990,1,1 )
-end: date = date(1990,1,3 )
+end: date = date(1990,1,5 )
 
 def process( d: date ) -> Dict[str,StatsAccumulator]:
 	reader = MERRA2DataProcessor()
