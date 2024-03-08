@@ -20,8 +20,9 @@ _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
-    num_nodata = nnan(varray)
+    num_nodata = nnan(varray.values)
     assert num_nodata == 0, f"ERROR: {num_nodata} Nodata values found in variable {vname} for date {d}"
+
 def nmissing(varray: xa.DataArray) -> int:
     mval = varray.attrs.get('fmissing_value',-9999)
     return np.count_nonzero(varray.values == mval)
