@@ -3,13 +3,19 @@ from .parse import parse
 from omegaconf import DictConfig, OmegaConf
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from .config import cfg
-import xarray as xa
+import shutil, xarray as xa
 import numpy as np
 from collections.abc import Iterable
 from torch import Tensor
 
 def nnan(varray: np.ndarray) -> int: return np.count_nonzero( np.isnan( varray.flatten() ) )
 def pctnan(varray: np.ndarray) -> str: return f"{nnan(varray) * 100.0 / varray.flatten().shape[0]:.2f}%"
+
+def remove_filepath(filepath: str):
+	if os.path.exists(filepath):
+		try: os.remove(filepath)
+		except IsADirectoryError:
+			shutil.rmtree(filepath)
 
 ArrayOrTensor = Union[xa.DataArray,Tensor]
 
