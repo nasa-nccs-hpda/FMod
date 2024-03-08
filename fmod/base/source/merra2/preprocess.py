@@ -127,18 +127,18 @@ class MERRA2DataProcessor:
 
     def write_daily_files(self, filepath: str, collection_dsets: List[xa.Dataset], vres: str):
         merged_dset: xa.Dataset = xa.merge(collection_dsets)
-        lgm().log(f"**** write_daily_files({self.format.value}): {filepath}", display=True )
+        lgm().log(f"**** write {len(collection_dsets)} merged collections: {filepath}", display=True )
         os.makedirs( os.path.dirname(filepath), exist_ok=True )
         if self.format == ncFormat.DALI:
             self.save_dali_dataset( filepath, merged_dset, vres )
         else:
             for vname, varray in merged_dset.data_vars.items():
                 lgm().log(f" > {vname:<25} {str(varray.dims):<25} {str(varray.shape):<20} {pctnan(varray.values):<20}" )
-                if vname == "T":
-                    for itime in range(varray.shape[0]):
-                        for ilev in range(varray.shape[1]):
-                            nn = nnan(varray.values[itime,ilev,:,:])
-                            if nn > 0: lgm().log(f" [T] ----> Level {ilev}, Time {itime}: nnan= {nn}")
+                # if vname == "T":
+                #     for itime in range(varray.shape[0]):
+                #         for ilev in range(varray.shape[1]):
+                #             nn = nnan(varray.values[itime,ilev,:,:])
+                #             if nn > 0: lgm().log(f" [T] ----> Level {ilev}, Time {itime}: nnan= {nn}")
             remove_filepath( filepath )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
