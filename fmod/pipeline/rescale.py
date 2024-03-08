@@ -128,6 +128,7 @@ class DataLoader(object):
 		if isconst and ("time" in variable.dims):
 			vhires = vhires.isel(time=0, drop=True)
 		if 'time' in vhires.dims:
+			lgm().log( f" @@Resample {variable.name}{variable.dims}: shape={variable.shape}, tstep={self.tstep}")
 			resampled: DataArrayResample = vhires.resample(time=self.tstep)
 			vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
