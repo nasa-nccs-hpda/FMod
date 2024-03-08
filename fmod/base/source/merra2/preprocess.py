@@ -262,9 +262,9 @@ class MERRA2DataProcessor:
         return {name: xa.Variable(dims, progress), name + "_sin": xa.Variable(dims, np.sin(progress_phase)), name + "_cos": xa.Variable(dims, np.cos(progress_phase))}
     @classmethod
     def add_derived_vars(cls, data: xa.Dataset) -> None:
-        if 'datetime' not in data.coords:
-            data.coords['datetime'] = data.coords['time'].expand_dims("batch")
-        seconds_since_epoch = (data.coords["datetime"].data.astype("datetime64[s]").astype(np.int64))
+    #    if 'datetime' not in data.coords:
+     #       data.coords['datetime'] = data.coords['time'].expand_dims("batch")
+        seconds_since_epoch = (data.coords["time"].data.astype("datetime64[s]").astype(np.int64))
         batch_dim = ("batch",) if "batch" in data.dims else ()
         year_progress = cls.get_year_progress(seconds_since_epoch)
         data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("time",), progress=year_progress))
