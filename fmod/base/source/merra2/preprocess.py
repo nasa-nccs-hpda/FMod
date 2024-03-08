@@ -133,7 +133,11 @@ class MERRA2DataProcessor:
             self.save_dali_dataset( filepath, merged_dset, vres )
         else:
             for vname, varray in merged_dset.data_vars.items():
-                lgm().log(f" {vname:<30} {str(varray.dims):<30} {str(varray.shape):<30}, {pctnan(varray.values):<30}" )
+                lgm().log(f" > {vname:<25} {str(varray.dims):<25} {str(varray.shape):<20} {pctnan(varray.values):<20}" )
+                if vname == "T":
+                    itime = 0
+                    for ilev in range(varray.shape[1]):
+                        lgm().log(f" ----> Level {ilev}, Time {itime}: nnan= {nnan(varray.values[itime,ilev,:,:])}")
             remove_filepath( filepath )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
