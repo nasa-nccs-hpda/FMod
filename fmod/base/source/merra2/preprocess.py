@@ -133,7 +133,7 @@ class MERRA2DataProcessor:
         else:
             for vname, varray in merged_dset.data_vars.items():
                 lgm().log(f" {vname:<30} {str(varray.dims):<30} {str(varray.shape):<30}, {pctnan(varray):<30}" )
-            if os.path.exists( filepath ): shutil.rmtree( filepath )
+            if os.path.exists( filepath ): os.remove( filepath )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
 
