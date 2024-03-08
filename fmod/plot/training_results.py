@@ -10,11 +10,9 @@ from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.ops import nnan, pctnan
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
-
-def nnan(varray: np.ndarray) -> int: return np.count_nonzero(np.isnan(varray))
-def pctnan(varray: np.ndarray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
 
 def flex(weight: int) -> ipw.Layout:
 	return ipw.Layout(flex=f'1 {weight} auto', width='auto')

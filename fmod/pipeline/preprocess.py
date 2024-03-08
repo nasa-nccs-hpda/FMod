@@ -10,6 +10,7 @@ from xarray.core.resample import DataArrayResample
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.ops import nnan, pctnan
 from enum import Enum
 
 _SEC_PER_HOUR = 3600
@@ -17,7 +18,6 @@ _HOUR_PER_DAY = 24
 SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
-def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 
 def nodata_test(vname: str, varray: xa.DataArray, d: date):
     num_nodata = nnan(varray)
@@ -25,7 +25,7 @@ def nodata_test(vname: str, varray: xa.DataArray, d: date):
 def nmissing(varray: xa.DataArray) -> int:
     mval = varray.attrs.get('fmissing_value',-9999)
     return np.count_nonzero(varray.values == mval)
-def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray) * 100.0 / varray.size:.2f}%"
+
 def pctmissing(varray: xa.DataArray) -> str:
     return f"{nmissing(varray) * 100.0 / varray.size:.2f}%"
 

@@ -8,10 +8,10 @@ import numpy as np
 from collections.abc import Iterable
 from torch import Tensor
 
-ArrayOrTensor = Union[xa.DataArray,Tensor]
+def nnan(varray: np.ndarray) -> int: return np.count_nonzero( np.isnan( varray.flatten() ) )
+def pctnan(varray: np.ndarray) -> str: return f"{nnan(varray) * 100.0 / varray.flatten().shape[0]:.2f}%"
 
-def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
-def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
+ArrayOrTensor = Union[xa.DataArray,Tensor]
 
 def xextent( raster: xa.DataArray ) -> Tuple[float,float,float,float]:
 	xc, yc = raster.coords['lon'].values.tolist(), raster.coords['lat'].values.tolist()

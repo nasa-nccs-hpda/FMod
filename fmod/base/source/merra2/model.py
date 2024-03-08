@@ -8,15 +8,13 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
 from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath
 from fmod.base.io.loader import ncFormat
+from fmod.base.util.ops import nnan, pctnan
 
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24
 SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
-
-def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
-def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray)*100.0/varray.size:.2f}%"
 
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )

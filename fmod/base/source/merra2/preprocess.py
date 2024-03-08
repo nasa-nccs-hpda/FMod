@@ -16,13 +16,13 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.stats import StatsAccumulator, StatsEntry
 from fmod.base.io.loader import ncFormat
 from .model import cache_filepath, VarType
+from fmod.base.util.ops import nnan, pctnan
 
 _SEC_PER_HOUR =   3600
 _HOUR_PER_DAY =   24
 SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
-def nnan(varray: xa.DataArray) -> int: return np.count_nonzero(np.isnan(varray.values))
 
 def sformat(aval: Any) -> str:
     list_method = getattr(aval, "list", None)
@@ -36,7 +36,7 @@ def nodata_test(vname: str, varray: xa.DataArray, d: date):
 def nmissing(varray: xa.DataArray) -> int:
     mval = varray.attrs.get('fmissing_value',-9999)
     return np.count_nonzero(varray.values == mval)
-def pctnan(varray: xa.DataArray) -> str: return f"{nnan(varray) * 100.0 / varray.size:.2f}%"
+
 def pctmissing(varray: xa.DataArray) -> str:
     return f"{nmissing(varray) * 100.0 / varray.size:.2f}%"
 
@@ -133,7 +133,7 @@ class MERRA2DataProcessor:
         else:
             for vname, varray in merged_dset.data_vars.items():
                 lgm().log(f" {vname:<30} {str(varray.dims):<30} {str(varray.shape):<30}, {pctnan(varray):<30}" )
-            if os.path.exists( filepath ): os.remove( filepath )
+            if os.path.exists( filepath ): shutil.rmtree( filepath )
             merged_dset.to_netcdf(filepath, format="NETCDF4", mode="w", encoding=self.get_encoding(merged_dset) )
             lgm().log(f"   --- coords: { {c:cv.shape for c,cv in merged_dset.coords.items()} }")
 

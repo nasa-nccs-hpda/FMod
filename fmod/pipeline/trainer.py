@@ -8,7 +8,6 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.plot.training_results import pctnan
 from enum import Enum
 import numpy as np
 import torch.nn as nn
