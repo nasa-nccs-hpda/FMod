@@ -128,11 +128,11 @@ def increasing( data: np.ndarray ) -> bool:
 	return xl[-1] > xl[0]
 
 def replace_nans(level_array: xa.DataArray) -> xa.DataArray:
-	if nnan(level_array) > 0:
+	if nnan(level_array.values) > 0:
 		level_array = level_array.interpolate_na(dim='x', method="linear", fill_value="extrapolate")
-		if nnan(level_array) > 0:
+		if nnan(level_array.values) > 0:
 			level_array = level_array.interpolate_na(dim='y', method="linear", fill_value="extrapolate")
-		assert nnan(level_array) == 0, "NaNs remaining after replace_nans()"
+		assert nnan(level_array.values) == 0, "NaNs remaining after replace_nans()"
 	return level_array
 def format_timedelta( td: np.timedelta64, form: str, strf: bool = True ) -> Union[str, float,int]:
 	s = td.astype('timedelta64[s]').astype(np.int32)
