@@ -72,11 +72,19 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     darray.attrs['channels'] = channels
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
+def get_device():
+    devname = cfg().task.device
+    if devname == "gpu": devname = "cuda"
+    device = torch.device(devname)
+    if device.type == "cuda" and device.index is None:
+        device = torch.device("cuda:0")
+    return device
+
 def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
     tt = cfg().task.tensor_type.lower()
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
     if   tt == TensorType.DALI:   return TensorCPU( array_data )
-    elif tt == TensorType.TORCH:  return FloatTensor( array_data, device=cfg().task.device )
+    elif tt == TensorType.TORCH:  return FloatTensor( array_data, device=get_device() )
     else: raise Exception( f"Unsupported tensor type: {tt}")
 
 
