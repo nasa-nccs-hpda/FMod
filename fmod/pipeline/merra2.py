@@ -80,13 +80,9 @@ def get_device():
         device = torch.device("cuda:0")
     return device
 
-def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
-    tt = cfg().task.tensor_type.lower()
+def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
-    if   tt == TensorType.DALI:   return TensorCPU( array_data )
-    elif tt == TensorType.TORCH:  return FloatTensor( array_data, device=get_device() )
-    else: raise Exception( f"Unsupported tensor type: {tt}")
-
+    return torch.tensor( array_data, device=get_device(), dtype=array_data.dtype, requires_grad=True )
 
 @dataclass
 class MetaData(DatapipeMetaData):
