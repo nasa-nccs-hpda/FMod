@@ -76,7 +76,7 @@ def array2tensor( darray: xa.DataArray ) -> Union[TensorCPU,FloatTensor]:
     tt = cfg().task.tensor_type.lower()
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
     if   tt == TensorType.DALI:   return TensorCPU( array_data )
-    elif tt == TensorType.TORCH:  return FloatTensor( array_data )
+    elif tt == TensorType.TORCH:  return FloatTensor( array_data, device=cfg().task.device )
     else: raise Exception( f"Unsupported tensor type: {tt}")
 
 
