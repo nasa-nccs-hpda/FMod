@@ -3,7 +3,6 @@ loss_fn: 'l2'
 batch_size: 1
 num_workers: 0
 persistent_workers: False
-num_encoder_layers: 3
 grid: "equiangular"
 in_chans: 178
 out_chans: 83
@@ -16,7 +15,7 @@ operator_type: 'driscoll-healy'
 scale_factor: 3
 embed_dim:  256
 num_layers: 4
-encoder_layers: 1
+encoder_layers: 3
 mlp_ratio: 2.0
 drop_rate: 0.0
 drop_path_rate: 0.0

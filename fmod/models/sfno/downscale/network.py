@@ -275,7 +275,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		activation_function="relu",
 		encoder_layers=1,
 		use_mlp=True,
-		mlp_ratio=2.,
+		mlp_ratio=1.,
 		drop_rate=0.,
 		drop_path_rate=0.,
 		normalization_layer="none",
@@ -390,7 +390,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		# self.encoder = encoder
 
 		# construct an encoder with num_encoder_layers
-		num_encoder_layers = 1
+		num_encoder_layers = cfg().model.encoder_layers
 		encoder_hidden_dim = int(self.embed_dim * mlp_ratio)
 		current_dim = self.in_chans
 		encoder_layers = []
@@ -404,16 +404,14 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			# initialize the weights correctly
 			scale = math.sqrt(2. / current_dim)
 			nn.init.normal_(fc.weight, mean=0., std=scale)
-			if fc.bias is not None:
-				nn.init.constant_(fc.bias, 0.0)
+			nn.init.constant_(fc.bias, 0.0)
 			encoder_layers.append(fc)
 			encoder_layers.append(self.activation_function())
 			current_dim = encoder_hidden_dim
-		self.efc = nn.Conv2d(current_dim, self.embed_dim, 1, bias=False)
+		self.efc = nn.Conv2d(current_dim, self.embed_dim, 1, bias=True)
 		scale = math.sqrt(1. / current_dim)
 		nn.init.normal_(self.efc.weight, mean=0., std=scale)
-		if self.efc.bias is not None:
-			nn.init.constant_(self.efc.bias, 0.0)
+		nn.init.constant_(self.efc.bias, 0.0)
 		encoder_layers.append(self.efc)
 		self.encoder = nn.Sequential(*encoder_layers)
 

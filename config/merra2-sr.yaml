@@ -2,7 +2,7 @@ defaults:
   - platform: explore
   - preprocess: merra2-sr
   - task: merra2-sr
-  - model: merra2-sfno.3
+  - model: merra2-sr
   - pipeline: sfno
   - _self_
 
