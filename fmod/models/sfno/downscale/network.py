@@ -525,6 +525,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		return x
 
 	def forward(self, x):
+		lgm().log(f"Forward: x{tuple(x.shape)}, %N={pctnant(x)}")
 		residual = x
 		x = self.encoder(x)
 		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, %N={pctnant(x)}")
