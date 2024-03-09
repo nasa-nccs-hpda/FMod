@@ -186,7 +186,6 @@ class MERRA2Dataset(BaseDataset):
             missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
-        dataset = dataset.drop_vars("datetime")
         inputs, targets = self.extract_input_target_times(dataset)
         for vname, varray in inputs.data_vars.items():
             if 'time' in varray.dims:
