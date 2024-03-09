@@ -8,13 +8,14 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.ops import nnan, pctnan
 from enum import Enum
 import numpy as np
 import torch.nn as nn
 import time, os
 
-def nnan(varray: torch.Tensor) -> int: return torch.isnan(varray).sum().item()
-def pctnan(varray: torch.Tensor) -> str: return f"{nnan(varray)*100.0/torch.numel(varray):.2f}%"
+def nnant(varray: torch.Tensor) -> int: return torch.isnan(varray).sum().item()
+def pctnant(varray: torch.Tensor) -> str: return f"{nnant(varray)*100.0/torch.numel(varray):.2f}%"
 
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
@@ -41,7 +42,7 @@ class ModelTrainer(object):
 			self.grid_shape = inp.shape[-2:]
 			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: input{inp.shape}, target{tar.shape}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
+		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
 		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
@@ -133,9 +134,9 @@ class ModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnan(inp)}", display=True)
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnan(tar)}", display=True)
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnan(prd)}", display=True)
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
