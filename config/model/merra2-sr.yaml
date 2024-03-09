@@ -16,7 +16,7 @@ scale_factor: 3
 embed_dim:  256
 num_layers: 4
 encoder_layers: 3
-mlp_ratio: 2.0
+mlp_ratio: 1.0
 drop_rate: 0.0
 drop_path_rate: 0.0
 hard_thresholding_fraction:  1.0
