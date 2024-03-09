@@ -1,4 +1,4 @@
-import os, glob, numpy as np
+import os, glob, torch
 from .parse import parse
 from omegaconf import DictConfig, OmegaConf
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
@@ -10,6 +10,9 @@ from torch import Tensor
 
 def nnan(varray: np.ndarray) -> int: return np.count_nonzero( np.isnan( varray.flatten() ) )
 def pctnan(varray: np.ndarray) -> str: return f"{nnan(varray) * 100.0 / varray.flatten().shape[0]:.2f}%"
+
+def nnant(varray: Tensor) -> int: return torch.isnan(varray).sum().item()
+def pctnant(varray: Tensor) -> str: return f"{nnant(varray)*100.0/torch.numel(varray):.2f}%"
 
 def remove_filepath(filepath: str):
 	if os.path.exists(filepath):

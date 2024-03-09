@@ -4,6 +4,7 @@ from ..layers import *
 from functools import partial
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.pipeline.trainer import TaskType
+from fmod.base.util.ops import nnan, pctnan, pctnant
 
 class SpectralFilterLayer(nn.Module):
 	"""
@@ -526,19 +527,20 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 	def forward(self, x):
 		residual = x
 		x = self.encoder(x)
-		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}")
+		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, %N={pctnant(x)}")
 
 		if self.pos_embed is not None:
 			x = x + self.pos_embed
 
 		x = self.forward_features(x)
+		lgm().log( f"FF: x.shape={tuple(x.shape)}, %N={pctnant(x)}")
 
 		if self.big_skip:
 			x = torch.cat((x, residual), dim=1)
 
 		residual = x
 		x = self.decoder(x)
-		lgm().log(f"Decode: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.dfc.weight.shape)}")
+		lgm().log(f"Decode: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.dfc.weight.shape)}, %N={pctnant(x)}")
 
 		return x
 

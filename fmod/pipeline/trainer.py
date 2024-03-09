@@ -8,14 +8,11 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.util.ops import nnan, pctnan
+from fmod.base.util.ops import nnan, pctnan, pctnant
 from enum import Enum
 import numpy as np
 import torch.nn as nn
 import time, os
-
-def nnant(varray: torch.Tensor) -> int: return torch.isnan(varray).sum().item()
-def pctnant(varray: torch.Tensor) -> str: return f"{nnant(varray)*100.0/torch.numel(varray):.2f}%"
 
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
@@ -178,6 +175,7 @@ class ModelTrainer(object):
 			for istep, (inp, tar) in enumerate(self.data_iter):
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
+				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]', display=True)
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )

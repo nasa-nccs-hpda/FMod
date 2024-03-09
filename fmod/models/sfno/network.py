@@ -3,6 +3,7 @@ from fmod.base.util.config import cfg
 from .layers import *
 from functools import partial
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.ops import nnan, pctnan, pctnant
 
 class SpectralFilterLayer(nn.Module):
 	"""
@@ -157,14 +158,14 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 	#         self.filter.filter.init_weights(scale)
 
 	def forward(self, x):
-		lgm().log( f" *** SphericalFourierNeuralOperatorBlock.forward: x{tuple(x.shape)}")
+		lgm().log( f" *** SphericalFourierNeuralOperatorBlock.forward: x{tuple(x.shape)}, %N={pctnant(x)}")
 		x, residual = self.filter(x)
 
 		x = self.norm0(x)
 
 		if hasattr(self, "inner_skip"):
 			isr = self.inner_skip(residual)
-			lgm().log(f" *** inner_skip: residual{tuple(residual.shape)}, isr{tuple(isr.shape)}")
+			lgm().log(f" *** inner_skip: residual{tuple(residual.shape)}, isr{tuple(isr.shape)}, %N={pctnant(x)}")
 			x = x + isr
 
 		if hasattr(self, "act_layer"):
@@ -173,7 +174,7 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 		if hasattr(self, "mlp"):
 			xsh0 = tuple(x.shape)
 			x = self.mlp(x)
-			lgm().log(f" *** mlp: input{xsh0}, output{tuple(x.shape)}")
+			lgm().log(f" *** mlp: input{xsh0}, output{tuple(x.shape)}, %N={pctnant(x)}")
 
 		x = self.norm1(x)
 
@@ -181,10 +182,10 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 
 		if hasattr(self, "outer_skip"):
 			osr = self.outer_skip(residual)
-			lgm().log(f" *** outer_skip: residual{tuple(residual.shape)}, isr{tuple(osr.shape)}")
+			lgm().log(f" *** outer_skip: residual{tuple(residual.shape)}, isr{tuple(osr.shape)}, %N={pctnant(x)}")
 			x = x + osr
 
-		lgm().log(f" *** SphericalFourierNeuralOperatorBlock.result: x{tuple(x.shape)}")
+		lgm().log(f" *** SphericalFourierNeuralOperatorBlock.result: x{tuple(x.shape)}, %N={pctnant(x)}")
 		return x
 
 sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
