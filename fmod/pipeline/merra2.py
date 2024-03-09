@@ -82,7 +82,7 @@ def get_device():
 
 def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
-    return torch.tensor( array_data, device=get_device(), dtype=array_data.dtype, requires_grad=True )
+    return torch.tensor( array_data, device=get_device(), requires_grad=True )
 
 @dataclass
 class MetaData(DatapipeMetaData):
