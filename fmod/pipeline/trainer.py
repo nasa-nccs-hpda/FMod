@@ -120,13 +120,13 @@ class ModelTrainer(object):
 			acc_loss = 0
 			self.model.train()
 			for inp, tar in self.data_iter:
-				prd = self.model(inp)
+				prd = self.model( inp )
 				for _ in range( cfg().model.nfuture ):
-					prd = self.model(prd)
+					prd = self.model( prd )
 				if cfg().model.loss_fn == 'l2':
-					loss = self.l2loss_sphere( prd, tar)
+					loss = self.l2loss_sphere( prd, tar )
 				elif cfg().model.loss_fn == "spectral l2":
-					loss = self.spectral_l2loss_sphere( prd, tar)
+					loss = self.spectral_l2loss_sphere( prd, tar )
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
@@ -197,18 +197,14 @@ class DualModelTrainer(object):
 		self.scale_factor = cfg().model.scale_factor
 		inp, _ = next(iter(input_dataset))
 		_, tar = next(iter(target_dataset))
+		self.input_grid = inp.shape[-2:]
+		self.output_grid = tar.shape[-2:]
 		self.input_data_iter = iter(input_dataset)
 		self.target_data_iter = iter(target_dataset)
-		if self.task_type == TaskType.Downscale:
-			self.grid_shape = tar.shape[-2:]
-			lmax = inp.shape[-2]
-		else:
-			self.grid_shape = inp.shape[-2:]
-			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
-		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
-		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
-		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+		lmax = math.ceil(self.output_grid[0] / cfg().model.scale_factor)
+		self.gridops = GridOps(*self.output_grid)
+		self.sht = harmonics.RealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+		self.isht = harmonics.InverseRealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None

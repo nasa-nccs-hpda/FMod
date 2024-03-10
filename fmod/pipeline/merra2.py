@@ -99,17 +99,17 @@ class MERRA2Dataset(BaseDataset):
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
         super(MERRA2Dataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
-
         self.train_steps = cfg().task.train_steps
         self.nsteps_input = cfg().task.nsteps_input
         self.input_duration = pd.Timedelta( self.dts*self.nsteps_input, unit="h" )
         self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
-        self.fmbatch: FMBatch = FMBatch(BatchType.Training, **kwargs)
+        self.fmbatch: FMBatch = FMBatch( BatchType.Training, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.current_date = date(1,1,1 )
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
+
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
@@ -121,7 +121,6 @@ class MERRA2Dataset(BaseDataset):
         return self.i % self.n_day_offsets
 
     def __next__(self) -> Tuple[ArrayOrTensor,ArrayOrTensor]:
-
         if self.i < self.length:
             next_date = self.get_date()
             if self.current_date != next_date:
