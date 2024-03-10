@@ -359,10 +359,10 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			raise NotImplementedError(f"Error, normalization {self.normalization_layer} not implemented.")
 
 		if pos_embed == "latlon" or pos_embed == True:
-			self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_chans, self.input_shape[0], self.input_shape[1]))
+			self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_chans, self.in_shape[0], self.in_shape[1]))
 			nn.init.constant_(self.pos_embed, 0.0)
 		elif pos_embed == "lat":
-			self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_chans, self.input_shape[0], 1))
+			self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_chans, self.in_shape[0], 1))
 			nn.init.constant_(self.pos_embed, 0.0)
 		elif pos_embed == "const":
 			self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_chans, 1, 1))
