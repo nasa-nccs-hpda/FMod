@@ -526,9 +526,10 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		lgm().log(f"Forward: x{tuple(x.shape)}, %N={pctnant(x)}")
 		residual = x
 		x = self.encoder(x)
-		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, %N={pctnant(x)}")
+		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, pos_embed{tuple(self.pos_embed)}")
 
 		if self.pos_embed is not None:
+			lgm().log(f"Pos Embed: pos_embed{tuple(self.pos_embed.shape)} + x{tuple(x.shape)},")
 			x = x + self.pos_embed
 
 		x = self.forward_features(x)
@@ -539,7 +540,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 
 		residual = x
 		x = self.decoder(x)
-		lgm().log(f"Decode: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.dfc.weight.shape)}, %N={pctnant(x)}")
+		lgm().log(f"Decode: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.dfc.weight.shape)}")
 
 		return x
 
