@@ -420,8 +420,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			first_layer = i == 0
 			last_layer = i == self.num_layers - 1
 
-			forward_transform = self.itrans_down if first_layer else self.itrans
-			inverse_transform = self.itrans_last if last_layer else self.itrans
+			forward_transform = self.trans_first if first_layer else self.trans
+			inverse_transform = self.itrans_last if last_layer  else self.itrans
 
 			inner_skip = cfg().model.get( 'inner_skip', "none" )
 			outer_skip = cfg().model.get( 'outer_skip', "identity" )
