@@ -410,8 +410,6 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		modes_lon = int( self.embed_shape[1] // 2 * self.hard_thresholding_fraction)
 		modes_lat = modes_lon = min(modes_lat, modes_lon)
 
-		lgm().log(f" -> sht: modes_lat & modes_lon = {modes_lon}, image size = {self.img_size}")
-
 		self.trans_first =  RealSHT(        *self.in_shape,     lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
 		self.itrans_last =  InverseRealSHT( *self.out_shape,    lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
 		self.trans =        RealSHT(        *self.embed_shape,  lmax=modes_lat, mmax=modes_lon, grid="legendre-gauss").float()
