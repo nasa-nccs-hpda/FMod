@@ -160,7 +160,7 @@ class InverseRealSHT(nn.Module):
 
 	def forward(self, x: torch.Tensor):
 		assert (x.shape[-2] == self.lmax), f"x.shape[-2]: {x.shape[-2]} != lmax: {self.lmax}, x.shape= {x.shape}"
-		assert (x.shape[-1] == self.mmax), f"x.shape[-1]: {x.shape[-2]} != mmax: {self.mmax}, x.shape= {x.shape}"
+		assert (x.shape[-1] == self.mmax), f"x.shape[-1]: {x.shape[-1]} != mmax: {self.mmax}, x.shape= {x.shape}"
 
 		# Evaluate associated Legendre functions on the output nodes
 		x = torch.view_as_real(x)
