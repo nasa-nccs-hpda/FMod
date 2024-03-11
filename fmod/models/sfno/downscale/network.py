@@ -206,10 +206,6 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		Type of spectral transformation to use, by default "sht"
 	operator_type : str, optional
 		Type of operator to use ('driscoll-healy', 'diagonal'), by default "driscoll-healy"
-	img_shape : tuple, optional
-		Shape of the input channels, by default (128, 256)
-	scale_factor : int, optional
-		Scale factor to use, by default 3
 	in_chans : int, optional
 		Number of input channels, by default 3
 	out_chans : int, optional
@@ -420,8 +416,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			first_layer = i == 0
 			last_layer = i == self.num_layers - 1
 
-			forward_transform = self.trans_first if first_layer else self.trans
-			inverse_transform = self.itrans_last if last_layer  else self.itrans
+			forward_transform = self.itrans_down if first_layer else self.itrans
+			inverse_transform = self.itrans_last if last_layer else self.itrans
 
 			inner_skip = cfg().model.get( 'inner_skip', "none" )
 			outer_skip = cfg().model.get( 'outer_skip', "identity" )
@@ -501,7 +497,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		lgm().log(f"Forward: x{tuple(x.shape)}, %N={pctnant(x)}")
 		residual = x
 		x = self.encoder(x)
-		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, pos_embed{tuple(self.pos_embed)}")
+		lgm().log( f"Embed: {tuple(residual.shape)} -> {tuple(x.shape)}, W{tuple(self.efc.weight.shape)}, pos_embed{tuple(self.pos_embed.shape)}")
 
 		if self.pos_embed is not None:
 			lgm().log(f"Pos Embed: pos_embed{tuple(self.pos_embed.shape)} + x{tuple(x.shape)},")

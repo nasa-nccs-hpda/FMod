@@ -75,19 +75,19 @@ class RealSHT(nn.Module):
 		return f'nlat={self.nlat}, nlon={self.nlon},\n lmax={self.lmax}, mmax={self.mmax},\n grid={self.grid}, csphase={self.csphase}'
 
 	def forward(self, x: torch.Tensor):
-		print( f" ---->>>> forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
+		lgm().log( f" ---->>>> forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
 		assert (x.shape[-2] == self.nlat), f"x.shape[-2]={x.shape[-2]} != nlat={self.nlat}"
 		assert (x.shape[-1] == self.nlon), f"x.shape[-1]={x.shape[-2]} != nlon={self.nlon}"
 
 		# apply real fft in the longitudinal direction
 		x = 2.0 * torch.pi * torch.fft.rfft(x, dim=-1, norm="forward")
 
-		print(f" ---->>>> X-FFT: shape={x.shape} ")
+		lgm().log(f" ---->>>> X-FFT: shape={x.shape}, lmax={self.lmax}, mmax={self.mmax} ")
 
 		# do the Legendre-Gauss quadrature
 		x = torch.view_as_real(x)
 
-		print(f" ---->>>> X-LGq: shape={x.shape} ")
+		lgm().log(f" ---->>>> X-LGq: shape={x.shape} ")
 
 		# distributed contraction: fork
 		out_shape = list(x.size())
@@ -96,7 +96,7 @@ class RealSHT(nn.Module):
 		xout = torch.zeros(out_shape, dtype=x.dtype, device=x.device)
 
 		# contraction
-		print( f" ....... out_shape={out_shape}, wts_shape={self.weights.shape}, x_shape={x.shape}, mmax={self.mmax}")
+		lgm().log( f" ---->>>> Contract: out_shape={out_shape}, wts_shape={self.weights.shape}, x_shape={x.shape}, mmax={self.mmax}")
 
 		xout[..., 0] = einsum('...km,mlk->...lm', x[..., :self.mmax, 0], self.weights.to(x.dtype))
 		xout[..., 1] = einsum('...km,mlk->...lm', x[..., :self.mmax, 1], self.weights.to(x.dtype))
