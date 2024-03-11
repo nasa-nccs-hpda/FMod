@@ -402,14 +402,14 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		encoder_layers.append(self.efc)
 		self.encoder = nn.Sequential(*encoder_layers)
 
-		modes_lat = int( self.embed_shape[0] * self.hard_thresholding_fraction)
-		modes_lon = int( self.embed_shape[1] // 2 * self.hard_thresholding_fraction)
-		modes_lat = modes_lon = min(modes_lat, modes_lon)
+		# modes_lat = int( self.embed_shape[0] * self.hard_thresholding_fraction)
+		# modes_lon = int( self.embed_shape[1] // 2 * self.hard_thresholding_fraction)
+		# modes_lat = modes_lon = min(modes_lat, modes_lon)
 
-		self.trans_first =  RealSHT(        *self.in_shape,     lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
-		self.itrans_last =  InverseRealSHT( *self.out_shape,    lmax=modes_lat, mmax=modes_lon, grid=self.grid).float()
-		self.trans =        RealSHT(        *self.embed_shape,  lmax=modes_lat, mmax=modes_lon, grid="legendre-gauss").float()
-		self.itrans =       InverseRealSHT( *self.embed_shape,  lmax=modes_lat, mmax=modes_lon, grid="legendre-gauss").float()
+		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
+		self.itrans_last =  InverseRealSHT( *self.out_shape,    grid=self.grid).float()
+		self.trans =        RealSHT(        *self.embed_shape,  grid="legendre-gauss").float()
+		self.itrans =       InverseRealSHT( *self.embed_shape,  grid="legendre-gauss").float()
 
 		self.blocks = nn.ModuleList([])
 		for i in range(self.num_layers):

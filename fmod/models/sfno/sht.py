@@ -87,7 +87,7 @@ class RealSHT(nn.Module):
 		# do the Legendre-Gauss quadrature
 		x = torch.view_as_real(x)
 
-		lgm().log(f" ---->>>> X-LGq: shape={x.shape} ")
+		lgm().log(f" ---->>>> X-LGq: shape={x.shape}, grid={self.grid} ")
 
 		# distributed contraction: fork
 		out_shape = list(x.size())
@@ -101,6 +101,9 @@ class RealSHT(nn.Module):
 		xout[..., 0] = einsum('...km,mlk->...lm', x[..., :self.mmax, 0], self.weights.to(x.dtype))
 		xout[..., 1] = einsum('...km,mlk->...lm', x[..., :self.mmax, 1], self.weights.to(x.dtype))
 		x = torch.view_as_complex(xout)
+
+		#----> >> > Contract: out_shape = [1, 256, 128, 128, 2], wts_shape = torch.Size([128, 128, 120]), x_shape = torch.Size([1, 256, 120, 97, 2]), mmax = 128
+		#   km, mlk->...lm, operand shapes = [torch.Size([1, 256, 120, 97]), torch.Size([128, 128, 120])]
 
 		return x
 
