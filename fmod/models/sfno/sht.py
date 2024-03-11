@@ -77,7 +77,7 @@ class RealSHT(nn.Module):
 	def forward(self, x: torch.Tensor):
 		lgm().log( f" ---->>>> forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
 		assert (x.shape[-2] == self.nlat), f"x.shape[-2]={x.shape[-2]} != nlat={self.nlat}"
-		assert (x.shape[-1] == self.nlon), f"x.shape[-1]={x.shape[-2]} != nlon={self.nlon}"
+		assert (x.shape[-1] == self.nlon), f"x.shape[-1]={x.shape[-1]} != nlon={self.nlon}"
 
 		# apply real fft in the longitudinal direction
 		x = 2.0 * torch.pi * torch.fft.rfft(x, dim=-1, norm="forward")
