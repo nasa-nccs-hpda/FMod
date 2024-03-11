@@ -407,8 +407,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		# modes_lat = modes_lon = min(modes_lat, modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
-		self.itrans_last =  InverseRealSHT( *self.out_shape,    grid=self.grid).float()
-		self.trans =        RealSHT(        *self.out_shape,  grid="legendre-gauss").float()
+		self.itrans_last =  InverseRealSHT( *self.in_shape,    grid=self.grid).float()
+		self.trans =        RealSHT(        *self.in_shape,  grid="legendre-gauss").float()
 		self.itrans =       InverseRealSHT( *self.in_shape,  lmax=self.in_shape[0], grid="legendre-gauss").float()
 
 		self.blocks = nn.ModuleList([])
