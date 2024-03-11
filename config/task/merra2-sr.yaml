@@ -15,7 +15,7 @@ month: 1
 day: 1
 max_steps: 3
 
-nsteps_input: 2
+nsteps_input: 1
 train_steps: [0]
 eval_steps: [0]
 data_timestep: 6
