@@ -1,4 +1,4 @@
-from torch_harmonics import *
+from torch_harmonics import RealSHT, InverseRealSHT
 from fmod.base.util.config import cfg
 from .layers import *
 from functools import partial

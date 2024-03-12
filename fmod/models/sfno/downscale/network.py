@@ -161,12 +161,13 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 	def forward(self, x):
 		lgm().log( f" *** SphericalFourierNeuralOperatorBlock.forward: x{tuple(x.shape)}")
 		x, residual = self.filter(x)
+		lgm().log(f" *** filter: residual{tuple(residual.shape)}, x{tuple(x.shape)}")
 
 		x = self.norm0(x)
 
 		if hasattr(self, "inner_skip"):
 			isr = self.inner_skip(residual)
-			lgm().log(f" *** inner_skip: residual{tuple(residual.shape)}, isr{tuple(isr.shape)}")
+			lgm().log(f" *** inner_skip: residual{tuple(residual.shape)}, isr{tuple(isr.shape)}, x{tuple(x.shape)}")
 			x = x + isr
 
 		if hasattr(self, "act_layer"):
@@ -183,7 +184,7 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 
 		if hasattr(self, "outer_skip"):
 			osr = self.outer_skip(residual)
-			lgm().log(f" *** outer_skip: residual{tuple(residual.shape)}, isr{tuple(osr.shape)}")
+			lgm().log(f" *** outer_skip: residual{tuple(residual.shape)}, isr{tuple(osr.shape)}, x{tuple(x.shape)}")
 			x = x + osr
 
 		lgm().log(f" *** SphericalFourierNeuralOperatorBlock.result: x{tuple(x.shape)}")
