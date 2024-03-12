@@ -160,10 +160,10 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 
 	def forward(self, x):
 		lgm().log( f" *** SphericalFourierNeuralOperatorBlock.forward: x{tuple(x.shape)}")
-		x, residual = self.filter(x)
-		lgm().log(f" *** filter: residual{tuple(residual.shape)}, x{tuple(x.shape)}")
+		x1, residual = self.filter(x)
+		lgm().log(f" *** filter: residual{tuple(residual.shape)}, x{tuple(x.shape)} -> y{tuple(x1.shape)}")
 
-		x = self.norm0(x)
+		x = self.norm0(x1)
 
 		if hasattr(self, "inner_skip"):
 			isr = self.inner_skip(residual)
