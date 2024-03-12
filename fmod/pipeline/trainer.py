@@ -298,7 +298,7 @@ class DualModelTrainer(object):
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
 				if cfg().model.loss_fn == 'l2':
-					loss = self.l2loss_sphere( prd, tar)
+					loss = self.l2loss_sphere( prd, tar )
 				elif cfg().model.loss_fn == "spectral l2":
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:

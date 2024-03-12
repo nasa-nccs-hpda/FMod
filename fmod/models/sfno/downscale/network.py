@@ -263,7 +263,6 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		operator_type="driscoll-healy",
 		in_shape=(128, 256),
 		out_shape=(128, 256),
-		embed_shape=(128, 256),
 		grid="equiangular",
 		in_chans=3,
 		out_chans=3,
@@ -288,9 +287,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		lgm().log(f" -> spectral_transform = {spectral_transform}")
 		lgm().log(f" -> operator_type = {operator_type}")
 		lgm().log(f" -> grid = {grid}")
-		lgm().log(f" -> in_shape = {in_shape}")
-		lgm().log(f" -> out_shape = {out_shape}")
-		lgm().log(f" -> embed_shape = {embed_shape}")
+		lgm().log(f" -> in_shape = {list(in_shape)}")
+		lgm().log(f" -> out_shape = {list(out_shape)}")
 		lgm().log(f" -> out_chans = {out_chans}")
 		lgm().log(f" -> embed_chans = {embed_chans}")
 		lgm().log(f" -> num_layers = {num_layers}")
@@ -311,7 +309,6 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		self.operator_type = operator_type
 		self.in_shape = in_shape
 		self.out_shape = out_shape
-		self.embed_shape = embed_shape    
 		self.grid = grid
 		self.in_chans = in_chans
 		self.out_chans = out_chans
@@ -343,8 +340,8 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 
 		# pick norm layer
 		if self.normalization_layer == "layer_norm":
-			norm_layer0 = partial(nn.LayerNorm, normalized_shape=self.out_shape,   eps=1e-6)
-			norm_layer1 = partial(nn.LayerNorm, normalized_shape=self.embed_shape, eps=1e-6)
+			norm_layer0 = partial(nn.LayerNorm, normalized_shape=self.out_shape, eps=1e-6)
+			norm_layer1 = partial(nn.LayerNorm, normalized_shape=self.in_shape, eps=1e-6)
 		elif self.normalization_layer == "instance_norm":
 			norm_layer0 = partial(nn.InstanceNorm2d, num_features=self.embed_chans, eps=1e-6, affine=True, track_running_stats=False)
 			norm_layer1 = partial(nn.InstanceNorm2d, num_features=self.embed_chans, eps=1e-6, affine=True, track_running_stats=False)
@@ -407,7 +404,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		# modes_lat = modes_lon = min(modes_lat, modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
-		self.itrans_last =  InverseRealSHT( *self.in_shape,    grid=self.grid).float()
+		self.itrans_last =  InverseRealSHT( *self.out_shape,    grid=self.grid).float()
 		self.trans =        RealSHT(        *self.in_shape,  grid="legendre-gauss").float()
 		self.itrans =       InverseRealSHT( *self.in_shape,  lmax=self.in_shape[0], grid="legendre-gauss").float()
 
