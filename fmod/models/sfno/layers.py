@@ -246,12 +246,12 @@ class SpectralConvS2(nn.Module):
 		residual = x
 
 		with amp.autocast(enabled=False):
-			x = self.forward_transform(x)
-			lgm().log(f' >>>>> Forward Spectral Transform: x{tuple(residual.shape)} -> f{tuple(x.shape)}')
+			x1 = self.forward_transform(x)
 			if self.scale_residual:
-				residual = self.inverse_transform(x)
+				residual = self.inverse_transform(x1)
+			lgm().log(f' >>>>> Forward Spectral Transform: x{tuple(x.shape)} -> f{tuple(x1.shape)} with residual{tuple(residual.shape)}')
 
-		x = torch.view_as_real(x)
+		x = torch.view_as_real(x1)
 		t0 = time.time()
 		x = self._contract(x, self.weight)
 		dtc = time.time() - t0

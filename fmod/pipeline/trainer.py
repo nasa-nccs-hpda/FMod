@@ -289,11 +289,11 @@ class DualModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
+			lgm().log(f"\n  ----------- Epoch: {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			acc_loss = 0
 			self.model.train()
-			for inp, tar in iter(self):
+			for iT, (inp, tar) in enumerate(iter(self)):
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
@@ -303,7 +303,7 @@ class DualModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
+				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ", display=True)
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
