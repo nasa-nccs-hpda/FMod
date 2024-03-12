@@ -400,7 +400,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		self.encoder = nn.Sequential(*encoder_layers)
 
 		up_modes_lat = int( self.in_shape[0] )
-		up_modes_lon = int( self.in_shape[1] // 2 )
+		up_modes_lon = int( self.in_shape[1] // 2 + 1 )
 	#	up_modes_lat = up_modes_lon = min(up_modes_lat, up_modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
