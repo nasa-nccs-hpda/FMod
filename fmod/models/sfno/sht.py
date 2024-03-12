@@ -75,9 +75,9 @@ class RealSHT(nn.Module):
 		return f'nlat={self.nlat}, nlon={self.nlon},\n lmax={self.lmax}, mmax={self.mmax},\n grid={self.grid}, csphase={self.csphase}'
 
 	def forward(self, x: torch.Tensor):
-		lgm().log( f" ---->>>> forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
-		assert (x.shape[-2] == self.nlat), f"x.shape[-2]={x.shape[-2]} != nlat={self.nlat}"
-		assert (x.shape[-1] == self.nlon), f"x.shape[-1]={x.shape[-1]} != nlon={self.nlon}"
+		lgm().log( f" ---->>>> RealSHT.forward: shape={x.shape} <--> nlatlon={(self.nlat,self.nlon)}")
+		assert (x.shape[-2] == self.nlat), f"RealSHT: x.shape[-2]={list(x.shape[-2])} != nlat={self.nlat}"
+		assert (x.shape[-1] == self.nlon), f"RealSHT: x.shape[-1]={list(x.shape[-1])} != nlon={self.nlon}"
 
 		# apply real fft in the longitudinal direction
 		x = 2.0 * torch.pi * torch.fft.rfft(x, dim=-1, norm="forward")
@@ -159,8 +159,8 @@ class InverseRealSHT(nn.Module):
 		return f'nlat={self.nlat}, nlon={self.nlon},\n lmax={self.lmax}, mmax={self.mmax},\n grid={self.grid}, csphase={self.csphase}'
 
 	def forward(self, x: torch.Tensor):
-		assert (x.shape[-2] == self.lmax), f"x.shape[-2]: {x.shape[-2]} != lmax: {self.lmax}, x.shape= {x.shape}, nlat={self.nlat}, nlon={self.nlon}"
-		assert (x.shape[-1] == self.mmax), f"x.shape[-1]: {x.shape[-1]} != mmax: {self.mmax}, x.shape= {x.shape}, nlat={self.nlat}, nlon={self.nlon}"
+		assert (x.shape[-2] == self.lmax), f"InverseRealSHT: x.shape[-2]: {x.shape[-2]} != lmax: {self.lmax}, x.shape= {list(x.shape)}, nlat={self.nlat}, nlon={self.nlon}"
+		assert (x.shape[-1] == self.mmax), f"InverseRealSHT: x.shape[-1]: {x.shape[-1]} != mmax: {self.mmax}, x.shape= {list(x.shape)}, nlat={self.nlat}, nlon={self.nlon}"
 
 		# Evaluate associated Legendre functions on the output nodes
 		x = torch.view_as_real(x)
