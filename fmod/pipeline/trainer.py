@@ -335,22 +335,23 @@ class DualModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
-	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
+	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
 		max_step = kwargs.get('max_step',5)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		inputs, predictions, targets = [], [], []
+		inputs, predictions, targets, base = [], [], [], []
 		with torch.inference_mode():
-			for istep, (inp, tar) in enumerate( iter(self) ):
+			for istep, (inp, tar, base) in enumerate( iter(self) ):
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
 				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]')
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
-		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}, target: {targets[0].shape}', display=True )
-		for input1, prediction, target in zip(inputs,predictions,targets):
-			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}')
+				base.append( base.numpy().squeeze() )
+		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}', display=True )
+		for input1, prediction, target, base_input in zip(inputs,predictions,targets,base):
+			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base_input.shape}')
 
-		return inputs, targets, predictions
+		return inputs, targets, predictions, base
