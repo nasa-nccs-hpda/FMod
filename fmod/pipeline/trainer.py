@@ -287,6 +287,10 @@ class DualModelTrainer(object):
 		nepochs = cfg().task.nepochs
 		train_start = time.time()
 		if load_state: self.load_state()
+
+		input_vars: Dict = self.input_dataset.get_input_data(0).data_vars
+		lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
+
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -308,8 +312,7 @@ class DualModelTrainer(object):
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
-				input_vars: Dict = self.input_dataset.get_input_data(iT).data_vars
-				lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
+
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
