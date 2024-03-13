@@ -290,6 +290,8 @@ class DualModelTrainer(object):
 
 		input_vars: Dict = self.input_dataset.get_input_data(0).data_vars
 		lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
+		temperature: xarray.DataArray = input_vars['temperature']
+		lgm().log(f" ** Temperature{temperature.dims}: {list(temperature.shape)}", display=True)
 
 		for epoch in range(nepochs):
 			epoch_start = time.time()
@@ -308,14 +310,14 @@ class DualModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ", display=True)
+
+				current_loss = loss.item() * inp.size(0)
+				acc_loss += current_loss
+
+				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}, current loss: {current_loss}   ----------- ", display=True)
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
-
-
-				acc_loss += loss.item() * inp.size(0)
-				#        print( f"Loss: {loss.item()}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()
