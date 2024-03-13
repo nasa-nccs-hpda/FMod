@@ -308,7 +308,7 @@ class DualModelTrainer(object):
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
-				input_vars: Dict = self.input_dataset.get_input_data().data_vars()
+				input_vars: Dict = self.input_dataset.get_input_data(iT).data_vars()
 				lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
