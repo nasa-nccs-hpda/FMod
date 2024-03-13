@@ -174,13 +174,13 @@ class ModelTrainer(object):
 			for istep, (inp, tar) in enumerate(self.data_iter):
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
-				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]', display=True)
+				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]')
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}, target: {targets[0].shape}', display=True )
 		for input1, prediction, target in zip(inputs,predictions,targets):
-			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}', display=True)
+			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}')
 
 		return inputs, targets, predictions
 
@@ -303,10 +303,10 @@ class DualModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ")
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
+				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ", display=True)
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
@@ -322,12 +322,12 @@ class DualModelTrainer(object):
 
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-
-			lgm().log(f'Epoch {epoch}: time={epoch_time:.3f}s, loss={acc_loss:.3f}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 
-		lgm().log(f' --DONE--   Training took {train_time / 60:.2f} min.', display=True)
+		print(f'--------------------------------------------------------------------------------')
+		print(f'done. Training took {train_time / 60:.2f} min.')
 		if save_state: self.save_state()
 		return acc_loss
 
@@ -341,12 +341,12 @@ class DualModelTrainer(object):
 			for istep, (inp, tar) in enumerate( iter(self) ):
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
-				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]', display=True)
+				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]')
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}, target: {targets[0].shape}', display=True )
 		for input1, prediction, target in zip(inputs,predictions,targets):
-			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}', display=True)
+			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}')
 
 		return inputs, targets, predictions
