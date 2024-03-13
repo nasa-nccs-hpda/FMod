@@ -120,7 +120,7 @@ class MERRA2Dataset(BaseDataset):
     def get_day_offset(self):
         return self.i % self.n_day_offsets
 
-    def __next__(self) -> Tuple[ArrayOrTensor,ArrayOrTensor]:
+    def __next__(self) -> Tuple[ArrayOrTensor,ArrayOrTensor,ArrayOrTensor]:
         if self.i < self.length:
             next_date = self.get_date()
             if self.current_date != next_date:
@@ -129,7 +129,7 @@ class MERRA2Dataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={cfg().task.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            inputs_targets: Tuple[ArrayOrTensor,ArrayOrTensor] = self.extract_inputs_targets(train_data, **cfg().task )
+            inputs_targets: Tuple[ArrayOrTensor,ArrayOrTensor,ArrayOrTensor] = self.extract_inputs_targets(train_data, **cfg().task )
             self.i = self.i + 1
             return inputs_targets
         else:
@@ -184,7 +184,7 @@ class MERRA2Dataset(BaseDataset):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-                                      levels: Tuple[int, ...], **kwargs) -> Tuple[ArrayOrTensor,ArrayOrTensor]:
+                                      levels: Tuple[int, ...], **kwargs) -> Tuple[ArrayOrTensor,ArrayOrTensor,ArrayOrTensor]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
@@ -212,6 +212,9 @@ class MERRA2Dataset(BaseDataset):
         input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
         lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, channels={input_array.attrs['channels']}")
 
+        base_input_array: xa.DataArray = ds2array( self.normalize(selected_inputs.isel(time=-1)) )
+        lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
+
         lgm().debug(f" >> >> target variables: {target_variables}")
         target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
         lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
@@ -220,9 +223,9 @@ class MERRA2Dataset(BaseDataset):
         self.chanIds['target'] = target_array.attrs['channels']
 
         if cfg().task.device == "gpu":
-            return array2tensor(input_array), array2tensor(target_array)
+            return array2tensor(input_array), array2tensor(target_array), base_input_array
         else:
-            return input_array, target_array
+            return input_array, target_array, base_input_array
 
 
 class MERRA2NCDatapipe(Datapipe):

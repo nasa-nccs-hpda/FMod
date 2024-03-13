@@ -196,8 +196,8 @@ class DualModelTrainer(object):
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.scale_factor = cfg().model.scale_factor
-		inp, _ = next(iter(input_dataset))
-		_, tar = next(iter(target_dataset))
+		inp, _, _ = next(iter(input_dataset))
+		_, tar, _ = next(iter(target_dataset))
 		self.input_grid = inp.shape[-2:]
 		self.output_grid = tar.shape[-2:]
 		self.input_data_iter = iter(input_dataset)
@@ -215,10 +215,10 @@ class DualModelTrainer(object):
 		self.target_data_iter = iter(self.target_dataset)
 		return self
 
-	def __next__(self) -> Tuple[Tensor, Tensor]:
-		inp, _ = next(self.input_data_iter)
-		_, tar = next(self.target_data_iter)
-		return inp, tar
+	def __next__(self) -> Tuple[Tensor, Tensor,xarray.Dataset]:
+		inp, _, base = next(self.input_data_iter)
+		_, tar, _ = next(self.target_data_iter)
+		return inp, tar, base
 
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
@@ -288,11 +288,6 @@ class DualModelTrainer(object):
 		train_start = time.time()
 		if load_state: self.load_state()
 
-		input_vars: Dict = self.input_dataset.get_input_data(0).data_vars
-		lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
-		temperature: xarray.DataArray = input_vars['temperature']
-		lgm().log(f" ** Temperature{temperature.dims}: {list(temperature.shape)}", display=True)
-
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -300,7 +295,7 @@ class DualModelTrainer(object):
 
 			acc_loss = 0
 			self.model.train()
-			for iT, (inp, tar) in enumerate(iter(self)):
+			for iT, (inp, tar, base) in enumerate(iter(self)):
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
@@ -315,6 +310,7 @@ class DualModelTrainer(object):
 				acc_loss += current_loss
 
 				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}, current loss: {current_loss}   ----------- ", display=True)
+				lgm().log(f" ** Base Input: {base.dims}: {list(base.shape)}", display=True)
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
