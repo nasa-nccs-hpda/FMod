@@ -28,7 +28,7 @@ class Downscaler(object):
 	def process( self, variable: xa.DataArray, target: xa.DataArray, ) -> Dict[str,xa.DataArray]:    # qtype: QType=QType.Intensive
 		t0 = time.time()
 		if self.model == "interp":
-			result = self._interpolate( variable, target )
+			result = self.interpolate( variable, target )
 		elif self.model == "sfno":
 			result = self._sfno( variable, target )
 		else:
@@ -43,7 +43,7 @@ class Downscaler(object):
 		print( f"Downscaling({self.model}:{self.method}): cumulative error = {emag(error):.3f}, time = {(time.time()-t0):.3f} sec")
 		return dict( downscale=result, target=target, error=error)
 
-	def _interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
+	def interpolate(self, variable: xa.DataArray, target: xa.DataArray ) -> xa.DataArray:
 		varray, nn = variable, np.count_nonzero(np.isnan(variable.values))
 		coords =  { self.c[cn]: target.coords[ self.c[cn] ] for cn in ['x','y']  }
 		varray = varray.interp( coords, self.method, True, self.kargs )

@@ -303,10 +303,10 @@ class DualModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
+				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ")
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
@@ -323,18 +323,11 @@ class DualModelTrainer(object):
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
 
-			# print(f'--------------------------------------------------------------------------------')
-			# print(f'Epoch {epoch} summary:')
-			# print(f'time taken: {epoch_time}')
-			# print(f'accumulated training loss: {acc_loss}')
-			# print(f'--------------------------------------------------------------------------------')
-
-			print(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}')
+			lgm().log(f'Epoch {epoch}: time={epoch_time:.3f}s, loss={acc_loss:.3f}', display=True)
 
 		train_time = time.time() - train_start
 
-		print(f'--------------------------------------------------------------------------------')
-		print(f'done. Training took {train_time / 60:.2f} min.')
+		lgm().log(f' --DONE--   Training took {train_time / 60:.2f} min.', display=True)
 		if save_state: self.save_state()
 		return acc_loss
 
