@@ -113,6 +113,9 @@ class FMBatch:
 	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
 		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
 
+	def get_time_slice(self,  day_offset: int) -> xa.Dataset:
+		return self.current_batch.isel( time=day_offset )
+
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
 		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")

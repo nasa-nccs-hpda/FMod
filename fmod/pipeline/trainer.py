@@ -1,4 +1,5 @@
 import torch, math
+import xarray
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.base.util.config import configure, cfg, cfg_date
@@ -304,9 +305,11 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}   ----------- ", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
+				input_vars: Dict = self.input_dataset.get_input_data().data_vars()
+				lgm().log(f" ** Input Vars: {list(input_vars.keys())}", display=True)
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")

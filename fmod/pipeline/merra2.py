@@ -135,6 +135,9 @@ class MERRA2Dataset(BaseDataset):
         else:
             raise StopIteration
 
+    def get_input_data(self, day_offset: int) -> xa.Dataset:
+        return self.fmbatch.get_time_slice( day_offset )
+
     def __iter__(self):
         self.i = 0
         return self
