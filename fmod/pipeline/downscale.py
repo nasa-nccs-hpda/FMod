@@ -3,7 +3,6 @@ import numpy as np
 from fmod.base.util.config import cfg
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal, Hashable
 import glob, sys, os, time, traceback
-from fmod.pipeline.rescale import QType
 from fmod.models.sfno.downscale.transform import SHTransform
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 
