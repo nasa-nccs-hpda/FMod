@@ -68,7 +68,7 @@ class ResultsPlotter:
 		self.predictions: List[xa.DataArray] = predictions
 		self.interpolates: List[xa.DataArray] = interpolates
 		self.nsteps = len(targets)
-		self.chanids: List[str] = kwargs.get('chanids',[])
+		self.chanids: List[str] = kwargs.pop('chanids',[])
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.create_figure(**kwargs)
