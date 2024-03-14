@@ -205,6 +205,7 @@ class MERRA2Dataset(BaseDataset):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
         input_varlist: List[str] = list(input_variables)+list(forcing_variables)
         selected_inputs: xa.Dataset = inputs[input_varlist]
+        base_inputs: xa.Dataset = inputs[list(target_variables)]
 
         lgm().debug(f" >> >> {len(inputs.data_vars.keys())} model variables: {input_varlist}")
         lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
@@ -212,7 +213,7 @@ class MERRA2Dataset(BaseDataset):
         input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
         lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, channels={input_array.attrs['channels']}")
 
-        base_input_array: xa.DataArray = ds2array( self.normalize(selected_inputs.isel(time=-1)) )
+        base_input_array: xa.DataArray = ds2array( self.normalize(base_inputs.isel(time=-1)) )
         lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
 
         lgm().debug(f" >> >> target variables: {target_variables}")
