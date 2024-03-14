@@ -60,13 +60,15 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 class ResultsPlotter:
 	tensor_roles = ["target", "prediction"]
 
-	def __init__(self, dataset: BaseDataset, targets: List[np.ndarray], prediction: List[np.ndarray], **kwargs ):
+	def __init__(self, inputs: List[xa.DataArray], targets: List[xa.DataArray], predictions: List[xa.DataArray], interpolates: List[xa.DataArray], **kwargs ):
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
 		(self.fig, self.axs) = (None,None)
-		self.plot_data: Tuple[List[np.ndarray],List[np.ndarray]] = ( targets, prediction )
+		self.inputs: List[xa.DataArray] = inputs
+		self.targets: List[xa.DataArray] = targets
+		self.predictions: List[xa.DataArray] = predictions
+		self.interpolates: List[xa.DataArray] = interpolates
 		self.nsteps = len(targets)
-		self.dataset: BaseDataset = dataset
-		self.chanids: List[str] = self.dataset.chanIds['target']
+		self.chanids: List[str] = kwargs.get('chanids',[])
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.create_figure(**kwargs)
@@ -84,7 +86,7 @@ class ResultsPlotter:
 		figsize = kwargs.pop('figsize',(12, 5))
 		with plt.ioff():
 			with plt.ioff():
-				self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
+				self.fig, self.axs = plt.subplots(nrows=1, ncols=3, sharex=True, sharey=True, figsize=figsize, layout="tight", **kwargs)
 		for ax in self.axs.flat:
 			ax.set_aspect(0.5)
 			ax.set_axis_off()
@@ -94,13 +96,12 @@ class ResultsPlotter:
 	def plot(self, **kwargs):
 		cmap = kwargs.pop('cmap', 'jet')
 		origin = kwargs.pop('origin', 'lower' )
-		lgm().log(f"PLOT {len(self.plot_data)} images:", display=True )
-		for ip, pdata in enumerate(self.plot_data):
+		for ip, image_arrays in enumerate( [ self.targets, self.predictions, self.interpolates ] ):
 			ax = self.axs[ip]
 			ax.set_title(f"{self.tensor_roles[ip]}")
-			image_data: np.ndarray = self.image_data( ip, pdata[self.istep] )
+			image_data: np.ndarray = self.image_data( ip, image_arrays[self.istep].values )
 			plot_args = dict( cmap=cmap, origin=origin, vmin=self.vrange[0], vmax=self.vrange[1], **kwargs )
-			lgm().log(f" ** image{ip}: shape={image_data.shape}: args={plot_args}, pctnan={pctnan(image_data)}",display=True)
+			lgm().log(f" ** image{ip}: shape={image_data.shape}: args={plot_args}",display=True)
 			self.ims[ip] = ax.imshow( image_data, **plot_args)
 		return ipw.VBox( [self.fig.canvas, self.cslider, self.sslider] )
 
