@@ -338,27 +338,25 @@ class DualModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
-	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
+	def inference(self, **kwargs ) -> Tuple[ List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray] ]:
 		seed = kwargs.get('seed',0)
 		max_step = kwargs.get('max_step',5)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		inputs, predictions, targets = [], [], []
-		bases: List[np.ndarray] = []
+		bases: List[xarray.DataArray] = []
 		with torch.inference_mode():
 			for istep, (xinp, xtar, xbase) in enumerate( iter(self) ):
-				inp = array2tensor(xinp)
-				tar = array2tensor(xtar)
 				if istep == max_step: break
-				lgm().log(f' * STEP {istep}, in({type(xinp)}): {list(xinp.shape)}, tar({type(xtar)}): {list(xtar.shape)}, base({type(xbase)}): {list(xbase.shape)}', display=True )
-				out: Tensor = self.model(inp)
-				lgm().log(f'->> in: %NaN={pctnant(inp)}], out: %NaN={pctnant(out)}')
-				predictions.append( npa(out) )
-				targets.append( npa(tar) )
-				inputs.append( npa(inp) )
-				bases.append( xbase.values )
+				out: Tensor = self.model( array2tensor(xinp) )
+				prediction: xarray.DataArray = xtar.copy( data=npa(out) )
+				predictions.append( prediction )
+				lgm().log(f' * STEP {istep}, in({type(xinp)}): {list(xinp.shape)}, prediction({type(prediction)}): {list(prediction.shape)}, tar({type(xtar)}): {list(xtar.shape)}, base({type(xbase)}): {list(xbase.shape)}', display=True )
+				targets.append( xtar )
+				inputs.append( xinp )
+				bases.append( xbase )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}', display=True )
-		for input1, prediction, target, base_input in zip(inputs,predictions,targets,xbase):
-			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base_input.shape}')
+		for input1, prediction, target, base in zip(inputs,predictions,targets,bases):
+			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base.shape}')
 
 		return inputs, targets, predictions, bases
