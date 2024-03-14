@@ -340,7 +340,8 @@ class DualModelTrainer(object):
 		max_step = kwargs.get('max_step',5)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		inputs, predictions, targets, bases = [], [], [], []
+		inputs, predictions, targets = [], [], []
+		bases: List[np.ndarray] = []
 		with torch.inference_mode():
 			for istep, (inp, tar, base) in enumerate( iter(self) ):
 				if istep == max_step: break
@@ -349,7 +350,7 @@ class DualModelTrainer(object):
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
-				bases.append( base.numpy().squeeze() )
+				bases.append( base.values )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}', display=True )
 		for input1, prediction, target, base_input in zip(inputs,predictions,targets,base):
 			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base_input.shape}')
