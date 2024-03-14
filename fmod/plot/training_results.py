@@ -58,7 +58,7 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 	return fig.canvas
 
 class ResultsPlotter:
-	tensor_roles = ["target", "prediction"]
+	tensor_roles = [ "target", "prediction", "interpolated" ]
 
 	def __init__(self, inputs: List[xa.DataArray], targets: List[xa.DataArray], predictions: List[xa.DataArray], interpolates: List[xa.DataArray], **kwargs ):
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
