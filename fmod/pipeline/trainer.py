@@ -347,7 +347,7 @@ class DualModelTrainer(object):
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
 				lgm().log(f' * STEP {istep}, in({type(inp)}): {list(inp.shape)}, out({type(out)}): {list(out.shape)}, base({type(base)}): {list(base.shape)}', display=True )
-				lgm().log(f'->> in: %NaN={pctnant(inp)}], out: %NaN={pctnant(out)}, base: %NaN={pctnant(base)}')
+				lgm().log(f'->> in: %NaN={pctnant(inp)}], out: %NaN={pctnant(out)}')
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
