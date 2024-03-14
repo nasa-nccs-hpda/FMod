@@ -10,6 +10,7 @@ from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import nnan, pctnan, pctnant
+from fmod.pipeline.merra2 import array2tensor
 from enum import Enum
 import numpy as np
 import torch.nn as nn
@@ -215,7 +216,7 @@ class DualModelTrainer(object):
 		self.target_data_iter = iter(self.target_dataset)
 		return self
 
-	def __next__(self) -> Tuple[Tensor, Tensor,xarray.Dataset]:
+	def __next__(self) -> Tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
 		inp, _, base = next(self.input_data_iter)
 		_, tar, _ = next(self.target_data_iter)
 		return inp, tar, base
@@ -295,7 +296,9 @@ class DualModelTrainer(object):
 
 			acc_loss = 0
 			self.model.train()
-			for iT, (inp, tar, base) in enumerate(iter(self)):
+			for iT, (xinp, xtar, xbase) in enumerate(iter(self)):
+				inp = array2tensor(xinp)
+				tar = array2tensor(xtar)
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
@@ -310,7 +313,7 @@ class DualModelTrainer(object):
 				acc_loss += current_loss
 
 				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}, current loss: {current_loss}   ----------- ", display=True)
-				lgm().log(f" ** Base Input: {base.dims}: {list(base.shape)}", display=True)
+				lgm().log(f" ** Base Input: {xbase.dims}: {list(xbase.shape)}", display=True)
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
@@ -343,17 +346,19 @@ class DualModelTrainer(object):
 		inputs, predictions, targets = [], [], []
 		bases: List[np.ndarray] = []
 		with torch.inference_mode():
-			for istep, (inp, tar, base) in enumerate( iter(self) ):
+			for istep, (xinp, xtar, xbase) in enumerate( iter(self) ):
+				inp = array2tensor(xinp)
+				tar = array2tensor(xtar)
 				if istep == max_step: break
+				lgm().log(f' * STEP {istep}, in({type(xinp)}): {list(xinp.shape)}, tar({type(xtar)}): {list(xtar.shape)}, base({type(xbase)}): {list(xbase.shape)}', display=True )
 				out: Tensor = self.model(inp)
-				lgm().log(f' * STEP {istep}, in({type(inp)}): {list(inp.shape)}, out({type(out)}): {list(out.shape)}, base({type(base)}): {list(base.shape)}', display=True )
 				lgm().log(f'->> in: %NaN={pctnant(inp)}], out: %NaN={pctnant(out)}')
 				predictions.append( npa(out) )
 				targets.append( npa(tar) )
 				inputs.append( npa(inp) )
-				bases.append( base.values )
+				bases.append( xbase.values )
 		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}', display=True )
-		for input1, prediction, target, base_input in zip(inputs,predictions,targets,base):
+		for input1, prediction, target, base_input in zip(inputs,predictions,targets,xbase):
 			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base_input.shape}')
 
 		return inputs, targets, predictions, bases
