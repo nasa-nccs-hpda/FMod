@@ -3,7 +3,7 @@ import xarray
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.base.util.config import configure, cfg, cfg_date
-from torch.utils.data import DataLoader
+from fmod.pipeline.downscale import Downscaler
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
@@ -210,6 +210,7 @@ class DualModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+		self.downscaler = Downscaler()
 
 	def __iter__(self):
 		self.input_data_iter = iter(self.input_dataset)
@@ -297,24 +298,20 @@ class DualModelTrainer(object):
 			for iT, (xinp, xtar, xbase) in enumerate(iter(self)):
 				inp = array2tensor(xinp)
 				tar = array2tensor(xtar)
-				base = array2tensor(xbase)
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( prd, tar )
-					base_loss = self.l2loss_sphere(base, tar)
 				elif cfg().model.loss_fn == "spectral l2":
 					loss = self.spectral_l2loss_sphere( prd, tar)
-					base_loss = self.spectral_l2loss_sphere(base, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 
 				current_loss = loss.item() * inp.size(0)
 				acc_loss += current_loss
-				acc_base_loss += base_loss
 
-				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss}, base loss: {base_loss}", display=True)
+				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss}", display=True)
 				lgm().log(f" ** Base Input: {xbase.dims}: {list(xbase.shape)}")
 				lgm().debug(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().debug(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
@@ -330,9 +327,8 @@ class DualModelTrainer(object):
 				self.scheduler.step()
 
 			acc_loss = acc_loss / len(self.input_dataset)
-			acc_base_loss = acc_base_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-			lgm().log(f' ---------- Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}, base_loss: {acc_base_loss:.2f}', display=True)
+			lgm().log(f' ---------- Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 
@@ -343,23 +339,37 @@ class DualModelTrainer(object):
 
 	def inference(self, **kwargs ) -> Tuple[ List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray] ]:
 		seed = kwargs.get('seed',0)
-		max_step = kwargs.get('max_step',5)
+		max_step = kwargs.get( 'max_step', -1)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		inputs, predictions, targets = [], [], []
-		bases: List[xarray.DataArray] = []
+		interpolates: List[xarray.DataArray] = []
+		acc_loss, acc_interp_loss = 0, 0
 		with torch.inference_mode():
 			for istep, (xinp, xtar, xbase) in enumerate( iter(self) ):
 				if istep == max_step: break
 				out: Tensor = self.model( array2tensor(xinp) )
+				tar: Tensor = array2tensor(xtar)
 				prediction: xarray.DataArray = xtar.copy( data=npa(out) )
 				predictions.append( prediction )
-				lgm().log(f' * STEP {istep}, in({type(xinp)}): {list(xinp.shape)}, prediction({type(prediction)}): {list(prediction.shape)}, tar({type(xtar)}): {list(xtar.shape)}, base({type(xbase)}): {list(xbase.shape)}', display=True )
 				targets.append( xtar )
 				inputs.append( xinp )
-				bases.append( xbase )
-		lgm().log(f' * INFERENCE complete, #predictions={len(predictions)}', display=True )
-		for input1, prediction, target, base in zip(inputs,predictions,targets,bases):
-			lgm().log(f' ---> *** input: {input1.shape} *** prediction: {prediction.shape} *** target: {target.shape} *** base: {base.shape}')
+				interpolate: xarray.DataArray = self.downscaler.interpolate(xbase, xtar)
+				interpolates.append( interpolate )
+				if cfg().model.loss_fn == 'l2':
+					loss = self.l2loss_sphere( out, tar )
+					interp_loss = self.l2loss_sphere( array2tensor(interpolate), tar )
+				elif cfg().model.loss_fn == "spectral l2":
+					loss = self.spectral_l2loss_sphere( out, tar )
+					interp_loss = self.spectral_l2loss_sphere( array2tensor(interpolate), tar )
+				else:
+					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
+				lgm().log(f' * STEP {istep}: in{list(xinp.shape)}, prediction{list(prediction.shape)}, tar{list(xtar.shape)}, inter{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
+				acc_interp_loss += interp_loss
+				acc_loss += loss
 
-		return inputs, targets, predictions, bases
+		acc_loss = acc_loss / len(self.input_dataset)
+		acc_interp_loss = acc_interp_loss / len(self.input_dataset)
+		lgm().log(f" ** Accumulated Loss: {acc_loss}, Accum Interp Loss: {acc_interp_loss}")
+
+		return inputs, targets, predictions, interpolates
