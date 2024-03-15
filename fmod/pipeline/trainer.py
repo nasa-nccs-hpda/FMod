@@ -28,6 +28,13 @@ def log_stats( name: str, data: xarray.DataArray, dims: List[str], display: bool
 	lgm().log(f' * {name} mean: {smean(data, dims)}', display=display)
 	lgm().log(f' * {name} std:  { sstd(data, dims)}', display=display)
 
+def stats_comp( data1: xarray.DataArray, data2: xarray.DataArray, dims: List[str], display: bool = True ):
+	means1: List[float] = data1.mean(dim=dims).values.tolist()
+	means2: List[float] = data2.mean(dim=dims).values.tolist()
+	stds1: List[float] = data1.std(dim=dims).values.tolist()
+	stds2: List[float] = data2.std(dim=dims).values.tolist()
+	for iC, (m1, m2, s1, s2) in enumerate(zip(means1, means2, stds1, stds2)):
+		lgm().log( f" *C-{iC}:  mean[ {m1:.2f}, {m2:.2f} ]  ---  std[ {s1:.2f}, {s2:.2f} ]", display=display )
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
@@ -373,8 +380,7 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
-				log_stats('INTERP', interpolate,["lat", "lon"], display=True )
-				log_stats('TARGET', xtar,       ["lat", "lon"], display=True )
+				if istep == 0: stats_comp( xtar, interpolate,["lat", "lon"], display=True )
 
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
