@@ -360,12 +360,15 @@ class DualModelTrainer(object):
 					interp_loss = self.spectral_l2loss_sphere( array2tensor(interpolate), tar )
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f' * STEP {istep}: in{list(xinp.shape)}, prediction{list(prediction.shape)}, tar{list(xtar.shape)}, inter{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
+				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
+				lgm().log(f' * INTERP mean: {interpolate.mean(dim=["x", "y"]).values.tolist():.2f} ')
+				lgm().log(f' * INTERP  std: { interpolate.std(dim=["x", "y"]).values.tolist():.2f} ')
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
 
 		acc_loss = acc_loss / len(self.input_dataset)
 		acc_interp_loss = acc_interp_loss / len(self.input_dataset)
-		lgm().log(f" ** Accumulated Loss: {acc_loss}, Accum Interp Loss: {acc_interp_loss}")
+		lgm().log(f" ** Accumulated Loss: {acc_loss}, Accum Interp Loss: {acc_interp_loss}", display=True)
+
 
 		return inputs, targets, predictions, interpolates
