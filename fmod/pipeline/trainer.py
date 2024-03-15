@@ -33,15 +33,17 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 	return np.sqrt( sdiff.mean(dim=dims) )
 
 
-def stats_comp( result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], display: bool = True ):
+def stats_comp( result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], **kwargs ):
 	means1: List[float] = result1.mean(dim=dims).values.tolist()
 	means2: List[float] = result2.mean(dim=dims).values.tolist()
 	stds1: List[float] = result1.std(dim=dims).values.tolist()
 	stds2: List[float] = result2.std(dim=dims).values.tolist()
 	loss1 = mse(result1,target,dims).values.tolist()
 	loss2 = mse(result2,target,dims).values.tolist()
+	cids: List[str] = kwargs.get('cids',[])
 	for iC, (m1, m2, s1, s2, l1, l2) in enumerate(zip(means1, means2, stds1, stds2, loss1, loss2)):
-		lgm().log( f" *C-{iC}:  mean[ {m1:.4f}, {m2:.4f} ]  ---  std[ {s1:.3f}, {s2:.3f} ] ---  loss[ {l1:.3f}, {l2:.3f} ]", display=display )
+		cid = cids[iC] if len(cids) else f"C-{iC}"
+		lgm().log( f" *{cid:<25}:  mean[ {m1:8.4f}, {m2:8.4f} ]  ---  std[ {s1:7.3f}, {s2:7.3f} ] ---  loss[ {l1:7.3f}, {l2:7.3f} ]", display=kwargs.get('display',False) )
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
@@ -220,6 +222,7 @@ class DualModelTrainer(object):
 	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset ):
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
+		self.chanids = input_dataset.channel_ids
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.scale_factor = cfg().model.scale_factor
@@ -387,7 +390,9 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
-				if istep == 0: stats_comp( prediction, interpolate, xtar, ["lat", "lon"], display=True )
+				if istep == 0:
+					lgm().log( f"\n----  STATS COMP:  prediction <-> interpolation  ---- ", display=True )
+					stats_comp( prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
 
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
