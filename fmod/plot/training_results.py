@@ -123,8 +123,8 @@ class ResultsPlotter:
 
 	@exception_handled
 	def refresh(self):
-		for ip, pdata in enumerate(self.plot_data):
-			self.ims[ip].set_data( self.image_data( ip, pdata[self.istep] ) )
+		for ip, image_arrays in enumerate( [ self.targets, self.predictions, self.interpolates ] ):
+			self.ims[ip].set_data( self.image_data( ip, image_arrays[self.istep].values ) )
 		self.format_plot()
 		self.fig.canvas.draw_idle()
 
