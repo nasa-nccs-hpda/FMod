@@ -361,8 +361,10 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
-				lgm().log(f' * INTERP mean: {interpolate.mean(dim=["x", "y"]).values.tolist():.2f} ')
-				lgm().log(f' * INTERP  std: { interpolate.std(dim=["x", "y"]).values.tolist():.2f} ')
+				lgm().log(f' * INTERP mean: {interpolate.mean(dim=["lat", "lon"]).values.tolist():.2f} ')
+				lgm().log(f' * INTERP  std: { interpolate.std(dim=["lat", "lon"]).values.tolist():.2f} ')
+				lgm().log(f' * TARGET mean: {xtar.mean(dim=["lat", "lon"]).values.tolist():.2f} ')
+				lgm().log(f' * TARGET  std: { xtar.std(dim=["lat", "lon"]).values.tolist():.2f} ')
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
 
