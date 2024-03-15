@@ -308,15 +308,10 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 
-				current_loss = loss.item() * inp.size(0)
+				current_loss = loss.item()
 				acc_loss += current_loss
 
-				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss}", display=True)
-				lgm().log(f" ** Base Input: {xbase.dims}: {list(xbase.shape)}")
-				lgm().debug(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
-				lgm().debug(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
-				lgm().debug(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
-
+				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss} -> prd{list(prd.shape)} - tar{list(tar.shape)}", display=True )
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()
 				loss.backward()
@@ -328,7 +323,7 @@ class DualModelTrainer(object):
 
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-			lgm().log(f' ---------- Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
+			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 
