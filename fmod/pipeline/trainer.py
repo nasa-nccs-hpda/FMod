@@ -301,6 +301,7 @@ class DualModelTrainer(object):
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
+				prd = prd.squeeze()
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( prd, tar )
 				elif cfg().model.loss_fn == "spectral l2":
@@ -311,7 +312,7 @@ class DualModelTrainer(object):
 				current_loss = loss.item()
 				acc_loss += current_loss
 
-				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss} -> prd{list(prd.shape)} - tar{list(tar.shape)}", display=True )
+				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss:.2f} -> prd{list(prd.shape)} - tar{list(tar.shape)}", display=True )
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()
 				loss.backward()
@@ -360,8 +361,8 @@ class DualModelTrainer(object):
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 				lgm().log(f' * STEP {istep}: in{list(xinp.shape)}, prediction{list(prediction.shape)}, tar{list(xtar.shape)}, inter{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
-				acc_interp_loss += interp_loss
-				acc_loss += loss
+				acc_interp_loss += interp_loss.item()
+				acc_loss += loss.item()
 
 		acc_loss = acc_loss / len(self.input_dataset)
 		acc_interp_loss = acc_interp_loss / len(self.input_dataset)
