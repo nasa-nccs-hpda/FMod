@@ -292,31 +292,33 @@ class DualModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"\n  ----------- Epoch: {epoch + 1}/{nepochs}   ----------- ", display=True )
-
-			acc_loss = 0
+			acc_loss, acc_base_loss = 0, 0
 			self.model.train()
 			for iT, (xinp, xtar, xbase) in enumerate(iter(self)):
 				inp = array2tensor(xinp)
 				tar = array2tensor(xtar)
+				base = array2tensor(xbase)
 				prd = self.model(inp)
 				for _ in range( cfg().model.nfuture ):
 					prd = self.model(prd)
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( prd, tar )
+					base_loss = self.l2loss_sphere(base, tar)
 				elif cfg().model.loss_fn == "spectral l2":
 					loss = self.spectral_l2loss_sphere( prd, tar)
+					base_loss = self.spectral_l2loss_sphere(base, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 
 				current_loss = loss.item() * inp.size(0)
 				acc_loss += current_loss
+				acc_base_loss += base_loss
 
-				lgm().log(f"\n  ----------- E{epoch + 1} Time Index: {iT}, current loss: {current_loss}   ----------- ", display=True)
-				lgm().log(f" ** Base Input: {xbase.dims}: {list(xbase.shape)}", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
+				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss}, base loss: {base_loss}", display=True)
+				lgm().log(f" ** Base Input: {xbase.dims}: {list(xbase.shape)}")
+				lgm().debug(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
+				lgm().debug(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
+				lgm().debug(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()
@@ -328,8 +330,9 @@ class DualModelTrainer(object):
 				self.scheduler.step()
 
 			acc_loss = acc_loss / len(self.input_dataset)
+			acc_base_loss = acc_base_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
+			lgm().log(f' ---------- Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}, base_loss: {acc_base_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 
