@@ -34,7 +34,7 @@ def stats_comp( data1: xarray.DataArray, data2: xarray.DataArray, dims: List[str
 	stds1: List[float] = data1.std(dim=dims).values.tolist()
 	stds2: List[float] = data2.std(dim=dims).values.tolist()
 	for iC, (m1, m2, s1, s2) in enumerate(zip(means1, means2, stds1, stds2)):
-		lgm().log( f" *C-{iC}:  mean[ {m1:.2f}, {m2:.2f} ]  ---  std[ {s1:.2f}, {s2:.2f} ]", display=display )
+		lgm().log( f" *C-{iC}:  mean[ {m1:.4f}, {m2:.4f} ]  ---  std[ {s1:.3f}, {s2:.3f} ]", display=display )
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
