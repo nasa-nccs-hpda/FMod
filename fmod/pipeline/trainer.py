@@ -359,36 +359,30 @@ class DualModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
-	def l2s_error(self, prd, tar ):
+	def l2s_error(self, prd, tar ) -> torch.Tensor:
 		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True)
-		print( f"l2s_error: s1={loss.shape}")
-		loss = loss.sum(dim=-1)
-		print(f"l2s_error: s2={loss.shape}")
 		loss = torch.sqrt(loss)
-		loss = loss.mean()
-		print(f"l2s_error: s3={loss.shape}")
 		return loss
 
-	def spectral_l2s_error(self, prd, tar):
+	def spectral_l2s_error(self, prd, tar) -> torch.Tensor:
 		coeffs = torch.view_as_real(self.sht(prd - tar))
 		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
 		norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
 		loss = torch.sum(norm2, dim=(-1, -2))
 		loss = torch.sqrt(loss)
-		loss = loss.mean()
 		return loss
 
-
-
-	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]):
-
+	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]) -> np.ndarray:
 		if etype == "mse":
 			sdiff: xarray.DataArray = (target - data) ** 2
-			return np.sqrt(sdiff.mean(dim=dims))
+			return np.sqrt( sdiff.mean(dim=dims).values )
 		elif etype == 'l2':
-			return self.l2s_error( self.tensor(data), self.tensor(target) )
+			error = self.l2s_error( self.tensor(data), self.tensor(target) )
+			print( f"{etype} error: {list(error.shape)}, mean={error.mean()}, std={error.std()}")
+			return error.detach().cpu().numpy()
 		elif etype == "spectral l2":
-			return self.spectral_l2s_error( self.tensor(data), self.tensor(target) )
+			error = self.spectral_l2s_error( self.tensor(data), self.tensor(target) )
+			return  error.detach().cpu().numpy()
 		else:
 			raise Exception(f"Unknown error function {etype}")
 
@@ -435,8 +429,8 @@ class DualModelTrainer(object):
 		return inputs, targets, predictions, interpolates
 
 	def error_comp(self, etype: str, result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], **kwargs):
-		loss1 = self.error( etype, result1, target, dims).values.tolist()
-		loss2 = self.error( etype, result2, target, dims).values.tolist()
+		loss1 = self.error( etype, result1, target, dims).tolist()
+		loss2 = self.error( etype, result2, target, dims).tolist()
 		cids: List[str] = kwargs.get('cids', [])
 		for iC, (l1, l2) in enumerate(zip(loss1, loss2)):
 			cid = cids[iC] if len(cids) else f"C-{iC}"
