@@ -114,7 +114,6 @@ class ModelTrainer(object):
 		if not squared:
 			loss = torch.sqrt(loss)
 		loss = loss.mean()
-
 		return loss
 
 	@exception_handled
@@ -350,14 +349,33 @@ class DualModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
+	def l2s_error(self, prd, tar ):
+		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True)
+		print( f"l2s_error: s1={loss.shape}")
+		loss = loss.sum(dim=-1)
+		print(f"l2s_error: s2={loss.shape}")
+		loss = torch.sqrt(loss)
+		loss = loss.mean()
+		print(f"l2s_error: s3={loss.shape}")
+		return loss
+
+	def spectral_l2s_error(self, prd, tar):
+		coeffs = torch.view_as_real(self.sht(prd - tar))
+		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
+		norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
+		loss = torch.sum(norm2, dim=(-1, -2))
+		loss = torch.sqrt(loss)
+		loss = loss.mean()
+		return loss
+
 	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]):
 		if etype == "mse":
 			sdiff: xarray.DataArray = (target - data) ** 2
 			return np.sqrt(sdiff.mean(dim=dims))
 		elif etype == 'l2':
-			return self.l2loss_sphere( Tensor(data.values), Tensor(target.values) )
+			return self.l2s_error( Tensor(data.values), Tensor(target.values) )
 		elif etype == "spectral l2":
-			return self.spectral_l2loss_sphere( Tensor(data.values), Tensor(target.values) )
+			return self.spectral_l2s_error( Tensor(data.values), Tensor(target.values) )
 		else:
 			raise Exception(f"Unknown error function {etype}")
 
@@ -391,7 +409,7 @@ class DualModelTrainer(object):
 				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
 				if istep == 0:
 					lgm().log( f"\n----  STATS COMP:  prediction <-> interpolation  ---- ", display=True )
-					self.error_comp( 'mse', prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
+					self.error_comp( kwargs.get('etype','mse'), prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
 
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
