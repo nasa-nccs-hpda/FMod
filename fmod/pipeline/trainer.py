@@ -32,6 +32,8 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 	sdiff: xarray.DataArray = (target - data)**2
 	return np.sqrt( sdiff.mean(dim=dims) )
 
+
+
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
@@ -42,8 +44,9 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  dataset: BaseDataset ):
+	def __init__(self,  dataset: BaseDataset, device: torch.device ):
 		self.dataset = dataset
+		self.device = device
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.scale_factor = cfg().model.scale_factor
@@ -62,6 +65,9 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+
+	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
+		return Tensor(data.values).to(self.device)
 
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
@@ -206,7 +212,8 @@ class DualModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset ):
+	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset, device ):
+		self.device = device
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
 		self.chanids = input_dataset.channel_ids
@@ -237,6 +244,9 @@ class DualModelTrainer(object):
 		inp, _, base = next(self.input_data_iter)
 		_, tar, _ = next(self.target_data_iter)
 		return inp, tar, base
+
+	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
+		return Tensor(data.values).to(self.device)
 
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
@@ -368,14 +378,17 @@ class DualModelTrainer(object):
 		loss = loss.mean()
 		return loss
 
+
+
 	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]):
+
 		if etype == "mse":
 			sdiff: xarray.DataArray = (target - data) ** 2
 			return np.sqrt(sdiff.mean(dim=dims))
 		elif etype == 'l2':
-			return self.l2s_error( Tensor(data.values), Tensor(target.values) )
+			return self.l2s_error( self.tensor(data), self.tensor(target) )
 		elif etype == "spectral l2":
-			return self.spectral_l2s_error( Tensor(data.values), Tensor(target.values) )
+			return self.spectral_l2s_error( self.tensor(data), self.tensor(target) )
 		else:
 			raise Exception(f"Unknown error function {etype}")
 
