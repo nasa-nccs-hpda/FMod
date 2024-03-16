@@ -9,7 +9,7 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.util.ops import nnan, pctnan, pctnant
+from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
 from fmod.pipeline.merra2 import array2tensor
 from enum import Enum
 import numpy as np
@@ -32,18 +32,6 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 	sdiff: xarray.DataArray = (target - data)**2
 	return np.sqrt( sdiff.mean(dim=dims) )
 
-
-def stats_comp( result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], **kwargs ):
-	means1: List[float] = result1.mean(dim=dims).values.tolist()
-	means2: List[float] = result2.mean(dim=dims).values.tolist()
-	stds1: List[float] = result1.std(dim=dims).values.tolist()
-	stds2: List[float] = result2.std(dim=dims).values.tolist()
-	loss1 = mse(result1,target,dims).values.tolist()
-	loss2 = mse(result2,target,dims).values.tolist()
-	cids: List[str] = kwargs.get('cids',[])
-	for iC, (m1, m2, s1, s2, l1, l2) in enumerate(zip(means1, means2, stds1, stds2, loss1, loss2)):
-		cid = cids[iC] if len(cids) else f"C-{iC}"
-		lgm().log( f" *{cid:<25}:  mean[ {m1:8.4f}, {m2:8.4f} ]  ---  std[ {s1:6.3f}, {s2:6.3f} ] ---  loss[ {l1:6.3f}, {l2:6.3f} ]", display=kwargs.get('display',False) )
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
@@ -362,6 +350,17 @@ class DualModelTrainer(object):
 		if save_state: self.save_state()
 		return acc_loss
 
+	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]):
+		if etype == "mse":
+			sdiff: xarray.DataArray = (target - data) ** 2
+			return np.sqrt(sdiff.mean(dim=dims))
+		elif etype == 'l2':
+			return self.l2loss_sphere( Tensor(data.values), Tensor(target.values) )
+		elif etype == "spectral l2":
+			return self.spectral_l2loss_sphere( Tensor(data.values), Tensor(target.values) )
+		else:
+			raise Exception(f"Unknown error function {etype}")
+
 	def inference(self, **kwargs ) -> Tuple[ List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray] ]:
 		seed = kwargs.get('seed',0)
 		max_step = kwargs.get( 'max_step', -1)
@@ -392,7 +391,7 @@ class DualModelTrainer(object):
 				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
 				if istep == 0:
 					lgm().log( f"\n----  STATS COMP:  prediction <-> interpolation  ---- ", display=True )
-					stats_comp( prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
+					self.error_comp( 'mse', prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
 
 				acc_interp_loss += interp_loss.item()
 				acc_loss += loss.item()
@@ -403,3 +402,11 @@ class DualModelTrainer(object):
 
 
 		return inputs, targets, predictions, interpolates
+
+	def error_comp(self, etype: str, result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], **kwargs):
+		loss1 = self.error( etype, result1, target, dims).values.tolist()
+		loss2 = self.error( etype, result2, target, dims).values.tolist()
+		cids: List[str] = kwargs.get('cids', [])
+		for iC, (l1, l2) in enumerate(zip(loss1, loss2)):
+			cid = cids[iC] if len(cids) else f"C-{iC}"
+			lgm().log(f" *{cid:<25}: ---  loss[ {l1:6.3f}, {l2:6.3f} ]", display=kwargs.get('display', False))
