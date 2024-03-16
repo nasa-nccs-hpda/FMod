@@ -212,7 +212,7 @@ class DualModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset, device ):
+	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset, device: str = "cpu" ):
 		self.device = device
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
