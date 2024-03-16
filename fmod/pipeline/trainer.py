@@ -43,7 +43,7 @@ def stats_comp( result1: xarray.DataArray, result2: xarray.DataArray, target: xa
 	cids: List[str] = kwargs.get('cids',[])
 	for iC, (m1, m2, s1, s2, l1, l2) in enumerate(zip(means1, means2, stds1, stds2, loss1, loss2)):
 		cid = cids[iC] if len(cids) else f"C-{iC}"
-		lgm().log( f" *{cid:<25}:  mean[ {m1:8.4f}, {m2:8.4f} ]  ---  std[ {s1:7.3f}, {s2:7.3f} ] ---  loss[ {l1:7.3f}, {l2:7.3f} ]", display=kwargs.get('display',False) )
+		lgm().log( f" *{cid:<25}:  mean[ {m1:8.4f}, {m2:8.4f} ]  ---  std[ {s1:6.3f}, {s2:6.3f} ] ---  loss[ {l1:6.3f}, {l2:6.3f} ]", display=kwargs.get('display',False) )
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 class TaskType(Enum):
