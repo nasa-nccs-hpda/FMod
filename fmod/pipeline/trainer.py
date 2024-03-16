@@ -378,9 +378,8 @@ class DualModelTrainer(object):
 			return np.sqrt( sdiff.mean(dim=dims).values )
 		elif etype == 'l2':
 			error = self.l2s_error( self.tensor(data), self.tensor(target) )
-			print( f"{etype} error: {list(error.shape)}, mean={error.mean()}, std={error.std()}")
 			return error.detach().cpu().numpy()
-		elif etype == "spectral l2":
+		elif etype == "spectral-l2":
 			error = self.spectral_l2s_error( self.tensor(data), self.tensor(target) )
 			return  error.detach().cpu().numpy()
 		else:
