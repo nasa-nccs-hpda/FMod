@@ -405,7 +405,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 	#	up_modes_lat = up_modes_lon = min(up_modes_lat, up_modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
-		self.itrans_last =  InverseRealSHT( *self.out_shape, up_modes_lat, up_modes_lon, grid=self.grid).float()
+		self.itrans_last =  InverseRealSHT( *self.out_shape, lmax=up_modes_lat, mmax=up_modes_lon, grid=self.grid).float()
 		self.trans =        RealSHT(        *self.in_shape,  grid="legendre-gauss").float()
 		self.itrans =       InverseRealSHT( *self.in_shape,  lmax=self.in_shape[0], grid="legendre-gauss").float()
 
@@ -416,6 +416,10 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 
 			forward_transform = self.trans_first if first_layer else self.trans
 			inverse_transform = self.itrans_last if last_layer else self.itrans
+
+			lgm().log( f"SFNO Layer-{i}:")
+			lgm().log(f" --> Forward transform: (nlat,nlon)={(forward_transform.nlat,forward_transform.nlon)}, (lmax,mmax)={(forward_transform.lmax,forward_transform.mmax)}")
+			lgm().log(f" --> Inverse transform: (nlat,nlon)={(inverse_transform.nlat,inverse_transform.nlon)}, (lmax,mmax)={(inverse_transform.lmax,inverse_transform.mmax)}")
 
 			inner_skip = cfg().model.get( 'inner_skip', "none" )
 			outer_skip = cfg().model.get( 'outer_skip', "identity" )
