@@ -191,7 +191,7 @@ class SphericalFourierNeuralOperatorBlock(nn.Module):
 		return x
 
 sfno_network_parms = [ 'spectral_transform','operator_type', 'in_chans', 'out_chans', 'pos_embed', 'normalization_layer', 'spectral_transform', 'operator_type'
-		        'scale_factor', 'embed_chans', 'embed_chans', 'num_layers', 'encoder_layers', 'mlp_ratio', 'drop_rate', 'drop_path_rate', 'hard_thresholding_fraction',
+		        'scale_factor', 'embed_chans', 'embed_chans', 'num_layers', 'num_downscale_layers', 'encoder_layers', 'mlp_ratio', 'drop_rate', 'drop_path_rate', 'hard_thresholding_fraction',
 		        'big_skip', 'factorization', 'separable', 'rank', 'activation_function', 'use_mlp' ]
 
 class SphericalFourierNeuralOperatorNet(nn.Module):
