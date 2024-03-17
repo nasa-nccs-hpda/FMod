@@ -423,8 +423,12 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 				forward_transform = self.trans_first
 				inverse_transform = self.itrans
 				norm_layer = norm_layer1
+			elif i < downscale_index-1:
+				forward_transform = self.trans
+				inverse_transform = self.itrans
+				norm_layer = norm_layer0
 			elif i == downscale_index-1:
-				forward_transform = self.trans_first
+				forward_transform = self.trans
 				inverse_transform = self.itrans_up
 				norm_layer = norm_layer0
 			elif i >= downscale_index:
