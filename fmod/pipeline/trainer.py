@@ -373,7 +373,7 @@ class DualModelTrainer(object):
 		return loss
 
 	def error(self, etype: str, data: xarray.DataArray, target: xarray.DataArray, dims: List[str]) -> np.ndarray:
-		if etype == "mse":
+		if etype == "mse" :
 			sdiff: xarray.DataArray = (target - data) ** 2
 			return np.sqrt( sdiff.mean(dim=dims).values )
 		elif etype == 'l2':
