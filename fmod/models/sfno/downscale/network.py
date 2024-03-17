@@ -269,6 +269,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		out_chans=3,
 		embed_chans=256,
 		num_layers=4,
+		num_downscale_layers = 0,
 		activation_function="relu",
 		encoder_layers=1,
 		use_mlp=True,
@@ -293,6 +294,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		lgm().log(f" -> out_chans = {out_chans}")
 		lgm().log(f" -> embed_chans = {embed_chans}")
 		lgm().log(f" -> num_layers = {num_layers}")
+		lgm().log(f" -> num_downscale_layers = {num_downscale_layers}")
 		lgm().log(f" -> encoder_layers = {encoder_layers}")
 		lgm().log(f" -> use_mlp = {use_mlp}")
 		lgm().log(f" -> mlp_ratio = {mlp_ratio}")
@@ -315,6 +317,7 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 		self.out_chans = out_chans
 		self.embed_chans = embed_chans
 		self.num_layers = num_layers
+		self.num_downscale_layers = num_downscale_layers
 		self.hard_thresholding_fraction = hard_thresholding_fraction
 		self.normalization_layer = normalization_layer
 		self.use_mlp = use_mlp
@@ -405,17 +408,34 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 	#	up_modes_lat = up_modes_lon = min(up_modes_lat, up_modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
-		self.itrans_last =  InverseRealSHT( *self.out_shape, lmax=up_modes_lat, mmax=up_modes_lon, grid=self.grid).float()
+		self.itrans_up =  InverseRealSHT( *self.out_shape, lmax=up_modes_lat, mmax=up_modes_lon, grid=self.grid).float()
 		self.trans =        RealSHT(        *self.in_shape,  grid="legendre-gauss").float()
 		self.itrans =       InverseRealSHT( *self.in_shape,  lmax=self.in_shape[0], grid="legendre-gauss").float()
 
-		self.blocks = nn.ModuleList([])
-		for i in range(self.num_layers):
-			first_layer = i == 0
-			last_layer = i == self.num_layers - 1
+		self.trans_high =   RealSHT(        *self.out_shape, grid=self.grid ).float()
+		self.itrans_high =  InverseRealSHT( *self.out_shape, grid=self.grid ).float()
 
-			forward_transform = self.trans_first if first_layer else self.trans
-			inverse_transform = self.itrans_last if last_layer else self.itrans
+		self.blocks = nn.ModuleList([])
+		downscale_index = self.num_layers - self.num_downscale_layers
+		for i in range(self.num_layers):
+
+			if i == 0:
+				forward_transform = self.trans_first
+				inverse_transform = self.itrans
+				norm_layer = norm_layer1
+			elif i == downscale_index-1:
+				forward_transform = self.trans_first
+				inverse_transform = self.itrans_up
+				norm_layer = norm_layer0
+			elif i >= downscale_index:
+				forward_transform = self.trans_high
+				inverse_transform = self.itrans_high
+				norm_layer = norm_layer0
+			else:
+				raise Exception( f"Indexing error: i={i}, num_layers={self.num_layers}, num_downscale_layers={self.num_downscale_layers}, downscale_index={downscale_index}")
+
+#			forward_transform = self.trans_first if first_layer else self.trans
+#			inverse_transform = self.itrans_up if last_layer else self.itrans
 
 			lgm().log( f"SFNO Layer-{i}:")
 			lgm().log(f" --> Forward transform: (nlat,nlon)={(forward_transform.nlat,forward_transform.nlon)}, (lmax,mmax)={(forward_transform.lmax,forward_transform.mmax)}")
@@ -424,12 +444,12 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 			inner_skip = cfg().model.get( 'inner_skip', "none" )
 			outer_skip = cfg().model.get( 'outer_skip', "identity" )
 
-			if first_layer:
-				norm_layer = norm_layer1
-			elif last_layer:
-				norm_layer = norm_layer0
-			else:
-				norm_layer = norm_layer1
+			# if first_layer:
+			# 	norm_layer = norm_layer1
+			# elif last_layer:
+			# 	norm_layer = norm_layer0
+			# else:
+			# 	norm_layer = norm_layer1
 
 			block = SphericalFourierNeuralOperatorBlock(
 				forward_transform,
