@@ -364,7 +364,7 @@ class DualModelTrainer(object):
 		loss = torch.sqrt(loss)
 		return loss
 
-	def spectral_l2s_error(self, prd, tar) -> torch.Tensor:
+	def spectral_l2s_error(self, prd: Tensor, tar: Tensor ) -> torch.Tensor:
 		coeffs = torch.view_as_real(self.sht(prd - tar))
 		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
 		norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
@@ -377,10 +377,10 @@ class DualModelTrainer(object):
 			sdiff: xarray.DataArray = (target - data) ** 2
 			return np.sqrt( sdiff.mean(dim=dims).values )
 		elif etype == 'l2':
-			error = self.l2s_error( self.tensor(data), self.tensor(target) )
+			error = self.l2s_error( array2tensor(data), array2tensor(target) )
 			return error.detach().cpu().numpy()
 		elif etype == "spectral-l2":
-			error = self.spectral_l2s_error( self.tensor(data), self.tensor(target) )
+			error = self.spectral_l2s_error( array2tensor(data), array2tensor(target) )
 			return  error.detach().cpu().numpy()
 		else:
 			raise Exception(f"Unknown error function {etype}")
