@@ -3,7 +3,7 @@ training_version: 'merra2-sfno.2'
 params: "small"
 nc_format: 'sres'
 tensor_type: "torch"
-device: "gpu"
+device: "cpu" # "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
 poly_order: 5
