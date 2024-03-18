@@ -173,8 +173,8 @@ class ModelTrainer(object):
 
 			if save_state:
 				self.save_state()
-				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch == 1))
-			print(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}')
+				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch == 0))
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 
@@ -345,10 +345,10 @@ class DualModelTrainer(object):
 
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 			if save_state:
 				self.save_state()
-				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch==1))
+				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch==0))
+			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
 		print(f'--------------------------------------------------------------------------------')
