@@ -72,16 +72,15 @@ class ModelTrainer(object):
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
 		torch.save( self.model.state_dict(), self.checkpoint_path )
-		print(f"Saved model to {self.checkpoint_path}")
 
 	def load_state(self) -> bool:
 		if os.path.exists( self.checkpoint_path ):
 			try:
 				self.model.load_state_dict( torch.load( self.checkpoint_path ) )
-				print(f"Loaded model from {self.checkpoint_path}")
+				lgm().log(f"Loaded model from {self.checkpoint_path}", display=True)
 				return True
 			except Exception as e:
-				print(f"Unsble to load model from {self.checkpoint_path}: {e}")
+				lgm().log(f"Unable to load model from {self.checkpoint_path}: {e}", display=True)
 		return False
 
 	@property
@@ -138,7 +137,7 @@ class ModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
+			lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- " )
 
 			acc_loss = 0
 			self.model.train()
@@ -152,10 +151,10 @@ class ModelTrainer(object):
 					loss = self.spectral_l2loss_sphere( prd, tar )
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}", display=True)
+				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ")
+				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
+				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
+				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
 
 				acc_loss += loss.item() * inp.size(0)
 				#        print( f"Loss: {loss.item()}")
@@ -172,19 +171,16 @@ class ModelTrainer(object):
 			acc_loss = acc_loss / len(self.dataset)
 			epoch_time = time.time() - epoch_start
 
-			# print(f'--------------------------------------------------------------------------------')
-			# print(f'Epoch {epoch} summary:')
-			# print(f'time taken: {epoch_time}')
-			# print(f'accumulated training loss: {acc_loss}')
-			# print(f'--------------------------------------------------------------------------------')
-
+			if save_state:
+				self.save_state()
+				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch == 1))
 			print(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}')
 
 		train_time = time.time() - train_start
 
 		print(f'--------------------------------------------------------------------------------')
 		print(f'done. Training took {train_time / 60:.2f} min.')
-		if save_state: self.save_state()
+
 		return acc_loss
 
 	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
@@ -251,7 +247,6 @@ class DualModelTrainer(object):
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
 		torch.save( self.model.state_dict(), self.checkpoint_path )
-		print(f"Saved model to {self.checkpoint_path}")
 
 	def load_state(self) -> bool:
 		if os.path.exists( self.checkpoint_path ):
@@ -350,8 +345,10 @@ class DualModelTrainer(object):
 
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
-			if save_state: self.save_state()
 			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
+			if save_state:
+				self.save_state()
+				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch==1))
 
 		train_time = time.time() - train_start
 		print(f'--------------------------------------------------------------------------------')
