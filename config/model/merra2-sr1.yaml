@@ -1,10 +1,9 @@
 nfuture: 0
-loss_fn: 'spectral-l2'
+loss_fn: 'l2'
 batch_size: 1
 num_workers: 0
 persistent_workers: False
 grid: "equiangular"
-embed_shape: (256,512)
 in_chans: 178
 out_chans: 83
 pos_embed: "lat"
