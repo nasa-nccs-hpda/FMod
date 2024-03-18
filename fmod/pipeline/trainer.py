@@ -350,13 +350,13 @@ class DualModelTrainer(object):
 
 			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
+			if save_state: self.save_state()
 			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}', display=True)
 
 		train_time = time.time() - train_start
-
 		print(f'--------------------------------------------------------------------------------')
 		print(f'done. Training took {train_time / 60:.2f} min.')
-		if save_state: self.save_state()
+
 		return acc_loss
 
 	def l2s_error(self, prd, tar ) -> torch.Tensor:
