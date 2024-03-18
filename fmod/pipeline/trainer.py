@@ -147,7 +147,7 @@ class ModelTrainer(object):
 					prd = self.model( prd )
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( prd, tar )
-				elif cfg().model.loss_fn == "spectral l2":
+				elif cfg().model.loss_fn == "spectral-l2":
 					loss = self.spectral_l2loss_sphere( prd, tar )
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
@@ -327,7 +327,7 @@ class DualModelTrainer(object):
 				prd = prd.squeeze()
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( prd, tar )
-				elif cfg().model.loss_fn == "spectral l2":
+				elif cfg().model.loss_fn == "spectral-l2":
 					loss = self.spectral_l2loss_sphere( prd, tar)
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
@@ -408,7 +408,7 @@ class DualModelTrainer(object):
 				if cfg().model.loss_fn == 'l2':
 					loss = self.l2loss_sphere( out, tar )
 					interp_loss = self.l2loss_sphere( array2tensor(interpolate), tar )
-				elif cfg().model.loss_fn == "spectral l2":
+				elif cfg().model.loss_fn == "spectral-l2":
 					loss = self.spectral_l2loss_sphere( out, tar )
 					interp_loss = self.spectral_l2loss_sphere( array2tensor(interpolate), tar )
 				else:

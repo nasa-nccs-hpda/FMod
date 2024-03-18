@@ -96,6 +96,9 @@ class MetaData(DatapipeMetaData):
 class MERRA2Dataset(BaseDataset):
     def __init__(self, **kwargs):
         self.train_dates = kwargs.pop( 'train_dates', year_range(*cfg().task.year_range, randomize=True) )
+        self.load_inputs = kwargs.pop('load_inputs',True)
+        self.load_targets = kwargs.pop('load_targets', True)
+        self.load_base = kwargs.pop('load_base', True)
         self.dts = cfg().task.data_timestep
         self.n_day_offsets = 24//self.dts
         super(MERRA2Dataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
@@ -121,7 +124,7 @@ class MERRA2Dataset(BaseDataset):
         return self.i % self.n_day_offsets
 
 
-    def __next__(self) -> Tuple[xa.DataArray,xa.DataArray,xa.DataArray]:
+    def __next__(self) -> List[xa.DataArray]:
         if self.i < self.length:
             next_date = self.get_date()
             if self.current_date != next_date:
@@ -130,7 +133,7 @@ class MERRA2Dataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={cfg().task.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            inputs_targets: Tuple[xa.DataArray,xa.DataArray,xa.DataArray] = self.extract_inputs_targets(train_data, **cfg().task )
+            inputs_targets: List[xa.DataArray] = self.extract_inputs_targets(train_data, **cfg().task )
             self.i = self.i + 1
             return inputs_targets
         else:
@@ -185,7 +188,7 @@ class MERRA2Dataset(BaseDataset):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-                                      levels: Tuple[int, ...], **kwargs) -> Tuple[xa.DataArray,xa.DataArray,xa.DataArray]:
+                                      levels: Tuple[int, ...], **kwargs) -> List[xa.DataArray]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
@@ -194,37 +197,38 @@ class MERRA2Dataset(BaseDataset):
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         inputs, targets = self.extract_input_target_times(dataset)
-        for vname, varray in inputs.data_vars.items():
-            if 'time' in varray.dims:
-                lgm().debug(f" ** INPUT {vname}: tcoord={varray.coords['time'].values.tolist()}")
-        for vname, varray in targets.data_vars.items():
-            if 'time' in varray.dims:
-                lgm().debug(f" ** TARGET {vname}: tcoord={varray.coords['time'].values.tolist()}")
         lgm().debug(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
 
         if set(forcing_variables) & set(target_variables):
             raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
-        input_varlist: List[str] = list(input_variables)+list(forcing_variables)
-        selected_inputs: xa.Dataset = inputs[input_varlist]
-        base_inputs: xa.Dataset = inputs[list(target_variables)]
+        results = []
 
-        lgm().debug(f" >> >> {len(inputs.data_vars.keys())} model variables: {input_varlist}")
-        lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
-        lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
-        input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
-        lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, channels={input_array.attrs['channels']}")
+        if self.load_inputs:
+            input_varlist: List[str] = list(input_variables)+list(forcing_variables)
+            selected_inputs: xa.Dataset = inputs[input_varlist]
+            lgm().debug(f" >> >> {len(inputs.data_vars.keys())} model variables: {input_varlist}")
+            lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
+            lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
+            input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
+            lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, channels={input_array.attrs['channels']}")
+            self.chanIds['input'] = input_array.attrs['channels']
+            results.append(input_array)
 
-        base_input_array: xa.DataArray = ds2array( self.normalize(base_inputs.isel(time=-1)) )
-        lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
+        if self.load_base:
+            base_inputs: xa.Dataset = inputs[list(target_variables)]
+            base_input_array: xa.DataArray = ds2array( self.normalize(base_inputs.isel(time=-1)) )
+            lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
+            results.append(base_input_array)
 
-        lgm().debug(f" >> >> target variables: {target_variables}")
-        target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
-        lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
-        lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg().task.device}")
-        self.chanIds['input']  = input_array.attrs['channels']
-        self.chanIds['target'] = target_array.attrs['channels']
+        if self.load_targets:
+            lgm().debug(f" >> >> target variables: {target_variables}")
+            target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
+            lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
+            lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg().task.device}")
+            self.chanIds['target'] = target_array.attrs['channels']
+            results.append(target_array)
 
-        return input_array, target_array, base_input_array
+        return results
 
 
 class MERRA2NCDatapipe(Datapipe):

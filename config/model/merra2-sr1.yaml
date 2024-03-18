@@ -1,5 +1,5 @@
 nfuture: 0
-loss_fn: 'l2'
+loss_fn: 'spectral-l2'
 batch_size: 1
 num_workers: 0
 persistent_workers: False
