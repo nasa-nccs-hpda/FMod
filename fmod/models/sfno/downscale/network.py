@@ -408,12 +408,13 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 	#	up_modes_lat = up_modes_lon = min(up_modes_lat, up_modes_lon)
 
 		self.trans_first =  RealSHT(        *self.in_shape,     grid=self.grid).float()
-		self.itrans_up =    InverseRealSHT( *self.out_shape, lmax=up_modes_lat, mmax=up_modes_lon, grid=self.grid).float()
+		self.itrans_up =    InverseRealSHT( *self.out_shape, lmax=up_modes_lat, mmax=up_modes_lon, grid="legendre-gauss").float()
 		self.trans =        RealSHT(        *self.in_shape,  grid="legendre-gauss").float()
 		self.itrans =       InverseRealSHT( *self.in_shape,  lmax=self.in_shape[0], grid="legendre-gauss").float()
-
-		self.trans_high =   RealSHT(        *self.out_shape, grid=self.grid ).float()
-		self.itrans_high =  InverseRealSHT( *self.out_shape, grid=self.grid ).float()
+		self.trans_high =   RealSHT(        *self.out_shape, grid="legendre-gauss" ).float()
+		self.itrans_high =  InverseRealSHT( *self.out_shape, grid="legendre-gauss" ).float()
+		self.trans_high_ext = RealSHT(*self.out_shape, grid=self.grid, csphase=False).float()
+		self.itrans_high_ext = InverseRealSHT(*self.out_shape, grid=self.grid).float()
 
 		self.blocks = nn.ModuleList([])
 		downscale_index = self.num_layers - self.num_downscale_layers
@@ -423,20 +424,14 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 				forward_transform = self.trans_first
 				inverse_transform = self.itrans
 				norm_layer = norm_layer1
-			elif i < downscale_index-1:
+			elif i <= downscale_index-1:
 				forward_transform = self.trans
-				inverse_transform = self.itrans
-				norm_layer = norm_layer0
-			elif i == downscale_index-1:
-				forward_transform = self.trans
-				inverse_transform = self.itrans_up
-				norm_layer = norm_layer0
-			elif i >= downscale_index:
-				forward_transform = self.trans_high
-				inverse_transform = self.itrans_high
+				inverse_transform = self.itrans_up if i == (downscale_index-1) else self.itrans
 				norm_layer = norm_layer0
 			else:
-				raise Exception( f"Indexing error: i={i}, num_layers={self.num_layers}, num_downscale_layers={self.num_downscale_layers}, downscale_index={downscale_index}")
+				forward_transform = self.trans_high
+				inverse_transform = self.itrans_high_ext if i == (self.num_layers-1) else self.itrans_high
+				norm_layer = norm_layer0
 
 #			forward_transform = self.trans_first if first_layer else self.trans
 #			inverse_transform = self.itrans_up if last_layer else self.itrans
@@ -510,6 +505,9 @@ class SphericalFourierNeuralOperatorNet(nn.Module):
 	@torch.jit.ignore
 	def no_weight_decay(self):
 		return {"pos_embed", "cls_token"}
+
+	def sht( self, x ):
+		return self.trans_high_ext(x)
 
 	def forward_features(self, x):
 		x = self.pos_drop(x)

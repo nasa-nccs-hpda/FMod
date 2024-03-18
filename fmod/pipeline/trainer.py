@@ -281,13 +281,13 @@ class DualModelTrainer(object):
 
 	def spectral_l2loss_sphere(self, prd, tar, relative=False, squared=True):
 		# compute coefficients
-		coeffs = torch.view_as_real(self.sht(prd - tar))
+		coeffs = torch.view_as_real(self.model.sht(prd - tar))
 		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
 		norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
 		loss = torch.sum(norm2, dim=(-1, -2))
 
 		if relative:
-			tar_coeffs = torch.view_as_real(self.sht(tar))
+			tar_coeffs = torch.view_as_real(self.model.sht(tar))
 			tar_coeffs = tar_coeffs[..., 0] ** 2 + tar_coeffs[..., 1] ** 2
 			tar_norm2 = tar_coeffs[..., :, 0] + 2 * torch.sum(tar_coeffs[..., :, 1:], dim=-1)
 			tar_norm2 = torch.sum(tar_norm2, dim=(-1, -2))
