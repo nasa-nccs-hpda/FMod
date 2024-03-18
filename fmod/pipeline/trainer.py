@@ -338,7 +338,7 @@ class DualModelTrainer(object):
 				current_loss = loss.item()
 				acc_loss += current_loss
 
-				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss:.2f} -> prd{list(prd.shape)} - tar{list(tar.shape)}", display=True )
+				lgm().log(f" * E-{epoch+1} T-{iT}, loss: {current_loss:.2f} -> prd{list(prd.shape)} - tar{list(tar.shape)}" )
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()
 				loss.backward()
@@ -412,7 +412,7 @@ class DualModelTrainer(object):
 					interp_loss = self.spectral_l2loss_sphere( array2tensor(interpolate), tar )
 				else:
 					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}', display=True )
+				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}' )
 				if istep == 0:
 					lgm().log( f"\n----  STATS COMP:  prediction <-> interpolation  ---- ", display=True )
 					self.error_comp( kwargs.get('etype','mse'), prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
