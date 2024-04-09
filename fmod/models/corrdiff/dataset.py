@@ -28,7 +28,7 @@ class M2DownscalingDataset(DownscalingDataset):
 
 	def __getitem__(self, idx: int):
 		ds_input: List[xa.Dataset] = self.input_dataset[idx]
-		ds_target: List[xa.Dataset]  = self.input_dataset[idx]
+		ds_target: List[xa.Dataset]  = self.target_dataset[idx]
 		return ds_target, ds_input, ""
 
 
