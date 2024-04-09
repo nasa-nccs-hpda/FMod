@@ -218,10 +218,10 @@ class DualModelTrainer(object):
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.scale_factor = cfg().model.scale_factor
-		inp, _, _ = next(iter(input_dataset))
-		_, tar, _ = next(iter(target_dataset))
-		self.input_grid = inp.shape[-2:]
-		self.output_grid = tar.shape[-2:]
+		inps = next(iter(input_dataset))
+		tars = next(iter(target_dataset))
+		self.input_grid = inps[0].shape[-2:]
+		self.output_grid = tars[-1].shape[-2:]
 		self.input_data_iter = iter(input_dataset)
 		self.target_data_iter = iter(target_dataset)
 		lmax = math.ceil(self.output_grid[0] / cfg().model.scale_factor)
