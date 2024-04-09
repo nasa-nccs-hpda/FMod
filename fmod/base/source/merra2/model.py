@@ -82,6 +82,9 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 
 def open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
+	print( f"open_dataset(filepath={filepath}), ds.attrs={list(dataset.attrs.keys())}")
+	for k,v in dataset.data_vars.items():
+		print( f"  -- {k}: {list(v.attrs.keys())}")
 	return rename_vars(dataset)
 
 def load_dataset( vres: str,  d: date ) -> xa.Dataset:
