@@ -17,6 +17,10 @@ train_dates = date_list(cfg_date('task'), cfg().task.max_days)
 
 dataset = M2DownscalingDataset(train_dates=train_dates)
 
-target, input, label = dataset[0]
+targets, inputs, label = dataset[0]
 
-print( target.shapo)
+for i, inp in enumerate(inputs):
+    print( f" input-{i}:  {inp.dims} {inp.shape}")
+
+for i, t in enumerate(targets):
+    print( f" target-{i}:  {t.dims} {t.shape}")

@@ -26,9 +26,9 @@ class M2DownscalingDataset(DownscalingDataset):
 		lgm().log("output_channels:%s", self.output_channels())
 
 	def __getitem__(self, idx: int):
-		ds_input: xa.Dataset = self.input_dataset[idx]
-		ds_target: xa.Dataset  = self.input_dataset[idx]
-		return ds_target.values(), ds_input.values(), ""
+		ds_input: List[xa.Dataset] = self.input_dataset[idx]
+		ds_target: List[xa.Dataset]  = self.input_dataset[idx]
+		return ds_target, ds_input, ""
 
 
 		# target = self.normalize_output(target[None, ...])[0]
