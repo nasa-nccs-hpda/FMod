@@ -13,8 +13,10 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
     torch.cuda.set_device(device.index)
 
-dataset = M2DownscalingDataset()
+train_dates = date_list(cfg_date('task'), cfg().task.max_days)
+
+dataset = M2DownscalingDataset(train_dates=train_dates)
 
 target, input, label = dataset[0]
 
-print( target.shape )
+print( target.shapo)

@@ -113,6 +113,9 @@ class MERRA2Dataset(BaseDataset):
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
 
+    def __getitem__(self, idx: int):
+        self.i = idx
+        return self.__next__()
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )

@@ -6,23 +6,28 @@ from fmod.pipeline.merra2 import MERRA2Dataset
 from fmod.base.util.logging import lgm
 T_co = TypeVar('T_co', covariant=True)
 from datetime import date
-from fmod.base.util.dates import year_range
+from fmod.base.util.dates import date_list
+from fmod.base.util.config import configure, cfg, cfg_date, cfg2args, pp
+from fmod.pipeline.trainer import DualModelTrainer
+from fmod.pipeline.merra2 import MERRA2Dataset
+
 
 class M2DownscalingDataset(DownscalingDataset):
 	path: str
-
-	def __init__( self, **kwargs ):
-		self.ds_lowres = MERRA2Dataset( vres="low", **kwargs )
-		self.ds_highres = MERRA2Dataset (vres="high", **kwargs )
-		lgm().log("Number of valid times: %d", self.ds_lowres.length )
+	def __init__( self, path, **kwargs ):
+		self.path=path
+		device = kwargs.pop('device', 'gpu')
+		self.train_dates= kwargs.pop('train_dates', date_list(cfg_date('task'), cfg().task.max_days) )
+		self.input_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='low', load_inputs=True, load_base=True)
+		self.target_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='high', load_targets=True)
+		self.trainer = DualModelTrainer(self.input_dataset, self.target_dataset, device)
+		lgm().log("Number of valid times: %d", self.input_dataset.length )
 		lgm().log("input_channels:%s", self.input_channels())
 		lgm().log("output_channels:%s", self.output_channels())
 
-
 	def __getitem__(self, idx: int):
-		ds_target: xa.Dataset = self.ds_highres.__getitem__(idx)
-		ds_input: xa.Dataset  = self.ds_lowres.__getitem__(idx)
-
+		ds_input: xa.Dataset = self.input_dataset[idx]
+		ds_target: xa.Dataset  = self.input_dataset[idx]
 		return ds_target.values(), ds_input.values(), ""
 
 
@@ -37,7 +42,7 @@ class M2DownscalingDataset(DownscalingDataset):
 	"""
 
 	def __len__(self):
-		return self.ds_lowres.length
+		return self.input_dataset.length
 
 	def longitude(self):
 		return None
