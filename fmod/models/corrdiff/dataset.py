@@ -18,12 +18,13 @@ class M2DownscalingDataset(DownscalingDataset):
 		self.path=path
 		device = kwargs.pop('device', 'gpu')
 		self.train_dates= kwargs.pop('train_dates', date_list(cfg_date('task'), cfg().task.max_days) )
-		self.input_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='low', load_inputs=True, load_base=True)
-		self.target_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='high', load_targets=True)
+		self.input_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='low', load_inputs=True, load_base=True, load_targets=False)
+		self.target_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='high', load_inputs=False, load_base=False, load_targets=True)
 		self.trainer = DualModelTrainer(self.input_dataset, self.target_dataset, device)
-		lgm().log("Number of valid times: %d", self.input_dataset.length )
-		lgm().log("input_channels:%s", self.input_channels())
-		lgm().log("output_channels:%s", self.output_channels())
+		lgm().log(f"Number of valid times: {self.input_dataset.length}",  )
+		lgm().log(f"valid times: {self.train_dates}" )
+		lgm().log(f"input_channels: {self.input_channels()}" )
+		lgm().log(f"output_channels: {self.output_channels()}")
 
 	def __getitem__(self, idx: int):
 		ds_input: List[xa.Dataset] = self.input_dataset[idx]
@@ -55,11 +56,11 @@ class M2DownscalingDataset(DownscalingDataset):
 
 	def input_channels(self):
 		"""Metadata for the input channels. A list of dictionaries, one for each channel"""
-		return None
+		return 0
 
 	def output_channels(self):
 		"""Metadata for the output channels. A list of dictionaries, one for each channel"""
-		return None
+		return 0
 
 	def _read_time(self):
 		"""The vector of time coordinate has length (self)"""
