@@ -24,9 +24,9 @@ import cv2
 import numpy as np
 import zarr
 
-from .base import ChannelMetadata, DownscalingDataset
-from .img_utils import reshape_fields
-from .norm import denormalize, normalize
+from models.corrdiff.nvidia.datasets.base import ChannelMetadata, DownscalingDataset
+from models.corrdiff.nvidia.datasets.img_utils import reshape_fields
+from models.corrdiff.nvidia.datasets.norm import denormalize, normalize
 
 logger = logging.getLogger(__file__)
 

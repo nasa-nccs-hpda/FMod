@@ -1,0 +1,20 @@
+hydra:
+  job:
+    chdir: True
+
+defaults:
+  - config_train_base
+
+## Main options
+outdir: "./output_diffusion"
+  # Where to save the results
+arch: ddpmpp-cwb
+  # Network architecture [ddpmpp, ddpmpp-cwb, ncsnpp, adm, ddpmpp-cwb-v0-regression]
+precond: resloss
+  # Preconditioning & loss function [vp, ve, edm, unetregression, resloss]
+task: diffusion
+  # Which model to train [regression, diffusion]
+
+## I/O
+regression_checkpoint_path: checkpoints/regression.mdlus
+  # Where to save the checkpoints

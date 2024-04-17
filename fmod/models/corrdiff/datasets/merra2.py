@@ -13,9 +13,7 @@ from fmod.pipeline.merra2 import MERRA2Dataset
 
 
 class M2DownscalingDataset(DownscalingDataset):
-	path: str
-	def __init__( self, path="", **kwargs ):
-		self.path=path
+	def __init__( self, *args, **kwargs ):
 		self.device = kwargs.pop('device', 'gpu')
 		self.train_dates= kwargs.pop('train_dates', date_list(cfg_date('task'), cfg().task.max_days) )
 		self.input_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='low', load_inputs=True, load_base=True, load_targets=False)
@@ -99,4 +97,7 @@ class M2DownscalingDataset(DownscalingDataset):
 
 	def info(self):
 		return { "target_normalization": None, "input_normalization": None }
+
+def get_dataset( *args, **kwargs ):
+    return M2DownscalingDataset( *args, **kwargs )
 

@@ -27,16 +27,16 @@ import hydra
 from hydra.utils import to_absolute_path
 import torch
 from omegaconf import OmegaConf, DictConfig, ListConfig
-
+from fmod.base.util.config import configure
 from modulus.distributed import DistributedManager
 from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
 from modulus.utils.generative import EasyDict
 
-from nvidia.training import training_loop
-from nvidia.datasets.dataset import init_dataset_from_config
+from fmod.models.corrdiff.nvidia.training import training_loop
+from fmod.models.corrdiff.datasets.dataset import init_dataset_from_config
 
-
-@hydra.main(version_base="1.2", config_path="nvidia.conf", config_name="config_train_base")
+hydra.initialize(version_base=None, config_path="../config")
+configure('merra2-corrdiff')
 def main(cfg: DictConfig) -> None:
     """Train diffusion-based generative model using the techniques described in the
     paper "Elucidating the Design Space of Diffusion-Based Generative Models".

@@ -21,11 +21,11 @@ import torch
 from modulus.utils.generative import InfiniteSampler
 from modulus.distributed import DistributedManager
 
-from . import base, cwb
-
+from models.corrdiff.nvidia.datasets import base
+from . import cwb, merra2
 
 # this maps all known dataset types to the corresponding init function
-known_datasets = {"cwb": cwb.get_zarr_dataset}
+known_datasets = {"cwb": cwb.get_zarr_dataset, "merra2": merra2.get_dataset}
 
 
 def init_dataset_from_config(
