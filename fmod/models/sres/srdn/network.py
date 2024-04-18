@@ -6,16 +6,26 @@ from .util import *
 
 class SRDN(nn.Module):
 
-	def __init__(self, inchannels: int, nfeatures: Dict[str,int], nrlayers: int, scale_factors: List[int], kernel_size: Dict[str,int], stride: Size2 = 1, momentum: float = 0.5 ):
+	def __init__( self,
+		inchannels: int,
+		nfeatures: Dict[str,int],
+		nrlayers: int,
+		scale_factors: List[int],
+		usmethod: str,
+		kernel_size: Dict[str,int],
+		stride: Size2 = 1,
+		momentum: float = 0.5
+	):
 		super(SRDN, self).__init__()
 
 		nchan = nfeatures['hidden']
-		ks = kernel_size['default']
+		ks = kernel_size.get( 'features', kernel_size['hidden'] )
 		self.features = nn.Sequential(
 			nn.Conv2d( inchannels, nchan, ks, stride ),
 			nn.PReLU(init=0.0)
 		)
 
+		ks = kernel_size['hidden']
 		res_layers = [ ( f"Residual-{iR}", Residual(nchan, ks, stride, momentum) ) for iR in range(nrlayers) ]
 		self.residuals = nn.Sequential( OrderedDict( res_layers ) )
 
@@ -28,7 +38,7 @@ class SRDN(nn.Module):
 		nfeatures_in = nchan
 		nchan_us = nfeatures['upscale']
 		for scale_factor in scale_factors:
-			self.upscaling.append( Upsample(nfeatures_in, nchan_us, scale_factor, ks, stride ) )
+			self.upscaling.append( Upsample(nfeatures_in, nchan_us, scale_factor, usmethod, ks, stride ) )
 			nfeatures_in = nchan_us
 
 		self.result = nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride )
