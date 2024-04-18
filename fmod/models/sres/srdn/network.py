@@ -1,4 +1,4 @@
-import torch.nn as nn
+import torch, torch.nn as nn
 from collections import OrderedDict
 from .residual import Residual
 from .upsample import Upsample
@@ -43,7 +43,7 @@ class SRDN(nn.Module):
 
 		self.result = nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride )
 
-	def forward(self, x):
+	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		f = self.features(x)
 		r = self.residuals( f )
 		y = f + self.global_residual( r )

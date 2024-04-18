@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 from .util import *
 
 class Residual(nn.Module):
@@ -19,5 +20,5 @@ class Residual(nn.Module):
 		)
 
 
-	def forward(self, x):
+	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		return x + self.rnet(x)

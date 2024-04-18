@@ -1,4 +1,4 @@
-import torch.nn as nn
+import torch, torch.nn as nn
 from .util import *
 
 class Upsample(nn.Module):
@@ -24,5 +24,5 @@ class Upsample(nn.Module):
 		self.usnet.append( nn.PReLU(init=0.0) )
 
 
-	def forward(self, x):
+	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		return self.usnet(x)
