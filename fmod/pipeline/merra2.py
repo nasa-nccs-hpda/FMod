@@ -69,7 +69,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-    darray.coords['channels'] = xa.DataArray( channels )
+    darray.assign_coords( channels=xa.DataArray(channels) )
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def get_device():
