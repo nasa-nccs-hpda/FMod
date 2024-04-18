@@ -32,7 +32,7 @@ from modulus.distributed import DistributedManager
 from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
 from modulus.utils.generative import EasyDict
 
-from fmod.models.corrdiff.nvidia.training import training_loop
+from models.sres.corrdiff.nvidia.training import training_loop
 from fmod.models.corrdiff.datasets.dataset import init_dataset_from_config
 
 hydra.initialize(version_base=None, config_path="../config")

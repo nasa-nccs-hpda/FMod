@@ -33,7 +33,7 @@ from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
 from modulus.utils.generative import EasyDict
 
 from training import training_loop
-from models.corrdiff.datasets.dataset import init_dataset_from_config
+from models.sres.corrdiff.datasets.dataset import init_dataset_from_config
 
 
 @hydra.main(version_base="1.2", config_path="conf", config_name="config_train_base")

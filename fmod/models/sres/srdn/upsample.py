@@ -15,11 +15,11 @@ class Upsample(nn.Module):
 		if method == "replicate":
 			self.usnet = nn.Sequential(
 				nn.Conv2d( nchannels_in, nchannels_out, kernel_size, stride=stride, padding='same' ),
-				nn.UpsamplingNearest2d( scale_factor=scale_factor ),
+				nn.UpsamplingNearest2d( scale_factor=scale_factor )
 			)
 		elif method == "transpose":
 			self.usnet = nn.Sequential(
-				nn.ConvTranspose2d( nchannels_in, nchannels_out, kernel_size, stride=scale_factor ),
+				nn.ConvTranspose2d( nchannels_in, nchannels_out, kernel_size, stride=scale_factor )
 			)
 		self.usnet.append( nn.PReLU(init=0.0) )
 
