@@ -1,0 +1,11 @@
+nfeatures:
+  hidden: 64
+  upscale: 128
+  output: 1
+nrlayers: 16
+scale_factors: [2,3,2]
+usmethod: transpose
+kernel_size:
+  features: 3
+  hidden: 3
+  output: 9

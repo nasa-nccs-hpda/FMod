@@ -1,0 +1,14 @@
+auto_device: true
+cuda_graphs: true
+ddp_sharding: true
+
+batch_size:  1
+num_steps:  1
+stride:  1
+patch_size: None
+num_samples_per_year:  None
+shuffle: true
+num_workers: 1
+device:  "cuda"
+process_rank:  0
+world_size:  1
