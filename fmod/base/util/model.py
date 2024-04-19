@@ -613,10 +613,10 @@ def array_to_stacked( vname: str,  variable: xarray.DataArray, sizes: Mapping[st
     variable = variable.stack(channels=stack_to_channels_dims)
   dims["channels"] = variable.sizes.get("channels", 1)
   coords = dict( **variable.coords )
-  print( coords['channels'] )
   coords['channels'] = kwargs.get("channels", np.arange(dims["channels"]) )
-  print(coords['channels'])
   lgm().debug(f"  **> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}")
+  csizes = {n:v.size for n,v in coords.items()}
+  print( f"  **> stacked dvar {vname}{variable.dims}{variable.shape}: dims={dims}, coord sizes={csizes}")
   return xarray.DataArray( data=variable.values, coords=coords, dims=dims, name=vname )
 
 
