@@ -70,6 +70,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
+    darray.attrs['channels'] = channels
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def get_device():
@@ -213,8 +214,10 @@ class MERRA2Dataset(BaseDataset):
             lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
             lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
             input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
+            channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}")
-            self.chanIds['input'] = input_array.attrs['channels']
+            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={channels}")
+            self.chanIds['input'] = channels
             results.append(input_array)
 
         if self.load_base:
