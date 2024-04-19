@@ -216,7 +216,7 @@ class MERRA2Dataset(BaseDataset):
             input_array: xa.DataArray = ds2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}")
-            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={channels}")
+            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             self.chanIds['input'] = channels
             results.append(input_array)
 
