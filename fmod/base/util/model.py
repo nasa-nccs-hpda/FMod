@@ -612,12 +612,12 @@ def array_to_stacked( vname: str,  variable: xarray.DataArray, sizes: Mapping[st
   lgm().debug( f"#variable_to_stacked: {vname}{variable.dims}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}")
   if stack_to_channels_dims:
     variable = variable.stack(channels=stack_to_channels_dims)
-  dims["channels"] = variable.sizes.get("channels", 1)
+  dims["channels"] = variable.sizes.get("channels",1)
+  vdata: np.ndarray = variable.values if ("channels" in variable.dims) else np.expand_dims(variable.values,-1)
   coords = dict( **variable.coords )
   lgm().debug(f"  **> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}")
-  csizes = {n:v.size for n,v in coords.items()}
-  print( f"  **> stacked dvar {vname}{variable.dims}{variable.shape}: dims={dims}, coord sizes={csizes}")
-  return xarray.DataArray( data=variable.values, coords=coords, dims=list(dims.keys()), name=vname )
+  print( f"  **> stacked dvar {vname}{variable.dims}{variable.shape}: dims={dims}")
+  return xarray.DataArray( data=vdata, coords=coords, dims=list(dims.keys()), name=vname )
 
 
 def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), **kwargs ) -> xarray.DataArray:
