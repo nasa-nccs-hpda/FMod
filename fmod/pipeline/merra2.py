@@ -71,7 +71,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
     darray.attrs['channels'] = channels
-    return darray.transpose( "channels", coords['y'], coords['x'] )
+    return darray.transpose( "batch", "channels", coords['y'], coords['x'] )
 
 def get_device():
     devname = cfg().task.device
