@@ -61,15 +61,15 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     sizes: Dict[str,int] = {}
     vnames = list(dset.data_vars.keys()); vnames.sort()
     channels = []
+    levels: np.ndarray = dset.coords[coords['z']].values
     for vname in vnames:
         dvar: xa.DataArray = dset.data_vars[vname]
-        if coords['z'] in dvar.dims:    channels.extend([f"{vname}~{iL}" for iL in range(dvar.sizes[coords['z']])])
+        if coords['z'] in dvar.dims:    channels.extend([f"{vname}{int(levels[iL])}" for iL in range(dvar.sizes[coords['z']])])
         else:                           channels.append(vname)
         for (cname, coord) in dvar.coords.items():
             if cname not in (merge_dims + list(sizes.keys())):
                 sizes[ cname ] = coord.size
-    darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
-    darray.assign_coords( channels=xa.DataArray(channels) )
+    darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()), channels=np.array(channels) )
     return darray.transpose( "channels", coords['y'], coords['x'] )
 
 def get_device():
