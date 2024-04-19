@@ -32,3 +32,15 @@ sample_input, sample_target, sample_base = next(iter(trainer))
 print( f"sample_input{sample_input.dims}: {sample_input.shape} {list(sample_input.coords.keys())}" )
 for k,c in sample_input.coords.items():
     print( f"{k}{c.shape}: {c[0]:.2f} -> {c[-1]:.2f}")
+
+inchannels: int = sample_input.shape[0]
+nfeatures: Dict[str, int] = cfg().model.nfeatures
+nrlayers: int = cfg().model.nrlayers
+scale_factors: List[int] = cfg().model.scale_factors
+usmethod: str = cfg().model.usmethod
+kernel_size: Dict[str, int] = cfg().model.kernel_size
+
+model = SRDN(inchannels, nfeatures, nrlayers, scale_factors, usmethod, kernel_size).to(device)
+
+trainer.train( model, load_state=load_state, save_state=save_state )
+inputs, targets, predictions, interpolates = trainer.inference( etype=etype )
