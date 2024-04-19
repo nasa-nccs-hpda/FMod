@@ -607,6 +607,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
 
 def array_to_stacked( vname: str,  variable: xarray.DataArray, sizes: Mapping[str, int], preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), **kwargs ) -> xarray.DataArray:
   stack_to_channels_dims = [ d for d in variable.dims if d not in preserved_dims]
+  print( f"array_to_stacked: stack_to_channels_dims={stack_to_channels_dims}, preserved_dims={preserved_dims}")
   dims = { d: variable.sizes.get(d) or sizes[d] for d in variable.dims if d in preserved_dims }
   lgm().debug( f"#variable_to_stacked: {vname}{variable.dims}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}")
   if stack_to_channels_dims:
