@@ -627,9 +627,13 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
     coords = {dim: coord for dim, coord in dataset.coords.items() if dim in preserved_dims}
     stacked_data = xarray.Variable.concat(data_vars, dim="channels")
     lgm().debug(f"stacked_data{stacked_data.dims}: shape = {stacked_data.shape}, coords={list(coords.keys())}")
+    dims: List = list( *stacked_data.dims )
+    vdata: np.ndarray = stacked_data.values
     if "channels" not in coords:
         coords["channels"] = np.arange( stacked_data.sizes["channels"], dtype=np.int32 )
-    return xarray.DataArray(data=stacked_data.values, dims=stacked_data.dims, coords=coords)
+    if "batch" not in coords:
+        coords["batch"] = np.array([0], dtype=np.int32)
+    return xarray.DataArray(data=vdata, dims=dims, coords=coords)
 
 
 def stacked_to_dataset(
