@@ -605,8 +605,22 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
   lgm().debug(f"  **> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}")
   return variable.set_dims(dims)
 
+def array_to_stacked( vname: str,  variable: xarray.DataArray, sizes: Mapping[str, int], preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon") ) -> xarray.DataArray:
+  stack_to_channels_dims = [ d for d in variable.dims if d not in preserved_dims]
+  print( f"array_to_stacked: stack_to_channels_dims={stack_to_channels_dims}, preserved_dims={preserved_dims}")
+  dims = { d: variable.sizes.get(d) or sizes[d] for d in variable.dims if d in preserved_dims }
+  lgm().debug( f"#variable_to_stacked: {vname}{variable.dims}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}")
+  if stack_to_channels_dims:
+    variable = variable.stack(channels=stack_to_channels_dims)
+  dims["channels"] = variable.sizes.get("channels",1)
+  vdata: np.ndarray = variable.values if ("channels" in variable.dims) else np.expand_dims(variable.values,-1)
+  coords = dict( **variable.coords )
+  lgm().debug(f"  **> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}")
+  print( f"  **> stacked dvar {vname}{variable.dims}{variable.shape}: dims={dims}")
+  return xarray.DataArray( data=vdata, coords=coords, dims=list(dims.keys()), name=vname )
 
-def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon") ) -> xarray.DataArray:
+
+def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), **kwargs ) -> xarray.DataArray:
   """Converts an xarray.Dataset to a single stacked array.
 
   This takes each consistuent data_var, converts it into BHWC layout
@@ -621,15 +635,14 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
 
   Returns:
     An xarray.DataArray with dimensions preserved_dims + ("channels",).
-    Existing coordinates for preserved_dims axes will be preserved, however
-    there will be no coordinates for "channels".
+    Existing coordinates for preserved_dims axes will be preserved".
   """
-  data_vars = [ variable_to_stacked(name, dataset.variables[name], sizes or dataset.sizes, preserved_dims) for name in sorted(dataset.data_vars.keys()) ]
+  data_vars: List[xarray.DataArray] = [ array_to_stacked(name, dataset.data_vars[name], sizes or dataset.sizes, preserved_dims) for name in sorted(dataset.data_vars.keys()) ]
   lgm().debug(f"dataset_to_stacked: {len(dataset.data_vars)} data_vars, preserved_dims={preserved_dims}, concat-list size= {len(data_vars)}")
   coords = { dim: coord for dim, coord in dataset.coords.items() if dim in preserved_dims  }
   stacked_data = xarray.Variable.concat(data_vars, dim="channels")
   lgm().debug(f"stacked_data{stacked_data.dims}: shape = {stacked_data.shape}, coords={list(coords.keys())}")
-  return xarray.DataArray( data=stacked_data.values, dims=stacked_data.dims, coords=coords)
+  return xarray.DataArray( data=stacked_data.values, dims=stacked_data.dims, coords=coords )
 
 
 def stacked_to_dataset(
