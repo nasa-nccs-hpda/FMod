@@ -34,6 +34,10 @@ def date_list( start: date, num_days: int )-> List[date]:
 		d0 = next(d0)
 	return dates
 
+def cfg_date_range( task_config )-> List[date]:
+	start = date( task_config.start_date )
+	end = date(task_config.end_date)
+	return date_range( start, end )
 def date_range( start: date, end: date )-> List[date]:
 	d0: date = start
 	dates: List[date] = []
@@ -47,3 +51,7 @@ def year_range( y0: int, y1: int, **kwargs )-> List[date]:
 	rlist = date_range( date(y0,1,1), date(y1,1,1) )
 	if randomize: random.shuffle(rlist)
 	return rlist
+
+def batches_range( task_config )-> List[date]:
+	toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+	return date_list( date( *toks ), task_config.batch_size*task_config.nbatches )

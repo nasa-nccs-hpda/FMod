@@ -126,10 +126,10 @@ class FMBatch:
 		result = result.transpose(..., "features")
 		return result
 
-class Batch:
+class SRBatch:
 
-	def __init__(self,  **kwargs):
-		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
+	def __init__(self, batch_size: int, **kwargs):
+		self.batch_size = batch_size
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
