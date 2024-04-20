@@ -19,6 +19,7 @@ save_state = True
 input_res = "low"
 target_res = "high"
 etype = "l2" # "spectral-l2"
+batch_size = 10
 
 # set device
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -27,7 +28,7 @@ if torch.cuda.is_available():
 
 input_dataset  = MERRA2Dataset( train_dates=date_list( cfg_date('task'), cfg().task.max_days ), vres=input_res, load_inputs=True, load_base=True )
 target_dataset = MERRA2Dataset( train_dates=date_list( cfg_date('task'), cfg().task.max_days ), vres=target_res, load_targets=True )
-trainer = DualModelTrainer( input_dataset, target_dataset, device )
+trainer = DualModelTrainer( input_dataset, target_dataset, device, batch_size=10 )
 sample_input, sample_target, sample_base = next(iter(trainer))
 print( f"sample_input{sample_input.dims}: {sample_input.shape} {list(sample_input.coords.keys())}" )
 for k,c in sample_input.coords.items():

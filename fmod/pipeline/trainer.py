@@ -32,7 +32,8 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 	sdiff: xarray.DataArray = (target - data)**2
 	return np.sqrt( sdiff.mean(dim=dims) )
 
-
+def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
+	return xarray.concat( members, dim="batch" )
 
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
@@ -210,8 +211,9 @@ class DualModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset, device: str = "cpu" ):
+	def __init__(self,  input_dataset: BaseDataset,  target_dataset: BaseDataset, device: str = "cpu", batch_size=1 ):
 		self.device = device
+		self.batch_size = batch_size
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
 		self.chanids = input_dataset.channel_ids
@@ -239,9 +241,14 @@ class DualModelTrainer(object):
 		return self
 
 	def __next__(self) -> Tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
-		inp, _, base = next(self.input_data_iter)
-		_, tar, _ = next(self.target_data_iter)
-		return inp, tar, base
+		inputs, bases, targets = [], [], []
+		for iB in range(self.batch_size):
+			inp, _, base = next(self.input_data_iter)
+			_, tar, _ = next(self.target_data_iter)
+			inputs.append( inp )
+			bases.append( base )
+			targets.append( tar )
+		return batch(inputs), batch(bases), batch(targets)
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
