@@ -92,6 +92,6 @@ def cfg_date( csection: str ) -> date:
     return date( dcfg.year, dcfg.month, dcfg.day )
 
 def start_date( task_config )-> date:
-    toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+    toks = [ int(tok) for tok in reversed(task_config.start_date.split("/")) ]
     print( f"Task start date: {task_config.start_date}: {toks}")
     return  date( *toks )
