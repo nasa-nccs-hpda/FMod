@@ -7,7 +7,7 @@ from fmod.base.util.logging import lgm
 T_co = TypeVar('T_co', covariant=True)
 from datetime import date
 from fmod.base.util.dates import date_list
-from fmod.base.util.config import configure, cfg, cfg_date, cfg2args, pp
+from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
 from fmod.pipeline.trainer import DualModelTrainer
 from fmod.pipeline.merra2 import MERRA2Dataset
 
@@ -15,7 +15,7 @@ from fmod.pipeline.merra2 import MERRA2Dataset
 class M2DownscalingDataset(DownscalingDataset):
 	def __init__( self, *args, **kwargs ):
 		self.device = kwargs.pop('device', 'gpu')
-		self.train_dates= kwargs.pop('train_dates', date_list(cfg_date('task'), cfg().task.max_days) )
+		self.train_dates= kwargs.pop('train_dates', date_list(start_date( cfg().task ), cfg().task.max_days) )
 		self.input_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='low', load_inputs=True, load_base=True, load_targets=False)
 		self.target_dataset = MERRA2Dataset(train_dates=self.train_dates, vres='high', load_inputs=False, load_base=False, load_targets=True)
 		self.trainer = DualModelTrainer(self.input_dataset, self.target_dataset, self.device)

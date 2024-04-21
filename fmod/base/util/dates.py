@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from datetime import date, timedelta
+from fmod.base.util.config import start_date
 import random
 
 def kw(d: date) -> Dict[str,int]:
@@ -53,5 +54,6 @@ def year_range( y0: int, y1: int, **kwargs )-> List[date]:
 	return rlist
 
 def batches_range( task_config )-> List[date]:
-	toks = [ int(tok) for tok in task_config.start_date.split("/") ]
-	return date_list( date( *toks ), task_config.batch_size*task_config.nbatches )
+	return date_list( start_date( task_config ), task_config.batch_size*task_config.nbatches )
+
+

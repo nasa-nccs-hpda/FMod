@@ -3,7 +3,7 @@ import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_list
 from fmod.pipeline.downscale import Downscaler
-from fmod.base.util.config import configure, cfg, cfg_date, cfg2args, pp
+from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
 import xarray as xa
 from fmod.pipeline.rescale import DataLoader
 from datetime import date

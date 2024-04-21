@@ -90,3 +90,7 @@ def cfg2args( csection: str, pnames: List[str] ) -> Dict[str,Any]:
 def cfg_date( csection: str ) -> date:
     dcfg = cfg().get(csection)
     return date( dcfg.year, dcfg.month, dcfg.day )
+
+def start_date( task_config )-> date:
+	toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+	return  date( *toks )
