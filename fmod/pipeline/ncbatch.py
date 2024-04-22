@@ -109,7 +109,7 @@ class ncBatchDataset(BaseDataset):
             lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}")
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
             lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
-            results: Dict[str,xa.DataArray] = self.extract_inputs_targets(train_data, **self.task_config )
+            results: Dict[str,xa.DataArray] = self.extract_inputs_targets( train_data, **self.task_config )
             self.i = self.i + 1
             for rtype, result in results.items():
                 daily_results.setdefault( rtype, [] ).append( result )
@@ -188,7 +188,7 @@ class ncBatchDataset(BaseDataset):
             lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
             input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
-            lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}")
+            lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
             print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array
@@ -226,6 +226,7 @@ class ncBatchDataset(BaseDataset):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         darray.attrs['channels'] = channels
+        print( f"ds2array{darray.dims}: shape = {darray.shape}")
         return darray.transpose("batch", "channels", coords['y'], coords['x'])
 
     def get_device(self):
