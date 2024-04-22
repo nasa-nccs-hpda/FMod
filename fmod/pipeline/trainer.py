@@ -220,8 +220,10 @@ class DualModelTrainer(object):
 		self.scale_factor = cfg().model.scale_factor
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
 		self.scale_factor = cfg().model.scale_factor
-		sample_input, _, _ = next(iter(input_dataset))
-		_, sample_target, _ = next(iter(target_dataset))
+		sample_input = next(iter(input_dataset))
+		sample_target = next(iter(target_dataset))
+		print(f" * sample_input{sample_input.dims}: {sample_input.shape}" )
+		print(f" * sample_target{sample_target.dims}: {sample_target.shape}" )
 		self.input_grid = sample_input.shape[-2:]
 		self.output_grid = sample_target.shape[-2:]
 		self.input_data_iter = iter(input_dataset)
