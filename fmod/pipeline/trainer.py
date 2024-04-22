@@ -222,8 +222,10 @@ class DualModelTrainer(object):
 		self.scale_factor = cfg().model.scale_factor
 		sample_input = next(iter(input_dataset))
 		sample_target = next(iter(target_dataset))
-		print(f" * sample_input{sample_input.dims}: {sample_input.shape}" )
-		print(f" * sample_target{sample_target.dims}: {sample_target.shape}" )
+		for k,v in sample_input.items():
+			print(f" * input[{k}]: {v.dims}: {v.shape}" )
+		for k, v in sample_target.items():
+			print(f" * target[{k}]: {v.dims}: {v.shape}" )
 		self.input_grid = sample_input.shape[-2:]
 		self.output_grid = sample_target.shape[-2:]
 		self.input_data_iter = iter(input_dataset)
