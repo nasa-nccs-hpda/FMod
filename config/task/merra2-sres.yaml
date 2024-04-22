@@ -13,7 +13,7 @@ start_date:  "01/01/1990"
 batch_ndays: 16
 nbatches: 10
 
-train_steps: 10
+train_steps: [0]
 nsteps_input: 1
 
 data_timestep: 6
