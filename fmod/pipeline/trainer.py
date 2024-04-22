@@ -61,8 +61,8 @@ class ModelTrainer(object):
 			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
 		self.gridops = GridOps(*self.grid_shape)
 		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
-		self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
-		self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+	#	self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
+	#	self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
@@ -223,11 +223,11 @@ class DualModelTrainer(object):
 		sample_input = next(iter(input_dataset))
 		sample_target = next(iter(target_dataset))
 		for k,v in sample_input.items():
-			print(f" * input[{k}]: {v.dims}: {v.shape}" )
+			print( f" * input[{k}]: {v.dims} {v.shape}" )
 		for k, v in sample_target.items():
-			print(f" * target[{k}]: {v.dims}: {v.shape}" )
-		self.input_grid = sample_input.shape[-2:]
-		self.output_grid = sample_target.shape[-2:]
+			print( f" * target[{k}]: {v.dims} {v.shape}" )
+		self.input_grid = sample_input['input'].shape[-2:]
+		self.output_grid = sample_target['target'].shape[-2:]
 		self.input_data_iter = iter(input_dataset)
 		self.target_data_iter = iter(target_dataset)
 		lmax = math.ceil(self.output_grid[0] / cfg().model.scale_factor)
