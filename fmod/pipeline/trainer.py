@@ -244,15 +244,14 @@ class DualModelTrainer(object):
 		self.target_data_iter = iter(self.target_dataset)
 		return self
 
-	def __next__(self) -> Tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
-		inputs, bases, targets = [], [], []
+	def __next__(self) -> Tuple[xarray.DataArray, xarray.DataArray]:
+		inputs, targets = [], []
 		for iB in range(self.batch_size):
-			inp, _, base = next(self.input_data_iter)
-			_, tar, _ = next(self.target_data_iter)
+			inp = next(self.input_data_iter)
+			tar = next(self.target_data_iter)
 			inputs.append( inp )
-			bases.append( base )
 			targets.append( tar )
-		return batch(inputs), batch(bases), batch(targets)
+		return batch(inputs), batch(targets)
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
@@ -312,6 +311,7 @@ class DualModelTrainer(object):
 
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
+		print( f" *------> training: {kwargs}" )
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', True )
 		save_state = kwargs.get('save_state', True)
@@ -325,11 +325,13 @@ class DualModelTrainer(object):
 		if load_state: self.load_state()
 
 		for epoch in range(nepochs):
+			print(f'Epoch {epoch + 1}/{nepochs}: ')
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			acc_loss, acc_base_loss = 0, 0
 			self.model.train()
-			for iT, (xinp, xtar, xbase) in enumerate(iter(self)):
+			for iT, (xinp, xtar) in enumerate(iter(self)):
+				print(f' *** STEP-{iT}, input{xinp.dims}{xinp.shape}, target{xtar.dims}{xtar.shape}')
 				inp = array2tensor(xinp)
 				tar = array2tensor(xtar)
 				prd = self.model(inp)
