@@ -245,6 +245,7 @@ class DualModelTrainer(object):
 		return self
 
 	def __next__(self) -> Tuple[xarray.DataArray, xarray.DataArray]:
+		print( f"DualModelTrainer: next")
 		inputs, targets = [], []
 		for iB in range(self.batch_size):
 			inp = next(self.input_data_iter)
