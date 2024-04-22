@@ -249,8 +249,8 @@ class DualModelTrainer(object):
 		for iB in range(self.batch_size):
 			inp = next(self.input_data_iter)
 			tar = next(self.target_data_iter)
-			inputs.append( inp )
-			targets.append( tar )
+			inputs.append( inp['input'] )
+			targets.append( tar['target'] )
 		return batch(inputs), batch(targets)
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
