@@ -114,6 +114,9 @@ class ncBatchDataset(BaseDataset):
             for rtype, result in results.items():
                 daily_results.setdefault( rtype, [] ).append( result )
         results = { rtype: xa.concat(result_list,'batch') for rtype, result_list in daily_results.items() }
+        print(f" >> generated batch[{self.i}]:")
+        for k,v in results.items():
+            print(f" --->> {k}{v.dims}: {v.shape}")
         return results
 
     def get_input_data(self, day_offset: int) -> xa.Dataset:
@@ -189,7 +192,7 @@ class ncBatchDataset(BaseDataset):
             input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
-            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
+        #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array
 
@@ -226,7 +229,7 @@ class ncBatchDataset(BaseDataset):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         darray.attrs['channels'] = channels
-        print( f"ds2array{darray.dims}: shape = {darray.shape}" )
+    #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
         return darray.transpose( "channels", coords['y'], coords['x'])
 
     def get_device(self):
