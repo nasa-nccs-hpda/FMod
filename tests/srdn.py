@@ -29,7 +29,7 @@ if torch.cuda.is_available():
 input_dataset  = MERRA2Dataset( train_dates=date_list( start_date( cfg().task ), cfg().task.max_days ), vres=input_res, load_inputs=True, load_base=True )
 target_dataset = MERRA2Dataset( train_dates=date_list( start_date( cfg().task ), cfg().task.max_days ), vres=target_res, load_targets=True )
 trainer = DualModelTrainer( input_dataset, target_dataset, device, batch_size=10 )
-sample_input, sample_target, sample_base = next(iter(trainer))
+[sample_input, sample_target, sample_base] = next(iter(trainer))
 print( f"sample_input{sample_input.dims}: {sample_input.shape} {list(sample_input.coords.keys())}" )
 for k,c in sample_input.coords.items():
     print( f"{k}{c.shape}: {c[0]:.2f} -> {c[-1]:.2f}")
