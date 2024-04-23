@@ -99,6 +99,7 @@ class ncBatchDataset(BaseDataset):
 
 
     def __next__(self) -> Dict[str,xa.DataArray]:
+        print("ncBatchDataset.next")
         daily_results: Dict[str,List[xa.DataArray]] = {}
         for gindex in range(self.batch_size):
             if self.i == self.length: break

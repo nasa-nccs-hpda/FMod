@@ -45,6 +45,8 @@ class ModelTrainer(object):
 		self.device = device
 		self.scale_factor = cfg().model.get('scale_factor',1)
 		inp, tar = next(iter(dataset))
+		print(inp)
+		print(tar)
 		self.data_iter = iter(dataset)
 		self.grid_shape = tar.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
