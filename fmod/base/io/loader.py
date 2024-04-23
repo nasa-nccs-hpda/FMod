@@ -11,7 +11,7 @@ class ncFormat(Enum):
 
 def path_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
-	upscale_factor: int = cfg().model.scale_factor
+	upscale_factor: int = cfg().model.get('scale_factor',1)
 	res_suffix = ""
 	if (vres == "low") and (ncformat == ncformat.SRES):
 		res_suffix = f".us{upscale_factor}"
@@ -20,7 +20,7 @@ def path_suffix(vres: str="high") -> str:
 def data_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
 	format_suffix = ".dali" if ncformat == ncformat.DALI else ".nc"
-	upscale_factor: int = cfg().model.scale_factor
+	upscale_factor: int = cfg().model.get('scale_factor',1)
 	res_suffix = ""
 	if (vres == "low") and (ncformat == ncformat.SRES):
 		res_suffix = f".us{upscale_factor}"
