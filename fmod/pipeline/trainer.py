@@ -48,9 +48,8 @@ class ModelTrainer(object):
 	def __init__(self,  dataset: BaseDataset, device: torch.device ):
 		self.dataset = dataset
 		self.device = device
-		self.scale_factor = cfg().model.scale_factor
+		self.scale_factor = cfg().model.get('scale_factor',1)
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
-		self.scale_factor = cfg().model.scale_factor
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
 		if self.task_type == TaskType.Downscale:
@@ -58,7 +57,7 @@ class ModelTrainer(object):
 			lmax = inp.shape[-2]
 		else:
 			self.grid_shape = inp.shape[-2:]
-			lmax = math.ceil(self.grid_shape[0] / cfg().model.scale_factor)
+			lmax = math.ceil(self.grid_shape[0] / cfg().model.get('scale_factor',1))
 		self.gridops = GridOps(*self.grid_shape)
 		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}, lmax={lmax}", display=True)
 	#	self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
@@ -217,9 +216,9 @@ class DualModelTrainer(object):
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
 		self.chanids = input_dataset.channel_ids
-		self.scale_factor = cfg().model.scale_factor
+		self.scale_factor = cfg().model.get('scale_factor',1)
 		self.task_type: TaskType = TaskType(cfg().task.task_type)
-		self.scale_factor = cfg().model.scale_factor
+		self.scale_factor = cfg().model.get('scale_factor',1)
 		sample_input = next(iter(input_dataset))
 		sample_target = next(iter(target_dataset))
 		for k,v in sample_input.items():
@@ -230,7 +229,7 @@ class DualModelTrainer(object):
 		self.output_grid = sample_target['target'].shape[-2:]
 		self.input_data_iter = iter(input_dataset)
 		self.target_data_iter = iter(target_dataset)
-		lmax = math.ceil(self.output_grid[0] / cfg().model.scale_factor)
+		lmax = math.ceil(self.output_grid[0] / cfg().model.get('scale_factor',1))
 		self.gridops = GridOps(*self.output_grid)
 		self.sht = harmonics.RealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)

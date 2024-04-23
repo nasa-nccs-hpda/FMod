@@ -43,7 +43,7 @@ class ModelTrainer(object):
 	def __init__(self,  dataset: BaseDataset, device: torch.device ):
 		self.dataset = dataset
 		self.device = device
-		self.scale_factor = cfg().model.scale_factor
+		self.scale_factor = cfg().model.get('scale_factor',1)
 		inp, tar = next(iter(dataset))
 		self.data_iter = iter(dataset)
 		self.grid_shape = tar.shape[-2:]

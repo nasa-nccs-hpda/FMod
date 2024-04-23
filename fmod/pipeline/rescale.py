@@ -135,7 +135,7 @@ class DataLoader(object):
 		vlores: xa.DataArray = vhires
 
 		for dim in [ 'x', 'y']:
-			cargs = { dim: cfg().model.scale_factor }
+			cargs = { dim: cfg().model.get('scale_factor',1) }
 			vlores = vlores.coarsen( boundary="trim", **cargs ).reduce( redop, keep_attrs=True )
 
 		return dict( high=[vhires], low=[vlores] )
