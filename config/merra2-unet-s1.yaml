@@ -1,0 +1,9 @@
+defaults:
+  - platform: explore
+  - preprocess: merra2-sres
+  - task: merra2-unet
+  - model: unet-s1
+  - pipeline: sres
+  - _self_
+
+cid: merra2-sres-s1

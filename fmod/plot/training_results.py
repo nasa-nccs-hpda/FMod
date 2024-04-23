@@ -60,13 +60,13 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 class ResultsPlotter:
 	tensor_roles = [ "target", "prediction", "interpolated" ]
 
-	def __init__(self, inputs: List[xa.DataArray], targets: List[xa.DataArray], predictions: List[xa.DataArray], interpolates: List[xa.DataArray], **kwargs ):
+	def __init__(self, inputs: List[xa.DataArray], targets: List[xa.DataArray], predictions: List[xa.DataArray], interpolates: Optional[List[xa.DataArray]] = None, **kwargs ):
 		(self.nchan, nlat, nlon) = targets[0].shape[-3:]
 		(self.fig, self.axs) = (None,None)
 		self.inputs: List[xa.DataArray] = inputs
 		self.targets: List[xa.DataArray] = targets
 		self.predictions: List[xa.DataArray] = predictions
-		self.interpolates: List[xa.DataArray] = interpolates
+		self.interpolates: Optional[List[xa.DataArray]] = interpolates
 		self.nsteps = len(targets)
 		self.chanids: List[str] = kwargs.pop('chanids',[])
 		self.ichannel: int = 0
@@ -77,6 +77,8 @@ class ResultsPlotter:
 		self.sslider: StepSlider = StepSlider( 'Step:', self.nsteps,  self.step_update )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
 		self.ims: List[Optional[AxesImage]] = [None,None,None]
+		self.input_images = [self.targets, self.predictions]
+		if self.interpolates is not None: self.input_images.append(self.interpolates)
 		self.format_plot()
 
 	def format_plot(self):
@@ -96,7 +98,7 @@ class ResultsPlotter:
 	def plot(self, **kwargs):
 		cmap = kwargs.pop('cmap', 'jet')
 		origin = kwargs.pop('origin', 'lower' )
-		for ip, image_arrays in enumerate( [ self.targets, self.predictions, self.interpolates ] ):
+		for ip, image_arrays in enumerate( self.input_images ):
 			ax = self.axs[ip]
 			ax.set_title(f"{self.tensor_roles[ip]}")
 			image_data: np.ndarray = self.image_data( ip, image_arrays[self.istep].values )
@@ -123,7 +125,7 @@ class ResultsPlotter:
 
 	@exception_handled
 	def refresh(self):
-		for ip, image_arrays in enumerate( [ self.targets, self.predictions, self.interpolates ] ):
+		for ip, image_arrays in enumerate( self.input_images ):
 			self.ims[ip].set_data( self.image_data( ip, image_arrays[self.istep].values ) )
 		self.format_plot()
 		self.fig.canvas.draw_idle()
