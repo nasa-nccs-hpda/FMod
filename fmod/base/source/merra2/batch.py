@@ -28,7 +28,7 @@ class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
 
-def cache_filepath(vartype: VarType, vres: str, d: date = None) -> str:
+def cache_filepath(vartype: VarType, d: date = None, vres: str="high") -> str:
 	version = cfg().task.dataset_version
 	if vartype == VarType.Dynamic:
 		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
@@ -64,11 +64,11 @@ def _open_dataset( filepath, **kwargs) -> xa.Dataset:
 	return rename_vars(dataset)
 
 def load_dataset( d: date, vres: str, **kwargs ):
-	filepath =  cache_filepath( VarType.Dynamic, vres, d )
+	filepath =  cache_filepath( VarType.Dynamic,  d, vres )
 	return _open_dataset( filepath, **kwargs)
 
-def load_const_dataset(  vres: str, **kwargs ):
-	filepath =  cache_filepath(VarType.Constant, vres)
+def load_const_dataset(  vres: str = "high", **kwargs ):
+	filepath =  cache_filepath(VarType.Constant, vres=vres)
 	return _open_dataset( filepath, **kwargs )
 
 def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
@@ -87,7 +87,7 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 	return xa.merge( [dynamics, constants], compat='override' )
 
 def load_batch( d: date, vres: str="high", **kwargs ):
-	filepath = cache_filepath(VarType.Dynamic, vres, d)
+	filepath = cache_filepath(VarType.Dynamic, d, vres)
 	device = cfg().task.device.lower()
 	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", engine="netcdf4", **kwargs)
 	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]

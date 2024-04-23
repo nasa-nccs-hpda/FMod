@@ -21,7 +21,7 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 
 def clear_const_file():
 	for vres in ["high", "low"]:
-		const_filepath = cache_filepath(VarType.Constant,vres)
+		const_filepath = cache_filepath(VarType.Constant,vres=vres)
 		remove_filepath(const_filepath)
 
 def furbish( dset: xa.Dataset ) -> xa.Dataset:
@@ -87,12 +87,12 @@ def open_dataset( filepath, **kwargs) -> xa.Dataset:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
 	return rename_vars(dataset)
 
-def load_dataset( vres: str,  d: date ) -> xa.Dataset:
-	filepath =  cache_filepath( VarType.Dynamic, vres, d )
+def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
+	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	return open_dataset( filepath )
 
-def load_const_dataset( vres: str ) -> xa.Dataset:
-	filepath =  cache_filepath(VarType.Constant, vres )
+def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
+	filepath =  cache_filepath(VarType.Constant, vres=vres )
 	return open_dataset( filepath )
 
 class FMBatch:

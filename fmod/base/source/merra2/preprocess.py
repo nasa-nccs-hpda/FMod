@@ -164,10 +164,10 @@ class MERRA2DataProcessor:
 
     def needs_update(self, vtype: VarType, d: date, reprocess: bool ) -> bool:
         if reprocess: return True
-        cache_fvpath: str = cache_filepath(vtype, "high", d )
+        cache_fvpath: str = cache_filepath( vtype, d, "high" )
         if not os.path.exists(cache_fvpath): return True
         if self.format == ncFormat.SRES:
-            cache_fvpath: str = cache_filepath(vtype, "low", d)
+            cache_fvpath: str = cache_filepath( vtype, d, "low" )
             if not os.path.exists(cache_fvpath): return True
         lgm().log(f" ** Skipping date {d} due to existence of processed files",display=True)
         return False
@@ -187,7 +187,7 @@ class MERRA2DataProcessor:
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets[vres].append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
                     lgm().log(f" --------- Processing {vres} res variable data: {len(collection_dsets)} dsets --------- ")
-                    cache_fvpath: str = cache_filepath(VarType.Dynamic, vres, d)
+                    cache_fvpath: str = cache_filepath(VarType.Dynamic, d, vres)
                     self.write_daily_files( cache_fvpath, collection_dsets, vres)
                     lgm().log(f" >> Saving {vres} res collection data for {d} to file '{cache_fvpath}'", display=True)
 
@@ -199,7 +199,7 @@ class MERRA2DataProcessor:
                         for vres, dsets in daily_vres_dsets.items(): const_vres_dsets[vres].append(dsets)
                     for vres,const_dsets in const_vres_dsets.items():
                         lgm().log(f" --------- Processing {vres} res const data: {len(const_dsets)} dsets --------- ")
-                        cache_fcpath: str = cache_filepath( VarType.Constant, vres )
+                        cache_fcpath: str = cache_filepath( VarType.Constant, vres=vres )
                         if not os.path.exists( cache_fcpath ):
                             self.write_daily_files(cache_fcpath, const_dsets, vres)
                             lgm().log(f" >> Saving {vres} res const data to file '{cache_fcpath}'", display=True)
