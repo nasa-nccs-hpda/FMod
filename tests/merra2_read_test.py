@@ -12,7 +12,7 @@ configure('merra2-sr')
 reference_date = date(1990,1,1 )
 vres = "high"
 
-dset: xa.Dataset = load_dataset( vres, reference_date )
+dset: xa.Dataset = load_dataset( reference_date, vres )
 
 print(f"\n -------------------- Encodings: D=dims, S=shape, C=chunks, PN=%nan -------------------- ")
 for vid in dset.data_vars.keys():

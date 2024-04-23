@@ -65,7 +65,6 @@ class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
         self.task_config: DictConfig = task_config
         self.train_dates = batches_range(task_config)
-        print( self.train_dates )
         self.batch_ndays = task_config.batch_ndays               # number of days per batch
         self.load_inputs = kwargs.pop('load_inputs',True)
         self.load_targets = kwargs.pop('load_targets', True)

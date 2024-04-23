@@ -110,7 +110,7 @@ class FMBatch:
 
 	def load(self, d: date, **kwargs):
 		bdays = date_list(d, self.days_per_batch)
-		time_slices: List[xa.Dataset] = [ load_dataset(self.vres, d) for d in bdays ]
+		time_slices: List[xa.Dataset] = [ load_dataset(d, self.vres) for d in bdays ]
 		self.current_batch: xa.Dataset = merge_batch(time_slices, self.constants)
 
 	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
@@ -134,8 +134,8 @@ class SRBatch:
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
 
-	def load(self, vres: str, d: date, **kwargs) -> xa.Dataset:
-		return load_dataset(vres, d, **kwargs)
+	def load(self, d: date, vres: str="high") -> xa.Dataset:
+		return load_dataset(d, vres)
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
