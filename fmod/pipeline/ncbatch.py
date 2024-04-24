@@ -1,5 +1,5 @@
 import numpy as np, xarray as xa
-import torch, dataclasses
+import torch, time
 from omegaconf import DictConfig, OmegaConf
 import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
@@ -63,7 +63,6 @@ class MetaData(DatapipeMetaData):
 
 class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
-        print( "ncBatchDataset.init")
         self.task_config: DictConfig = task_config
         self.train_dates = batches_range(task_config)
         self.batch_ndays = task_config.batch_ndays               # number of days per batch
@@ -84,7 +83,6 @@ class ncBatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
-        print( "ncBatchDataset: initialized")
 
     def __getitem__(self, idx: int):
         self.i = idx
@@ -102,6 +100,7 @@ class ncBatchDataset(BaseDataset):
 
     def __next__(self) -> Dict[str,xa.DataArray]:
         print("ncBatchDataset.next")
+        t0 = time.time()
         daily_results: Dict[str,List[xa.DataArray]] = {}
         for gindex in range(self.batch_size):
             if self.i == self.length: break
@@ -109,15 +108,15 @@ class ncBatchDataset(BaseDataset):
             if self.current_date != next_date:
                 self.fmbatch.load( next_date )
                 self.current_date = next_date
-            lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}")
+            lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}",display=True)
             train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
-            lgm().log(f" *** >>> train_data: sizes={train_data.sizes}")
+            lgm().log(f" *** >>> train_data: sizes={train_data.sizes}",display=True)
             results: Dict[str,xa.DataArray] = self.extract_inputs_targets( train_data, **self.task_config )
             self.i = self.i + 1
             for rtype, result in results.items():
                 daily_results.setdefault( rtype, [] ).append( result )
         results = { rtype: xa.concat(result_list,'batch') for rtype, result_list in daily_results.items() }
-        print(f" >> generated batch[{self.i}]:")
+        print(f" >> generated batch[{self.i}] in {time.time()-t0:.2f} sec:")
         for k,v in results.items():
             print(f" --->> {k}{v.dims}: {v.shape}")
         return results

@@ -113,7 +113,6 @@ class FMBatch:
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 		self.current_batch: xa.Dataset = None
-		print( "FMBatch Created")
 
 	def load(self, d: date, **kwargs):
 		bdays = date_list(d, self.days_per_batch)
