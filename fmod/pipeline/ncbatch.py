@@ -63,6 +63,7 @@ class MetaData(DatapipeMetaData):
 
 class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
+        print( "ncBatchDataset.init")
         self.task_config: DictConfig = task_config
         self.train_dates = batches_range(task_config)
         self.batch_ndays = task_config.batch_ndays               # number of days per batch
@@ -83,6 +84,7 @@ class ncBatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
+        print( "ncBatchDataset: initialized")
 
     def __getitem__(self, idx: int):
         self.i = idx

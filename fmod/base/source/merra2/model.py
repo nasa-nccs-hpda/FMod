@@ -62,17 +62,20 @@ def get_predef_norm_data() -> Dict[str, xa.Dataset]:
 	pdstats = dict(std_diff=d2xa(dstd), mean=d2xa(vmean), std=d2xa(vstd))
 	return {snames[sname]: pdstats[sname] for sname in sndef.keys()}
 
+@log_timing
 def load_stats(statname: str, **kwargs) -> xa.Dataset:
 	version = cfg().task['dataset_version']
 	filepath = stats_filepath(version, statname)
 	varstats: xa.Dataset = xa.open_dataset(filepath, **kwargs)
 	return rename_vars( varstats )
 
+@log_timing
 def load_norm_data() -> Dict[str, xa.Dataset]:
 	sndef = { sn:sn for sn in StatsAccumulator.statnames }
 	snames: Dict[str, str] = cfg().task.get('statnames',sndef)
 	return {} if snames is None else {snames[sname]: load_stats(sname) for sname in sndef.keys()}
 
+@log_timing
 def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	predef_norm_data: Dict[str, xa.Dataset] = get_predef_norm_data()
 	m2_norm_data: Dict[str, xa.Dataset] = load_norm_data()
@@ -87,16 +90,19 @@ def open_dataset( filepath, **kwargs) -> xa.Dataset:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
 	return rename_vars(dataset)
 
+@log_timing
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	return open_dataset( filepath )
 
+@log_timing
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres=vres )
 	return open_dataset( filepath )
 
 class FMBatch:
 
+	@log_timing
 	def __init__(self, btype: BatchType, **kwargs):
 		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
 		self.type: BatchType = btype
@@ -107,6 +113,7 @@ class FMBatch:
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 		self.current_batch: xa.Dataset = None
+		print( "FMBatch Created")
 
 	def load(self, d: date, **kwargs):
 		bdays = date_list(d, self.days_per_batch)
