@@ -8,7 +8,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import pctnan
 
 hydra.initialize(version_base=None, config_path="../config")
-configure('merra2-srdn-s1')
+configure('merra2-unet-s1')
 cfg().task.device = "cpu"
 lgm().set_level( logging.DEBUG )
 
