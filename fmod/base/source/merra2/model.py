@@ -157,10 +157,19 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
+	def load_batch(self, d: date, **kwargs) -> xa.Dataset:
+		dsets = []
+		for day in date_list(d, self.days_per_batch):
+			dsets.append( load_dataset(day, self.vres) )
+		return xa.concat(dsets, dim="time", coords="minimal").rename( time = "batch" )
+
 	def load(self, d: date) -> xa.Dataset:
 		if self.current_date != d:
-			self.current_batch = load_dataset(d, self.vres)
+			self.current_batch = self.load_batch(d)
 			self.current_date = d
+			print("Loaded batch  for date {d}:")
+			for k, v in self.current_batch.data_vars.items():
+				print(f" *** {k}{v.dims}: {v.shape}")
 		return self.current_batch
 
 
