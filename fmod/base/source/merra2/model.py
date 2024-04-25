@@ -161,7 +161,7 @@ class SRBatch:
 		dsets = []
 		for day in date_list(d, self.days_per_batch):
 			dsets.append( load_dataset(day, self.vres) )
-		return xa.concat(dsets, dim="time", coords="minimal").rename( time = "batch" )
+		return xa.concat(dsets, dim="time", coords="minimal")
 
 	def load(self, d: date) -> xa.Dataset:
 		if self.current_date != d:
