@@ -161,7 +161,9 @@ class ModelTrainer(object):
 
 			acc_loss = 0
 			self.model.train()
-			for inp, tar in self.data_iter:
+			for batch_data in self.data_iter:
+				inp = batch_data['input']
+				tar = batch_data['target']
 				print( inp )
 				prd = self.model( inp )
 				loss = self.loss( prd, tar )
@@ -207,7 +209,9 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		inputs, predictions, targets = [], [], []
 		with torch.inference_mode():
-			for istep, (inp, tar) in enumerate(self.data_iter):
+			for istep, batch_data in enumerate(self.data_iter):
+				inp = batch_data['input']
+				tar = batch_data['target']
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
 				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]')
