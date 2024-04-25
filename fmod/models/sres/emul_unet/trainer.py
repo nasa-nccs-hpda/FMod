@@ -162,6 +162,7 @@ class ModelTrainer(object):
 			acc_loss = 0
 			self.model.train()
 			for inp, tar in self.data_iter:
+				print( inp )
 				prd = self.model( inp )
 				loss = self.loss( prd, tar )
 
