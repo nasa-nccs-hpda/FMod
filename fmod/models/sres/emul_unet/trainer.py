@@ -47,7 +47,6 @@ class ModelTrainer(object):
 		self.scale_factor = cfg().model.get('scale_factor',1)
 		results = next(iter(dataset))
 		[inp, tar] = [results[t] for t in ['input', 'target']]
-		self.data_iter = iter(dataset)
 		self.grid_shape = tar.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
 		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
@@ -56,6 +55,10 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+
+	@property
+	def data_iter(self):
+		return iter(self.dataset)
 
 	@property
 	def sht(self):
@@ -158,7 +161,7 @@ class ModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- " )
+			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- " )
 
 			acc_loss = 0
 			self.model.train()
@@ -174,7 +177,6 @@ class ModelTrainer(object):
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
 
 				acc_loss += loss.item() * inp.size(0)
-				#        print( f"Loss: {loss.item()}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()

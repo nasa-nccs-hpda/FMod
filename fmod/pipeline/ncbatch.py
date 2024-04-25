@@ -101,12 +101,17 @@ class ncBatchDataset(BaseDataset):
         if self.current_date != next_date:
             self.fmbatch.load( next_date )
             self.current_date = next_date
-        results: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
-        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-t0:.2f} sec",display=True)
-        for k,v in results.items():
-            print(f" --->> {k}{v.dims}: {v.shape}")
-        self.day_index = (self.day_index + self.batch_ndays) % len( self.train_dates )
-        return results
+        batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
+        self.log( batch_inputs, t0 )
+        self.day_index = self.day_index + self.batch_ndays
+        if self.day_index >= len( self.train_dates ):
+            raise StopIteration()
+        return batch_inputs
+
+    def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
+        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec",display=True)
+        for k,v in batch_inputs.items():
+            lgm().log(f" --->> {k}{v.dims}: {v.shape}")
 
     def __iter__(self):
         self.day_index = 0
