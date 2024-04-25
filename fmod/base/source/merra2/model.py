@@ -6,7 +6,8 @@ from fmod.base.util.dates import drepr, date_list
 from datetime import date
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
-from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath
+from fmod.base.source.merra2.batch import get_steps_per_day
+from .batch import rename_vars, get_days_per_batch, get_target_steps, VarType, BatchType, cache_filepath, stats_filepath, rename_coords, subset_datavars
 from fmod.base.io.loader import ncFormat
 from fmod.base.util.ops import nnan, pctnan, remove_filepath
 
@@ -31,7 +32,7 @@ def furbish( dset: xa.Dataset ) -> xa.Dataset:
 	attrs['datetime'] = coords.pop('datetime', attrs.get('datetime',None) )
 	return xa.Dataset( dvars, coords, attrs )
 
-def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
+def merge_batch1( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = cfg().task.get('constants',[])
 	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
 	vslices = [ furbish(vslice) for vslice in slices ]
@@ -51,6 +52,10 @@ def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset
 			dvar = dvar.mean(dim="time", skipna=True, keep_attrs=True)
 			constants[vname] = dvar
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
+	return xa.merge( [dynamics, constants], compat='override' )
+
+def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
+	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
 	return xa.merge( [dynamics, constants], compat='override' )
 
 def get_predef_norm_data() -> Dict[str, xa.Dataset]:
@@ -83,22 +88,25 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	lgm().log( f"m2_norm_data: {list(m2_norm_data.keys())}")
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
-def open_dataset( filepath, **kwargs) -> xa.Dataset:
-	dataset: xa.Dataset = xa.open_dataset(filepath, engine='netcdf4', **kwargs)
+def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 	roi: Optional[ Dict[str,List[float]] ] = cfg().task.get('roi')
+	levels: Optional[ List[float] ] = cfg().task.get('levels')
+	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
 	if roi is not None:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
-	return rename_vars(dataset)
+	if levels is not None:
+		dataset = dataset.sel(z=levels, method="nearest")
+	return rename_coords(dataset)
 
 @log_timing
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
-	return open_dataset( filepath )
+	return acess_data_subset( filepath)
 
 @log_timing
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres=vres )
-	return open_dataset( filepath )
+	return acess_data_subset( filepath)
 
 class FMBatch:
 
@@ -134,21 +142,25 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, batch_size: int, **kwargs):
-		self.batch_size = batch_size
+	@log_timing
+	def __init__(self, **kwargs):
+		self.vres = kwargs.get('vres', "high" )
+		self.current_batch: xa.Dataset = None
+		self.days_per_batch = cfg().task.batch_ndays
+		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
 
+	def merge_batch(self, slices: List[xa.Dataset]) -> xa.Dataset:
+		dynamics: xa.Dataset = xa.concat(slices, dim="time", coords="minimal")
+		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
+		return merged
 
-	def load(self, d: date, vres: str="high") -> xa.Dataset:
-		return load_dataset(d, vres)
-
-	@classmethod
-	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
-		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
-		result = xa.concat( list(data_batch.data_vars.values()), dim=features )
-		result = result.transpose(..., "features")
-		return result
+	def load(self, d: date) -> xa.Dataset:
+		bdays = date_list(d, self.days_per_batch)
+		time_slices: List[xa.Dataset] = [ load_dataset(d, self.vres) for d in bdays ]
+		self.current_batch = self.merge_batch(time_slices)
+		return self.current_batch
 
 
 

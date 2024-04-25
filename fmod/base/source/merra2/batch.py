@@ -44,9 +44,13 @@ def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task['train_steps']
 	elif btype == BatchType.Forecast: return cfg().task['eval_steps']
 
-def get_days_per_batch(btype: BatchType):
+def get_steps_per_day() -> int:
 	steps_per_day: float = 24 / cfg().task['data_timestep']
 	assert steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
+	return int(steps_per_day)
+
+def get_days_per_batch(btype: BatchType):
+	steps_per_day = get_steps_per_day()
 	target_steps = get_target_steps( btype )
 	batch_steps: int = cfg().task.nsteps_input + len(target_steps)
 	if btype == BatchType.Training: return 1 + math.ceil((batch_steps - 1) / steps_per_day)
@@ -58,6 +62,16 @@ def rename_vars( dataset: xa.Dataset ) -> xa.Dataset:
 	if 'coords' in cfg().task:
 		model_coord_map = {k: v for k, v in cfg().task['coords'].items() if k in dataset.coords}
 	return dataset.rename(**model_varname_map, **model_coord_map)
+
+def subset_datavars( dataset: xa.Dataset ) -> xa.Dataset:
+	data_vars = {k: dataset.data_vars[v] for k, v in cfg().task['input_variables'].items() if v in dataset.data_vars}
+	return xa.Dataset( data_vars=data_vars, coords=dataset.coords, attrs=dataset.attrs )
+
+def rename_coords( dataset: xa.Dataset ) -> xa.Dataset:
+	model_coord_map = {}, {}
+	if 'coords' in cfg().task:
+		model_coord_map = {k: v for k, v in cfg().task['coords'].items() if k in dataset.coords}
+	return dataset.rename(**model_coord_map)
 
 def _open_dataset( filepath, **kwargs) -> xa.Dataset:
 	dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)

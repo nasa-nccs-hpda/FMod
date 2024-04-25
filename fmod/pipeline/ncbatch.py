@@ -12,7 +12,7 @@ from fmod.base.util.dates import date_list, year_range, batches_range
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from modulus.datapipes.datapipe import Datapipe
-from fmod.base.source.merra2.model import FMBatch, BatchType
+from fmod.base.source.merra2.model import FMBatch, BatchType, SRBatch
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
@@ -77,7 +77,7 @@ class ncBatchDataset(BaseDataset):
         self.nsteps_input = task_config.nsteps_input
         self.input_duration = pd.Timedelta( self.dts*self.nsteps_input, unit="h" )
         self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
-        self.fmbatch: FMBatch = FMBatch( BatchType.Training, **kwargs )
+        self.fmbatch: SRBatch = SRBatch( **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.current_date = date(1,1,1 )
         self.mu: xa.Dataset  = self.norms['mean_by_level']
@@ -102,19 +102,17 @@ class ncBatchDataset(BaseDataset):
         print("ncBatchDataset.next")
         t0 = time.time()
         daily_results: Dict[str,List[xa.DataArray]] = {}
-        for gindex in range(self.batch_size):
-            if self.i == self.length: break
-            next_date = self.get_date()
-            if self.current_date != next_date:
-                self.fmbatch.load( next_date )
-                self.current_date = next_date
-            lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}",display=True)
-            train_data: xa.Dataset = self.fmbatch.get_train_data( self.get_day_offset() )
-            lgm().log(f" *** >>> train_data: sizes={train_data.sizes}",display=True)
-            results: Dict[str,xa.DataArray] = self.extract_inputs_targets( train_data, **self.task_config )
-            self.i = self.i + 1
-            for rtype, result in results.items():
-                daily_results.setdefault( rtype, [] ).append( result )
+        next_date = self.get_date()
+        if self.current_date != next_date:
+            self.fmbatch.load( next_date )
+            self.current_date = next_date
+        lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}",display=True)
+        train_data: xa.Dataset = self.fmbatch.load( self.get_day_offset() )
+        lgm().log(f" *** >>> train_data: sizes={train_data.sizes}",display=True)
+        results: Dict[str,xa.DataArray] = self.extract_inputs_targets( train_data, **self.task_config )
+        self.i = self.i + self.fmbatch.batch_steps
+        for rtype, result in results.items():
+            daily_results.setdefault( rtype, [] ).append( result )
         results = { rtype: xa.concat(result_list,'batch') for rtype, result_list in daily_results.items() }
         print(f" >> generated batch[{self.i}] in {time.time()-t0:.2f} sec:")
         for k,v in results.items():
