@@ -72,6 +72,7 @@ class ncBatchDataset(BaseDataset):
         self.dts =task_config.data_timestep                       # data timestep in hours
         self.n_day_offsets = 24//self.dts                         # number of timesteps per day
         self.batch_size = self.batch_ndays * self.dts             # number of timesteps per batch
+        self.day_index = 0
         super(ncBatchDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
         self.train_steps = task_config.train_steps
         self.nsteps_input = task_config.nsteps_input
@@ -85,21 +86,16 @@ class ncBatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
 
     def __getitem__(self, idx: int):
-        self.i = idx
+        self.day_index = idx
         return self.__next__()
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
     def get_date(self):
-        return self.train_dates[ self.i // self.n_day_offsets ]
-
-    def get_day_offset(self):
-        return self.i % self.n_day_offsets
-
+        return self.train_dates[ self.day_index ]
 
     def __next__(self) -> Dict[str,xa.DataArray]:
-        print("ncBatchDataset.next")
         t0 = time.time()
         next_date = self.get_date()
         if self.current_date != next_date:
@@ -110,11 +106,11 @@ class ncBatchDataset(BaseDataset):
         print(f" >> generated batch[{self.i}] for date {self.current_date} in {time.time()-t0:.2f} sec:")
         for k,v in results.items():
             print(f" --->> {k}{v.dims}: {v.shape}")
-        self.i = self.i + self.fmbatch.batch_steps
+        self.day_index = (self.day_index + self.batch_ndays) % len( self.train_dates )
         return results
 
     def __iter__(self):
-        self.i = 0
+        self.day_index = 0
         return self
 
     def extract_input_target_times(self, dataset: xa.Dataset) -> Tuple[xa.Dataset, xa.Dataset]:
