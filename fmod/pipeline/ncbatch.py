@@ -101,9 +101,8 @@ class ncBatchDataset(BaseDataset):
         if self.current_date != next_date:
             self.fmbatch.load( next_date )
             self.current_date = next_date
-        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}",display=True)
         results: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
-        print(f" >> generated batch[{self.i}] for date {self.current_date} in {time.time()-t0:.2f} sec:")
+        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-t0:.2f} sec",display=True)
         for k,v in results.items():
             print(f" --->> {k}{v.dims}: {v.shape}")
         self.day_index = (self.day_index + self.batch_ndays) % len( self.train_dates )
