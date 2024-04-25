@@ -82,7 +82,7 @@ class ModelTrainer(object):
 		torch.save( self.model.state_dict(), cppath )
 		if loss < self.min_loss:
 			cppath = cppath + ".best"
-			lgm().log(f"Saving best model to {cppath}")
+			lgm().log(f"   ---- Saving best model (loss={loss:.2f}) to {cppath}", display=True )
 			torch.save(self.model.state_dict(), cppath )
 			self.min_loss = loss
 
