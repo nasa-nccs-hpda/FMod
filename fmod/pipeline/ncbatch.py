@@ -106,7 +106,7 @@ class ncBatchDataset(BaseDataset):
             self.fmbatch.load( next_date )
             self.current_date = next_date
         lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}",display=True)
-        results: Dict[str,xa.DataArray] = self.extract_inputs_targets( self.fmbatch.current_batch, **self.task_config )
+        results: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
         print(f" >> generated batch[{self.i}] for date {self.current_date} in {time.time()-t0:.2f} sec:")
         for k,v in results.items():
             print(f" --->> {k}{v.dims}: {v.shape}")
@@ -203,6 +203,46 @@ class ncBatchDataset(BaseDataset):
 
         return results
 
+    def extract_batch_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...], **kwargs) -> Dict[str,xa.DataArray]:
+        nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
+        dvars = {}
+        for vname, varray in idataset.data_vars.items():
+            missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
+            dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
+        dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
+
+        if set(forcing_variables) & set(target_variables):
+            raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
+        results = {}
+
+        if self.load_inputs:
+            input_varlist: List[str] = list(input_variables)+list(forcing_variables)
+            selected_inputs: xa.Dataset = dataset[input_varlist]
+            lgm().debug(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}")
+            lgm().debug(f" >> >> dataset vars = {list(dataset.data_vars.keys())}")
+            lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
+            input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
+            channels = input_array.attrs.get('channels', [])
+            lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
+        #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
+            self.chanIds['input'] = channels
+            results['input'] = input_array
+
+        if self.load_base:
+            base_inputs: xa.Dataset = dataset[list(target_variables)]
+            base_input_array: xa.DataArray = self.ds2array( self.normalize(base_inputs.isel(time=-1)) )
+            lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
+            results['base'] = base_input_array
+
+        if self.load_targets:
+            lgm().debug(f" >> >> target variables: {target_variables}")
+            target_array: xa.DataArray = self.ds2array( self.normalize(dataset[list(target_variables)]) )
+            lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
+            lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
+            self.chanIds['target'] = target_array.attrs['channels']
+            results['target'] = target_array
+
+        return results
     def ds2array(self, dset: xa.Dataset, **kwargs) -> xa.DataArray:
         coords = self.task_config.coords
         merge_dims = kwargs.get('merge_dims', [coords['z'], coords['t']])
