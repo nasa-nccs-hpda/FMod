@@ -45,6 +45,7 @@ class ModelTrainer(object):
 		self.dataset = dataset
 		self.device = device
 		self.scale_factor = cfg().model.get('scale_factor',1)
+		self.min_loss = float('inf')
 		results = next(iter(dataset))
 		[inp, tar] = [results[t] for t in ['input', 'target']]
 		self.grid_shape = tar.shape[-2:]
@@ -75,18 +76,25 @@ class ModelTrainer(object):
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
 
-	def save_state(self):
+	def save_state(self, loss: float ):
+		cppath = self.checkpoint_path
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
-		torch.save( self.model.state_dict(), self.checkpoint_path )
+		torch.save( self.model.state_dict(), cppath )
+		if loss < self.min_loss:
+			cppath = cppath + ".best"
+			lgm().log(f"Saving best model to {cppath}")
+			torch.save(self.model.state_dict(), cppath )
+			self.min_loss = loss
 
-	def load_state(self) -> bool:
-		if os.path.exists( self.checkpoint_path ):
+	def load_state(self, best_model: bool = False) -> bool:
+		cppath = self.checkpoint_path + ".best" if best_model else self.checkpoint_path
+		if os.path.exists( cppath ):
 			try:
-				self.model.load_state_dict( torch.load( self.checkpoint_path ) )
-				lgm().log(f"Loaded model from {self.checkpoint_path}", display=True)
+				self.model.load_state_dict( torch.load( cppath ) )
+				lgm().log(f"Loaded model from {cppath}", display=True)
 				return True
 			except Exception as e:
-				lgm().log(f"Unable to load model from {self.checkpoint_path}: {e}", display=True)
+				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
 		return False
 
 	@property
@@ -149,7 +157,9 @@ class ModelTrainer(object):
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', True )
+		best_model = kwargs.get('best_model', True)
 		save_state = kwargs.get('save_state', True)
+
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get( 'scheduler', None )
@@ -157,7 +167,7 @@ class ModelTrainer(object):
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		nepochs = cfg().task.nepochs
 		train_start, acc_loss = time.time(), 0
-		if load_state: self.load_state()
+		if load_state: self.load_state(best_model)
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -192,8 +202,7 @@ class ModelTrainer(object):
 
 			cp_msg = ""
 			if save_state:
-				self.save_state()
-				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch == 0))
+				self.save_state( acc_loss )
 				cp_msg = "  ** model saved ** "
 			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
 
@@ -235,5 +244,5 @@ class ModelTrainer(object):
 			inp: torch.Tensor = array2tensor(batch_data['input'])
 			tar: torch.Tensor = array2tensor(batch_data['target'])
 			out: Tensor = self.model(inp)
-			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(out.shape)}')
+			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(out.shape)}', display=True)
 			return npa(inp), npa(tar), npa(out)
