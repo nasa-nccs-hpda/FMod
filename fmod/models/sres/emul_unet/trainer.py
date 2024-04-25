@@ -4,6 +4,7 @@ from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.base.util.config import configure, cfg, cfg_date
 from fmod.base.util.grid import GridOps
+from fmod.pipeline.merra2 import array2tensor
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
@@ -162,8 +163,8 @@ class ModelTrainer(object):
 			acc_loss = 0
 			self.model.train()
 			for batch_data in self.data_iter:
-				inp = batch_data['input']
-				tar = batch_data['target']
+				inp: torch.Tensor = array2tensor(batch_data['input'])
+				tar: torch.Tensor = array2tensor(batch_data['target'])
 				print( inp )
 				prd = self.model( inp )
 				loss = self.loss( prd, tar )
@@ -210,8 +211,8 @@ class ModelTrainer(object):
 		inputs, predictions, targets = [], [], []
 		with torch.inference_mode():
 			for istep, batch_data in enumerate(self.data_iter):
-				inp = batch_data['input']
-				tar = batch_data['target']
+				inp: torch.Tensor = array2tensor(batch_data['input'])
+				tar: torch.Tensor = array2tensor(batch_data['target'])
 				if istep == max_step: break
 				out: Tensor = self.model(inp)
 				lgm().log(f' * STEP {istep}, in: [{list(inp.shape)}, {pctnant(inp)}], out: [{list(out.shape)}, {pctnant(out)}]')
