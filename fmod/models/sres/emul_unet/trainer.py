@@ -204,7 +204,7 @@ class ModelTrainer(object):
 
 		return acc_loss
 
-	def inference(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
+	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
 		max_step = kwargs.get('max_step',5)
 		torch.manual_seed(seed)
@@ -225,3 +225,15 @@ class ModelTrainer(object):
 			lgm().log(f' ---> *** input: {input1.shape}, pctnan={pctnan(input1)} *** prediction: {prediction.shape}, pctnan={pctnan(prediction)} *** target: {target.shape}, pctnan={pctnan(target)}')
 
 		return inputs, targets, predictions
+
+	def apply(self, date_index: int, **kwargs ) -> Tuple[ np.ndarray, np.ndarray, np.ndarray ]:
+		seed = kwargs.get('seed',0)
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+		with torch.inference_mode():
+			batch_data = self.dataset[date_index]
+			inp: torch.Tensor = array2tensor(batch_data['input'])
+			tar: torch.Tensor = array2tensor(batch_data['target'])
+			out: Tensor = self.model(inp)
+			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(out.shape)}')
+			return npa(inp), npa(tar), npa(out)
