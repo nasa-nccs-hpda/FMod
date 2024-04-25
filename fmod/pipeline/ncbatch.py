@@ -101,22 +101,16 @@ class ncBatchDataset(BaseDataset):
     def __next__(self) -> Dict[str,xa.DataArray]:
         print("ncBatchDataset.next")
         t0 = time.time()
-        daily_results: Dict[str,List[xa.DataArray]] = {}
         next_date = self.get_date()
         if self.current_date != next_date:
             self.fmbatch.load( next_date )
             self.current_date = next_date
         lgm().log(f" *** MERRA2Dataset.load_date[{self.i}]: {self.current_date}, offset={self.get_day_offset()}, device={self.task_config.device}",display=True)
-        train_data: xa.Dataset = self.fmbatch.load( self.get_day_offset() )
-        lgm().log(f" *** >>> train_data: sizes={train_data.sizes}",display=True)
-        results: Dict[str,xa.DataArray] = self.extract_inputs_targets( train_data, **self.task_config )
-        self.i = self.i + self.fmbatch.batch_steps
-        for rtype, result in results.items():
-            daily_results.setdefault( rtype, [] ).append( result )
-        results = { rtype: xa.concat(result_list,'batch') for rtype, result_list in daily_results.items() }
-        print(f" >> generated batch[{self.i}] in {time.time()-t0:.2f} sec:")
+        results: Dict[str,xa.DataArray] = self.extract_inputs_targets( self.fmbatch.current_batch, **self.task_config )
+        print(f" >> generated batch[{self.i}] for date {self.current_date} in {time.time()-t0:.2f} sec:")
         for k,v in results.items():
             print(f" --->> {k}{v.dims}: {v.shape}")
+        self.i = self.i + self.fmbatch.batch_steps
         return results
 
     def get_input_data(self, day_offset: int) -> xa.Dataset:
