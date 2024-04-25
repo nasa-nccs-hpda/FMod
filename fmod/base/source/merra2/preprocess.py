@@ -143,7 +143,7 @@ class MERRA2DataProcessor:
         for vid, var in dset.data_vars.items():
             chunksizes = list(var.shape).copy()
             print( f" --- {vid}{var.dims} --- {var.shape}")
-            try: chunksizes[ var.dims.index('time') ] = 1
+            try: chunksizes[ var.dims.index('z') ] = 1
             except ValueError: pass
             encoding[vid] = dict(zlib=True, chunksizes=chunksizes)
         return encoding
@@ -184,7 +184,8 @@ class MERRA2DataProcessor:
             else:
                 vres_dsets: Dict[str,List[xa.Dataset]] = dict( high=[], low=[])
                 for collection, (file_path, dvars) in dset_files.items():
-                    lgm().log(f" >> Loading {collection} from {file_path}: dvvars= {dvars}", display=True)
+                    lgm().log(f" >> Loading {collection} from {file_path}:", display=True)
+                    lgm().log(f" ----> dvvars= {dvars}", display=True)
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets[vres].append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
