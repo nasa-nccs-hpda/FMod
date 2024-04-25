@@ -28,8 +28,8 @@ statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_me
 
 input_variables: { 2m_temperature: 'T2M' }
 target_variables: [ '2m_temperature' ]
-forcing_variables: [ 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos' ]
-constants: [ 'land_sea_mask', 'geopotential_at_surface' ]
+forcing_variables: []
+constants: []
 feature_list: [  '2m_temperature' ]
 
 
