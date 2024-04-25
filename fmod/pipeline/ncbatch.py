@@ -281,7 +281,7 @@ class ncBatchDataset(BaseDataset):
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         darray.attrs['channels'] = channels
     #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
-        return darray.transpose( "time", "channels", coords['y'], coords['x'])
+        return darray.transpose( "time", "channels", coords['y'], coords['x'] ).rename( time="batch" )
 
     def get_device(self):
         devname = self.task_config.device
