@@ -164,8 +164,8 @@ class SRBatch:
 		dset = xa.concat(dsets, dim="time", coords="minimal")
 		print("Loaded batch  for date {d}:")
 		for k, v in dset.data_vars.items():
-			print(f" *** {k}{v.dims}: {v.shape}")
-		return dset.rename(time="batch")
+			print(f" ***>> {k}{v.dims}: {v.shape}")
+		return dset # .rename(time="batch")
 
 	def load(self, d: date) -> xa.Dataset:
 		if self.current_date != d:
