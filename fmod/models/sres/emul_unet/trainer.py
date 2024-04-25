@@ -87,7 +87,11 @@ class ModelTrainer(object):
 			self.min_loss = loss
 
 	def load_state(self, best_model: bool = False) -> bool:
-		cppath = self.checkpoint_path + ".best" if best_model else self.checkpoint_path
+		cppath = self.checkpoint_path
+		if best_model:
+			best_cppath = cppath + ".best"
+			if os.path.exists( best_cppath ):
+				cppath = best_cppath
 		if os.path.exists( cppath ):
 			try:
 				self.model.load_state_dict( torch.load( cppath ) )
