@@ -92,10 +92,10 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 	roi: Optional[ Dict[str,List[float]] ] = cfg().task.get('roi')
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
-	if roi is not None:
-		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
 	if levels is not None:
 		dataset = dataset.sel(z=levels, method="nearest")
+	if roi is not None:
+		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
 	return rename_coords(dataset)
 
 @log_timing
@@ -146,6 +146,7 @@ class SRBatch:
 	def __init__(self, **kwargs):
 		self.vres = kwargs.get('vres', "high" )
 		self.current_batch: xa.Dataset = None
+		self.current_date = None
 		self.days_per_batch = cfg().task.batch_ndays
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self.constants: xa.Dataset = load_const_dataset( **kwargs )
@@ -157,9 +158,9 @@ class SRBatch:
 		return merged
 
 	def load(self, d: date) -> xa.Dataset:
-		bdays = date_list(d, self.days_per_batch)
-		time_slices: List[xa.Dataset] = [ load_dataset(d, self.vres) for d in bdays ]
-		self.current_batch = self.merge_batch(time_slices)
+		if self.current_date != d:
+			self.current_batch = load_dataset(d, self.vres)
+			self.current_date = d
 		return self.current_batch
 
 
