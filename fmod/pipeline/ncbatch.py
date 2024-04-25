@@ -221,7 +221,7 @@ class ncBatchDataset(BaseDataset):
             lgm().debug(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}")
             lgm().debug(f" >> >> dataset vars = {list(dataset.data_vars.keys())}")
             lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
-            input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
+            input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
         #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
@@ -230,13 +230,13 @@ class ncBatchDataset(BaseDataset):
 
         if self.load_base:
             base_inputs: xa.Dataset = dataset[list(target_variables)]
-            base_input_array: xa.DataArray = self.ds2array( self.normalize(base_inputs.isel(time=-1)) )
+            base_input_array: xa.DataArray = self.batch2array( self.normalize(base_inputs.isel(time=-1)) )
             lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
             results['base'] = base_input_array
 
         if self.load_targets:
             lgm().debug(f" >> >> target variables: {target_variables}")
-            target_array: xa.DataArray = self.ds2array( self.normalize(dataset[list(target_variables)]) )
+            target_array: xa.DataArray = self.batch2array( self.normalize(dataset[list(target_variables)]) )
             lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
             lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
             self.chanIds['target'] = target_array.attrs['channels']
@@ -262,6 +262,26 @@ class ncBatchDataset(BaseDataset):
         darray.attrs['channels'] = channels
     #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
         return darray.transpose( "channels", coords['y'], coords['x'])
+
+    def batch2array(self, dset: xa.Dataset, **kwargs) -> xa.DataArray:
+        coords = self.task_config.coords
+        merge_dims = kwargs.get('merge_dims', [coords['z']])
+        sizes: Dict[str, int] = {}
+        vnames = list(dset.data_vars.keys())
+        vnames.sort()
+        channels = []
+        for vname in vnames:
+            dvar: xa.DataArray = dset.data_vars[vname]
+            levels: List[float] = dvar.coords[coords['z']].values.tolist() if coords['z'] in dvar.dims else []
+            if levels:    channels.extend([f"{vname}{int(lval)}" for lval in levels])
+            else:         channels.append(vname)
+            for (cname, coord) in dvar.coords.items():
+                if cname not in (merge_dims + list(sizes.keys())):
+                    sizes[cname] = coord.size
+        darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
+        darray.attrs['channels'] = channels
+    #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
+        return darray.transpose( "time", "channels", coords['y'], coords['x'])
 
     def get_device(self):
         devname = self.task_config.device
