@@ -30,6 +30,6 @@ input_variables: { 2m_temperature: 'T2M' }
 target_variables: [ '2m_temperature' ]
 forcing_variables: [ 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos' ]
 constants: [ 'land_sea_mask', 'geopotential_at_surface' ]
-feature_list: [  '2m_temperature', 'year_progress_sin', 'year_progress_cos', 'day_progress_sin', 'day_progress_cos', 'geopotential_at_surface', 'land_sea_mask' ]
+feature_list: [  '2m_temperature' ]
 
 
