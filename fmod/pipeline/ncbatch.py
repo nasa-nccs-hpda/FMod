@@ -109,7 +109,7 @@ class ncBatchDataset(BaseDataset):
         return batch_inputs
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
-        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec",display=True)
+        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")
         for k,v in batch_inputs.items():
             lgm().log(f" --->> {k}{v.dims}: {v.shape}")
 
