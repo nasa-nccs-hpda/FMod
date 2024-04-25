@@ -165,7 +165,6 @@ class ModelTrainer(object):
 			for batch_data in self.data_iter:
 				inp: torch.Tensor = array2tensor(batch_data['input'])
 				tar: torch.Tensor = array2tensor(batch_data['target'])
-				print( inp )
 				prd = self.model( inp )
 				loss = self.loss( prd, tar )
 

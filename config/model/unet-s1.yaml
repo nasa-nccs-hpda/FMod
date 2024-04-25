@@ -1,1 +1,2 @@
 usmethod: transpose
+loss_fn: l2
