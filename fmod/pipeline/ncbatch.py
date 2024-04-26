@@ -80,7 +80,6 @@ class ncBatchDataset(BaseDataset):
         self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
         self.fmbatch: SRBatch = SRBatch( **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
-        self.current_date = date(1,1,1 )
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']

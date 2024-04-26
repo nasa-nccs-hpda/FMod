@@ -190,12 +190,13 @@ class ModelTrainer(object):
 				prd = self.model( inp )
 				loss = self.loss( prd, tar )
 
-				lgm().log(f"\n  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ")
+				lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ")
 				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
 				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
 				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
 
 				acc_loss += loss.item() * inp.size(0)
+				print( f"  >> {self.dataset.current_date}: loss = {loss.item():.2f}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				# gscaler.scale(loss).backward()

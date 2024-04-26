@@ -2,6 +2,7 @@ from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import configure, cfg
 from enum import Enum
+from datetime import date
 # from fmod.pipeline.merra2 import TensorRole
 
 class ncFormat(Enum):
@@ -32,6 +33,7 @@ class BaseDataset(IterableDataset):
 		super(BaseDataset, self).__init__()
 		self.length = length
 		self.chanIds: Dict[str,List[str]] = {}
+		self.current_date = date(1, 1, 1)
 
 	def __getitem__(self, idx: int):
 		raise NotImplementedError()
