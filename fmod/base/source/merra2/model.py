@@ -101,7 +101,9 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 @log_timing
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
-	return acess_data_subset( filepath)
+	result = acess_data_subset( filepath)
+	print( f"load_dataset[{vres}]({d}): {filepath} -> {result}")
+	return result
 
 @log_timing
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
