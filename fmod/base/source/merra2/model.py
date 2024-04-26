@@ -98,21 +98,18 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
 	return rename_coords(dataset)
 
-@log_timing
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	result = acess_data_subset( filepath)
-	print( f"load_dataset[{vres}]({d}): {filepath} -> {result}")
+	print( f"\nload_dataset[{vres}]({d}): {filepath} -> {result}")
 	return result
 
-@log_timing
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres=vres )
 	return acess_data_subset( filepath)
 
 class FMBatch:
 
-	@log_timing
 	def __init__(self, btype: BatchType, **kwargs):
 		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
 		self.type: BatchType = btype
@@ -144,7 +141,6 @@ class FMBatch:
 
 class SRBatch:
 
-	@log_timing
 	def __init__(self, **kwargs):
 		self.vres = kwargs.get('vres', "high" )
 		self.current_batch: xa.Dataset = None
