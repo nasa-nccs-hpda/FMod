@@ -51,10 +51,10 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
-	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
+	batch: xa.DataArray = xaformat_timedeltas( sample.coords['batch'] )
 	channels: List[str] = sample.attrs['channels']
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
-	tslider: StepSlider = StepSlider( 'Time:', time.size  )
+	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 5.0 )
 
 	with plt.ioff():
@@ -64,7 +64,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		ax = axs[ itype ]
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
-		tslice: xa.DataArray = image.isel(time=tslider.value)
+		tslice: xa.DataArray = image.isel(batch=tslider.value)
 		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		ax.set_title(f" {tname} ")
@@ -76,7 +76,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
@@ -88,7 +88,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
 		fig.canvas.draw_idle()
