@@ -49,7 +49,8 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
-	sample: xa.DataArray = list(images.values())[0]
+	sample: xa.DataArray = images['input']
+	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	channels: List[str] = sample.attrs['channels']
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
