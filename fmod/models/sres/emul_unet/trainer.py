@@ -100,7 +100,7 @@ class ModelTrainer(object):
 				loss = model_state.get('_loss_', float('inf') )
 				self.model.load_state_dict( model_state )
 				self.min_loss = loss
-				lgm().log(f"Loaded model from {cppath}", display=True)
+				lgm().log(f"Loaded model from {cppath}, loss = {self.min_loss}", display=True)
 				return True
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
