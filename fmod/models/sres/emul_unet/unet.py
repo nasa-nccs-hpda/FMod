@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
+from collections import OrderedDict
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -110,8 +111,8 @@ class UNet(nn.Module):
         self.up2: nn.Module = Up(512, 256 // factor,  self.bilinear)
         self.up3: nn.Module = Up(256, 128 // factor,  self.bilinear)
         self.up4: nn.Module = Up(128, 64,  self.bilinear)
-        self.upscale_layers = nn.ModuleList([ Upscale(64, usf,  self.bilinear) for usf in  self.upscale_factors] )
-        self.upscale = nn.Sequential( self.upscale_layers )
+        upscale_layers: List[Tuple[str,nn.Module]] = [ ( f"upscale-{iL}", Upscale(64, usf,  self.bilinear) ) for iL, usf in  enumerate(self.upscale_factors)]
+        self.upscale = nn.Sequential( OrderedDict( upscale_layers ) )
         self.outc: nn.Module = OutConv(64, self.n_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
