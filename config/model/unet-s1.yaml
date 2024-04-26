@@ -1,2 +1,3 @@
 usmethod: transpose
 loss_fn: l2
+scale_factor: 3
