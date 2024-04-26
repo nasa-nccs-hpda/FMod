@@ -1,3 +1,4 @@
 usmethod: transpose
 loss_fn: l2
 upscale_factors: [3]
+bilinear: False
