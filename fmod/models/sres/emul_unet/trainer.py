@@ -80,12 +80,12 @@ class ModelTrainer(object):
 		cppath = self.checkpoint_path
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
 		model_state = self.model.state_dict()
-		model_state['_loss_'] = loss
 		torch.save( model_state, cppath )
 		if loss < self.min_loss:
 			cppath = cppath + ".best"
 			lgm().log(f"   ---- Saving best model (loss={loss:.2f}) to {cppath}", display=True )
-			torch.save(self.model.state_dict(), cppath )
+			model_state['_loss_'] = loss
+			torch.save( model_state, cppath )
 			self.min_loss = loss
 
 	def load_state(self, best_model: bool = False) -> bool:
@@ -97,10 +97,10 @@ class ModelTrainer(object):
 		if os.path.exists( cppath ):
 			try:
 				model_state = torch.load( cppath )
-				loss = model_state.get('_loss_', float('inf') )
+				loss = model_state.pop('_loss_', float('inf') )
 				self.model.load_state_dict( model_state )
 				self.min_loss = loss
-				lgm().log(f"Loaded model from {cppath}, loss = {self.min_loss}", display=True)
+				lgm().log(f"Loaded model from {cppath}, loss = {loss:.2f}", display=True)
 				return True
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
