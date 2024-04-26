@@ -40,6 +40,12 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 	stats: Dict[str,xa.DataArray] = { stat: statdata.data_vars[vname] for stat,statdata in norms.items()}
 	return (fvar-stats[ statnames['mean'] ]) / stats[ statnames['std'] ]
 
+
+def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.ndarray, sample_input: xa.DataArray, sample_target: xa.DataArray ) -> Dict[str,xa.DataArray]:
+	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),
+					targets=     sample_target.copy( data=targets.reshape(sample_target.shape) ),
+					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ) )
+
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
