@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import DictConfig, OmegaConf
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 
 class DoubleConv(nn.Module):
@@ -92,22 +93,24 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels: int, upscale_factors: List[int], bilinear: bool=False):
+    def __init__(self, n_channels: int, model_config: DictConfig ):
         super(UNet, self).__init__()
+        self.model_config: DictConfig = model_config
         self.n_channels: int = n_channels
-        self.bilinear: bool = bilinear
+        self.bilinear: bool = model_config.bilinear
+        self.upscale_factors: List[int] = model_config.upscale_factors
 
         self.inc: nn.Module = DoubleConv(n_channels, 64)
         self.down1: nn.Module = Down(64, 128)
         self.down2: nn.Module = Down(128, 256)
         self.down3: nn.Module = Down(256, 512)
-        factor = 2 if bilinear else 1
+        factor = 2 if  self.bilinear else 1
         self.down4: nn.Module = Down(512, 1024 // factor)
-        self.up1: nn.Module = Up(1024, 512 // factor, bilinear)
-        self.up2: nn.Module = Up(512, 256 // factor, bilinear)
-        self.up3: nn.Module = Up(256, 128 // factor, bilinear)
-        self.up4: nn.Module = Up(128, 64, bilinear)
-        self.upscale_layers = nn.ModuleList([ Upscale(64, usf, bilinear) for usf in upscale_factors] )
+        self.up1: nn.Module = Up(1024, 512 // factor,  self.bilinear)
+        self.up2: nn.Module = Up(512, 256 // factor,  self.bilinear)
+        self.up3: nn.Module = Up(256, 128 // factor,  self.bilinear)
+        self.up4: nn.Module = Up(128, 64,  self.bilinear)
+        self.upscale_layers = nn.ModuleList([ Upscale(64, usf,  self.bilinear) for usf in  self.upscale_factors] )
         self.upscale = nn.Sequential( self.upscale_layers )
         self.outc: nn.Module = OutConv(64, self.n_channels)
 
