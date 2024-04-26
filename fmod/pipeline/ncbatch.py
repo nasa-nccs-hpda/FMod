@@ -64,18 +64,18 @@ class MetaData(DatapipeMetaData):
 class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
         self.task_config: DictConfig = task_config
-        self.train_dates = batches_range(task_config)
-        self.batch_ndays = task_config.batch_ndays               # number of days per batch
-        self.load_inputs = kwargs.pop('load_inputs',True)
-        self.load_targets = kwargs.pop('load_targets', True)
-        self.load_base = kwargs.pop('load_base', True)
-        self.dts =task_config.data_timestep                       # data timestep in hours
-        self.n_day_offsets = 24//self.dts                         # number of timesteps per day
-        self.batch_size = self.batch_ndays * self.dts             # number of timesteps per batch
-        self.day_index = 0
+        self.train_dates: List[date] = batches_range(task_config)
+        self.batch_ndays: int = task_config.batch_ndays               # number of days per batch
+        self.load_inputs: bool = kwargs.pop('load_inputs',True)
+        self.load_targets: bool = kwargs.pop('load_targets', True)
+        self.load_base: bool = kwargs.pop('load_base', True)
+        self.dts: int =task_config.data_timestep                       # data timestep in hours
+        self.n_day_offsets: int = 24//self.dts                         # number of timesteps per day
+        self.batch_size: int = self.batch_ndays * self.dts             # number of timesteps per batch
+        self.day_index: int = 0
         super(ncBatchDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
-        self.train_steps = task_config.train_steps
-        self.nsteps_input = task_config.nsteps_input
+        self.train_steps: int = task_config.train_steps
+        self.nsteps_input: int = task_config.nsteps_input
         self.fmbatch: SRBatch = SRBatch( **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.mu: xa.Dataset  = self.norms['mean_by_level']
