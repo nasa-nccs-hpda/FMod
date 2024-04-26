@@ -85,6 +85,9 @@ class ncBatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
         self.batch_dates: List[date] = self.get_batch_start_dates()
 
+    def randomize(self):
+        random.shuffle(self.batch_dates)
+
     def __getitem__(self, idx: int):
         self.day_index = idx
         return self.__next__()

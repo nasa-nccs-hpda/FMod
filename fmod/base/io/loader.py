@@ -38,6 +38,9 @@ class BaseDataset(IterableDataset):
 	def __getitem__(self, idx: int):
 		raise NotImplementedError()
 
+	def randomize(self):
+		raise NotImplementedError()
+
 	def channel_ids(self, role: str) -> List[str]:
 		return self.chanIds[role]
 

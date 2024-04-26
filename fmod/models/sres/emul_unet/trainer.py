@@ -59,6 +59,7 @@ class ModelTrainer(object):
 
 	@property
 	def data_iter(self):
+		self.dataset.randomize()
 		return iter(self.dataset)
 
 	@property
