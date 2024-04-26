@@ -19,7 +19,7 @@ nsteps_input: 1
 data_timestep: 6
 levels:  [850, 1000]
 lr: 1e-5 # 1e-4
-nepochs: 1000
+nepochs: 10
 weight_decay: 0.0
 error_threshold: 1.0
 roi: { x: [-125,-65], y: [25,50] }

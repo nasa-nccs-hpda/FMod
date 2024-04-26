@@ -1,5 +1,5 @@
 import numpy as np, xarray as xa
-import torch, time
+import torch, time, random
 from omegaconf import DictConfig, OmegaConf
 import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
@@ -84,6 +84,7 @@ class ncBatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
+        self.batch_dates: List[date] = self.get_batch_start_dates()
 
     def __getitem__(self, idx: int):
         self.day_index = idx
@@ -93,7 +94,14 @@ class ncBatchDataset(BaseDataset):
         return dsnorm( vdata, self.sd, self.mu )
 
     def get_date(self):
-        return self.train_dates[ self.day_index ]
+        return self.batch_dates[ self.day_index ]
+
+    def get_batch_start_dates(self, randomize: bool = True ) -> List[date]:
+        start_dates, ndates = [], len( self.train_dates )
+        for dindex in range( 0, ndates, self.batch_ndays ):
+            start_dates.append( self.train_dates[ dindex ] )
+        if randomize: random.shuffle(start_dates)
+        return start_dates
 
     def __next__(self) -> Dict[str,xa.DataArray]:
         t0 = time.time()
@@ -103,8 +111,8 @@ class ncBatchDataset(BaseDataset):
             self.current_date = next_date
         batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
         self.log( batch_inputs, t0 )
-        self.day_index = self.day_index + self.batch_ndays
-        if self.day_index >= len( self.train_dates ):
+        self.day_index = self.day_index + 1
+        if self.day_index >= len( self.batch_dates ):
             raise StopIteration()
         return batch_inputs
 
