@@ -1,3 +1,4 @@
+import xarray
 from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import configure, cfg
@@ -46,3 +47,6 @@ class BaseDataset(IterableDataset):
 
 	def __len__(self):
 		return self.length
+
+	def get_batch(self, start_date: date) -> Dict[str, xarray.DataArray]:
+		raise NotImplementedError()

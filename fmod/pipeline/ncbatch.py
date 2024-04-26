@@ -76,8 +76,6 @@ class ncBatchDataset(BaseDataset):
         super(ncBatchDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
         self.train_steps = task_config.train_steps
         self.nsteps_input = task_config.nsteps_input
-        self.input_duration = pd.Timedelta( self.dts*self.nsteps_input, unit="h" )
-        self.target_lead_times = [f"{iS * self.dts}h" for iS in self.train_steps]
         self.fmbatch: SRBatch = SRBatch( **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.mu: xa.Dataset  = self.norms['mean_by_level']
@@ -85,8 +83,9 @@ class ncBatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
         self.batch_dates: List[date] = self.get_batch_start_dates()
 
-    def randomize(self):
+    def randomize(self) -> List[date]:
         random.shuffle(self.batch_dates)
+        return self.batch_dates
 
     def __getitem__(self, idx: int):
         self.day_index = idx
@@ -104,6 +103,13 @@ class ncBatchDataset(BaseDataset):
             start_dates.append( self.train_dates[ dindex ] )
         if randomize: random.shuffle(start_dates)
         return start_dates
+
+    def get_batch(self, batch_date: date ) -> Dict[str,xa.DataArray]:
+        t0 = time.time()
+        self.fmbatch.load( batch_date )
+        batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.fmbatch.current_batch, **self.task_config)
+        self.log(batch_data, t0)
+        return batch_data
 
     def __next__(self) -> Dict[str,xa.DataArray]:
         t0 = time.time()

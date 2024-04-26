@@ -14,6 +14,7 @@ batch_ndays: 16
 nbatches: 10
 
 train_steps: [0]
+upscale_factors: [3]
 nsteps_input: 1
 
 data_timestep: 6

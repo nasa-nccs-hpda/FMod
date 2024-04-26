@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -63,6 +64,23 @@ class Up(nn.Module):
         x: torch.Tensor = torch.cat([x2, x1], dim=1)
         return self.conv(x)
 
+class Upscale(nn.Module):
+    """Upscaling then double conv"""
+
+    def __init__(self, in_channels: int, upscale_fator: int, bilinear: bool = False):
+        super().__init__()
+
+        if bilinear:
+            self.up = nn.Upsample(scale_factor=upscale_fator, mode='bilinear', align_corners=True)
+            self.conv = DoubleConv(in_channels, in_channels )
+        else:
+            self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=upscale_fator)
+            self.conv = DoubleConv(in_channels, in_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.up(x)
+        return self.conv(x)
+
 
 class OutConv(nn.Module):
     def __init__(self, in_channels: int, out_channels: int):
@@ -74,10 +92,10 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels: int, bilinear: bool=False):
+    def __init__(self, n_channels: int, upscale_factors: List[int], bilinear: bool=False):
         super(UNet, self).__init__()
         self.n_channels: int = n_channels
-        self.bilinear: int = bilinear
+        self.bilinear: bool = bilinear
 
         self.inc: nn.Module = DoubleConv(n_channels, 64)
         self.down1: nn.Module = Down(64, 128)
@@ -89,6 +107,8 @@ class UNet(nn.Module):
         self.up2: nn.Module = Up(512, 256 // factor, bilinear)
         self.up3: nn.Module = Up(256, 128 // factor, bilinear)
         self.up4: nn.Module = Up(128, 64, bilinear)
+        self.upscale_layers = nn.ModuleList([ Upscale(64, usf, bilinear) for usf in upscale_factors] )
+        self.upscale = nn.Sequential( self.upscale_layers )
         self.outc: nn.Module = OutConv(64, self.n_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -101,5 +121,6 @@ class UNet(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
-        logits = self.outc(x)
-        return logits
+        x = self.upscale(x)
+        result = self.outc(x)
+        return result

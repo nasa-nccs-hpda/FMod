@@ -1,5 +1,6 @@
 import torch, math
 import xarray
+from datetime import date
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.base.util.config import configure, cfg, cfg_date
@@ -41,26 +42,22 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  dataset: BaseDataset, device: torch.device ):
-		self.dataset = dataset
+	def __init__(self,  input_dataset: BaseDataset, target_dataset: BaseDataset, device: torch.device ):
+		self.input_dataset = input_dataset
+		self.target_dataset = target_dataset
 		self.device = device
 		self.scale_factor = cfg().model.get('scale_factor',1)
 		self.min_loss = float('inf')
-		results = next(iter(dataset))
-		[inp, tar] = [results[t] for t in ['input', 'target']]
+		sample_results = next(iter(target_dataset))
+		tar: xarray.DataArray = sample_results['target']
 		self.grid_shape = tar.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
-		self.lmax = inp.shape[-2]
+		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
+		self.lmax = tar.shape[-2]
 		self._sht, self._isht = None, None
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
-
-	@property
-	def data_iter(self):
-		self.dataset.randomize()
-		return iter(self.dataset)
 
 	@property
 	def sht(self):
@@ -115,14 +112,14 @@ class ModelTrainer(object):
 	def loader_args(self) -> Dict[str, Any]:
 		return { k: cfg().model.get(k) for k in self.model_cfg }
 
-	def l2loss(self, prd, tar, squared=True):
+	def l2loss(self, prd: torch.Tensor, tar: torch.Tensor, squared=True) -> torch.Tensor:
 		loss = ((prd - tar) ** 2).sum()
 		if not squared:
 			loss = torch.sqrt(loss)
 		loss = loss.mean()
 		return loss
 
-	def l2loss_sphere(self, prd, tar, relative=False, squared=True):
+	def l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
 		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
 		if relative:
 			loss = loss / self.gridops.integrate_grid(tar ** 2, dimensionless=True).sum(dim=-1)
@@ -133,7 +130,7 @@ class ModelTrainer(object):
 
 		return loss
 
-	def spectral_l2loss_sphere(self, prd, tar, relative=False, squared=True):
+	def spectral_l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
 		# compute coefficients
 		coeffs = torch.view_as_real(self.sht(prd - tar))
 		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
@@ -152,7 +149,7 @@ class ModelTrainer(object):
 		loss = loss.mean()
 		return loss
 
-	def loss(self, prd, tar):
+	def loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
@@ -162,6 +159,15 @@ class ModelTrainer(object):
 		else:
 			raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 		return loss
+
+	def get_batch(self, batch_date ) -> Dict[str,torch.Tensor]:
+		input_batch: Dict[str, xarray.DataArray] = self.input_dataset.get_batch(batch_date)
+		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
+		inp: torch.Tensor = array2tensor(input_batch['input'])
+		tar: torch.Tensor = array2tensor(target_batch['target'])
+		lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
+		lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
+		return dict( input=inp, target=tar )
 
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
@@ -181,34 +187,26 @@ class ModelTrainer(object):
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- " )
+			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
-			acc_loss = 0
+			acc_loss: float = 0
 			self.model.train()
-			for batch_data in self.data_iter:
-				inp: torch.Tensor = array2tensor(batch_data['input'])
-				tar: torch.Tensor = array2tensor(batch_data['target'])
-				prd = self.model( inp )
-				loss = self.loss( prd, tar )
-
-				lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ")
-				lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}")
-				lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}")
-				lgm().log(f" ** prd shape={prd.shape}, pct-nan= {pctnant(prd)}")
-
-				acc_loss += loss.item() * inp.size(0)
-				print( f"  >> {self.dataset.current_date}: loss = {loss.item():.2f}")
+			batch_dates: List[date] = self.input_dataset.randomize()
+			for batch_date in batch_dates:
+				train_data: Dict[str,torch.Tensor] = self.get_batch(batch_date)
+				prd:  torch.Tensor = self.model( train_data['input'] )
+				loss: torch.Tensor = self.loss( prd, train_data['target'] )
+				acc_loss += loss.item() * train_data['input'].size(0)
+				lgm().log(f" ** prd shape={prd.shape}, {batch_date}: loss = {loss.item():.2f}", display=True)
 
 				self.optimizer.zero_grad(set_to_none=True)
-				# gscaler.scale(loss).backward()
 				loss.backward()
 				self.optimizer.step()
-			# gscaler.update()
 
 			if self.scheduler is not None:
 				self.scheduler.step()
 
-			acc_loss = acc_loss / len(self.dataset)
+			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
 
 			cp_msg = ""
