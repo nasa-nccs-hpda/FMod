@@ -92,7 +92,7 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 	roi: Optional[ Dict[str,List[float]] ] = cfg().task.get('roi')
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
-	if levels is not None:
+	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
 	if roi is not None:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
