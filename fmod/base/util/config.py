@@ -103,4 +103,5 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
 
 def get_roi( coords: Dict[str,xarray.DataArray] ) -> Dict:
     cmap: Dict = cfg().task.coords
+    print( cmap )
     return { dim: get_coord_bounds( coords[ cmap[dim] ].values ) for dim in ['x','y'] }
