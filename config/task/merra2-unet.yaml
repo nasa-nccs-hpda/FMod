@@ -22,7 +22,7 @@ lr: 1e-5 # 1e-4
 nepochs: 1
 weight_decay: 0.0
 error_threshold: 1.0
-roi: { x: [-120,-70], y: [30,45] }
+roi: { x: [-110,-90], y: [30,50] }
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }
 statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_mean_by_level", std_diff: "diffs_stddev_by_level" }
