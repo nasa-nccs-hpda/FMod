@@ -9,9 +9,9 @@ downscale_method: 'interp:linear'
 poly_order: 5
 task_type: "downscale"
 
-start_date:  "01/01/1996"
+start_date:  "01/01/1995"
 batch_ndays: 16
-nbatches: 1
+nbatches: 2
 
 train_steps: [0]
 nsteps_input: 1
