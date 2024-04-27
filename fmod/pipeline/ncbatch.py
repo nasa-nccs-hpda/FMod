@@ -112,6 +112,8 @@ class ncBatchDataset(BaseDataset):
         return batch_data
 
     def __next__(self) -> Dict[str,xa.DataArray]:
+        if self.day_index >= len( self.batch_dates ):
+            raise StopIteration()
         t0 = time.time()
         next_date = self.get_date()
         if self.current_date != next_date:
@@ -120,8 +122,6 @@ class ncBatchDataset(BaseDataset):
         batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
         self.log( batch_inputs, t0 )
         self.day_index = self.day_index + 1
-        if self.day_index >= len( self.batch_dates ):
-            raise StopIteration()
         return batch_inputs
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
