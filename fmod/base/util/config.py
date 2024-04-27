@@ -1,3 +1,4 @@
+import xarray
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -6,7 +7,7 @@ from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
 import hydra, traceback, os
-import warnings
+import numpy as np
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -95,3 +96,10 @@ def start_date( task_config )-> date:
     toks = [ int(tok) for tok in reversed(task_config.start_date.split("/")) ]
     print( f"Task start date: {task_config.start_date}: {toks}")
     return  date( *toks )
+
+def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
+    dc = coord[1] - coord[0]
+    return ( coord[0], coord[-1]+dc )
+
+def get_roi( coords: Dict[str,xarray.DataArray] ) -> Dict:
+    return {dim: get_coord_bounds( coords[dim].values ) for dim in ['x','y'] }
