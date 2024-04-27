@@ -111,7 +111,7 @@ class UNet(nn.Module):
         self.up2: nn.Module = Up(512, 256 // factor,  self.bilinear)
         self.up3: nn.Module = Up(256, 128 // factor,  self.bilinear)
         self.up4: nn.Module = Up(128, 64,  self.bilinear)
-        upscale_layers: List[Tuple[str,nn.Module]] = [ ( f"upscale-{iL}", Upscale(64, usf,  self.bilinear) ) for iL, usf in  enumerate(self.upscale_factors)]
+        upscale_layers: List[Tuple[str,nn.Module]] = [ ( f"ups{iL}-{usf}", Upscale(64, usf,  self.bilinear) ) for iL, usf in  enumerate(self.upscale_factors)]
         self.upscale = nn.Sequential( OrderedDict( upscale_layers ) )
         self.outc: nn.Module = OutConv(64, self.n_channels)
 
