@@ -6,7 +6,7 @@ import numpy as np
 from fmod.base.util.config import cfg
 from fmod.base.util.model import dataset_to_stacked
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
-import glob, sys, os, time, traceback
+import math, glob, sys, os, time, traceback
 from xarray.core.dataset import DataVariables
 from datetime import date
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
@@ -133,9 +133,9 @@ class DataLoader(object):
 		# 	vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
 		vlores: xa.DataArray = vhires
-
+		scale_factor = math.prod( cfg().model.upscale_factors )
 		for dim in [ 'x', 'y']:
-			cargs = { dim: cfg().model.get('scale_factor',1) }
+			cargs = { dim: scale_factor }
 			vlores = vlores.coarsen( boundary="trim", **cargs ).reduce( redop, keep_attrs=True )
 
 		return dict( high=[vhires], low=[vlores] )
