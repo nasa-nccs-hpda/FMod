@@ -249,9 +249,10 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		with torch.inference_mode():
-			batch_data = self.dataset[date_index]
-			inp: torch.Tensor = array2tensor(batch_data['input'])
-			tar: torch.Tensor = array2tensor(batch_data['target'])
+			input_batch = self.input_dataset[date_index]
+			target_batch = self.target_dataset[date_index]
+			inp: torch.Tensor = array2tensor( input_batch['input'] )
+			tar: torch.Tensor = array2tensor( target_batch['target'] )
 			out: Tensor = self.model(inp)
 			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(out.shape)}', display=True)
 			return npa(inp), npa(tar), npa(out)

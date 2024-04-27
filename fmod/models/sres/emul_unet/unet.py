@@ -51,7 +51,7 @@ class Up(nn.Module):
             self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
             self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels, out_channels)
+            self.conv = DoubleConv( in_channels, out_channels )
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         x1 = self.up(x1)
@@ -69,15 +69,15 @@ class Up(nn.Module):
 class Upscale(nn.Module):
     """Upscaling then double conv"""
 
-    def __init__(self, in_channels: int, upscale_fator: int, bilinear: bool = False):
+    def __init__(self, in_channels: int, out_channels: int, upscale_fator: int, bilinear: bool = False):
         super().__init__()
 
         if bilinear:
             self.up = nn.Upsample(scale_factor=upscale_fator, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, in_channels )
+            self.conv = DoubleConv(in_channels, out_channels )
         else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=upscale_fator)
-            self.conv = DoubleConv(in_channels, in_channels)
+            self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator)
+            self.conv = DoubleConv(out_channels, out_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.up(x)
@@ -111,9 +111,11 @@ class UNet(nn.Module):
         self.up2: nn.Module = Up(512, 256 // factor,  self.bilinear)
         self.up3: nn.Module = Up(256, 128 // factor,  self.bilinear)
         self.up4: nn.Module = Up(128, 64,  self.bilinear)
-        upscale_layers: List[Tuple[str,nn.Module]] = [ ( f"ups{iL}-{usf}", Upscale(64, usf,  self.bilinear) ) for iL, usf in  enumerate(self.upscale_factors)]
-        self.upscale = nn.Sequential( OrderedDict( upscale_layers ) )
-        self.outc: nn.Module = OutConv(64, self.n_channels)
+        self.upscale = nn.Sequential()
+        for iL, usf in enumerate(self.upscale_factors):
+            in_channels = 64 if iL == 0 else 32
+            self.upscale.add_module( f"ups{iL}-{usf}", Upscale( in_channels, 32, usf,  self.bilinear) )
+        self.outc: nn.Module = OutConv(32, self.n_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x1 = self.inc(x)
