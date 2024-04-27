@@ -102,4 +102,5 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     return ( coord[0], coord[-1]+dc )
 
 def get_roi( coords: Dict[str,xarray.DataArray] ) -> Dict:
+    print( f"Coordinates: {list(coords.keys())}")
     return {dim: get_coord_bounds( coords[dim].values ) for dim in ['x','y'] }
