@@ -99,7 +99,7 @@ def start_date( task_config )-> date:
 
 def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
-    return ( coord[0], coord[-1]+dc )
+    return  float(coord[0]), float(coord[-1]+dc)
 
 def get_roi( coords: Dict[str,xarray.DataArray] ) -> Dict:
     cmap: Dict = cfg().task.coords
