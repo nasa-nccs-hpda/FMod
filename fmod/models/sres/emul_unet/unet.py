@@ -37,6 +37,7 @@ class Down(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.maxpool_conv(x)
+        print( f" ----> DOWN:  {x.shape} -> {y.shape}")
         return y
 
 
