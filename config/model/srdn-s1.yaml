@@ -3,8 +3,7 @@ nfeatures:
   upscale: 128
   output: 1
 nrlayers: 16
-scale_factors: [3]
-scale_factor: 3
+upscale_factors: [2,2,2]
 usmethod: transpose
 kernel_size:
   features: 3
