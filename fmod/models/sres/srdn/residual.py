@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from models.sres.util import *
+from fmod.models.sres.util import *
 
 class Residual(nn.Module):
 

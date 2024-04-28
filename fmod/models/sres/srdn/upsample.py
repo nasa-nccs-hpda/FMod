@@ -1,5 +1,5 @@
 import torch, torch.nn as nn
-from models.sres.util import *
+from fmod.models.sres.util import *
 
 class Upsample(nn.Module):
 

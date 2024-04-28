@@ -2,7 +2,7 @@ import torch, torch.nn as nn
 from collections import OrderedDict
 from .residual import Residual
 from .upsample import Upsample
-from models.sres.util import *
+from fmod.models.sres.util import *
 
 class SRDN(nn.Module):
 
