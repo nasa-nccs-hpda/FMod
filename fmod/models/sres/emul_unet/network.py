@@ -1,6 +1,6 @@
 import torch, torch.nn as nn
 from collections import OrderedDict
-from models.sres.util import *
+from fmod.models.sres.util import *
 import numpy as np
 
 
