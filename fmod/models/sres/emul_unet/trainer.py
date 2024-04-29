@@ -194,8 +194,11 @@ class ModelTrainer(object):
 			batch_dates: List[date] = self.input_dataset.randomize()
 			for batch_date in batch_dates:
 				train_data: Dict[str,torch.Tensor] = self.get_batch(batch_date)
-				prd:  torch.Tensor = self.model( train_data['input'] )
-				loss: torch.Tensor = self.loss( prd, train_data['target'] )
+				input: torch.Tensor = train_data['input']
+				target: torch.Tensor   = train_data['target']
+				prd:  torch.Tensor  = self.model( input )
+				print( f" LOSS shapes: input={input.shape}, target={target.shape}, product={prd.shape}, ")
+				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item() * train_data['input'].size(0)
 				lgm().log(f" ** prd shape={prd.shape}, {batch_date}: loss = {loss.item():.2f}", display=True)
 
