@@ -21,7 +21,7 @@ class SRDN(nn.Module):
 		nchan = nfeatures['hidden']
 		ks = kernel_size.get( 'features', kernel_size['hidden'] )
 		self.features = nn.Sequential(
-			nn.Conv2d( inchannels, nchan, ks, stride ),
+			nn.Conv2d( inchannels, nchan, ks, stride, padding="same" ),
 			nn.PReLU(init=0.0)
 		)
 
