@@ -46,7 +46,9 @@ class SRDN(nn.Module):
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		f = self.features(x)
 		r = self.residuals( f )
-		y = f + self.global_residual( r )
+		gr = self.global_residual(r)
+		print( f"SRDN.forward: f{f.shape} r{r.shape} gr{gr.shape}" )
+		y = f + gr
 		y = self.upscaling( y )
 		return self.result( y )
 
