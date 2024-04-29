@@ -161,13 +161,13 @@ class ModelTrainer(object):
 		return loss
 
 	def get_batch(self, batch_date ) -> Dict[str,torch.Tensor]:
-		input_batch: Dict[str, xarray.DataArray] = self.input_dataset.get_batch(batch_date)
+		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(batch_date)
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
-		inp: torch.Tensor = array2tensor(input_batch['input'])
-		tar: torch.Tensor = array2tensor(target_batch['target'])
-		lgm().log(f" ** inp shape={inp.shape}, pct-nan= {pctnant(inp)}", display=True)
-		lgm().log(f" ** tar shape={tar.shape}, pct-nan= {pctnant(tar)}", display=True)
-		return dict( input=inp, target=tar )
+		binput: xarray.DataArray = input_batch['input']
+		btarget: xarray.DataArray = target_batch['target']
+		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}", display=True)
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}", display=True)
+		return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
