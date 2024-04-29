@@ -91,7 +91,7 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	lgm().log( f"m2_norm_data: {list(m2_norm_data.keys())}")
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
-def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
+def access_data_subset( filepath, **kwargs) -> xa.Dataset:
 	roi: Optional[ Dict[str,List[float]] ] = cfg().task.get('roi')
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
@@ -99,17 +99,18 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 		dataset = dataset.sel(z=levels, method="nearest")
 	if roi is not None:
 		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
+	print( f"access_data_subset: roi: {roi}, rcoords: {rcoords(dataset)}" )
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
-	result: xa.Dataset = acess_data_subset( filepath)
+	result: xa.Dataset = access_data_subset( filepath )
 	print( f" -- load_dataset[{vres}]({d}): {filepath} -> {rcoords(result)} ")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres=vres )
-	return acess_data_subset( filepath)
+	return access_data_subset( filepath)
 
 class FMBatch:
 
