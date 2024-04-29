@@ -200,7 +200,7 @@ class ModelTrainer(object):
 				lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}", display=True)
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item() * train_data['input'].size(0)
-				lgm().log(f" ** Loss shape={loss.shape}, {batch_date}: loss = {loss.item():.2f}", display=True)
+				lgm().log(f" ** Loss shape={list(loss.shape)}, {batch_date}: loss = {loss.item():.2f}", display=True)
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()

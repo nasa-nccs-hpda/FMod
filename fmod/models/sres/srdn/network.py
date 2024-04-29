@@ -47,10 +47,10 @@ class SRDN(nn.Module):
 		f: torch.Tensor = self.features(x)
 		r: torch.Tensor = self.residuals( f )
 		gr: torch.Tensor = self.global_residual(r)
-		print( f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)}" )
-		y = f + gr
-		y = self.upscaling( y )
-		return self.result( y )
+		y = self.upscaling( f + gr )
+		z = self.result( y )
+		print(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)} z{list(z.shape)}")
+		return z
 
 # class Generator(object):
 #
