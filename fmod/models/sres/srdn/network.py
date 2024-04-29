@@ -30,7 +30,7 @@ class SRDN(nn.Module):
 		self.residuals = nn.Sequential( OrderedDict( res_layers ) )
 
 		self.global_residual = nn.Sequential(
-			nn.Conv2d( nchan, nchan, ks, stride ),
+			nn.Conv2d( nchan, nchan, ks, stride, padding='same' ),
 			nn.BatchNorm2d( nchan, momentum=momentum )
 		)
 
@@ -41,13 +41,13 @@ class SRDN(nn.Module):
 			self.upscaling.append( Upsample(nfeatures_in, nchan_us, scale_factor, usmethod, ks, stride ) )
 			nfeatures_in = nchan_us
 
-		self.result = nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride )
+		self.result = nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride, padding='same' )
 
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
-		f = self.features(x)
-		r = self.residuals( f )
-		gr = self.global_residual(r)
-		print( f"SRDN.forward: f{f.shape} r{r.shape} gr{gr.shape}" )
+		f: torch.Tensor = self.features(x)
+		r: torch.Tensor = self.residuals( f )
+		gr: torch.Tensor = self.global_residual(r)
+		print( f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)}" )
 		y = f + gr
 		y = self.upscaling( y )
 		return self.result( y )
