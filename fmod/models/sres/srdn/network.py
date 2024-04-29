@@ -34,7 +34,7 @@ class SRDN(nn.Module):
 			nn.BatchNorm2d( nchan, momentum=momentum )
 		)
 
-		self.upscaling = nn.Sequential()
+		self.upscaling = []
 		nfeatures_in = nchan
 		nchan_us = nfeatures['upscale']
 		for scale_factor in scale_factors:
@@ -47,9 +47,12 @@ class SRDN(nn.Module):
 		f: torch.Tensor = self.features(x)
 		r: torch.Tensor = self.residuals( f )
 		gr: torch.Tensor = self.global_residual(r)
-		y = self.upscaling( f + gr )
+		y = f + gr
+		print(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)}")
+		for layer in self.upscaling:
+			y = layer( y )
+			print( f" ** UPSCALE: y{list(y.shape)}" )
 		z =  self.result( y )
-		print(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)} z{list(z.shape)}")
 		return z
 
 # class Generator(object):
