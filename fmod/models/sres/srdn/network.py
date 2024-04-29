@@ -30,7 +30,7 @@ class SRDN(nn.Module):
 		self.residuals = nn.Sequential( OrderedDict( res_layers ) )
 
 		self.global_residual = nn.Sequential(
-			nn.Conv2d( nchan, nchan, ks, stride ),
+			nn.Conv2d( nchan, nchan, ks, stride, padding="same" ),
 			nn.BatchNorm2d( nchan, momentum=momentum )
 		)
 
