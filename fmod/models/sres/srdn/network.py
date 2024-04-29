@@ -38,10 +38,9 @@ class SRDN(nn.Module):
 		nfeatures_in = nchan
 		nchan_us = nfeatures['upscale']
 		for scale_factor in scale_factors:
-			self.upscaling.append( Upsample(nfeatures_in, nchan_us, scale_factor, usmethod, ks, stride ) )
+			self.upscaling.append( nn.Sequential( Upsample(nfeatures_in, nchan_us, scale_factor, usmethod, ks, stride ), ) )
 			nfeatures_in = nchan_us
-
-		self.result = nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride, padding="same" )
+		self.result = nn.Sequential( nn.Conv2d( nchan_us, nfeatures['output'], kernel_size['output'], stride, padding="same" ),  )
 
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		f: torch.Tensor = self.features(x)
