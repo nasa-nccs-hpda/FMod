@@ -19,7 +19,7 @@ class Upsample(nn.Module):
 			)
 		elif method == "transpose":
 			self.usnet = nn.Sequential(
-				nn.ConvTranspose2d( nchannels_in, nchannels_out, kernel_size, stride=scale_factor, padding=1 )
+				nn.ConvTranspose2d( nchannels_in, nchannels_out, kernel_size, stride=scale_factor )
 			)
 		self.usnet.append( nn.PReLU(init=0.0) )
 
