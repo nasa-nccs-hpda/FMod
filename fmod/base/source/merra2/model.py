@@ -21,7 +21,7 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 	return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
 def rcoords(dset: xa.Dataset):
-	return {k:v.shape for k,v in dset.coords.items()}
+	return '[' + ','.join( [ f"{k}:{v.size}" for k,v in dset.coords.items()] ) + ']'
 
 def clear_const_file():
 	for vres in ["high", "low"]:
@@ -104,7 +104,7 @@ def acess_data_subset( filepath, **kwargs) -> xa.Dataset:
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	result: xa.Dataset = acess_data_subset( filepath)
-	print( f"\n  load_dataset[{vres}]({d}): {filepath} -> {rcoords(result)} ")
+	print( f" -- load_dataset[{vres}]({d}): {filepath} -> {rcoords(result)} ")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
