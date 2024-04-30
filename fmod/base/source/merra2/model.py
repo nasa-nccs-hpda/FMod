@@ -23,6 +23,9 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 def rcoords(dset: xa.Dataset):
 	return '[' + ','.join( [ f"{k}:{v.size}" for k,v in dset.coords.items()] ) + ']'
 
+def bounds(dset: xa.Dataset):
+	return '[' + ','.join( [ f"{k}:[{v[0]:.2f},{v[-1]:.2f}:{v[1]-v[0]:.2f}]" for k,v in dset.coords.items()] ) + ']'
+
 def index_of_cval(  data: Union[xa.Dataset,xa.DataArray], dim:str, cval: float)-> int:
 	coord: np.ndarray = data.coords[dim].values
 	cindx: np.ndarray = np.where(coord==cval)[0]
@@ -116,13 +119,13 @@ def access_data_subset( filepath, **kwargs) -> xa.Dataset:
 	roi: Optional[Dict[str,slice]] = get_index_roi(dataset)
 	if roi is not None:
 		dataset = dataset.isel(**roi)
-	print( f"access_data_subset: roi: {roi}, rcoords: {rcoords(dataset)}" )
+	print( f" ----subset> roi:{roi}, rc:{rcoords(dataset)}, bounds:{bounds(dataset)}" )
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
+	print( f" * load_dataset[{vres}]({d}): ")
 	result: xa.Dataset = access_data_subset( filepath )
-	print( f" -- load_dataset[{vres}]({d}): {filepath} -> {rcoords(result)} ")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
