@@ -39,7 +39,7 @@ def get_index_roi(dataset: xa.Dataset) -> Optional[Dict[str,slice]]:
 	cbounds: Dict = {}
 	for dim in ['x', 'y']:
 		croi: List[float] = roi[dim]
-		coord: List[float] = dataset.coords[dim].tolist()
+		coord: List[float] = dataset.coords[dim].values.tolist()
 		iroi: int =  index_of_cval( dataset, dim, croi[0] )
 		crisize = round( (croi[1]-croi[0]) / (coord[1] - coord[0] ) )
 		cbounds[dim] = slice( iroi, iroi + crisize )
@@ -109,7 +109,6 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
 def access_data_subset( filepath, **kwargs) -> xa.Dataset:
-
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
 	if (levels is not None) and ('z' in dataset.coords):
