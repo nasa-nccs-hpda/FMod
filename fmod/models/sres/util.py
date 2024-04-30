@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, TypeAlias
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, TypeAlias, Callable
 Size2: TypeAlias = Union[int,Tuple[int,int]]
 
 def highest_powerof2(n: int) -> int:
