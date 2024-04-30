@@ -23,10 +23,27 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 def rcoords(dset: xa.Dataset):
 	return '[' + ','.join( [ f"{k}:{v.size}" for k,v in dset.coords.items()] ) + ']'
 
+def index_of_cval(  data: Union[xa.Dataset,xa.DataArray], dim:str, cval: float)-> int:
+	coord: np.ndarray = data.coords[dim].values
+	cindx: np.ndarray = np.where(coord==cval)[0]
+	return cindx.tolist()[0] if cindx.size else -1
+
 def clear_const_file():
 	for vres in ["high", "low"]:
 		const_filepath = cache_filepath(VarType.Constant,vres=vres)
 		remove_filepath(const_filepath)
+
+def get_index_roi(dataset: xa.Dataset) -> Optional[Dict[str,slice]]:
+	roi: Optional[Dict[str, List[float]]] = cfg().task.get('roi')
+	if roi is None: return None
+	cbounds: Dict = {}
+	for dim in ['x', 'y']:
+		croi: List[float] = roi[dim]
+		coord: List[float] = dataset.coords[dim].tolist()
+		iroi: int =  index_of_cval( dataset, dim, croi[0] )
+		crisize = round( (croi[1]-croi[0]) / (coord[1] - coord[0] ) )
+		cbounds[dim] = slice( iroi, iroi + crisize )
+	return cbounds
 
 def furbish( dset: xa.Dataset ) -> xa.Dataset:
 	dvars: Dict = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
@@ -92,13 +109,14 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
 def access_data_subset( filepath, **kwargs) -> xa.Dataset:
-	roi: Optional[ Dict[str,List[float]] ] = cfg().task.get('roi')
+
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
+	roi: Optional[Dict[str,slice]] = get_index_roi(dataset)
 	if roi is not None:
-		dataset = dataset.sel( x=slice(*roi['x']), y=slice(*roi['y']) )
+		dataset = dataset.isel(**roi)
 	print( f"access_data_subset: roi: {roi}, rcoords: {rcoords(dataset)}" )
 	return rename_coords(dataset)
 
