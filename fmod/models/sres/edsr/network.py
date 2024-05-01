@@ -18,10 +18,10 @@ class EDSR(nn.Module):
 	 ):
         super(EDSR, self).__init__()
 
-        m_head: List[nn.Module] = [ conv(nchannels, nfeatures, kernel_size) ]
+        m_head: List[nn.Module] = [ conv(nchannels, nfeatures, kernel_size, bias) ]
 
         m_body: List[nn.Module] = [ ResBlock( conv, nfeatures, kernel_size, bias, bn, act, res_scale ) for _ in range(n_resblocks) ]
-        m_body.append( conv(nfeatures, nfeatures, kernel_size, bias ) )
+        m_body.append( conv(nfeatures, nfeatures, kernel_size, bias) )
 
         m_tail: List[nn.Module] = [
             SPUpsample( conv, scale, nfeatures,False ),

@@ -38,7 +38,7 @@ def clear_const_file():
 		const_filepath = cache_filepath(VarType.Constant,vres=vres)
 		remove_filepath(const_filepath)
 
-def get_index_roi(dataset: xa.Dataset) -> Optional[Dict[str,slice]]:
+def get_index_roi(dataset: xa.Dataset, vres: str) -> Optional[Dict[str,slice]]:
 	roi: Optional[Dict[str, List[float]]] = cfg().task.get('roi')
 	if roi is None: return None
 	cbounds: Dict = {}
@@ -113,12 +113,12 @@ def load_merra2_norm_data() -> Dict[str, xa.Dataset]:
 	lgm().log( f"m2_norm_data: {list(m2_norm_data.keys())}")
 	return {nnorm: xa.merge([predef_norm_data[nnorm], m2_norm_data[nnorm]]) for nnorm in m2_norm_data.keys()}
 
-def access_data_subset( filepath, **kwargs) -> xa.Dataset:
+def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	levels: Optional[ List[float] ] = cfg().task.get('levels')
-	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4', **kwargs) )
+	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4') )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
-	roi: Optional[Dict[str,slice]] = get_index_roi(dataset)
+	roi: Optional[Dict[str,slice]] = get_index_roi(dataset, vres)
 	if roi is not None:
 		dataset = dataset.isel(**roi)
 	print( f" ----subset> roi:{roi}, bounds:{bounds(dataset)}" )
@@ -127,7 +127,7 @@ def access_data_subset( filepath, **kwargs) -> xa.Dataset:
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	print( f" * load_dataset[{vres}]({d}): ")
-	result: xa.Dataset = access_data_subset( filepath )
+	result: xa.Dataset = access_data_subset( filepath, vres )
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:

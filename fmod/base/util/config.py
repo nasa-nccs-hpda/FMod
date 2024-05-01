@@ -1,4 +1,5 @@
 import xarray
+import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -6,6 +7,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
+from xarray.core.coordinates import DataArrayCoordinates
 import hydra, traceback, os
 import numpy as np
 import pprint
@@ -97,10 +99,21 @@ def start_date( task_config )-> date:
     print( f"Task start date: {task_config.start_date}: {toks}")
     return  date( *toks )
 
+def index_of_value( array: np.ndarray, target_value: float ) -> int:
+    differences = np.abs(array - target_value)
+    return differences.argmin()
+
+def closest_value( array: np.ndarray, target_value: float ) -> float:
+    differences = np.abs(array - target_value)
+    return array[ differences.argmin() ]
+
 def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
     return  float(coord[0]), float(coord[-1]+dc)
 
-def get_roi( coords: Dict[str,xarray.DataArray] ) -> Dict:
+def get_roi( coords: DataArrayCoordinates ) -> Dict:
     cmap = { dim: coords[ cfg().task.coords[dim] ].values for dim in ['x','y'] }
     return { dim: get_coord_bounds( cmap[dim] ) for dim in ['x','y'] }
+
+def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict:
+    return { dim: closest_value( data.coords[dim], cval ) for dim, cval in target_coords.items() }
