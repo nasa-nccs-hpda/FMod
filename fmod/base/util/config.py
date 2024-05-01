@@ -111,15 +111,16 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
     return  float(coord[0]), float(coord[-1]+dc)
 
-def get_dims( coords: DataArrayCoordinates ) -> List[str]:
+def get_dims( coords: DataArrayCoordinates, **kwargs ) -> List[str]:
+    dims = kwargs.get( 'dims', ['x','y'] )
     dc: List[Hashable] = list(coords.keys())
     if 'x' in dc:
-        return ['x','y']
+        return dims
     else:
         cmap: Dict[str, str] = cfg().task.coords
         vs: List[str] = list(cmap.values())
         if vs[0] in dc:
-            return [ cmap[k] for k in ['x','y'] ]
+            return [ cmap[k] for k in dims ]
         else:
             raise Exception(f"Data Coordinates {dc} do not exist in configuration")
 
