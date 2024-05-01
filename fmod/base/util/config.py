@@ -112,7 +112,7 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     return  float(coord[0]), float(coord[-1]+dc)
 
 def get_roi( coords: DataArrayCoordinates ) -> Dict:
-    cmap = { dim: coords[ cfg().task.coords[dim] ].values for dim in ['x','y'] }
+    cmap = { dim: coords[ dim ].values for dim in ['x','y'] }
     return { dim: get_coord_bounds( cmap[dim] ) for dim in ['x','y'] }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
