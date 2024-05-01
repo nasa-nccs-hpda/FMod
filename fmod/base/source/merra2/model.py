@@ -120,7 +120,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
 	origin: Dict[str,float] = cfg().task.origin
-	tile_size: Dict[str,int] = cfg().task.batch_size
+	tile_size: Dict[str,int] = cfg().task.tile_size
 	oindx: Dict[str,int] = get_data_indices(dataset, origin)
 	if vres == "high":
 		upscale_factor = math.prod( cfg().model.upscale_factors )
