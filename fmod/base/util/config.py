@@ -112,14 +112,12 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     return  float(coord[0]), float(coord[-1]+dc)
 
 def get_roi( coords: DataArrayCoordinates ) -> Dict:
-    cmap = { dim: coords[ dim ].values for dim in ['x','y'] }
-    return { dim: get_coord_bounds( cmap[dim] ) for dim in ['x','y'] }
+    return { dim: get_coord_bounds( coords[ dim ].values ) for dim in ['x','y'] }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
-    print( f"get_data_indices indices: target_coords={list(target_coords.keys())}, data_coords={list(data.coords.keys())}")
     return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
 def snap_origin_to_data_grid( data: xarray.DataArray, **kwargs ):
