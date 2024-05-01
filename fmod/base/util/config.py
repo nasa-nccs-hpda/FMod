@@ -116,4 +116,4 @@ def get_roi( coords: DataArrayCoordinates ) -> Dict:
     return { dim: get_coord_bounds( cmap[dim] ) for dim in ['x','y'] }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict:
-    return { dim: closest_value( data.coords[ cfg().task.coords[dim] ], cval ) for dim, cval in target_coords.items() }
+    return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
