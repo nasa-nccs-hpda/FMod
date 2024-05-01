@@ -3,7 +3,7 @@ import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type, Optional, Union
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
@@ -115,7 +115,7 @@ def get_dims( coords: DataArrayCoordinates ) -> List[str]:
     cmap: Dict[str,str] = cfg().task.coords
     ks: List[str] = list(cmap.keys())
     vs: List[str] = list(cmap.values())
-    dc: List[str] = list(coords.values())
+    dc: List[Hashable] = list(coords.keys())
     if ks[0] in dc: return ks
     if vs[0] in dc: return vs
     raise Exception(f"Data Coordinates {dc} do not exist in configuration")
