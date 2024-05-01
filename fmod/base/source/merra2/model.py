@@ -125,8 +125,8 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	if vres == "high":
 		upscale_factor = math.prod( cfg().model.upscale_factors )
 		tile_size = { dim: ts*upscale_factor for dim, ts in tile_size.items() }
-	iroi = { dim: (oindx[dim], oindx[dim]+ts) for dim, ts in tile_size.items() }
-	dataset = dataset.isel( iroi )
+	iroi = { dim: slice(oindx[dim], oindx[dim]+ts) for dim, ts in tile_size.items() }
+	dataset = dataset.isel( **iroi )
 	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True)
 	return rename_coords(dataset)
 
