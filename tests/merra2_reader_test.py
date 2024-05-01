@@ -32,8 +32,8 @@ print( f"  ** updated cfg origin = {cfg().task['origin']}" )
 print( f"  ** lowres roi = {get_roi(sample_batch.coords)}" )
 
 target_dataset   = ncBatchDataset( cfg().task, vres="high",  load_inputs=False,  load_base=False, load_targets=True )
-target_batch: xa.DataArray  = input_dataset.get_batch( input_dataset.train_dates[0] )['target']
-print( f" @@@ sample_batch{target_batch.dims}: shape={target_batch.shape}, pctnan={pctnan(target_batch.values)}" )
+target_batch: xa.DataArray  = target_dataset.get_batch( input_dataset.train_dates[0] )['target']
+print( f" @@@ target_batch{target_batch.dims}: shape={target_batch.shape}, pctnan={pctnan(target_batch.values)}" )
 
 print( f"  ** highres roi = {get_roi(target_batch.coords)}" )
 
