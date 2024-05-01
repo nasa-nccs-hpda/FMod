@@ -119,6 +119,7 @@ def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) ->
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
+    print( f"get_data_indices indices: target_coords={list(target_coords.keys())}, data_coords={list(data.coords.keys())}")
     return { dim: index_of_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def snap_origin_to_data_grid( data: xarray.DataArray, **kwargs ):
