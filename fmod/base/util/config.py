@@ -112,13 +112,16 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     return  float(coord[0]), float(coord[-1]+dc)
 
 def get_dims( coords: DataArrayCoordinates ) -> List[str]:
-    cmap: Dict[str,str] = cfg().task.coords
-    ks: List[str] = list(cmap.keys())
-    vs: List[str] = list(cmap.values())
     dc: List[Hashable] = list(coords.keys())
-    if ks[0] in dc: return ks
-    if vs[0] in dc: return vs
-    raise Exception(f"Data Coordinates {dc} do not exist in configuration")
+    if 'x' in dc:
+        return ['x','y']
+    else:
+        cmap: Dict[str, str] = cfg().task.coords
+        vs: List[str] = list(cmap.values())
+        if vs[0] in dc:
+            return [ cmap[k] for k in ['x','y'] ]
+        else:
+            raise Exception(f"Data Coordinates {dc} do not exist in configuration")
 
 def get_roi( coords: DataArrayCoordinates ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
