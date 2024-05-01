@@ -105,7 +105,7 @@ def index_of_value( array: np.ndarray, target_value: float ) -> int:
 
 def closest_value( array: np.ndarray, target_value: float ) -> float:
     differences = np.abs(array - target_value)
-    return array[ differences.argmin() ]
+    return float( array[ differences.argmin() ] )
 
 def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
