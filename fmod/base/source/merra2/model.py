@@ -132,7 +132,7 @@ def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
 	filepath =  cache_filepath(VarType.Constant, vres=vres )
-	return access_data_subset( filepath)
+	return access_data_subset( filepath, vres )
 
 class FMBatch:
 
