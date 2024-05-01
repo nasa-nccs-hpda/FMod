@@ -36,8 +36,8 @@ class ResBlock(nn.Module):
 		super(ResBlock, self).__init__()
 		m = []
 		for i in range(2):
-			m.append(conv(nchannels, nchannels, kernel_size, bias))
-			if bn: m.append(nn.BatchNorm2d(nchannels))
+			m.append( conv( nchannels, nchannels, kernel_size, bias ) )
+			if bn: m.append( nn.BatchNorm2d(nchannels) )
 			if i == 0: m.append(act)
 
 		self.body = nn.Sequential(*m)
