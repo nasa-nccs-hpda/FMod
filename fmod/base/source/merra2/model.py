@@ -3,6 +3,7 @@ import os, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.pipeline.stats import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
+from fmod.base.util.config import get_data_indices, get_roi
 from datetime import date
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
@@ -118,10 +119,15 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4') )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
-	roi: Optional[Dict[str,slice]] = get_index_roi(dataset, vres)
-	if roi is not None:
-		dataset = dataset.isel(**roi)
-	print( f" ----subset> roi:{roi}, bounds:{bounds(dataset)}" )
+	origin: Dict[str,float] = cfg().task.origin
+	tile_size: Dict[str,int] = cfg().task.batch_size
+	oindx: Dict[str,int] = get_data_indices(dataset, origin)
+	if vres == "high":
+		upscale_factor = math.prod( cfg().model.upscale_factors )
+		tile_size = { dim: ts*upscale_factor for dim, ts in tile_size.items() }
+	iroi = { dim: (oindx[dim], oindx[dim]+ts) for dim, ts in tile_size.items() }
+	dataset = dataset.isel( iroi )
+	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True)
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:

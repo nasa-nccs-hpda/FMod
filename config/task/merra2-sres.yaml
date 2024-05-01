@@ -14,7 +14,7 @@ batch_ndays: 16
 nbatches: 2
 
 train_steps: [0]
-upscale_factors: [3]
+upscale_factors: [2,2]
 nsteps_input: 1
 
 data_timestep: 6
@@ -25,7 +25,7 @@ weight_decay: 0.0
 error_threshold: 1.0
 # roi: { x: [-122.8125, -62.8125], y: [27.75, 51.75] }
 origin: { x: -120, y: 25 }
-block_size: [64,64]
+tile_size: { x: 64, y: 64 }
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }
 statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_mean_by_level", std_diff: "diffs_stddev_by_level" }

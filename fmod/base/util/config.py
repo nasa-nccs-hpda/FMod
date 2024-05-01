@@ -115,5 +115,13 @@ def get_roi( coords: DataArrayCoordinates ) -> Dict:
     cmap = { dim: coords[ cfg().task.coords[dim] ].values for dim in ['x','y'] }
     return { dim: get_coord_bounds( cmap[dim] ) for dim in ['x','y'] }
 
-def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict:
+def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
+
+def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
+    return { dim: index_of_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
+
+def snap_origin_to_data_grid( data: xarray.DataArray, **kwargs ):
+    data_origin: Dict[str,float] = get_data_coords(data, cfg().task['origin'])
+    lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
+    cfg().task['origin'] = data_origin
