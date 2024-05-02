@@ -13,6 +13,7 @@ import numpy as np
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
+DataCoordinates = Union[DataArrayCoordinates,DatasetCoordinates]
 
 def cfg() -> DictConfig:
     return Configuration.instance().cfg
@@ -111,7 +112,7 @@ def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
     return  float(coord[0]), float(coord[-1]+dc)
 
-def get_dims( coords: DataArrayCoordinates, **kwargs ) -> List[str]:
+def get_dims( coords: DataCoordinates, **kwargs ) -> List[str]:
     dims = kwargs.get( 'dims', ['x','y'] )
     dc: List[Hashable] = list(coords.keys())
     if 'x' in dc:
@@ -124,7 +125,7 @@ def get_dims( coords: DataArrayCoordinates, **kwargs ) -> List[str]:
         else:
             raise Exception(f"Data Coordinates {dc} do not exist in configuration")
 
-def get_roi( coords: Union[DataArrayCoordinates,DatasetCoordinates] ) -> Dict:
+def get_roi( coords: DataCoordinates ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:

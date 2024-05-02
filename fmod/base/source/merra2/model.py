@@ -3,7 +3,7 @@ import os, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.pipeline.stats import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
-from fmod.base.util.config import get_data_indices, get_roi
+from fmod.base.util.config import get_data_indices, get_roi, get_dims
 from datetime import date
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.config import cfg
@@ -27,7 +27,8 @@ def rcoords(dset: xa.Dataset):
 
 def bounds(dset: xa.Dataset):
 	c = dset.coords
-	return '[' + ','.join( [ f"{k}[{c[k].size}]:[{c[k][0]:.2f},{c[k][-1]:.2f}:{c[k][1]-c[k][0]:.2f}]" for k in ['x','y']] ) + ']'
+	dims = get_dims(c)
+	return '[' + ','.join( [ f"{k}[{c[k].size}]:[{c[k][0]:.2f},{c[k][-1]:.2f}:{c[k][1]-c[k][0]:.2f}]" for k in dims] ) + ']'
 
 def index_of_cval(  data: Union[xa.Dataset,xa.DataArray], dim:str, cval: float)-> int:
 	coord: np.ndarray = data.coords[dim].values
