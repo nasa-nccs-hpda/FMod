@@ -132,8 +132,8 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
-	print( f" * load_dataset[{vres}]({d}): {filepath}")
 	result: xa.Dataset = access_data_subset( filepath, vres )
+	print( f" * load_dataset[{vres}]({d}) {get_roi(result.coords)} {filepath}")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
@@ -194,9 +194,9 @@ class SRBatch:
 		return merged
 
 	def load_batch(self, d: date, **kwargs) -> xa.Dataset:
-		dsets = []
-		for day in date_list(d, self.days_per_batch):
-			dsets.append( load_dataset(day, self.vres) )
+		dates = date_list(d, self.days_per_batch)
+		dsets = [ load_dataset(day, self.vres) for day in dates ]
+		print( f"Concat {len(dates)} daily datasets")
 		dset = xa.concat(dsets, dim="time", coords="minimal")
 		return dset
 

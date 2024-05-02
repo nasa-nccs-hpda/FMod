@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta
-from xarray.core.coordinates import DataArrayCoordinates
+from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
 import hydra, traceback, os
 import numpy as np
 import pprint
@@ -124,7 +124,7 @@ def get_dims( coords: DataArrayCoordinates, **kwargs ) -> List[str]:
         else:
             raise Exception(f"Data Coordinates {dc} do not exist in configuration")
 
-def get_roi( coords: DataArrayCoordinates ) -> Dict:
+def get_roi( coords: Union[DataArrayCoordinates,DatasetCoordinates] ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
