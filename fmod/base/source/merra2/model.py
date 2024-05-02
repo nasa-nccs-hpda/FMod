@@ -127,13 +127,13 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 		tile_size = { dim: ts*upscale_factor for dim, ts in tile_size.items() }
 	iroi = { dim: slice(oindx[dim], oindx[dim]+ts) for dim, ts in tile_size.items() }
 	dataset = dataset.isel( **iroi )
-	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}")
+	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	result: xa.Dataset = access_data_subset( filepath, vres )
-	print( f" * load_dataset[{vres}]({d}) {get_roi(result.coords)} {filepath}")
+	print( f" * load_dataset[{vres}]({d}) {bounds(result)} nts={result.coords['time'].size} {filepath}")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
