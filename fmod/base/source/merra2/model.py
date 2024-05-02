@@ -179,8 +179,14 @@ class SRBatch:
 		self.current_date = None
 		self.days_per_batch = cfg().task.batch_ndays
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
-		self.constants: xa.Dataset = load_const_dataset( **kwargs )
+		self._constants: Optional[xa.Dataset] = None
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()
+
+	@property
+	def constants(self)-> xa.Dataset:
+		if self._constants is None:
+			self._constants: xa.Dataset = load_const_dataset(self.vres)
+		return self._constants
 
 	def merge_batch(self, slices: List[xa.Dataset]) -> xa.Dataset:
 		dynamics: xa.Dataset = xa.concat(slices, dim="time", coords="minimal")
