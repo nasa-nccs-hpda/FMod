@@ -174,9 +174,9 @@ class DataLoader(object):
 		varray = variable.interp( x=vcoord['x'], assume_sorted=True,  method=self.interp_method ) if 'x' in vcoord else variable
 		varray =   varray.interp( y=vcoord['y'], assume_sorted=True,  method=self.interp_method ) if 'y' in vcoord else varray
 		varray =   varray.interp( z=vcoord['z'], assume_sorted=False, method=self.interp_method ) if 'z' in vcoord else varray
-		if 'time' in varray.dims:
-			resampled: DataArrayResample = varray.resample(time=self.tstep)
-			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
+#		if 'time' in varray.dims:
+#			resampled: DataArrayResample = varray.resample(time=self.tstep)
+#			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		varray.attrs.update(global_attrs)
 		varray.attrs.update(varray.attrs)
 		for missing in ['fmissing_value', 'missing_value', 'fill_value']:
