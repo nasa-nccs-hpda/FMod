@@ -184,8 +184,7 @@ class MERRA2DataProcessor:
             else:
                 vres_dsets: Dict[str,List[xa.Dataset]] = dict( high=[], low=[])
                 for collection, (file_path, dvars) in dset_files.items():
-                    lgm().log(f" >> Loading {collection} from {file_path}:", display=True)
-                    lgm().log(f" ----> dvvars= {dvars}", display=True)
+                    lgm().log(f" >> Loading {collection} from {file_path}: {dvars}", display=True)
                     daily_vres_dsets: Dict[str,xa.Dataset] = self.load_collection(  collection, file_path, dvars, d, **kwargs)
                     for vres, dsets in daily_vres_dsets.items(): vres_dsets[vres].append(dsets)
                 for vres,collection_dsets in vres_dsets.items():
