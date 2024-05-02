@@ -132,7 +132,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
-	print( f" * load_dataset[{vres}]({d}): ")
+	print( f" * load_dataset[{vres}]({d}): {filepath}")
 	result: xa.Dataset = access_data_subset( filepath, vres )
 	return result
 
