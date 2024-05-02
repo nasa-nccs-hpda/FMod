@@ -36,7 +36,7 @@ target_dataset   = ncBatchDataset( cfg().task, vres="high",  load_inputs=False, 
 target_batch: xa.DataArray  = target_dataset.get_batch( input_dataset.train_dates[0] )['target']
 print( f" @@@ target_batch{target_batch.dims}: shape={target_batch.shape}, pctnan={pctnan(target_batch.values)}" )
 
-hrc = { dim: sample_batch.coords[dim].values for dim in ['lat', 'lon'] }
+hrc = { dim: target_batch.coords[dim].values for dim in ['lat', 'lon'] }
 print( f"  ** highres roi = {get_roi(target_batch.coords)}, delx={hrc['lon'][1]-lrc['lon'][0]}, dely={hrc['lat'][1]-lrc['lat'][0]}" )
 
 
