@@ -15,6 +15,7 @@ def nnant(varray: Tensor) -> int: return torch.isnan(varray).sum().item()
 def pctnant(varray: Tensor) -> str: return f"{nnant(varray)*100.0/torch.numel(varray):.2f}%"
 
 def remove_filepath(filepath: str):
+	print( "Removing const file: ", filepath )
 	if os.path.exists(filepath):
 		try: os.remove(filepath)
 		except IsADirectoryError:
