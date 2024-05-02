@@ -23,7 +23,7 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 
 def rcoords(dset: xa.Dataset):
 	c = dset.coords
-	return '[' + ','.join( [ f"{k}:{c[k].size}" for k in ['x','y']] ) + ']'
+	return '[' + ','.join( [ f"{k}:{c[k].size}" for k in c.keys()] ) + ']'
 
 def bounds(dset: xa.Dataset):
 	c = dset.coords
