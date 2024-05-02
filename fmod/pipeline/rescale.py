@@ -136,7 +136,7 @@ class DataLoader(object):
 		scale_factor = math.prod( cfg().model.upscale_factors )
 		for dim in [ 'x', 'y']:
 			cargs = { dim: scale_factor }
-			vlores = vlores.coarsen( boundary="trim", **cargs ).reduce( redop, keep_attrs=True )
+			vlores = vlores.coarsen( boundary="trim", coord_func="min", **cargs ).reduce( redop, keep_attrs=True )
 
 		return dict( high=[vhires], low=[vlores] )
 
