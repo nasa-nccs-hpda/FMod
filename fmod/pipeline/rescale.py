@@ -127,10 +127,10 @@ class DataLoader(object):
 		vhires = self.process_attrs( variable, global_attrs )
 		if isconst and ("time" in variable.dims):
 			vhires = vhires.isel(time=0, drop=True)
-		# if 'time' in vhires.dims:
-		# 	lgm().log( f" @@Resample {variable.name}{variable.dims}: shape={variable.shape}, tstep={self.tstep}")
-		# 	resampled: DataArrayResample = vhires.resample( dict(time=self.tstep), offset='0h' )
-		# 	vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
+		if 'time' in vhires.dims:
+			lgm().log( f" @@Resample {variable.name}{variable.dims}: shape={variable.shape}, tstep={self.tstep}")
+			resampled: DataArrayResample = vhires.resample( dict(time=self.tstep), offset='0h' )
+			vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
 		vlores: xa.DataArray = vhires
 		scale_factor = math.prod( cfg().model.upscale_factors )
@@ -174,9 +174,9 @@ class DataLoader(object):
 		varray = variable.interp( x=vcoord['x'], assume_sorted=True,  method=self.interp_method ) if 'x' in vcoord else variable
 		varray =   varray.interp( y=vcoord['y'], assume_sorted=True,  method=self.interp_method ) if 'y' in vcoord else varray
 		varray =   varray.interp( z=vcoord['z'], assume_sorted=False, method=self.interp_method ) if 'z' in vcoord else varray
-#		if 'time' in varray.dims:
-#			resampled: DataArrayResample = varray.resample(time=self.tstep)
-#			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
+		if 'time' in varray.dims:
+			resampled: DataArrayResample = varray.resample(time=self.tstep)
+			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		varray.attrs.update(global_attrs)
 		varray.attrs.update(varray.attrs)
 		for missing in ['fmissing_value', 'missing_value', 'fill_value']:
