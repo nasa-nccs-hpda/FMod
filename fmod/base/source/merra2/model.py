@@ -120,6 +120,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4') )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
+	lgm().log(f"LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
 	origin: Dict[str,float] = cfg().task.origin
 	tile_size: Dict[str,int] = cfg().task.tile_size
 	oindx: Dict[str,int] = get_data_indices(dataset, origin)
