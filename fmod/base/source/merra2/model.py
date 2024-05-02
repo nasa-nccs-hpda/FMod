@@ -204,6 +204,7 @@ class SRBatch:
 		if self.current_date != d:
 			self.current_batch = self.load_batch(d)
 			self.current_date = d
+			lgm().log( f"\n -----> load_batch[{d}]-> {rcoords(self.current_batch)}\n", display=True )
 
 		return self.current_batch
 
