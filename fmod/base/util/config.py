@@ -104,9 +104,10 @@ def index_of_value( array: np.ndarray, target_value: float ) -> int:
     differences = np.abs(array - target_value)
     return differences.argmin()
 
-def closest_value( array: np.ndarray, target_value: float ) -> float:
+def closest_value( array: np.ndarray, target_value: float ) -> Tuple[int,float]:
     differences = np.abs(array - target_value)
-    return float( array[ differences.argmin() ] )
+    cindex = differences.argmin()
+    return cindex, float( array[ differences.argmin() ] )
 
 def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
@@ -128,13 +129,16 @@ def get_dims( coords: DataCoordinates, **kwargs ) -> List[str]:
 def get_roi( coords: DataCoordinates ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
 
-def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
+def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,Tuple[int,float]]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
     return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
-def snap_origin_to_data_grid( data: xarray.DataArray, **kwargs ):
-    data_origin: Dict[str,float] = get_data_coords(data, cfg().task['origin'])
+def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
+    data_origin: Dict[str,Tuple[int,float]] = get_data_coords(data, cfg().task['origin'])
+    tile_size: Dict[str,int] = cfg().task.tile_size
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
+    cfg().task['extent'] = { dim: data.values[idx+tile_size[dim]] for dim, (idx,oval) in data_origin.items() }
+    print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} roi={cfg().task['roi']} *** ")

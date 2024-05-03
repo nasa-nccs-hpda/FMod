@@ -121,13 +121,9 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
 	lgm().log(f"LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
-	origin: Dict[str,float] = cfg().task.origin
-	tile_size: Dict[str,int] = cfg().task.tile_size
-	oindx: Dict[str,int] = get_data_indices(dataset, origin)
-	if vres == "high":
-		upscale_factor = math.prod( cfg().model.upscale_factors )
-		tile_size = { dim: ts*upscale_factor for dim, ts in tile_size.items() }
-	iroi = { dim: slice(oindx[dim], oindx[dim]+ts) for dim, ts in tile_size.items() }
+	iorigin: Dict[str,int] = get_data_indices(dataset, cfg().task.origin )
+	iextent: Dict[str, int] = get_data_indices(dataset, cfg().task.extent )
+	iroi = { dim: slice(oval, iextent[dim]) for dim, oval in iorigin.items() }
 	dataset = dataset.isel( **iroi )
 	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
 	return rename_coords(dataset)
