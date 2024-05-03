@@ -101,6 +101,7 @@ def start_date( task_config )-> date:
     return  date( *toks )
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
+    print( f"Index of value {target_value} in array[{array.shape}]")
     differences = np.abs(array - target_value)
     return differences.argmin()
 
@@ -138,7 +139,7 @@ def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     return float( coord[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
     print( f"get_data_indices(data{data.shape}, {target_coords})" )
-    return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
+    return { dim: index_of_value( data.coords[ dim ].values, coord_value ) for dim, coord_value in target_coords.items() }
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     data_origin: Dict[str,Tuple[int,float]] = get_data_coords(data, cfg().task['origin'])
