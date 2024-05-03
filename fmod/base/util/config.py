@@ -105,10 +105,9 @@ def index_of_value( array: np.ndarray, target_value: float ) -> int:
     differences = np.abs(array - target_value)
     return differences.argmin()
 
-def closest_value( array: np.ndarray, target_value: float ) -> Tuple[int,float]:
+def closest_value( array: np.ndarray, target_value: float ) -> float:
     differences = np.abs(array - target_value)
-    cindex = int(differences.argmin())
-    return cindex, float( array[ cindex ] )
+    return  float( array[ differences.argmin() ] )
 
 def get_coord_bounds( coord: np.ndarray ) -> Tuple[float, float]:
     dc = coord[1] - coord[0]
@@ -130,19 +129,17 @@ def get_dims( coords: DataCoordinates, **kwargs ) -> List[str]:
 def get_roi( coords: DataCoordinates ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
 
-def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,Tuple[int,float]]:
+def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
-    print( f"cval[{dim}]: coord shape = {coord.shape}")
     return float( coord[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
-    print( f"get_data_indices( {target_coords})" )
     return { dim: index_of_value( data.coords[ dim ].values, coord_value ) for dim, coord_value in target_coords.items() }
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
-    data_origin: Dict[str,Tuple[int,float]] = get_data_coords(data, cfg().task['origin'])
+    data_origin: Dict[str,float] = get_data_coords(data, cfg().task['origin'])
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
     cfg().task['extent'] = { dim: cval(data, dim, -1) for dim in data_origin.keys() }
