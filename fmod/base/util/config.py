@@ -137,6 +137,7 @@ def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     print( f"cval[{dim}]: coord shape = {coord.shape}")
     return float( coord[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
+    print( f"get_data_indices(data{data.shape}, {target_coords})" )
     return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
@@ -144,4 +145,4 @@ def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
     cfg().task['extent'] = { dim: cval(data, dim, -1) for dim in data_origin.keys() }
-    print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")
+    print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** " )
