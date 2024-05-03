@@ -133,7 +133,9 @@ def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) ->
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
-    return float( data.coords[ cfg().task.coords[dim] ].values[cindex] )
+    coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
+    print( f"cval[{dim}]: coord shape = {coord.shape}")
+    return float( coord[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
     return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
