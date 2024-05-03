@@ -132,6 +132,8 @@ def get_roi( coords: DataCoordinates ) -> Dict:
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,Tuple[int,float]]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
+def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
+    return float( data.coords[ cfg().task.coords[dim] ].values[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
     return { dim: index_of_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
@@ -140,5 +142,5 @@ def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     tile_size: Dict[str,int] = cfg().task.tile_size
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
-    cfg().task['extent'] = { dim: data.values[idx+tile_size[dim]] for dim, (idx,oval) in data_origin.items() }
+    cfg().task['extent'] = { dim: cval(data, dim, idx+tile_size[dim]) for dim, (idx,oval) in data_origin.items() }
     print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} roi={cfg().task['roi']} *** ")
