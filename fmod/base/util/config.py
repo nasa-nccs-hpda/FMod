@@ -144,4 +144,4 @@ def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
     cfg().task['extent'] = { dim: cval(data, dim, -1) for dim in data_origin.keys() }
-    print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} roi={cfg().task['roi']} *** ")
+    print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")

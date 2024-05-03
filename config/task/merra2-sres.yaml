@@ -22,7 +22,9 @@ lr: 1e-4
 nepochs: 2
 weight_decay: 0.0
 error_threshold: 1.0
+
 origin: { x: -120, y: -60 }
+extent: { x: -1, y: -1 }
 tile_size: { x: 64, y: 64 }
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }
