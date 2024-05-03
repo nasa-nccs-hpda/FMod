@@ -141,8 +141,7 @@ def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coord
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     data_origin: Dict[str,Tuple[int,float]] = get_data_coords(data, cfg().task['origin'])
-    tile_size: Dict[str,int] = cfg().task.tile_size
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
-    cfg().task['extent'] = { dim: cval(data, dim, idx+tile_size[dim]) for dim, (idx,oval) in data_origin.items() }
+    cfg().task['extent'] = { dim: cval(data, dim, -1) for dim in data_origin.keys() }
     print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} roi={cfg().task['roi']} *** ")

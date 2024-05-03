@@ -126,7 +126,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 
 	if vres == "high":
 		iextent: Dict[str, int] = get_data_indices(dataset, cfg().task.extent )
-		iroi = { dim: slice(oidx, iextent[dim]) for dim, oidx in iorigin.items() }
+		iroi = { dim: slice(oidx, iextent[dim]+1) for dim, oidx in iorigin.items() }
 	elif vres == "low":
 		iroi = {dim: slice(oidx, oidx+tile_size[dim]) for dim, oidx in iorigin.items()}
 	else:
