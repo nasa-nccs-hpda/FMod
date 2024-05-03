@@ -138,7 +138,7 @@ def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     print( f"cval[{dim}]: coord shape = {coord.shape}")
     return float( coord[cindex] )
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
-    print( f"get_data_indices(data{data.shape}, {target_coords})" )
+    print( f"get_data_indices( {target_coords})" )
     return { dim: index_of_value( data.coords[ dim ].values, coord_value ) for dim, coord_value in target_coords.items() }
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
