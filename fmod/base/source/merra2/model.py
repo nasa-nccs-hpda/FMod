@@ -120,7 +120,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4') )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
-	lgm().log(f"LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
+	lgm().log(f"\n LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
 	iorigin: Dict[str,int] = get_data_indices(dataset, cfg().task.origin )
 	tile_size: Dict[str,int] = cfg().task.tile_size
 
@@ -133,7 +133,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 		raise Exception(f"Unrecognized vres: {vres}")
 
 	dataset = dataset.isel( **iroi )
-	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
+	lgm().log( f" %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:

@@ -14,7 +14,6 @@ batch_ndays: 16
 nbatches: 1
 
 train_steps: [0]
-upscale_factors: [2,2]
 nsteps_input: 1
 
 data_timestep: 6
@@ -23,7 +22,6 @@ lr: 1e-4
 nepochs: 2
 weight_decay: 0.0
 error_threshold: 1.0
-# roi: { x: [-122.8125, -62.8125], y: [27.75, 51.75] }
 origin: { x: -120, y: 25 }
 tile_size: { x: 64, y: 64 }
 
