@@ -122,8 +122,16 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 		dataset = dataset.sel(z=levels, method="nearest")
 	lgm().log(f"LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
 	iorigin: Dict[str,int] = get_data_indices(dataset, cfg().task.origin )
-	iextent: Dict[str, int] = get_data_indices(dataset, cfg().task.extent )
-	iroi = { dim: slice(oval, iextent[dim]) for dim, oval in iorigin.items() }
+	tile_size: Dict[str,int] = cfg().task.tile_size
+
+	if vres == "high":
+		iextent: Dict[str, int] = get_data_indices(dataset, cfg().task.extent )
+		iroi = { dim: slice(oidx, iextent[dim]) for dim, oidx in iorigin.items() }
+	elif vres == "low":
+		iroi = {dim: slice(oidx, oidx+tile_size[dim]) for dim, oidx in iorigin.items()}
+	else:
+		raise Exception(f"Unrecognized vres: {vres}")
+
 	dataset = dataset.isel( **iroi )
 	lgm().log( f"\n %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
 	return rename_coords(dataset)
