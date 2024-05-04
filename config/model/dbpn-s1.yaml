@@ -1,0 +1,4 @@
+nfeatures: 128
+depth: 2
+scale: 2
+nprojectionfeatures: 32
