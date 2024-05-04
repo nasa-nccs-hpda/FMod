@@ -101,7 +101,6 @@ def start_date( task_config )-> date:
     return  date( *toks )
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
-    print( f"Index of value {target_value} in array[{array.shape}]")
     differences = np.abs(array - target_value)
     return differences.argmin()
 
@@ -132,6 +131,8 @@ def get_roi( coords: DataCoordinates ) -> Dict:
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
+def cdelta(dset: xarray.DataArray):
+	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in get_dims(dset.coords) }
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
     return float( coord[cindex] )
@@ -140,7 +141,8 @@ def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coord
 
 def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     data_origin: Dict[str,float] = get_data_coords(data, cfg().task['origin'])
+    dc = cdelta(data)
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
-    cfg().task['extent'] = { dim: cval(data, dim, -1) for dim in data_origin.keys() }
+    cfg().task['extent'] = { dim: float(cval(data, dim, -1) + dc[dim]) for dim in data_origin.keys() }
     print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** " )
