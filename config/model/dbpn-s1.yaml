@@ -3,3 +3,4 @@ depth: 2
 scale: 2
 nprojectionfeatures: 32
 upscale_factors: [2,2]
+loss_fn: 'l2'
