@@ -160,14 +160,15 @@ class ModelTrainer(object):
 			raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 		return loss
 
-	def get_batch(self, batch_date ) -> Dict[str,torch.Tensor]:
+	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(batch_date)
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}", display=True)
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}", display=True)
-		return dict( input=array2tensor(binput), target=array2tensor(btarget) )
+		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
+		else:          return dict( input=binput,               target=btarget )
 
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
