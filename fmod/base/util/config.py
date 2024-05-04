@@ -132,7 +132,7 @@ def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) ->
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def cdelta(dset: xarray.DataArray):
-	return { cfg().task.coords[k]: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() if dset.coords[k].size > 1 }
+	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() if dset.coords[k].size > 1 }
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
     return float( coord[cindex] )
@@ -144,5 +144,5 @@ def coerce_to_data_grid( data: xarray.DataArray, **kwargs ):
     dc = cdelta(data)
     lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs )
     cfg().task['origin'] = data_origin
-    cfg().task['extent'] = { dim: float(cval(data, dim, -1) + dc[dim]) for dim in data_origin.keys() }
+    cfg().task['extent'] = { dim: float(cval(data, dim, -1) + dc[cfg().task.coords[dim]]) for dim in data_origin.keys() }
     print( f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** " )
