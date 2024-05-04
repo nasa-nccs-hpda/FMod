@@ -239,7 +239,7 @@ class ncBatchDataset(BaseDataset):
             lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
             input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
-            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}", display=True )
+            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )
         #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array

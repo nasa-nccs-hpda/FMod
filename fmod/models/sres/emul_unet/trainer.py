@@ -165,8 +165,8 @@ class ModelTrainer(object):
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
-		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}", display=True)
-		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}", display=True)
+		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
@@ -198,10 +198,10 @@ class ModelTrainer(object):
 				input: torch.Tensor = train_data['input']
 				target: torch.Tensor   = train_data['target']
 				prd:  torch.Tensor  = self.model( input )
-				lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}", display=True)
+				lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}")
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item() * train_data['input'].size(0)
-				lgm().log(f" ** Loss shape={list(loss.shape)}, {batch_date}: loss = {loss.item():.2f}", display=True)
+				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.2f}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()

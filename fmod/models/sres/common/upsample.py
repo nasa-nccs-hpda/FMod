@@ -1,5 +1,6 @@
 import torch, math, torch.nn as nn
 from fmod.models.sres.util import *
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class Upsample(nn.Module):
 
@@ -26,7 +27,7 @@ class Upsample(nn.Module):
 
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		y: torch.Tensor =  self.usnet(x)
-		print( f" --- Upsample: {list(x.shape)} -> {list(y.shape)}")
+		lgm().log( f" --- Upsample: {list(x.shape)} -> {list(y.shape)}")
 		return  y
 
 class SPUpsample(nn.Sequential):

@@ -3,6 +3,7 @@ from collections import OrderedDict
 from fmod.models.sres.common.residual import Residual
 from fmod.models.sres.common.upsample import Upsample
 from fmod.models.sres.util import *
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class SRDN(nn.Module):
 
@@ -49,8 +50,10 @@ class SRDN(nn.Module):
 		gr: torch.Tensor = self.global_residual(r)
 		y = self.upscaling( f + gr )
 		z =  self.result( y )
-		print(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)} z{list(z.shape)}")
+		lgm().log(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)} z{list(z.shape)}")
 		return z
+
+
 
 # class Generator(object):
 #
