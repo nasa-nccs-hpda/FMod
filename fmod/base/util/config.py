@@ -132,7 +132,7 @@ def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) ->
     return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
 
 def cdelta(dset: xarray.DataArray):
-	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in get_dims(dset.coords) }
+	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() }
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
     return float( coord[cindex] )
