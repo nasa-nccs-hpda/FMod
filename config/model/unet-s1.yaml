@@ -2,3 +2,4 @@ usmethod: transpose
 loss_fn: l2
 upscale_factors: [2,2,2]
 bilinear: False
+training_version: 'merra2-unet.1'

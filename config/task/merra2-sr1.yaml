@@ -1,5 +1,4 @@
 dataset_version: 'merra2.sr.1'
-training_version: 'merra2-sfno.2'
 params: "small"
 nc_format: 'sres'
 tensor_type: "torch"

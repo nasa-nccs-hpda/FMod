@@ -27,4 +27,5 @@ separable: False
 rank:  128
 inner_skip: "none"
 outer_skip: "identity"
+training_version: 'merra2-sfno.1'
 

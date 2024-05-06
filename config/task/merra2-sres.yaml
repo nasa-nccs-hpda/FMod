@@ -1,5 +1,4 @@
 dataset_version: 'merra2.sr.1'
-training_version: 'merra2-sfno.2'
 params: "small"
 nc_format: 'sres'
 tensor_type: "torch"
@@ -19,7 +18,7 @@ nsteps_input: 1
 data_timestep: 6
 levels:  [850, 1000]
 lr: 1e-4
-nepochs: 200
+nepochs: 10
 weight_decay: 0.0
 error_threshold: 1.0
 

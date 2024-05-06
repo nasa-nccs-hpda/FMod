@@ -5,3 +5,4 @@ usmethod: replicate # replicate # transpose
 loss_fn: 'l2'
 kernel_size: 3
 res_scale: 1.0
+training_version: 'merra2-vdsr.1'

@@ -47,4 +47,5 @@ ckpt_name: "model_34var.pt"
 pyt_profiler: False
 profile: False
 profile_range: (90, 110)
+training_version: 'merra2-graphcast.1'
 

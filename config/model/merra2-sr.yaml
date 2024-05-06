@@ -28,4 +28,5 @@ separable: False
 rank:  128
 inner_skip: "linear"
 outer_skip: "identity"
+training_version: 'merra2-sres.1'
 
