@@ -71,12 +71,12 @@ class ModelTrainer(object):
 
 	def save_state(self):
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
-		torch.save( self.model, self.checkpoint_path )
+		torch.save( self.model.state_dict(), self.checkpoint_path )
 
 	def load_state(self) -> bool:
 		if os.path.exists( self.checkpoint_path ):
 			try:
-				self.model = torch.load( self.checkpoint_path )
+				self.model.load_state_dict( torch.load( self.checkpoint_path ) )
 				lgm().log(f"Loaded model from {self.checkpoint_path}", display=True)
 				return True
 			except Exception as e:
@@ -85,7 +85,7 @@ class ModelTrainer(object):
 
 	@property
 	def checkpoint_path(self) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version + ".pt") )
+		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version) )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
@@ -272,7 +272,7 @@ class DualModelTrainer(object):
 
 	@property
 	def checkpoint_path(self) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().task.training_version) )
+		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version) )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:

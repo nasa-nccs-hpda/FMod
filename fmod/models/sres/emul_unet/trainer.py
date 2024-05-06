@@ -106,7 +106,7 @@ class ModelTrainer(object):
 
 	@property
 	def checkpoint_path(self) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().task.training_version) )
+		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version) )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
