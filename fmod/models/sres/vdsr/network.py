@@ -21,7 +21,7 @@ class VDSR(nn.Module):
 			return BasicBlock( conv, in_channels, out_channels, kernel_size, bias=bias, bn=bn, act=activation )
 
 		self.upscaler = nn.Sequential(
-			nn.UpsamplingNearest2d(scale_factor=scale),
+			  nn.UpsamplingNearest2d(scale_factor=scale),
 		)
 
 		m_body = [  basic_block( nchannels, nfeatures, act ) ]
