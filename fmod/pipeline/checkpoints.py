@@ -26,7 +26,7 @@ class CheckpointManager(object):
 	def _save_state(self, epoch: int, loss: float, version: str = "current" ) -> str:
 		checkpoint = dict( epoch=epoch, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
 		cpath = self.checkpoint_path(version)
-		torch.save( checkpoint, cpath, version )
+		torch.save( checkpoint, cpath )
 		return cpath
 
 	def save_checkpoint(self, epoch: int, loss: float ):
