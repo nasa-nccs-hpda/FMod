@@ -11,6 +11,7 @@ from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
 from fmod.pipeline.merra2 import array2tensor
+from fmod.pipeline.checkpoints import CheckpointManager
 from enum import Enum
 import numpy as np
 import torch.nn as nn
@@ -65,6 +66,7 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+		self.checkpoint_manager = None
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
@@ -124,16 +126,21 @@ class ModelTrainer(object):
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', True )
+		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
-		nepochs = cfg().task.nepochs
+		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		epoch0, nepochs = 0, cfg().task.nepochs
 		train_start = time.time()
-		if load_state: self.load_state()
+		if load_state:
+			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			epoch0 = train_state['epoch']
+			nepochs += epoch0
+
 		for epoch in range(nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -173,8 +180,7 @@ class ModelTrainer(object):
 
 			cp_msg = ""
 			if save_state:
-				self.save_state()
-				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch == 0))
+				self.checkpoint_manager.save_checkpoint( epoch, acc_loss )
 				cp_msg = "  ** model saved ** "
 			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
 
@@ -236,6 +242,7 @@ class DualModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.model = None
+		self.checkpoint_manager = None
 		self.downscaler = Downscaler()
 
 	def __iter__(self):
@@ -255,24 +262,6 @@ class DualModelTrainer(object):
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
-
-	def save_state(self):
-		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
-		torch.save( self.model, self.checkpoint_path )
-
-	def load_state(self) -> bool:
-		if os.path.exists( self.checkpoint_path ):
-			try:
-				self.model = torch.load( self.checkpoint_path )
-				print(f"Loaded model from {self.checkpoint_path}")
-				return True
-			except Exception as e:
-				print(f"Unsble to load model from {self.checkpoint_path}: {e}")
-		return False
-
-	@property
-	def checkpoint_path(self) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version + ".pt") )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
@@ -313,18 +302,22 @@ class DualModelTrainer(object):
 	def train(self, model: nn.Module, **kwargs ):
 		print( f" *------> training: {kwargs}" )
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', True )
+		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
-		nepochs = cfg().task.nepochs
+		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		epoch0, nepochs = 0, cfg().task.nepochs
 		train_start = time.time()
-		if load_state: self.load_state()
+		if load_state:
+			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			epoch0 = train_state['epoch']
+			nepochs += epoch0
 
-		for epoch in range(nepochs):
+		for epoch in range(epoch0,nepochs):
 			print(f'Epoch {epoch + 1}/{nepochs}: ')
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -362,8 +355,7 @@ class DualModelTrainer(object):
 			epoch_time = time.time() - epoch_start
 			cp_msg = ""
 			if save_state:
-				self.save_state()
-				lgm().log(f"Saving model to {self.checkpoint_path}", display=(epoch==0))
+				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
 				cp_msg = "  ** model saved ** "
 			lgm().log(f' ---------- Epoch {epoch+1}, time: {epoch_time:.1f}, loss: {acc_loss:.2f} {cp_msg}', display=True)
 

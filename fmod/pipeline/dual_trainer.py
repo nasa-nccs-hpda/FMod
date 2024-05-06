@@ -11,6 +11,7 @@ from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
+from fmod.pipeline.checkpoints import CheckpointManager
 import numpy as np
 import torch.nn as nn
 import time, os
@@ -59,6 +60,7 @@ class ModelTrainer(object):
 		self.optimizer = None
 		self.checkpoint_manager = None
 		self.model = None
+		self.checkpoint_manager: CheckpointManager = None
 
 	@property
 	def sht(self):
@@ -140,8 +142,7 @@ class ModelTrainer(object):
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', True )
-		best_model = kwargs.get('best_model', True)
+		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
 
 		torch.manual_seed(seed)
@@ -149,10 +150,16 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
-		nepochs = cfg().task.nepochs
-		train_start, acc_loss = time.time(), 0
-		if load_state: self.load_state(best_model)
-		for epoch in range(nepochs):
+		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		epoch0, nepochs = 0, cfg().task.nepochs
+		train_start = time.time()
+		if load_state:
+			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			epoch0 = train_state['epoch']
+			nepochs += epoch0
+
+		for epoch in range(epoch0,nepochs):
+			print(f'Epoch {epoch + 1}/{nepochs}: ')
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
@@ -182,7 +189,7 @@ class ModelTrainer(object):
 
 			cp_msg = ""
 			if save_state:
-				self.save_state( acc_loss )
+				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
 				cp_msg = "  ** model saved ** "
 			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
 
