@@ -77,13 +77,13 @@ class ModelTrainer(object):
 	def save_state(self, loss: float ):
 		cppath = self.checkpoint_path
 		os.makedirs( os.path.dirname(self.checkpoint_path), 0o777, exist_ok=True )
-		model_state = self.model.state_dict()
-		torch.save( model_state, cppath )
+		torch.save( self.model, cppath )
 		if loss < self.min_loss:
 			cppath = cppath + ".best"
 			lgm().log(f"   ---- Saving best model (loss={loss:.2f}) to {cppath}", display=True )
+			model_state = self.model.state_dict()
 			model_state['_loss_'] = loss
-			torch.save( model_state, cppath )
+			torch.save( self.model, cppath )
 			self.min_loss = loss
 
 	def load_state(self, best_model: bool = False) -> bool:
@@ -94,9 +94,9 @@ class ModelTrainer(object):
 				cppath = best_cppath
 		if os.path.exists( cppath ):
 			try:
-				model_state = torch.load( cppath )
+				self.model = torch.load( cppath )
+				model_state = self.model.state_dict()
 				loss = model_state.pop('_loss_', float('inf') )
-				self.model.load_state_dict( model_state )
 				self.min_loss = loss
 				lgm().log(f"Loaded model from {cppath}, loss = {loss:.2f}", display=True)
 				return True
@@ -106,7 +106,7 @@ class ModelTrainer(object):
 
 	@property
 	def checkpoint_path(self) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version) )
+		return str( os.path.join( fmbdir('results'), 'checkpoints/' + cfg().model.training_version + ".pt") )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
