@@ -2,7 +2,7 @@ defaults:
   - platform: explore
   - preprocess: merra2-sres
   - task: merra2-sres
-  - model: srdn-s1
+  - model: emul-s1
   - pipeline: sres
   - _self_
 
