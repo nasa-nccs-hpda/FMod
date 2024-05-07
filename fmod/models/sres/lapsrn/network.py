@@ -26,6 +26,16 @@ class _Conv_Block(nn.Module):
 		output = self.cov_block(x)
 		return output
 
+class Upsample(nn.Module):
+
+	def __init__(self, nchannels: int, nfeatures: int = 64, nlayers: int = 10 ):
+		super(Upsample, self).__init__()
+		self.I = nn.ConvTranspose2d(in_channels=nchannels, out_channels=1, kernel_size=4, stride=2, padding=1, bias=False)
+		self.R = nn.Conv2d(in_channels=nfeatures, out_channels=nchannels, kernel_size=3, stride=1, padding=1, bias=False)
+		self.F = _Conv_Block( nlayers, nfeatures )
+
+	def forward(self, x):
+
 class LapSRN(nn.Module):
 	def __init__(self, nchannels: int, nfeatures: int = 64, nlayers: int = 10 ):
 		super(LapSRN, self).__init__()
