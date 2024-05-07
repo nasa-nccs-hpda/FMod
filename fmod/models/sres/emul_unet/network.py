@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from omegaconf import DictConfig, OmegaConf
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
-from collections import OrderedDict
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -37,7 +36,6 @@ class Down(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.maxpool_conv(x)
-        print( f" ----> DOWN:  {x.shape} -> {y.shape}")
         return y
 
 
@@ -122,6 +120,7 @@ class EMUL(nn.Module):
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
+        lgm().log( f"         << UNET Bottom shape: {x5.shape} >>" , display=True )
         x = self.up1(x5, x4)
         x = self.up2(x, x3)
         x = self.up3(x, x2)
