@@ -1,6 +1,6 @@
 training_version: 'merra2-emul.1'
 nfeatures: 64
-n_upscale_layers: 2
+upscale_factors: [2,2]
 bilinear: False
 loss_fn: 'l2'
 

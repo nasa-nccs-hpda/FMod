@@ -96,7 +96,7 @@ class OutConv(nn.Module):
 
 
 class EMUL(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int=64, n_upscale_layers = 2, bilinear: bool=False ):
+    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], bilinear: bool=False ):
         super(EMUL, self).__init__()
         self.n_channels: int = n_channels
 
@@ -111,9 +111,9 @@ class EMUL(nn.Module):
         self.up3: nn.Module = Up( nfeatures*4, nfeatures*2 // factor,  bilinear)
         self.up4: nn.Module = Up( nfeatures*2, nfeatures,  bilinear)
         self.upscale = nn.Sequential()
-        for iL in range(n_upscale_layers):
+        for iL, usf in enumerate(upscale_factors):
             in_channels = nfeatures if iL == 0 else nfeatures*2
-            self.upscale.add_module( f"ups{iL}", Upscale( in_channels, nfeatures*2, 2,  bilinear) )
+            self.upscale.add_module( f"ups{iL}-{usf}", Upscale( in_channels, nfeatures*2, usf,  bilinear) )
         self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
