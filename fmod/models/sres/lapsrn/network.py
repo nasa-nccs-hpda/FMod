@@ -66,6 +66,7 @@ class LapSrnMS(nn.Module):
             features = self.transpose(self.relu_features(features))
             rescaled_img = self.scale_img(rescaled_img)
             predict = self.predict(features)
+            print( f"SCALE-{i}: x{x.shape}, predict{predict.shape}, features{features.shape}, rescaled_img{rescaled_img.shape}")
             out = torch.add(predict, rescaled_img)
             out = torch.clamp(out, 0.0, 1.0)
             output_images.append(out)
