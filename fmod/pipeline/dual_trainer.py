@@ -16,6 +16,8 @@ import numpy as np
 import torch.nn as nn
 import time, os
 
+Tensors = Sequence[Tensor]
+TensorOrTensors = Union[Tensor, Tensors]
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
 	return str( [ f"{mv:.2f}" for mv in means ] )
@@ -38,7 +40,6 @@ def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 
-
 class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
@@ -49,6 +50,7 @@ class ModelTrainer(object):
 		self.device = device
 		self.scale_factor = cfg().model.get('scale_factor',1)
 		self.min_loss = float('inf')
+		self.eps = 1e-6
 		sample_results = next(iter(target_dataset))
 		tar: xarray.DataArray = sample_results['target']
 		self.grid_shape = tar.shape[-2:]
@@ -61,6 +63,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager = None
 		self.model = None
 		self.checkpoint_manager: CheckpointManager = None
+		self.loss_module: nn.Module = None
 
 	@property
 	def sht(self):
@@ -81,11 +84,9 @@ class ModelTrainer(object):
 	def loader_args(self) -> Dict[str, Any]:
 		return { k: cfg().model.get(k) for k in self.model_cfg }
 
-	def l2loss(self, prd: torch.Tensor, tar: torch.Tensor, squared=True) -> torch.Tensor:
-		loss = ((prd - tar) ** 2).sum()
-		if not squared:
-			loss = torch.sqrt(loss)
-		loss = loss.mean()
+	def l2loss(self, prd: torch.Tensor, tar: torch.Tensor, squared=False) -> torch.Tensor:
+		loss = ((prd - tar) ** 2).mean()
+		if not squared: loss = torch.sqrt(loss)
 		return loss
 
 	def l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
@@ -118,15 +119,33 @@ class ModelTrainer(object):
 		loss = loss.mean()
 		return loss
 
-	def loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
+	def charbonnier(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
+		error = torch.sqrt( ((prd - tar) ** 2) + self.eps )
+		return torch.mean(error)
+
+	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
 			loss = self.l2loss_sphere(prd, tar)
 		elif cfg().model.loss_fn == "spectral-l2s":
 			loss = self.spectral_l2loss_sphere(prd, tar)
+		elif cfg().model.loss_fn == "charbonnier":
+			loss = self.charbonnier(prd, tar)
 		else:
-			raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
+			raise Exception("Unknown single-product loss function {}".format(cfg().model.loss_fn))
+		return loss
+
+	def loss(self, prd: TensorOrTensors, tar: TensorOrTensors) -> torch.Tensor:
+		loss, ptype = None, type(prd)
+		if ptype is torch.Tensor:
+			loss = self.single_product_loss( prd, tar )
+		elif ptype is Sequence[torch.Tensor]:
+			for layer_output, layer_target in zip(prd,tar):
+				layer_loss = self.single_product_loss(layer_output, layer_target)
+				loss = layer_loss if (loss is None) else (loss + layer_loss)
+		else:
+			raise Exception(f"Unsupported model product type: {ptype}")
 		return loss
 
 	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
@@ -168,11 +187,10 @@ class ModelTrainer(object):
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
 			for batch_date in batch_dates:
-				train_data: Dict[str,torch.Tensor] = self.get_batch(batch_date)
-				input: torch.Tensor = train_data['input']
-				target: torch.Tensor   = train_data['target']
-				prd:  torch.Tensor  = self.model( input )
-				lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}")
+				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
+				input: Tensor = train_data['input']
+				target: TensorOrTensors   = self.model.get_targets( train_data['target'] )
+				prd: TensorOrTensors = self.model( input )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item() * train_data['input'].size(0)
 				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.2f}")

@@ -109,3 +109,5 @@ class DBPN(nn.Module):
 
 		return out
 
+	def get_targets(self, target: torch.Tensor):
+		return target

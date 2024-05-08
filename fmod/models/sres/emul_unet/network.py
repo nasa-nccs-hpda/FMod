@@ -128,3 +128,6 @@ class EMUL(nn.Module):
         x = self.upscale(x)
         result = self.outc(x)
         return result
+
+    def get_targets(self, target: torch.Tensor):
+        return target

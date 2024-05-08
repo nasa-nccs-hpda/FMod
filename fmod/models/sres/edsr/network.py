@@ -1,7 +1,7 @@
 from ..common.residual import ResBlock
 from ..common.upsample import SPUpsample
 from fmod.models.sres.util import *
-import torch.nn as nn
+import torch, torch.nn as nn
 
 class EDSR(nn.Module):
     def __init__( self,
@@ -39,6 +39,8 @@ class EDSR(nn.Module):
         x = self.tail(res)
         return x
 
+    def get_targets(self, target: torch.Tensor):
+        return target
 
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
         own_state = self.state_dict()

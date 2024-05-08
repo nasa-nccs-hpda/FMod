@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 from typing import Any, List, Tuple, Callable, Optional, Union, overload
 from fmod.models.sres.util import *
 from fmod.models.sres.common.cnn import BasicBlock
@@ -36,3 +37,5 @@ class VDSR(nn.Module):
 		y = x + self.body(x)
 		return y
 
+	def get_targets(self, target: torch.Tensor):
+		return target
