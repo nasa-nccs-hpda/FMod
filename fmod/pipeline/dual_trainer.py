@@ -138,14 +138,12 @@ class ModelTrainer(object):
 
 	def loss(self, prd: TensorOrTensors, tar: TensorOrTensors) -> torch.Tensor:
 		loss, ptype = None, type(prd)
-		if ptype is torch.Tensor:
+		if ptype == torch.Tensor:
 			loss = self.single_product_loss( prd, tar )
-		elif ptype is Sequence[torch.Tensor]:
+		else:
 			for layer_output, layer_target in zip(prd,tar):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
-		else:
-			raise Exception(f"Unsupported model product type: {ptype}")
 		return loss
 
 	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
