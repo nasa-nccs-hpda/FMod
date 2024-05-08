@@ -48,7 +48,7 @@ class LapSrnMS(nn.Module):
         super(LapSrnMS, self).__init__()
         self.nscale_ops = math.log2(scale)
         self.conv_input = nn.Conv2d(in_channels=nchannels, out_channels=nfeatures, kernel_size=3, stride=1, padding='same', bias=True, )
-        self.transpose = nn.ConvTranspose2d(in_channels=nfeatures, out_channels=nfeatures, kernel_size=3, stride=2, padding=1, bias=True)
+        self.transpose = nn.ConvTranspose2d(in_channels=nfeatures, out_channels=nfeatures, kernel_size=4, stride=2, padding=1, bias=True)
         self.relu_features = nn.LeakyReLU(0.2, inplace=True)
         self.scale_img = nn.ConvTranspose2d(in_channels=nchannels, out_channels=nchannels, kernel_size=4, stride=2, padding=1, bias=False)
         self.predict = nn.Conv2d(in_channels=nfeatures, out_channels=nchannels, kernel_size=3, stride=1, padding='same', bias=True)
