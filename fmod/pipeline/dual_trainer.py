@@ -144,8 +144,8 @@ class ModelTrainer(object):
 			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
 			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
-				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}")
 				layer_loss = self.single_product_loss(layer_output, layer_target)
+				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
 		return loss
 
@@ -194,7 +194,7 @@ class ModelTrainer(object):
 				prd: TensorOrTensors = self.model( input )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item() * train_data['input'].size(0)
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.2f}")
+				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()
@@ -210,7 +210,7 @@ class ModelTrainer(object):
 			if save_state:
 				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
 				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f}  {cp_msg}', display=True)
 
 		train_time = time.time() - train_start
 
