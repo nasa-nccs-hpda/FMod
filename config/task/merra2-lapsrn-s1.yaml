@@ -1,0 +1,38 @@
+dataset_version: 'merra2.sr.1'
+params: "small"
+nc_format: 'sres'
+tensor_type: "torch"
+device: "gpu"
+num_workers: 4
+downscale_method: 'interp:linear'
+poly_order: 5
+task_type: "downscale"
+
+start_date:  "01/01/1995"
+batch_ndays: 16
+nbatches: 1
+
+train_steps: [0]
+nsteps_input: 1
+
+data_timestep: 6
+levels:  [850, 1000]
+lr: 1e-3
+nepochs: 100
+weight_decay: 0.0
+error_threshold: 1.0
+
+origin: { x: -120, y: -60 }
+extent: { x: -1, y: -1 }
+tile_size: { x: 64, y: 64 }
+
+coords: { x: "lon", y: "lat", z: "level", t: "time" }
+statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_mean_by_level", std_diff: "diffs_stddev_by_level" }
+
+input_variables: { 2m_temperature: 'T2M' }
+target_variables: [ '2m_temperature' ]
+forcing_variables: [  ]
+constants: [  ]
+feature_list: [ '2m_temperature' ]
+
+
