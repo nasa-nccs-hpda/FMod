@@ -177,7 +177,7 @@ class ModelTrainer(object):
 		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, nepochs = 0, cfg().task.nepochs
+		epoch0, nepochs, acc_loss = 0, cfg().task.nepochs, float('inf')
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -192,7 +192,7 @@ class ModelTrainer(object):
 			self.optimizer.zero_grad(set_to_none=True)
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
-			acc_loss: float = 0
+			acc_loss = 0.0
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
 			for batch_date in batch_dates:
