@@ -141,8 +141,8 @@ class ModelTrainer(object):
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, targets)
 		else:
-			print(f"  Output Shapes: { ','.join(*[list(out.shape) for out in products]) }")
-			print(f"  Target Shapes: { ','.join(*[list(tar.shape) for tar in targets]) }")
+			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
 				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}")
 				layer_loss = self.single_product_loss(layer_output, layer_target)
