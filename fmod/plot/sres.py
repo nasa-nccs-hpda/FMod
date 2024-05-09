@@ -66,6 +66,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
 	target: xa.DataArray = images['targets']
+	rms_errors: Dict[str,float] = {}
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
@@ -77,7 +78,8 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		tslice: xa.DataArray = image.isel(batch=tslider.value)
 		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-		rmserror: str = "" if (itype < 2) else f" RMSE={RMSE(image-target):.3f}"
+		if itype >= 2: rms_errors[tname] = RMSE(image-target)
+		rmserror: str = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 		ax.set_title(f" {tname} {rmserror}")
 
 	@exception_handled
@@ -89,7 +91,8 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
-			ax1.set_title(f"{tname}")
+			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
+			ax1.set_title(f"{tname} {rmserror}")
 		fig.canvas.draw_idle()
 
 	@exception_handled
@@ -101,11 +104,12 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
-			ax1.set_title(f"{tname}")
+			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
+			ax1.set_title(f"{tname} {rmserror}")
 		fig.canvas.draw_idle()
 
 	tslider.set_callback( time_update )
 	cslider.set_callback( channel_update )
 	fig.suptitle(f' ** Channel: {channels[0]}', fontsize=10, va="top", y=1.0 )
-	return ipw.VBox([tslider, cslider, fig.canvas])
+	return ipw.VBox([fig.canvas,tslider, cslider])
 
