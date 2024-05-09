@@ -141,8 +141,8 @@ class ModelTrainer(object):
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, targets)
 		elif not cfg().model.multiscale_loss:
-			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
+		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			loss = self.single_product_loss(products[-1], targets[-1])
 		else:
 		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
@@ -183,6 +183,8 @@ class ModelTrainer(object):
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
 			epoch0 = train_state.get('epoch',0)
 			nepochs += epoch0
+		else:
+			print( " *** No checkpoint loaded: training from scratch *** ")
 
 		for epoch in range(epoch0,nepochs):
 			print(f'Epoch {epoch + 1}/{nepochs}: ')
