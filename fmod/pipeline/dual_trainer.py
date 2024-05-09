@@ -137,7 +137,7 @@ class ModelTrainer(object):
 		return loss
 
 	def loss(self, products: TensorOrTensors, targets: TensorOrTensors) -> torch.Tensor:
-		loss, ptype = None, type(products)
+		loss, ptype, layer_losses = None, type(products), {}
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, targets)
 		else:
@@ -147,6 +147,8 @@ class ModelTrainer(object):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
+				layer_losses[iL] = layer_loss.item()
+		print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
 	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
@@ -193,7 +195,7 @@ class ModelTrainer(object):
 				target: TensorOrTensors   = self.model.get_targets( train_data['target'] )
 				prd: TensorOrTensors = self.model( input )
 				loss: torch.Tensor  = self.loss( prd, target )
-				acc_loss += loss.item() * train_data['input'].size(0)
+				acc_loss += loss.item()
 				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f}")
 
 				self.optimizer.zero_grad(set_to_none=True)
@@ -203,7 +205,6 @@ class ModelTrainer(object):
 			if self.scheduler is not None:
 				self.scheduler.step()
 
-			acc_loss = acc_loss / len(self.input_dataset)
 			epoch_time = time.time() - epoch_start
 
 			cp_msg = ""
