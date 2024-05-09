@@ -1,5 +1,6 @@
 import math, numpy as np
 import xarray as xa
+from torch import nn
 from typing  import List, Tuple, Union, Optional, Dict
 from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
@@ -49,6 +50,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', time.size  )
 	fsize = kwargs.get( 'fsize', 5.0 )
+
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*fsize*1.4, nvars*fsize], layout="tight")

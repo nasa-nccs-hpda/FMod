@@ -1,4 +1,4 @@
-import math, numpy as np
+import math, torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Union, Optional, Dict
 from fmod.base.util.ops import xaformat_timedeltas, print_data_column
@@ -6,6 +6,7 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
 from fmod.base.util.config import cfg
+from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
@@ -42,9 +43,14 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 
 
 def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.ndarray, sample_input: xa.DataArray, sample_target: xa.DataArray ) -> Dict[str,xa.DataArray]:
+	upscale_factors: List[int] = cfg().model.upscale_factors
+	upscale_factor = math.prod(upscale_factors)
+	upsampler = nn.UpsamplingBilinear2d(scale_factor=upscale_factor)
+	upsampled_input: np.ndarray = upsampler( torch.from_numpy( inputs ) ).numpy()
 	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),
 					targets=     sample_target.copy( data=targets.reshape(sample_target.shape) ),
-					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ) )
+					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
+					upsampled=   sample_target.copy( data=upsampled_input.reshape(sample_target.shape) ) )
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
@@ -55,13 +61,13 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	channels: List[str] = sample.attrs['channels']
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
-	fsize = kwargs.get( 'fsize', 5.0 )
+	fsize = kwargs.get( 'fsize', 6.0 )
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=1, ncols=ntypes, sharex=True, sharey=True, figsize=[ntypes*fsize*1.4, nvars*fsize], layout="tight")
+		fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
 
 	for itype, (tname, image) in enumerate(images.items()):
-		ax = axs[ itype ]
+		ax = axs[ itype//2, itype%2 ]
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
 		tslice: xa.DataArray = image.isel(batch=tslider.value)
@@ -75,7 +81,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		fig.suptitle(f'Timestep: {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
-			ax1 = axs[ itype ]
+			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
@@ -87,7 +93,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		fig.suptitle(f'Forecast day {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
-			ax1 = axs[ itype ]
+			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			ax1.set_title(f"{tname}")
