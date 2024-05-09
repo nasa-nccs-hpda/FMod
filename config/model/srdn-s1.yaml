@@ -5,9 +5,9 @@ nfeatures:
 nrlayers: 16
 upscale_factors: [2,2]
 usmethod: replicate # replicate # transpose
-loss_fn: 'l2'
+loss_fn: l2
 kernel_size:
   features: 3
   hidden: 3
   output: 9
-training_version: 'merra2-srdn.1'
+training_version: merra2-srdn.1

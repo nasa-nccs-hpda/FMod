@@ -3,6 +3,6 @@ rdepth: 3
 rlayers: 2
 upscale_factors: [2,2]
 usmethod: replicate # replicate # transpose
-loss_fn: charbonnier
-training_version: merra2-vdsr.1
+loss_fn: l2 # charbonnier
+training_version: merra2-lapsrn.1
 
