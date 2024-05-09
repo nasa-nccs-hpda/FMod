@@ -49,7 +49,7 @@ class LapSrnMS(nn.Module):
         self.nscale_ops = math.log2(scale)
         self.conv_input = nn.Conv2d(in_channels=nchannels, out_channels=nfeatures, kernel_size=3, stride=1, padding='same', bias=True, )
         self.transpose = nn.ConvTranspose2d(in_channels=nfeatures, out_channels=nfeatures, kernel_size=4, stride=2, padding=1, bias=True)
-        self.relu_features = nn.LeakyReLU(0.2, inplace=True)
+        self.relu = nn.LeakyReLU(0.2, inplace=True)
         self.scale_img = nn.ConvTranspose2d(in_channels=nchannels, out_channels=nchannels, kernel_size=4, stride=2, padding=1, bias=False)
         self.predict = nn.Conv2d(in_channels=nfeatures, out_channels=nchannels, kernel_size=3, stride=1, padding='same', bias=True)
         self.features = FeatureEmbedding(rdepth, rlayers, nfeatures )
@@ -58,6 +58,11 @@ class LapSrnMS(nn.Module):
         self.use_features = False
 
     def forward(self, x):
+        rescaled_img_2x = self.scale_img(x)
+        rescaled_img_4x = self.scale_img(rescaled_img_2x)
+        return self.relu( rescaled_img_4x )
+
+    def forward1(self, x):
         features = None
         output_images = []
         rescaled_img = x.clone()
@@ -68,7 +73,7 @@ class LapSrnMS(nn.Module):
                 if features is None:
                     features = self.conv_input(x)
                 features = self.features(features)
-                features = self.transpose(self.relu_features(features))
+                features = self.transpose(self.relu(features))
                 predict = self.predict(features)
                 out =  torch.add(predict, rescaled_img)
             else:
