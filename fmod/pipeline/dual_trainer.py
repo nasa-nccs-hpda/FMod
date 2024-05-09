@@ -140,6 +140,10 @@ class ModelTrainer(object):
 		loss, ptype, layer_losses = None, type(products), {}
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, targets)
+		elif not cfg().model.multiscale_loss:
+			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
+			loss = self.single_product_loss(products[-1], targets[-1])
 		else:
 		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
 		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
