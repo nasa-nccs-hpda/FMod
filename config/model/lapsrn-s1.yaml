@@ -1,6 +1,6 @@
 nfeatures: 64
-rdepth: 3
-rlayers: 2
+rdepth: 1
+rlayers: 8
 upscale_factors: [2,2]
 usmethod: replicate # replicate # transpose
 loss_fn: l2 # charbonnier
