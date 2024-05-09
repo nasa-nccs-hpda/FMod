@@ -77,10 +77,9 @@ class LapSrnMS(nn.Module):
 
     def get_targets(self, hr_targ: Tensor ) -> TensorOrTensors:
         targets: List[Tensor] = [ hr_targ ]
-        for i in range(int(self.nscale_ops)-1):
+        for i in range(int(self.nscale_ops)):
             targets.append(  torch.nn.functional.interpolate( targets[-1], scale_factor=2, mode='bilinear' ) )
-        targets.reverse()
-        return targets
+        return targets[1:]
 
     def init_weights( self, nfeatures: int ):
         i_conv = 0
