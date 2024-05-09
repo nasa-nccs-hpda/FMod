@@ -50,7 +50,7 @@ class CheckpointManager(object):
 		if os.path.exists( cppath ):
 			try:
 				train_state = self._load_state( version)
-				self.min_loss = train_state['loss']
+				self.min_loss = train_state.get('loss',float('inf'))
 				lgm().log(f"Loaded model from {cppath}, loss = {self.min_loss:.2f}", display=True)
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)

@@ -175,7 +175,7 @@ class ModelTrainer(object):
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
-			epoch0 = train_state['epoch']
+			epoch0 = train_state.get('epoch',0)
 			nepochs += epoch0
 
 		for epoch in range(epoch0,nepochs):
