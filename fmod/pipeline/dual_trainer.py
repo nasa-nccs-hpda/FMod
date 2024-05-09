@@ -136,12 +136,15 @@ class ModelTrainer(object):
 			raise Exception("Unknown single-product loss function {}".format(cfg().model.loss_fn))
 		return loss
 
-	def loss(self, prd: TensorOrTensors, tar: TensorOrTensors) -> torch.Tensor:
-		loss, ptype = None, type(prd)
+	def loss(self, products: TensorOrTensors, targets: TensorOrTensors) -> torch.Tensor:
+		loss, ptype = None, type(products)
 		if ptype == torch.Tensor:
-			loss = self.single_product_loss( prd, tar )
+			loss = self.single_product_loss( products, targets)
 		else:
-			for layer_output, layer_target in zip(prd,tar):
+			print(f"  Output Shapes: { ','.join(*[list(out.shape) for out in products]) }")
+			print(f"  Target Shapes: { ','.join(*[list(tar.shape) for tar in targets]) }")
+			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
+				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}")
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
 		return loss
