@@ -26,6 +26,9 @@ def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
 	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
 	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
 
+def RMSE( diff: xa.DataArray ) -> float:
+	d2: xa.DataArray = diff*diff
+	return np.sqrt( d2.mean(keep_attrs=True) )
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 	meanv, stdv, minv = pvar.values.mean(), pvar.values.std(), pvar.values.min()
 	vmin = max( minv, meanv - stretch*stdv )
@@ -62,6 +65,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
+	target: xa.DataArray = images['targets']
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
@@ -73,7 +77,8 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		tslice: xa.DataArray = image.isel(batch=tslider.value)
 		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-		ax.set_title(f" {tname} ")
+		rmserror: str = "" if (itype < 2) else f" RMSE={RMSE(image-target):.3f}"
+		ax.set_title(f" {tname} {rmserror}")
 
 	@exception_handled
 	def time_update(sindex: int):
