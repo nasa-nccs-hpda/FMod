@@ -60,15 +60,15 @@ class LapSrnMS(nn.Module):
         features = self.conv_input(x)
         output_images = []
         rescaled_img = x.clone()
-        print(f" >> forward: x{list(x.shape)}, features{list(features.shape)}")
+     #   print(f" >> forward: x{list(x.shape)}, features{list(features.shape)}")
 
         for i in range(int(self.nscale_ops)):
             features = self.features(features)
-            print(f"   --- SCALE-{i}: features(features) -> {list(features.shape)}")
+        #    print(f"   --- SCALE-{i}: features(features) -> {list(features.shape)}")
             features = self.transpose(self.relu_features(features))
             rescaled_img = self.scale_img(rescaled_img)
             predict = self.predict(features)
-            print( f"   --- --- predict{list(predict.shape)}, features{list(features.shape)}, rescaled_img{list(rescaled_img.shape)}")
+        #    print( f"   --- --- predict{list(predict.shape)}, features{list(features.shape)}, rescaled_img{list(rescaled_img.shape)}")
             out = torch.add(predict, rescaled_img)
             out = torch.clamp(out, 0.0, 1.0)
             output_images.append(out)

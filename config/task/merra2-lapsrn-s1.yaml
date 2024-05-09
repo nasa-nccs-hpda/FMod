@@ -17,7 +17,7 @@ nsteps_input: 1
 
 data_timestep: 6
 levels:  [850, 1000]
-lr: 1e-2
+lr: 0.1
 nepochs: 100
 weight_decay: 0.0
 error_threshold: 1.0
