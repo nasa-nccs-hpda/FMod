@@ -46,7 +46,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 	upscale_factors: List[int] = cfg().model.upscale_factors
 	upscale_factor = math.prod(upscale_factors)
 	upsampler = nn.UpsamplingBilinear2d(scale_factor=upscale_factor)
-	upsampled_input: np.ndarray = upsampler( torch.from_numpy( inputs ) ).numpy()
+	upsampled_input: np.ndarray = upsampler( torch.from_numpy( inputs.reshape(sample_input.shape) ) ).numpy()
 	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),
 					targets=     sample_target.copy( data=targets.reshape(sample_target.shape) ),
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
