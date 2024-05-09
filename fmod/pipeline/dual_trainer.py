@@ -241,7 +241,7 @@ class ModelTrainer(object):
 
 		return inputs, targets, predictions
 
-	def apply(self, date_index: int, **kwargs ) -> Tuple[ np.ndarray, np.ndarray, np.ndarray ]:
+	def apply(self, date_index: int, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 		seed = kwargs.get('seed',0)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -250,6 +250,7 @@ class ModelTrainer(object):
 			target_batch = self.target_dataset[date_index]
 			inp: torch.Tensor = array2tensor( input_batch['input'] )
 			tar: torch.Tensor = array2tensor( target_batch['target'] )
-			out: Tensor = self.model(inp)
-			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(out.shape)}', display=True)
-			return npa(inp), npa(tar), npa(out)
+			out: TensorOrTensors = self.model(inp)
+			product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
+			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
+			return npa(inp), npa(tar), npa(product)
