@@ -148,9 +148,9 @@ class UNet(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip = []
         for iL in range(self.depth):
-            x = self.downscale[iL](x)
-            skip.append(x)
-        skip.reverse()
+            x: torch.Tensor = self.downscale[iL](x)
+            skip.insert(0,x)
+        print( f"UNet skip variables: {[list(z.shape) for z in skip]}, bottom shape = {list(x.shape)}")
         for iL in range(self.depth):
             x = self.upscale[iL](x,skip[iL])
         return x
