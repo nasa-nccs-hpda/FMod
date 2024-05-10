@@ -69,19 +69,25 @@ class Up(nn.Module):
 class Upscale(nn.Module):
     """Upscaling then double conv"""
 
-    def __init__(self, in_channels: int, out_channels: int, upscale_fator: int, bilinear: bool = False):
+    def __init__(self, in_channels: int, out_channels: int, upscale_fator: int):
         super().__init__()
-
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=upscale_fator, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels )
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator)
-            self.conv = DoubleConv(out_channels, out_channels )
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator)
+        self.conv = DoubleConv(out_channels, out_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.up(x)
         return self.conv(x)
+
+class Upsample(nn.Module):
+
+    def __init__(self, upscale_fator: int):
+        super().__init__()
+        self.up = nn.Upsample(scale_factor=upscale_fator, mode='bilinear', align_corners=False )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.up(x)
+
+
 
 
 class OutConv(nn.Module):
@@ -96,17 +102,22 @@ class MSCNN(nn.Module):
     def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], bilinear: bool=False ):
         super(MSCNN, self).__init__()
         self.n_channels: int = n_channels
+        self.upscale_factors = upscale_factors
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
-        self.upscale = nn.Sequential()
+        self.upscale: List[nn.Module] = []
+        self.upsample: List[nn.Module] = []
         for iL, usf in enumerate(upscale_factors):
             in_channels = nfeatures if iL == 0 else nfeatures*2
-            self.upscale.add_module( f"ups{iL}-{usf}", Upscale( in_channels, nfeatures*2, usf,  bilinear) )
+            self.upscale.append(  Upscale( in_channels, nfeatures*2, usf ) )
+            self.upsample.append(  Upsample( usf ) )
         self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        xr = self.inc(x)
-        y = self.upscale(xr) + x
-        result = self.outc(y)
+        xres, xave = self.inc(x), x
+        for iL, usf in enumerate(self.upscale_factors):
+            xres = self.upscale[iL](xres)
+            xave = self.upsample[iL](xave)
+        result = torch.add( self.outc(xres), xave )
         return result
 
     def get_targets(self, target: torch.Tensor):
