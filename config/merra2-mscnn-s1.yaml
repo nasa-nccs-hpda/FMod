@@ -1,0 +1,9 @@
+defaults:
+  - platform: explore
+  - preprocess: merra2-sres
+  - task: merra2-sres
+  - model: mscnn-s1
+  - pipeline: sres
+  - _self_
+
+cid: merra2-mscnn-s1
