@@ -43,10 +43,9 @@ class Upscale(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, upscale_fator: int):
         super().__init__()
         self.upscale = nn.Sequential(
-            DoubleConv(in_channels, in_channels),
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator),
             DoubleConv(out_channels, out_channels ),
-        #    DoubleConv(out_channels, out_channels)
+            DoubleConv(out_channels, out_channels)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -79,9 +78,8 @@ class MSCNN(nn.Module):
         self.upsample: nn.ModuleList = nn.ModuleList()
         self.crossscale: nn.ModuleList = nn.ModuleList()
         for iL, usf in enumerate(upscale_factors):
-            in_channels = nfeatures if iL == 0 else nfeatures*2
-            self.upscale.append(  Upscale( in_channels, nfeatures*2, usf ) )
-            self.crossscale.append(  Crossscale( nfeatures*2, self.n_channels ) )
+            self.upscale.append(  Upscale( nfeatures, nfeatures, usf ) )
+            self.crossscale.append(  Crossscale( nfeatures, self.n_channels ) )
             self.upsample.append( Upsample(usf) )
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:

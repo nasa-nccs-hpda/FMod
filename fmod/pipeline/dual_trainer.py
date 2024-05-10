@@ -40,6 +40,10 @@ def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
 def npa( tensor: Tensor ) -> np.ndarray:
 	return tensor.detach().cpu().numpy().squeeze()
 
+def fmtfl( flist: List[float] ) -> str:
+	svals = ','.join( [ f"{fv:.4f}" for fv in flist ] )
+	return f"[{svals}]"
+
 class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
@@ -159,7 +163,7 @@ class ModelTrainer(object):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
-				self.layer_losses.append( f"{layer_loss.item():.3f}" )
+				self.layer_losses.append( layer_loss.item() )
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
@@ -210,7 +214,7 @@ class ModelTrainer(object):
 				prd: TensorOrTensors = self.model( inp )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item()
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} [{','.join(self.layer_losses)}]")
+				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} {fmtfl(self.layer_losses)}")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()
