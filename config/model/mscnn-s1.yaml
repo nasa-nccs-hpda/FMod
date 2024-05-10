@@ -1,5 +1,5 @@
 training_version: merra2-mscnn.1
-nfeatures: 80
+nfeatures: 64
 upscale_factors: [2,2]
 loss_fn: l2
 multiscale_loss: True
