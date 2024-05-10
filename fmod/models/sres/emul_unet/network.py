@@ -134,34 +134,25 @@ class EMUL1(nn.Module):
         return result
 
 class UNet(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, depth: int ):
+    def __init__(self, nfeatures: int, depth: int ):
         super(UNet, self).__init__()
-        self.n_channels: int = n_channels
         self.depth: int = depth
         self.downscale = nn.ModuleList()
         self.upscale = nn.ModuleList()
-        self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
 
         for iL in range(depth):
             usf, dsf = 2 ** (depth-iL-1), 2 ** iL
             self.downscale.append( MPDownscale(nfeatures * dsf, nfeatures * dsf * 2))
             self.upscale.append( UNetUpscale(nfeatures * usf * 2, nfeatures * usf))
 
-        self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
-
-    def forward(self, inp: torch.Tensor) -> torch.Tensor:
-        x = self.inc(inp)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip = []
-
         for iL in range(self.depth):
             x = self.downscale[iL](x)
             skip.append(x)
-
         for iL in range(self.depth):
             x = self.upscale[iL](x,skip[iL])
-
-        result = self.outc(x)
-        return result
+        return x
 
 
 class EMUL(nn.Module):
@@ -170,7 +161,7 @@ class EMUL(nn.Module):
         self.n_channels: int = n_channels
 
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
-        self.unet = UNet( n_channels, nfeatures, depth=unet_depth )
+        self.unet = UNet( nfeatures,  depth=unet_depth )
         self.upscale = nn.Sequential()
         for iL in range(n_upscale_ops):
             self.upscale.add_module( f"ups{iL}", Upscale( nfeatures, nfeatures) )
