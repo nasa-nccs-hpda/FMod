@@ -39,16 +39,18 @@ class Down(nn.Module):
         return y
 
 class Upscale(nn.Module):
-    """Upscaling then double conv"""
 
     def __init__(self, in_channels: int, out_channels: int, upscale_fator: int):
         super().__init__()
-        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator)
-        self.conv = DoubleConv(out_channels, out_channels )
+        self.upscale = nn.Sequential(
+            DoubleConv(in_channels, in_channels),
+            nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator),
+            DoubleConv(out_channels, out_channels ),
+        #    DoubleConv(out_channels, out_channels)
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.up(x)
-        return self.conv(x)
+        return self.upscale(x)
 
 class Upsample(nn.Module):
 
