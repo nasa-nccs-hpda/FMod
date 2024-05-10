@@ -148,7 +148,7 @@ class ModelTrainer(object):
 		loss, ptype, layer_losses = None, type(products), {}
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, target)
-		elif not cfg().model.multiscale_loss:
+		elif not cfg().model.get('multiscale_loss',False):
 			loss = self.single_product_loss(products[-1], target)
 		else:
 			targets: List[Tensor] = self.get_multiscale_targets(target)
