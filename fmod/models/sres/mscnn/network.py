@@ -108,8 +108,8 @@ class MSCNN(nn.Module):
         self.upsample: nn.ModuleList = nn.ModuleList()
         for iL, usf in enumerate(upscale_factors):
             in_channels = nfeatures if iL == 0 else nfeatures*2
-            self.upscale.add_module( f"Upscale{iL}x{usf}", Upscale( in_channels, nfeatures*2, usf ) )
-            self.upsample.add_module(  f"Upsample{iL}x{usf}", Upsample( usf ) )
+            self.upscale.append(  Upscale( in_channels, nfeatures*2, usf ) )
+            self.upsample.append(  Upsample( usf ) )
         self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
