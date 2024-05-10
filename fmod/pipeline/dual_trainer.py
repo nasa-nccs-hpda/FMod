@@ -152,14 +152,14 @@ class ModelTrainer(object):
 			loss = self.single_product_loss(products[-1], target)
 		else:
 			targets: List[Tensor] = self.get_multiscale_targets(target)
-			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
+		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
-				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
+		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
 				layer_losses[iL] = layer_loss.item()
-			print( f" --------- Layer losses: {layer_losses} --------- ")
+		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
 	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
