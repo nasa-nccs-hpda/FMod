@@ -139,8 +139,8 @@ class ModelTrainer(object):
 
 	def get_multiscale_targets(self, hr_targ: Tensor) -> List[Tensor]:
 		targets: List[Tensor] = [hr_targ]
-		for i in range(int(self.upscale_factors) - 1):
-			targets.append(torch.nn.functional.interpolate(targets[-1], scale_factor=0.5, mode='bilinear'))
+		for usf in self.upscale_factors[:-1]:
+			targets.append( torch.nn.functional.interpolate(targets[-1], scale_factor=1.0/usf, mode='bilinear') )
 		targets.reverse()
 		return targets
 
