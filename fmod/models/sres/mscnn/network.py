@@ -104,9 +104,9 @@ class MSCNN(nn.Module):
         self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.inc(x)
-        x = self.upscale(x)
-        result = self.outc(x)
+        xr = self.inc(x)
+        y = self.upscale(xr) + x
+        result = self.outc(y)
         return result
 
     def get_targets(self, target: torch.Tensor):
