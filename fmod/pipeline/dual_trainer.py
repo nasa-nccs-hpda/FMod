@@ -48,7 +48,8 @@ class ModelTrainer(object):
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
 		self.device = device
-		self.scale_factor = cfg().model.get('scale_factor',1)
+		self.upscale_factors = cfg().model.upscale_factors
+		self.scale_factor = math.prod(self.upscale_factors)
 		self.min_loss = float('inf')
 		self.eps = 1e-6
 		sample_results = next(iter(target_dataset))
@@ -136,20 +137,26 @@ class ModelTrainer(object):
 			raise Exception("Unknown single-product loss function {}".format(cfg().model.loss_fn))
 		return loss
 
-	def loss(self, products: TensorOrTensors, targets: TensorOrTensors) -> torch.Tensor:
+	def get_multiscale_targets(self, hr_targ: Tensor) -> List[Tensor]:
+		targets: List[Tensor] = [hr_targ]
+		for i in range(int(self.upscale_factors) - 1):
+			targets.append(torch.nn.functional.interpolate(targets[-1], scale_factor=0.5, mode='bilinear'))
+		targets.reverse()
+		return targets
+
+	def loss(self, products: TensorOrTensors, target: Tensor ) -> torch.Tensor:
 		loss, ptype, layer_losses = None, type(products), {}
 		if ptype == torch.Tensor:
-			loss = self.single_product_loss( products, targets)
+			loss = self.single_product_loss( products, target)
 		elif not cfg().model.multiscale_loss:
-		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
-			loss = self.single_product_loss(products[-1], targets[-1])
+			loss = self.single_product_loss(products[-1], target)
 		else:
-		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
+			targets: List[Tensor] = self.get_multiscale_targets(target)
+			print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+			print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
-		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
+				print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
 				layer_losses[iL] = layer_loss.item()
 			print( f" --------- Layer losses: {layer_losses} --------- ")
@@ -198,7 +205,7 @@ class ModelTrainer(object):
 			for batch_date in batch_dates:
 				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
 				input: Tensor = train_data['input']
-				target: TensorOrTensors   = self.model.get_targets( train_data['target'] )
+				target: Tensor   = train_data['target']
 				prd: TensorOrTensors = self.model( input )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item()

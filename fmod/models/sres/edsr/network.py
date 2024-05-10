@@ -39,9 +39,6 @@ class EDSR(nn.Module):
         x = self.tail(res)
         return x
 
-    def get_targets(self, target: torch.Tensor):
-        return target
-
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
         own_state = self.state_dict()
         for name, param in state_dict.items():

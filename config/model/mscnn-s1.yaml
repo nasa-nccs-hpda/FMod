@@ -3,6 +3,8 @@ nfeatures: 64
 upscale_factors: [2,2]
 bilinear: False
 loss_fn: l2
+multiscale_loss: True
+
 
 
 

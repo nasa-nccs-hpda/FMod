@@ -53,9 +53,6 @@ class SRDN(nn.Module):
 		lgm().log(f"SRDN.forward: f{list(f.shape)} r{list(r.shape)} gr{list(gr.shape)} y{list(y.shape)} z{list(z.shape)}")
 		return z
 
-	def get_targets(self, target: torch.Tensor):
-		return target
-
 # class Generator(object):
 #
 # 	def __init__(self, noise_shape):

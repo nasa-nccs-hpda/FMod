@@ -36,6 +36,3 @@ class VDSR(nn.Module):
 		x = self.upscaler(x)
 		y = x + self.body(x)
 		return y
-
-	def get_targets(self, target: torch.Tensor):
-		return target

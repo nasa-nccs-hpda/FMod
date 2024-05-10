@@ -108,6 +108,3 @@ class DBPN(nn.Module):
 		out = self.reconstruction(torch.cat(h_list, dim=1))
 
 		return out
-
-	def get_targets(self, target: torch.Tensor):
-		return target
