@@ -156,20 +156,22 @@ class UNet(nn.Module):
 
 
 class EMUL(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, unet_depth: int, n_upscale_ops: int ):
+    def __init__(self, n_channels: int, n_features: int, unet_depth: int, n_upscale_ops: int ):
         super(EMUL, self).__init__()
         self.n_channels: int = n_channels
-
-        self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
-        self.unet = UNet( nfeatures,  depth=unet_depth )
-        self.upscale = nn.Sequential()
-        for iL in range(n_upscale_ops):
-            self.upscale.add_module( f"ups{iL}", Upscale( nfeatures, nfeatures) )
-        self.outc: nn.Module = OutConv( nfeatures, self.n_channels )
+        self.n_features: int = n_features
+        self.workflow = nn.Sequential(
+            DoubleConv( n_channels, n_features ),
+            UNet( n_features, depth=unet_depth ),
+            self.get_upscale_layers( n_upscale_ops ),
+            OutConv( n_features, self.n_channels ),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.inc(x)
-        x = self.unet(x)
-        x = self.upscale(x)
-        result = self.outc(x)
-        return result
+        return self.workflow(x)
+
+    def get_upscale_layers(self, nlayers: int) -> nn.Module:
+        upscale = nn.Sequential()
+        for iL in range(nlayers):
+            upscale.add_module( f"ups{iL}", Upscale( self.nfeatures, self.nfeatures) )
+        return upscale
