@@ -1,7 +1,7 @@
 training_version: merra2-emul.1
 nfeatures: 64
-n_upscale: 2
-n_downscale: 4
+upscale_factors: [2,2]
+unet_depth: 4
 loss_fn: l2
 
 
