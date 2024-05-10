@@ -65,6 +65,7 @@ class ModelTrainer(object):
 		self.model = None
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
+		self.layer_losses = []
 
 	@property
 	def sht(self):
@@ -145,7 +146,7 @@ class ModelTrainer(object):
 		return targets
 
 	def loss(self, products: TensorOrTensors, target: Tensor ) -> torch.Tensor:
-		loss, ptype, layer_losses = None, type(products), {}
+		loss, ptype, self.layer_losses = None, type(products), []
 		if ptype == torch.Tensor:
 			loss = self.single_product_loss( products, target)
 		elif not cfg().model.get('multiscale_loss',False):
@@ -158,7 +159,7 @@ class ModelTrainer(object):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
-				layer_losses[iL] = layer_loss.item()
+				self.layer_losses.append( f"{layer_loss.item():.3f}" )
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
@@ -204,12 +205,12 @@ class ModelTrainer(object):
 			batch_dates: List[date] = self.input_dataset.randomize()
 			for batch_date in batch_dates:
 				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
-				input: Tensor = train_data['input']
+				inp: Tensor = train_data['input']
 				target: Tensor   = train_data['target']
-				prd: TensorOrTensors = self.model( input )
+				prd: TensorOrTensors = self.model( inp )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item()
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f}")
+				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} [{','.join(self.layer_losses)}]")
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()
@@ -224,7 +225,7 @@ class ModelTrainer(object):
 			if save_state:
 				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
 				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f}  {cp_msg}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} [{",".join(self.layer_losses)}] {cp_msg}', display=True)
 
 		train_time = time.time() - train_start
 
