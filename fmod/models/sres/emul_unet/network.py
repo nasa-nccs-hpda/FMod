@@ -150,6 +150,7 @@ class UNet(nn.Module):
         for iL in range(self.depth):
             x = self.downscale[iL](x)
             skip.append(x)
+        skip.reverse()
         for iL in range(self.depth):
             x = self.upscale[iL](x,skip[iL])
         return x
