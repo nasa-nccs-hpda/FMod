@@ -111,13 +111,14 @@ class MSCNN(nn.Module):
             self.upsample.append( Upsample(usf) )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        features, xave, xout = self.inc(x), x, []
+        features, result, partials = self.inc(x), x, []
         for iL, usf in enumerate(self.upscale_factors):
             features = self.upscale[iL](features)
-            xave = self.upsample[iL](xave)
+            xave = self.upsample[iL](result)
             xres = self.crossscale[iL](features)
-            xout.append( torch.add( xres, xave ) )
-        return xout[-1]
+            result =  torch.add( xres, xave )
+            partials.append( result )
+        return result
 
     def get_targets(self, target: torch.Tensor):
         return target
