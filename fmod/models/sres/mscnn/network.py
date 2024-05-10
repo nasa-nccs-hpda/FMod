@@ -45,7 +45,7 @@ class Upscale(nn.Module):
         self.upscale = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator),
             DoubleConv(out_channels, out_channels ),
-            DoubleConv(out_channels, out_channels)
+    #        DoubleConv(out_channels, out_channels)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
