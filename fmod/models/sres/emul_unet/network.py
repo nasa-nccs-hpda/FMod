@@ -173,5 +173,5 @@ class EMUL(nn.Module):
     def get_upscale_layers(self, nlayers: int) -> nn.Module:
         upscale = nn.Sequential()
         for iL in range(nlayers):
-            upscale.add_module( f"ups{iL}", Upscale( self.nfeatures, self.nfeatures) )
+            upscale.add_module( f"ups{iL}", Upscale( self.n_features, self.n_features) )
         return upscale
