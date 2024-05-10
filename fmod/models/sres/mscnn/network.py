@@ -116,7 +116,7 @@ class MSCNN(nn.Module):
             features = self.upscale[iL](features)
             xave = self.upsample[iL](xave)
             xres = self.crossscale[iL](features)
-            xout[iL] = torch.add( xres, xave )
+            xout.append( torch.add( xres, xave ) )
         return xout[-1]
 
     def get_targets(self, target: torch.Tensor):
