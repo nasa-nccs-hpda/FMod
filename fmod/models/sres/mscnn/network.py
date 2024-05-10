@@ -87,12 +87,9 @@ class Upsample(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.up(x)
 
-
-
-
-class OutConv(nn.Module):
+class Crossscale(nn.Module):
     def __init__(self, in_channels: int, out_channels: int):
-        super(OutConv, self).__init__()
+        super(Crossscale, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -106,19 +103,21 @@ class MSCNN(nn.Module):
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
         self.upscale: nn.ModuleList = nn.ModuleList()
         self.upsample: nn.ModuleList = nn.ModuleList()
+        self.crossscale: nn.ModuleList = nn.ModuleList()
         for iL, usf in enumerate(upscale_factors):
             in_channels = nfeatures if iL == 0 else nfeatures*2
             self.upscale.append(  Upscale( in_channels, nfeatures*2, usf ) )
-            self.upsample.append(  Upsample( usf ) )
-        self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
+            self.crossscale.append(  Crossscale( nfeatures*2, self.n_channels ) )
+            self.upsample.append( Upsample(usf) )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        xres, xave = self.inc(x), x
+        features, xave, xout = self.inc(x), x, []
         for iL, usf in enumerate(self.upscale_factors):
-            xres = self.upscale[iL](xres)
+            features = self.upscale[iL](features)
             xave = self.upsample[iL](xave)
-        result = torch.add( self.outc(xres), xave )
-        return result
+            xres = self.crossscale[iL](features)
+            xout[iL] = torch.add( xres, xave )
+        return xout[-1]
 
     def get_targets(self, target: torch.Tensor):
         return target
