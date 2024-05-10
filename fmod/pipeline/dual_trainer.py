@@ -234,7 +234,8 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 
 		print(f'--------------------------------------------------------------------------------')
-		print(f'done. Training took {train_time / 60:.2f} min.')
+		ntotal_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
 		return acc_loss
 

@@ -24,8 +24,7 @@ class DoubleConv(nn.Module):
         return self.double_conv(x)
 
 
-class Down(nn.Module):
-    """Downscaling with maxpool then double conv"""
+class MPDownscale(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
@@ -67,20 +66,25 @@ class Up(nn.Module):
         return self.conv(x)
 
 class Upscale(nn.Module):
-    """Upscaling then double conv"""
 
-    def __init__(self, in_channels: int, out_channels: int, upscale_fator: int, bilinear: bool = False):
+    def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
-
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=upscale_fator, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels )
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=upscale_fator)
-            self.conv = DoubleConv(out_channels, out_channels )
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv(out_channels, out_channels )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.up(x)
+        return self.conv(x)
+
+class UNetUpscale(nn.Module):
+
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv(out_channels, out_channels )
+
+    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+        x: torch.Tensor = torch.cat([self.up(x), skip], dim=1 )
         return self.conv(x)
 
 
@@ -93,17 +97,17 @@ class OutConv(nn.Module):
         return self.conv(x)
 
 
-class EMUL(nn.Module):
+class EMUL1(nn.Module):
     def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], bilinear: bool=False ):
-        super(EMUL, self).__init__()
+        super(EMUL1, self).__init__()
         self.n_channels: int = n_channels
 
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
-        self.down1: nn.Module = Down( nfeatures, nfeatures*2 )
-        self.down2: nn.Module = Down( nfeatures*2, nfeatures*4)
-        self.down3: nn.Module = Down( nfeatures*4, nfeatures*8 )
+        self.down1: nn.Module = MPDownscale( nfeatures, nfeatures * 2)
+        self.down2: nn.Module = MPDownscale(nfeatures * 2, nfeatures * 4)
+        self.down3: nn.Module = MPDownscale(nfeatures * 4, nfeatures * 8)
         factor = 2 if  bilinear else 1
-        self.down4: nn.Module = Down(nfeatures*8, nfeatures*16 // factor)
+        self.down4: nn.Module = MPDownscale(nfeatures * 8, nfeatures * 16 // factor)
         self.up1: nn.Module = Up( nfeatures*16, nfeatures*8 // factor,  bilinear)
         self.up2: nn.Module = Up( nfeatures*8, nfeatures*4 // factor,  bilinear)
         self.up3: nn.Module = Up( nfeatures*4, nfeatures*2 // factor,  bilinear)
@@ -125,6 +129,56 @@ class EMUL(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
+        x = self.upscale(x)
+        result = self.outc(x)
+        return result
+
+class UNet(nn.Module):
+    def __init__(self, n_channels: int, nfeatures: int, nscales: int ):
+        super(UNet, self).__init__()
+        self.n_channels: int = n_channels
+        self.n_scales: int = nscales
+        self.downscale = nn.ModuleList()
+        self.upscale = nn.ModuleList()
+        self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
+
+        for iL in range(nscales):
+            usf, dsf = 2 ** (nscales-iL-1), 2 ** iL
+            self.downscale.append( MPDownscale(nfeatures * dsf, nfeatures * dsf * 2))
+            self.upscale.append( UNetUpscale(nfeatures * usf * 2, nfeatures * usf))
+
+        self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
+
+    def forward(self, inp: torch.Tensor) -> torch.Tensor:
+        x = self.inc(inp)
+        skip = []
+
+        for iL in range(self.n_scales):
+            x = self.downscale[iL](x)
+            skip.append(x)
+
+        for iL in range(self.n_scales):
+            x = self.upscale[iL](x,skip[iL])
+
+        result = self.outc(x)
+        return result
+
+
+class EMUL(nn.Module):
+    def __init__(self, n_channels: int, nfeatures: int, n_downscale_ops: int, n_upscale_ops: int ):
+        super(EMUL, self).__init__()
+        self.n_channels: int = n_channels
+
+        self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
+        self.unet = UNet( n_channels, nfeatures, nscales=n_downscale_ops )
+        self.upscale = nn.Sequential()
+        for iL in range(n_upscale_ops):
+            self.upscale.add_module( f"ups{iL}", Upscale( nfeatures, nfeatures) )
+        self.outc: nn.Module = OutConv( nfeatures, self.n_channels )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.inc(x)
+        x = self.unet(x)
         x = self.upscale(x)
         result = self.outc(x)
         return result
