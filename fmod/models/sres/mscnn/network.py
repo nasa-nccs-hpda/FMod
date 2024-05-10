@@ -69,7 +69,7 @@ class Crossscale(nn.Module):
         return self.conv(x)
 
 class MSCNN(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], bilinear: bool=False ):
+    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int] ):
         super(MSCNN, self).__init__()
         self.n_channels: int = n_channels
         self.upscale_factors = upscale_factors
