@@ -229,7 +229,7 @@ class ModelTrainer(object):
 			if save_state:
 				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
 				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} [{",".join(self.layer_losses)}] {cp_msg}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} {fmtfl(self.layer_losses)} {cp_msg}', display=True)
 
 		train_time = time.time() - train_start
 
