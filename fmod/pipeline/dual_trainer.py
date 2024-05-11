@@ -44,6 +44,10 @@ def fmtfl( flist: List[float] ) -> str:
 	svals = ','.join( [ f"{fv:.4f}" for fv in flist ] )
 	return f"[{svals}]"
 
+def shuffle( data: Tensor ) -> Tensor:
+	idx = torch.randperm(data.shape[0])
+	return data[idx,...]
+
 class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
@@ -189,7 +193,7 @@ class ModelTrainer(object):
 		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, nepochs, acc_loss = 0, cfg().task.nepochs, float('inf')
+		epoch0, nepochs, batch_iter, acc_loss = 0, cfg().task.nepochs, cfg().task.batch_iter, float('inf')
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -211,15 +215,16 @@ class ModelTrainer(object):
 				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
 				inp: Tensor = train_data['input']
 				target: Tensor   = train_data['target']
-				print( f"\n TRAIN epoch: {epoch} batch: {batch_date}")
-				prd: TensorOrTensors = self.model( inp )
-				loss: torch.Tensor  = self.loss( prd, target )
-				acc_loss += loss.item()
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} {fmtfl(self.layer_losses)}", display=True)
+				for biter in range(batch_iter):
+					idx = torch.randperm(inp.shape[0])
+					prd: TensorOrTensors = self.model( inp[idx,...] )
+					loss: torch.Tensor  = self.loss( prd, target[idx,...] )
+					acc_loss += loss.item()
+					lgm().log(f" ** Loss[{batch_date}:{biter}]: {loss.item():.5f} {fmtfl(self.layer_losses)}", display=True )
 
-				self.optimizer.zero_grad(set_to_none=True)
-				loss.backward()
-				self.optimizer.step()
+					self.optimizer.zero_grad(set_to_none=True)
+					loss.backward()
+					self.optimizer.step()
 
 			if self.scheduler is not None:
 				self.scheduler.step()
