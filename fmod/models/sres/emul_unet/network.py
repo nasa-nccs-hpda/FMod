@@ -86,8 +86,10 @@ class UNetUpscale(nn.Module):
         self.conv = DoubleConv(out_channels, out_channels )
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
-        x: torch.Tensor = torch.cat([self.up(x), skip], dim=1 )
-        return self.conv(x)
+        xup = self.up(x)
+        print( f" ## UNetUpscale: skip{list(skip.shape)}, x{list(x.shape)}" )
+        y: torch.Tensor = torch.cat([xup, skip], dim=1 )
+        return self.conv(y)
 
 
 class OutConv(nn.Module):
