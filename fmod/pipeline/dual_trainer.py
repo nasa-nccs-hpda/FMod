@@ -226,16 +226,14 @@ class ModelTrainer(object):
 					loss.backward()
 					self.optimizer.step()
 
+				if save_state:
+					self.checkpoint_manager.save_checkpoint(epoch, acc_loss)
+
 			if self.scheduler is not None:
 				self.scheduler.step()
 
 			epoch_time = time.time() - epoch_start
-
-			cp_msg = ""
-			if save_state:
-				self.checkpoint_manager.save_checkpoint(epoch,acc_loss)
-				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} {fmtfl(self.layer_losses)} {cp_msg}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
 
 		train_time = time.time() - train_start
 
