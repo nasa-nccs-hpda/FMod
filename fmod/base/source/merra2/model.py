@@ -210,7 +210,7 @@ class SRBatch:
 			t0 = time.time()
 			self.current_batch = self.load_batch(d)
 			self.current_date = d
-			lgm().log( f" -----> load {self.vres}-res batch[{d}]-> {rcoords(self.current_batch)}, time = {time.time()-t0} sec", display=True )
+			lgm().log( f" -----> load {self.vres}-res batch[{d}]-> {rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
 
 		return self.current_batch
 
