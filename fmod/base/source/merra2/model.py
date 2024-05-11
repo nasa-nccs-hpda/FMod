@@ -1,5 +1,5 @@
 import xarray as xa, pandas as pd
-import os, math, numpy as np, shutil
+import os, time, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
 from fmod.pipeline.stats import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
@@ -120,7 +120,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 	dataset: xa.Dataset = subset_datavars( xa.open_dataset(filepath, engine='netcdf4') )
 	if (levels is not None) and ('z' in dataset.coords):
 		dataset = dataset.sel(z=levels, method="nearest")
-	lgm().log(f"\n LOAD[{vres}]-> dims: {rcoords(dataset)}", display=True)
+	lgm().log(f"LOAD[{vres}]-> dims: {rcoords(dataset)}")
 	iorigin: Dict[str,int] = get_data_indices(dataset, cfg().task.origin )
 	tile_size: Dict[str,int] = cfg().task.tile_size
 
@@ -133,13 +133,13 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 		raise Exception(f"Unrecognized vres: {vres}")
 
 	dataset = dataset.isel( **iroi )
-	lgm().log( f" %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}", display=True )
+	lgm().log( f" %% data_subset[{vres}]-> iroi: {iroi}, dataset roi: {get_roi(dataset.coords)}" )
 	return rename_coords(dataset)
 
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	result: xa.Dataset = access_data_subset( filepath, vres )
-	print( f" * load_dataset[{vres}]({d}) {bounds(result)} nts={result.coords['time'].size} {filepath}")
+	lgm().log( f" * load_dataset[{vres}]({d}) {bounds(result)} nts={result.coords['time'].size} {filepath}")
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
@@ -202,15 +202,15 @@ class SRBatch:
 	def load_batch(self, d: date, **kwargs) -> xa.Dataset:
 		dates = date_list(d, self.days_per_batch)
 		dsets = [ load_dataset(day, self.vres) for day in dates ]
-		print( f"Concat {len(dates)} daily datasets")
 		dset = xa.concat(dsets, dim="time", coords="minimal")
 		return dset
 
 	def load(self, d: date) -> xa.Dataset:
 		if self.current_date != d:
+			t0 = time.time()
 			self.current_batch = self.load_batch(d)
 			self.current_date = d
-			lgm().log( f"\n -----> load_batch[{d}]-> {rcoords(self.current_batch)}\n", display=True )
+			lgm().log( f" -----> load_batch[{d}]-> {rcoords(self.current_batch)}, time = {time.time()-t0} sec", display=True )
 
 		return self.current_batch
 

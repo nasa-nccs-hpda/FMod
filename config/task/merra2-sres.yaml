@@ -18,8 +18,8 @@ nsteps_input: 1
 data_timestep: 6
 levels:  [850, 1000]
 lr: 1e-4
-nepochs: 50
-batch_iter: 100
+nepochs: 100
+batch_iter: 50
 weight_decay: 0.0
 error_threshold: 1.0
 

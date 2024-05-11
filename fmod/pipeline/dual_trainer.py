@@ -216,9 +216,9 @@ class ModelTrainer(object):
 				inp: Tensor = train_data['input']
 				target: Tensor   = train_data['target']
 				for biter in range(batch_iter):
-					idx = torch.randperm(inp.shape[0])
-					prd: TensorOrTensors = self.model( inp[idx,...] )
-					loss: torch.Tensor  = self.loss( prd, target[idx,...] )
+					bidx = torch.randperm(inp.shape[0])
+					prd: TensorOrTensors = self.model( inp[bidx,...] )
+					loss: torch.Tensor  = self.loss( prd, target[bidx,...] )
 					acc_loss += loss.item()
 					lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
