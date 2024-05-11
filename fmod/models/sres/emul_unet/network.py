@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapp
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class DoubleConv(nn.Module):
-    """(convolution => [BN] => ReLU) * 2"""
 
     def __init__(self, in_channels: int, out_channels: int, mid_channels: int=None):
         super().__init__()
@@ -28,7 +27,6 @@ class MPDownscale(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
-        print( f" ## MPDownscale: in_channels={in_channels}, out_channels={out_channels}")
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
             DoubleConv(in_channels, out_channels)
@@ -81,13 +79,11 @@ class UNetUpscale(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
-        print(f" ## UNetUpscale: in_channels={in_channels}, out_channels={out_channels}")
         self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
         self.conv = DoubleConv( 2*out_channels, out_channels )
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         xup = self.up(x)
-        print( f" ## UNetUpscale: skip{list(skip.shape)}, x{list(x.shape)} -> xup{list(xup.shape)}" )
         y: torch.Tensor = torch.cat([xup, skip], dim=1 )
         return self.conv(y)
 
@@ -154,10 +150,7 @@ class UNet(nn.Module):
         for iL in range(self.depth):
             skip.insert(0, x)
             x: torch.Tensor = self.downscale[iL](x)
-            print(f"  <<UNet downscale-{iL}>> x{list(x.shape)}, skip{list(skip[0].shape)}")
-        print( f"UNet skip variables: {[list(z.shape) for z in skip]}, bottom shape = {list(x.shape)}")
         for iL in range(self.depth):
-            print(f"  <<UNet upscale-{iL}>> x{list(x.shape)}, skip{list(skip[iL].shape)}")
             x = self.upscale[iL](x,skip[iL])
         return x
 
