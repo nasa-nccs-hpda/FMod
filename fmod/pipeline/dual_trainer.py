@@ -220,7 +220,7 @@ class ModelTrainer(object):
 					prd: TensorOrTensors = self.model( inp[idx,...] )
 					loss: torch.Tensor  = self.loss( prd, target[idx,...] )
 					acc_loss += loss.item()
-					lgm().log(f" ** Loss[{batch_date}:{biter}]: {loss.item():.5f} {fmtfl(self.layer_losses)}", display=True )
+					lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
 					self.optimizer.zero_grad(set_to_none=True)
 					loss.backward()
