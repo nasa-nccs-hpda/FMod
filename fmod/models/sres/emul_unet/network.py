@@ -28,6 +28,7 @@ class MPDownscale(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
+        print( f" ## MPDownscale: in_channels={in_channels}, out_channels={out_channels}")
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
             DoubleConv(in_channels, out_channels)
@@ -80,6 +81,7 @@ class UNetUpscale(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
+        print(f" ## UNetUpscale: in_channels={in_channels}, out_channels={out_channels}")
         self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
         self.conv = DoubleConv(out_channels, out_channels )
 
