@@ -211,10 +211,11 @@ class ModelTrainer(object):
 				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
 				inp: Tensor = train_data['input']
 				target: Tensor   = train_data['target']
+				print( f"\n TRAIN epoch: {epoch} batch: {batch_date}")
 				prd: TensorOrTensors = self.model( inp )
 				loss: torch.Tensor  = self.loss( prd, target )
 				acc_loss += loss.item()
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} {fmtfl(self.layer_losses)}")
+				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.5f} {fmtfl(self.layer_losses)}", display=True)
 
 				self.optimizer.zero_grad(set_to_none=True)
 				loss.backward()
