@@ -3,40 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-
-class DoubleConv(nn.Module):
-    """(convolution => [BN] => ReLU) * 2"""
-
-    def __init__(self, in_channels: int, out_channels: int, mid_channels: int=None):
-        super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding='same', bias=True),
-            nn.BatchNorm2d(mid_channels),
-            nn.LeakyReLU(negative_slope = 0.1),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding='same', bias=True),
-            nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(negative_slope = 0.1),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.double_conv(x)
-
-
-class Down(nn.Module):
-    """Downscaling with maxpool then double conv"""
-
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = self.maxpool_conv(x)
-        return y
+from fmod.models.sres.common.unet import UNet, DoubleConv
 
 class Upscale(nn.Module):
 
@@ -68,14 +35,16 @@ class Crossscale(nn.Module):
         return self.conv(x)
 
 class MSCNN(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int] ):
+    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], unet_depth: int = 0 ):
         super(MSCNN, self).__init__()
         self.n_channels: int = n_channels
+        self.unet_depth: int = unet_depth
         self.upscale_factors = upscale_factors
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
         self.upscale: nn.ModuleList = nn.ModuleList()
         self.upsample: nn.ModuleList = nn.ModuleList()
         self.crossscale: nn.ModuleList = nn.ModuleList()
+        self.unet: Optional[UNet] = UNet( nfeatures, unet_depth ) if unet_depth > 0 else None
         for iL, usf in enumerate(upscale_factors):
             self.upscale.append(  Upscale( nfeatures, nfeatures, usf ) )
             self.crossscale.append(  Crossscale( nfeatures, self.n_channels ) )
@@ -83,6 +52,8 @@ class MSCNN(nn.Module):
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
         features, results = self.inc(x), [x]
+        if self.unet_depth > 0:
+            features = self.unet(features)
         for iL, usf in enumerate(self.upscale_factors):
             features = self.upscale[iL](features)
             xave = self.upsample[iL](results[-1])
