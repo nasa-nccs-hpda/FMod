@@ -10,7 +10,7 @@ task_type: "downscale"
 
 start_date:  "01/01/1995"
 batch_ndays: 16
-nbatches: 1
+nbatches: 50
 
 train_steps: [0]
 nsteps_input: 1
@@ -18,7 +18,7 @@ nsteps_input: 1
 data_timestep: 6
 levels:  [850, 1000]
 lr: 1e-4
-nepochs: 100
+nepochs: 5000
 weight_decay: 0.0
 error_threshold: 1.0
 
