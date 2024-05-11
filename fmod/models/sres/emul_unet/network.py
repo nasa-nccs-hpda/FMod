@@ -83,7 +83,7 @@ class UNetUpscale(nn.Module):
         super().__init__()
         print(f" ## UNetUpscale: in_channels={in_channels}, out_channels={out_channels}")
         self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
-        self.conv = DoubleConv(out_channels, out_channels )
+        self.conv = DoubleConv( 2*out_channels, out_channels )
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         xup = self.up(x)
