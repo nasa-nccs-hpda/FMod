@@ -9,7 +9,7 @@ poly_order: 5
 task_type: "downscale"
 
 start_date:  "01/01/1995"
-batch_ndays: 16
+days_per_batch: 16
 nbatches: 50
 
 train_steps: [0]

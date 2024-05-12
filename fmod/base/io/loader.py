@@ -58,5 +58,5 @@ class BaseDataset(IterableDataset):
 	def get_batch(self, start_date: date) -> Dict[str, xarray.DataArray]:
 		raise NotImplementedError()
 
-	def get_first_batch(self) -> Dict[str, xarray.DataArray]:
+	def get_current_batch(self) -> Dict[str, xarray.DataArray]:
 		return self.get_batch( self.current_date )

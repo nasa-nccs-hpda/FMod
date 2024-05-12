@@ -12,12 +12,12 @@ class SRModels:
 	def __init__(self, input_dataset: BaseDataset, model_config: DictConfig, device: torch.device):
 		self.model_config = dict(*model_config)
 		self.device = device
-		train_data: Dict[str, xa.DataArray] = input_dataset.get_first_batch()
-		sample_input: xa.DataArray = train_data['input']
-		sample_target: xa.DataArray = train_data['target']
-		print(f"sample_input: shape={sample_input.shape}")
-		print(f"sample_target: shape={sample_target.shape}")
-		self.model_config['nchannels'] = sample_input.shape[1]
+		train_data: Dict[str, xa.DataArray] = input_dataset.get_current_batch()
+		self.sample_input:  xa.DataArray = train_data['input']
+		self.sample_target: xa.DataArray = train_data['target']
+		print(f"sample_input: shape={self.sample_input.shape}")
+		print(f"sample_target: shape={self.sample_target.shape}")
+		self.model_config['nchannels'] = self.sample_input.shape[1]
 
 	def get_model(self):
 		modelId = self.model_config['name']

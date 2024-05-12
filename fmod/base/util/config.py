@@ -18,10 +18,12 @@ DataCoordinates = Union[DataArrayCoordinates,DatasetCoordinates]
 def cfg() -> DictConfig:
     return Configuration.instance().cfg
 
-def configure(config_name: str):
+def fmconfig( task: str, model: str, dataset: str, scenario: str, ):
+    config_name = f"{task}-{model}-{dataset}-{scenario}"
     Configuration.init( config_name )
  #   warnings.filterwarnings("error")
     lgm().log(f"Config loaded: {config_name}")
+
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"

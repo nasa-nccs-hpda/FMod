@@ -8,7 +8,6 @@ import ipywidgets as ipw
 from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
-from fmod.base.io.loader import BaseDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import nnan, pctnan
 
