@@ -1,7 +1,7 @@
 import xarray, math
 from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
-from fmod.base.util.config import configure, cfg
+from fmod.base.util.config import cfg
 from enum import Enum
 from datetime import date
 from omegaconf import DictConfig, OmegaConf

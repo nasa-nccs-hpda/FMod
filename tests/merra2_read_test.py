@@ -3,7 +3,7 @@ import hydra, os, time
 from fmod.base.source.merra2.model import load_dataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.source.merra2.model import pctnan
-from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
+from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 import xarray as xa
 from datetime import date
 

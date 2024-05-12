@@ -1,5 +1,5 @@
 from fmod.base.source.merra2.preprocess import MERRA2DataProcessor, StatsAccumulator
-from fmod.base.util.config import configure, cfg
+from fmod.base.util.config import cfg
 from typing import List, Tuple, Dict
 from datetime import date
 from fmod.base.util.dates import year_range

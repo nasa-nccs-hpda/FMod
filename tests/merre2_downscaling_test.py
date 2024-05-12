@@ -2,7 +2,7 @@ import torch
 import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_list
-from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
+from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 from fmod.models.corrdiff.dataset import M2DownscalingDataset
 
 hydra.initialize(version_base=None, config_path="../config")

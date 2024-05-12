@@ -7,7 +7,7 @@ from fmod.base.util.logging import lgm
 T_co = TypeVar('T_co', covariant=True)
 from datetime import date
 from fmod.base.util.dates import date_list
-from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
+from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 from fmod.pipeline.trainer import DualModelTrainer
 from fmod.pipeline.merra2 import MERRA2Dataset
 

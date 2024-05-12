@@ -4,7 +4,7 @@ import xarray as xa
 import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_list
-from fmod.base.util.config import configure, cfg, start_date,  cfg2args, pp
+from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 from fmod.models.sres.srdn.network import SRDN
 from fmod.plot.training_results import ResultsPlotter
 from fmod.pipeline.trainer import DualModelTrainer

@@ -1,4 +1,4 @@
-from fmod.base.util.config import configure, cfg
+from fmod.base.util.config import cfg
 from typing import List, Tuple, Optional, Union
 from datetime import date
 from multiprocessing import Pool, cpu_count

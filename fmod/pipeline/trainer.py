@@ -2,7 +2,7 @@ import torch, math
 import xarray
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
-from fmod.base.util.config import configure, cfg, cfg_date
+from fmod.base.util.config import cfg, cfg_date
 from fmod.pipeline.downscale import Downscaler
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics

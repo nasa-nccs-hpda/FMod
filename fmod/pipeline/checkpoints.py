@@ -2,7 +2,7 @@ import torch, math
 import xarray
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
-from fmod.base.util.config import configure, cfg, cfg_date
+from fmod.base.util.config import cfg, cfg_date
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from torch.optim.optimizer import Optimizer

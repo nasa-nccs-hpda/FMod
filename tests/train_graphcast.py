@@ -18,7 +18,7 @@ from fmod.models.graphcast.loss.utils import grid_cell_area
 from fmod.models.graphcast.train_base import BaseTrainer
 from fmod.models.graphcast.validation import Validation
 from fmod.models.graphcast.constants import Constants, get_constants
-from fmod.base.util.config import configure, cfg
+from fmod.base.util.config import cfg
 from modulus.distributed import DistributedManager
 try: import apex
 except: pass
