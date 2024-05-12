@@ -24,10 +24,10 @@ def cid() -> str:
 def fmconfig( task: str, model: str, dataset: str, scenario: str, ):
     config_name = f"{task}-{model}-{dataset}-{scenario}"
     Configuration.init( config_name )
-    cfg().task['name'] = task
-    cfg().task['scenario'] = scenario
-    cfg().task['dataset'] = dataset
-    cfg().model['name'] = model
+    cfg().task.name = task
+    cfg().task.scenario = scenario
+    cfg().task.dataset = dataset
+    cfg().model.name = model
     #   warnings.filterwarnings("error")
 
 def cfgdir() -> str:
