@@ -36,8 +36,8 @@ def date_list( start: date, num_days: int )-> List[date]:
 	return dates
 
 def cfg_date_range( task_config )-> List[date]:
-	start = date( task_config.start_date )
-	end = date(task_config.end_date)
+	start = date( str(task_config['start_date']) )
+	end = date( str(task_config['end_date']) )
 	return date_range( start, end )
 def date_range( start: date, end: date )-> List[date]:
 	d0: date = start
@@ -54,6 +54,7 @@ def year_range( y0: int, y1: int, **kwargs )-> List[date]:
 	return rlist
 
 def batches_range( task_config )-> List[date]:
-	return date_list( start_date( task_config ), task_config.days_per_batch * task_config.nbatches)
+	print( )
+	return date_list( start_date( task_config ), task_config['days_per_batch'] * task_config['nbatches'])
 
 
