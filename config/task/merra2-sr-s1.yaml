@@ -1,3 +1,7 @@
+name: ???
+scenario: ???
+dataset: ???
+
 dataset_version: 'merra2.sr.1'
 params: "small"
 nc_format: 'sres'
