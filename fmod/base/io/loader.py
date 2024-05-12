@@ -4,7 +4,8 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import configure, cfg
 from enum import Enum
 from datetime import date
-# from fmod.pipeline.merra2 import TensorRole
+from omegaconf import DictConfig, OmegaConf
+from fmod.base.util.dates import date_list, year_range, batches_range
 
 class ncFormat(Enum):
 	Standard = 'standard'
@@ -31,11 +32,16 @@ def data_suffix(vres: str="high") -> str:
 
 class BaseDataset(IterableDataset):
 
-	def __init__(self, length: int ):
+	def __init__(self, task_config: DictConfig, **kwargs ):
 		super(BaseDataset, self).__init__()
-		self.length = length
+		self.task_config: DictConfig = task_config
+		self.train_dates: List[date] = batches_range(task_config)
+		self.days_per_batch: int = task_config.days_per_batch
+		self.hours_per_step: int = task_config.hours_per_step
+		self.steps_per_day = 24 // self.hours_per_step
+		self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
 		self.chanIds: Dict[str,List[str]] = {}
-		self.current_date = date(1, 1, 1)
+		self.current_date: date = self.train_dates[0]
 
 	def __getitem__(self, idx: int):
 		raise NotImplementedError()
@@ -47,7 +53,10 @@ class BaseDataset(IterableDataset):
 		return self.chanIds[role]
 
 	def __len__(self):
-		return self.length
+		return self.steps_per_batch
 
 	def get_batch(self, start_date: date) -> Dict[str, xarray.DataArray]:
 		raise NotImplementedError()
+
+	def get_first_batch(self) -> Dict[str, xarray.DataArray]:
+		return self.get_batch( self.current_date )

@@ -183,7 +183,7 @@ class SRBatch:
 		self.vres = kwargs.get('vres', "high" )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
-		self.days_per_batch = cfg().task.batch_ndays
+		self.days_per_batch = cfg().task.days_per_batch
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
 		self.norm_data: Dict[str, xa.Dataset] = load_merra2_norm_data()

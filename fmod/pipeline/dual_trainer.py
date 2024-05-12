@@ -3,7 +3,7 @@ import xarray
 from datetime import date
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
-from fmod.base.util.config import configure, cfg, cfg_date
+from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.pipeline.merra2 import array2tensor
 import torch_harmonics as harmonics
@@ -52,20 +52,13 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self,  input_dataset: BaseDataset, target_dataset: BaseDataset, device: torch.device ):
+	def __init__(self, input_dataset: BaseDataset, target_dataset: BaseDataset, device: torch.device ):
+		super(ModelTrainer, self).__init__()
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
 		self.device = device
-		self.upscale_factors = cfg().model.upscale_factors
-		self.scale_factor = math.prod(self.upscale_factors)
 		self.min_loss = float('inf')
 		self.eps = 1e-6
-		sample_results = next(iter(target_dataset))
-		tar: xarray.DataArray = sample_results['target']
-		self.grid_shape = tar.shape[-2:]
-		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
-		self.lmax = tar.shape[-2]
 		self._sht, self._isht = None, None
 		self.scheduler = None
 		self.optimizer = None
@@ -74,6 +67,28 @@ class ModelTrainer(object):
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
+		self.train_dates = self.input_dataset.train_dates
+		self.upscale_factors = cfg().model.upscale_factors
+		self.scale_factor = math.prod(self.upscale_factors)
+		self.coerce_to_data_grid()
+		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
+
+	def configure_grid(self):
+		tar: xarray.DataArray = self.target_dataset.get_current_batch()['target']
+		grid_shape = tar.shape[-2:]
+		gridops = GridOps(*grid_shape)
+		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
+		lmax = tar.shape[-2]
+		return grid_shape, gridops, lmax
+
+	def coerce_to_data_grid(self, **kwargs):
+		data: xarray.DataArray = self.input_dataset.get_current_batch()['input']
+		data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
+		dc = cdelta(data)
+		lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
+		cfg().task['origin'] = data_origin
+		cfg().task['extent'] = {dim: float(cval(data, dim, -1) + dc[cfg().task.coords[dim]]) for dim in data_origin.keys()}
+		print(f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")
 
 	@property
 	def sht(self):

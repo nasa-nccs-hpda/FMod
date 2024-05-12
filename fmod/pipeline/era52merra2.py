@@ -66,7 +66,7 @@ class MERRA2NCDatapipe(Datapipe):
         data_dir: str,
         stats_dir: Optional[str] = None,
         channels: Optional[List[int]] = cfg().platform.channels,
-        batch_size: int = cfg().platform.batch_size,
+        batch_size: int = cfg().platform.steps_per_batch,
         num_steps: int = cfg().platform.num_steps,
         stride: int = cfg().platform.stride,
         patch_size: Union[Tuple[int, int], int, None] = cfg().platform.patch_size,

@@ -60,3 +60,10 @@ class MSCNN(nn.Module):
             xres = self.crossscale[iL](features)
             results.append( torch.add( xres, xave ) )
         return results[1:]
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+    nchannels:          int     = mconfig['nchannels']
+    nfeatures:          int     = mconfig['nfeatures']
+    upscale_factors: List[int]  = mconfig['upscale_factors']
+    unet_depth:         int     = mconfig['unet_depth']
+    return MSCNN( nchannels, nfeatures, upscale_factors, unet_depth )

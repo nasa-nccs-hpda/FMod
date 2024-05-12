@@ -54,6 +54,6 @@ def year_range( y0: int, y1: int, **kwargs )-> List[date]:
 	return rlist
 
 def batches_range( task_config )-> List[date]:
-	return date_list( start_date( task_config ), task_config.batch_ndays * task_config.nbatches )
+	return date_list( start_date( task_config ), task_config.days_per_batch * task_config.nbatches)
 
 

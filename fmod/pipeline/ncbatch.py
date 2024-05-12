@@ -63,19 +63,14 @@ class MetaData(DatapipeMetaData):
 
 class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
+        super(ncBatchDataset, self).__init__(task_config)
         self.task_config: DictConfig = task_config
-        self.train_dates: List[date] = batches_range(task_config)
-        self.batch_ndays: int = task_config.batch_ndays               # number of days per batch
         self.load_inputs: bool = kwargs.pop('load_inputs',True)
         self.load_targets: bool = kwargs.pop('load_targets', True)
         self.load_base: bool = kwargs.pop('load_base', True)
-        self.dts: int =task_config.data_timestep                       # data timestep in hours
-        self.n_day_offsets: int = 24//self.dts                         # number of timesteps per day
-        self.batch_size: int = self.batch_ndays * self.dts             # number of timesteps per batch
         self.day_index: int = 0
-        super(ncBatchDataset,self).__init__(len(self.train_dates) * self.n_day_offsets)
-        self.train_steps: int = task_config.train_steps
-        self.nsteps_input: int = task_config.nsteps_input
+        self.train_steps: int = task_config.get('train_steps',1)
+        self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.fmbatch: SRBatch = SRBatch( **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
         self.mu: xa.Dataset  = self.norms['mean_by_level']
@@ -99,7 +94,7 @@ class ncBatchDataset(BaseDataset):
 
     def get_batch_start_dates(self, randomize: bool = True ) -> List[date]:
         start_dates, ndates = [], len( self.train_dates )
-        for dindex in range( 0, ndates, self.batch_ndays ):
+        for dindex in range( 0, ndates, self.days_per_batch):
             start_dates.append( self.train_dates[ dindex ] )
         if randomize: random.shuffle(start_dates)
         return start_dates
