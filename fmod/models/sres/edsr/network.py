@@ -1,7 +1,8 @@
 from ..common.residual import ResBlock
 from ..common.upsample import SPUpsample
 from fmod.models.sres.util import *
-import torch, torch.nn as nn
+import torch, math, torch.nn as nn
+from fmod.models.sres.common.cnn import default_conv
 
 class EDSR(nn.Module):
     def __init__( self,
@@ -58,3 +59,16 @@ class EDSR(nn.Module):
                     raise KeyError(f'unexpected key "{name}" in state_dict')
 
 
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+    nchannels: int =            mconfig['nchannels']
+    nfeatures: int =            mconfig['nfeatures']
+    scale_factors: List[int] =  mconfig['upscale_factors']
+    kernel_size: Size2 =        mconfig['kernel_size']
+    nrlayers: int =             mconfig['nrlayers']
+    res_scale: float =          mconfig['res_scale']
+    conv: Callable[[int, int, Size2, bool], nn.Module] = default_conv
+    scale: int = math.prod(scale_factors)
+    bnorm: bool = False
+    bias: bool = True
+    act: nn.Module = nn.ReLU(True)
+    return EDSR( conv, scale, nchannels, nfeatures, kernel_size, nrlayers, bnorm, act, bias,  res_scale)

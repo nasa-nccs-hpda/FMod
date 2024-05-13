@@ -9,8 +9,6 @@ tensor_type: "torch"
 device: "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
-poly_order: 5
-task_type: "downscale"
 
 start_date:  "01/01/1995"
 days_per_batch: 16
@@ -22,7 +20,7 @@ nsteps_input: 1
 levels:  [850, 1000]
 lr: 1e-4
 nepochs: 100
-batch_iter: 50
+batch_iter: 20
 weight_decay: 0.0
 error_threshold: 1.0
 

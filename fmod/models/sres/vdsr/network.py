@@ -1,8 +1,9 @@
 import torch.nn as nn
-import torch
+import torch, math
 from typing import Any, List, Tuple, Callable, Optional, Union, overload
+from fmod.base.util.config import cfg
 from fmod.models.sres.util import *
-from fmod.models.sres.common.cnn import BasicBlock
+from fmod.models.sres.common.cnn import BasicBlock, default_conv
 
 class VDSR(nn.Module):
 	def __init__( self,
@@ -36,3 +37,16 @@ class VDSR(nn.Module):
 		x = self.upscaler(x)
 		y = x + self.body(x)
 		return y
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+	nchannels:          int     = mconfig['nchannels']
+	nfeatures:          int     = mconfig['nfeatures']
+	scale_factors:   List[int]  = mconfig['upscale_factors']
+	kernel_size:        Size2   = mconfig['kernel_size']
+	nrlayers:           int     = mconfig['nrlayers']
+	conv: Callable[[int,int,Size2,bool],nn.Module] = default_conv
+	scale: int = math.prod( scale_factors )
+	bn: bool = False
+	act: nn.Module = nn.ReLU(True)
+	bias: bool = True
+	return VDSR( conv, nchannels, nfeatures, kernel_size, scale, nrlayers, bn, act, bias )

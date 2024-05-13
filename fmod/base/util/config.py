@@ -1,4 +1,6 @@
-import xarray
+import logging
+
+import xarray, warnings
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
@@ -21,14 +23,16 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( task: str, model: str, dataset: str, scenario: str, ):
+def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN, warning_filters=[]):
     config_name = f"{task}-{model}-{dataset}-{scenario}"
     Configuration.init( config_name )
     cfg().task.name = task
     cfg().task.scenario = scenario
     cfg().task.dataset = dataset
     cfg().model.name = model
-    #   warnings.filterwarnings("error")
+    lgm().set_level( log_level )
+    for wfilter in warning_filters:
+       warnings.filterwarnings(wfilter)      # "error"
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"
