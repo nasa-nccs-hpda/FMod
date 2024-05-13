@@ -9,6 +9,7 @@ from fmod.pipeline.merra2 import array2tensor
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
+from fmod.models.sres.manager import SRModels
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
 from fmod.pipeline.checkpoints import CheckpointManager
@@ -52,18 +53,19 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self, input_dataset: BaseDataset, target_dataset: BaseDataset, device: torch.device ):
+	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
-		self.input_dataset = input_dataset
-		self.target_dataset = target_dataset
-		self.device = device
+		self.input_dataset: BaseDataset = model_manager.datasets['input']
+		self.target_dataset: BaseDataset = model_manager.datasets['target']
+		self.device: torch.device = model_manager.device
+		self.model_manager = model_manager
 		self.min_loss = float('inf')
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
 		self.scheduler = None
 		self.optimizer = None
 		self.checkpoint_manager = None
-		self.model = None
+		self.model = model_manager.get_model()
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
@@ -197,7 +199,7 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	@exception_handled
-	def train(self, model: nn.Module, **kwargs ):
+	def train(self, **kwargs ):
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
@@ -205,7 +207,6 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get( 'scheduler', None )
-		self.model = model
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
 		epoch0, nepochs, batch_iter, acc_loss = 0, cfg().task.nepochs, cfg().task.batch_iter, float('inf')

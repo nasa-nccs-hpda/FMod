@@ -10,13 +10,13 @@ from fmod.base.io.loader import BaseDataset
 
 class SRModels:
 
-	def __init__(self, input_dataset: BaseDataset, device: torch.device):
+	def __init__(self, input_dataset: BaseDataset, target_dataset: BaseDataset, device: torch.device):
 		self.model_config = dict( cfg().model.items() )
 		self.model_name = cfg().model.name
 		self.device = device
-		train_data: Dict[str, xa.DataArray] = input_dataset.get_current_batch()
-		self.sample_input:  xa.DataArray = train_data['input']
-		self.sample_target: xa.DataArray = train_data['target']
+		self.datasets: Dict[str,BaseDataset] = dict( input = input_dataset, target = target_dataset )
+		self.sample_input:  xa.DataArray = input_dataset.get_current_batch()['input']
+		self.sample_target: xa.DataArray = target_dataset.get_current_batch()['target']
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.shape[1]
