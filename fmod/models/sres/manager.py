@@ -10,7 +10,7 @@ from fmod.base.io.loader import BaseDataset
 class SRModels:
 
 	def __init__(self, input_dataset: BaseDataset, model_config: DictConfig, device: torch.device):
-		self.model_config = dict(model_config.items())
+		self.model_config = dict( model_config.items() )
 		self.device = device
 		train_data: Dict[str, xa.DataArray] = input_dataset.get_current_batch()
 		self.sample_input:  xa.DataArray = train_data['input']
