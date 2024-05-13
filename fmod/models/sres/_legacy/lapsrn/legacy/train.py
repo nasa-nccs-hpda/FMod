@@ -2,8 +2,6 @@ from torch.utils import data
 import torch.optim as optim
 import torch
 import shutil
-from .network import *
-
 
 def save_ckp(state, is_best, checkpoint_path, best_model_path):
     """

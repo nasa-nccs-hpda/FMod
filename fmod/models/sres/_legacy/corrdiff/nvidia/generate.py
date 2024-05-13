@@ -42,7 +42,7 @@ from modulus.utils.generative import (
 from modulus import Module
 
 from datasets.base import DownscalingDataset
-from models.sres.corrdiff.datasets.dataset import init_dataset_from_config
+from models.sres._legacy.corrdiff.datasets.dataset import init_dataset_from_config
 from training.time import convert_datetime_to_cftime, time_range
 
 

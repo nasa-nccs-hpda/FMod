@@ -96,43 +96,6 @@ class OutConv(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.conv(x)
 
-
-class EMUL1(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], bilinear: bool=False ):
-        super(EMUL1, self).__init__()
-        self.n_channels: int = n_channels
-
-        self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
-        self.down1: nn.Module = MPDownscale( nfeatures, nfeatures * 2)
-        self.down2: nn.Module = MPDownscale(nfeatures * 2, nfeatures * 4)
-        self.down3: nn.Module = MPDownscale(nfeatures * 4, nfeatures * 8)
-        factor = 2 if  bilinear else 1
-        self.down4: nn.Module = MPDownscale(nfeatures * 8, nfeatures * 16 // factor)
-        self.up1: nn.Module = Up( nfeatures*16, nfeatures*8 // factor,  bilinear)
-        self.up2: nn.Module = Up( nfeatures*8, nfeatures*4 // factor,  bilinear)
-        self.up3: nn.Module = Up( nfeatures*4, nfeatures*2 // factor,  bilinear)
-        self.up4: nn.Module = Up( nfeatures*2, nfeatures,  bilinear)
-        self.upscale = nn.Sequential()
-        for iL, usf in enumerate(upscale_factors):
-            in_channels = nfeatures if iL == 0 else nfeatures*2
-            self.upscale.add_module( f"ups{iL}-{usf}", Upscale( in_channels, nfeatures*2, usf,  bilinear) )
-        self.outc: nn.Module = OutConv( nfeatures*2, self.n_channels )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        lgm().log( f"         << UNET Bottom shape: {x5.shape} >>" )  # , display=True )
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        x = self.upscale(x)
-        result = self.outc(x)
-        return result
-
 class UNet(nn.Module):
     def __init__(self, nfeatures: int, depth: int ):
         super(UNet, self).__init__()
@@ -175,3 +138,11 @@ class EMUL(nn.Module):
         for iL in range(nlayers):
             upscale.add_module( f"ups{iL}", Upscale( self.n_features, self.n_features) )
         return upscale
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+    nchannels:          int     = mconfig['nchannels']
+    nfeatures:          int     = mconfig['nfeatures']
+    upscale_factors: List[int]  = mconfig['upscale_factors']
+    unet_depth:         int     = mconfig['unet_depth']
+    n_upscale_ops = len(upscale_factors)
+    return EMUL( nchannels, nfeatures, unet_depth, n_upscale_ops )

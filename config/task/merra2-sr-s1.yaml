@@ -13,20 +13,22 @@ downscale_method: 'interp:linear'
 start_date:  "01/01/1995"
 days_per_batch: 16
 hours_per_step: 6
+
 nbatches: 50
+batch_iter: 20
+nepochs: 100
+lr: 1e-4
 
 train_steps: [0]
 nsteps_input: 1
-levels:  [850, 1000]
-lr: 1e-4
-nepochs: 100
-batch_iter: 20
+
 weight_decay: 0.0
 error_threshold: 1.0
 
 origin: { x: -120, y: -60 }
 extent: { x: -1, y: -1 }
 tile_size: { x: 64, y: 64 }
+levels:  [850, 1000]
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }
 statnames: { mean: "mean_by_level", std: "stddev_by_level", mean_diff: "diffs_mean_by_level", std_diff: "diffs_stddev_by_level" }

@@ -6,7 +6,7 @@ from omegaconf import OmegaConf, DictConfig, ListConfig
 from modulus.distributed import DistributedManager
 from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
 from modulus.utils.generative import EasyDict
-from models.sres.corrdiff.datasets.dataset import init_dataset_from_config
+from models.sres._legacy.corrdiff.datasets.dataset import init_dataset_from_config
 
 
 valid_archs = {"ddpmpp-cwb", "ddpmpp-cwb-v0-regression", "ncsnpp", "adm"}

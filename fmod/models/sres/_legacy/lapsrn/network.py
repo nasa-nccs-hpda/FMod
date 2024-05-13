@@ -43,9 +43,9 @@ class FeatureEmbedding(nn.Module):
         return output
 
 
-class LapSrnMS(nn.Module):
+class LapSrn(nn.Module):
     def __init__(self, nchannels: int, nfeatures: int, rdepth: int, rlayers: int, scale: int ):
-        super(LapSrnMS, self).__init__()
+        super(LapSrn, self).__init__()
         self.nscale_ops = math.log2(scale)
         self.conv_input = nn.Conv2d(in_channels=nchannels, out_channels=nfeatures, kernel_size=3, stride=1, padding='same', bias=True, )
         self.transpose = nn.ConvTranspose2d(in_channels=nfeatures, out_channels=nfeatures, kernel_size=4, stride=2, padding=1, bias=True)
@@ -109,3 +109,10 @@ class LapSrnMS(nn.Module):
                     m.weight.data = weight.view(1, 1, h, w).repeat(c1, c2, 1, 1)
                 i_tconv += 1
                 if m.bias is not None: m.bias.data.zero_()
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+    nchannels:          int     = mconfig['nchannels']
+    nfeatures:          int     = mconfig['nfeatures']
+    upscale_factors: List[int]  = mconfig['upscale_factors']
+    unet_depth:         int     = mconfig['unet_depth']
+    return LapSrn( nchannels, nfeatures, upscale_factors, unet_depth )
