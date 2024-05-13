@@ -1,3 +1,5 @@
+name: ???
+
 training_version: merra2-emul.1
 nfeatures: 64
 upscale_factors: [2,2]
