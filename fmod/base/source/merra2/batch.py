@@ -41,11 +41,11 @@ def cache_filepath(vartype: VarType, d: date = None, vres: str="high") -> str:
 def stats_filepath(version: str, statname: str, vres: str="high") -> str:
 	return f"{fmbdir('processed')}/{version}/stats{path_suffix(vres)}/{statname}"
 def get_target_steps(btype: BatchType):
-	if btype == BatchType.Training: return cfg().task['train_steps']
-	elif btype == BatchType.Forecast: return cfg().task['eval_steps']
+	if btype == BatchType.Training: return cfg().task.train_steps
+	elif btype == BatchType.Forecast: return cfg().task.eval_steps
 
 def get_steps_per_day() -> int:
-	steps_per_day: float = 24 / cfg().task['data_timestep']
+	steps_per_day: float = 24 / cfg().task.hours_per_step
 	assert steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
 	return int(steps_per_day)
 
