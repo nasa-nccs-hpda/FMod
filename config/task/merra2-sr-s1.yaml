@@ -14,12 +14,11 @@ task_type: "downscale"
 
 start_date:  "01/01/1995"
 days_per_batch: 16
+hours_per_step: 6
 nbatches: 50
 
 train_steps: [0]
 nsteps_input: 1
-
-data_timestep: 6
 levels:  [850, 1000]
 lr: 1e-4
 nepochs: 100
