@@ -1,8 +1,10 @@
 # Deep Back-Projection Networks For Super-Resolution
 # https://arxiv.org/abs/1803.02735
 
-import torch
-import torch.nn as nn
+from fmod.models.sres.util import *
+import torch, math, torch.nn as nn
+from fmod.models.sres.common.cnn import default_conv
+
 conv_spec = { 2: (6, 2, 2),  4: (8, 4, 2),  8: (12, 8, 2) }
 
 def projection_conv( in_channels: int, out_channels: int, scale: int, upscale=True ):
@@ -108,3 +110,12 @@ class DBPN(nn.Module):
 		out = self.reconstruction(torch.cat(h_list, dim=1))
 
 		return out
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+	nchannels:          int     = mconfig['nchannels']
+	nfeatures:          int     = mconfig['nfeatures']
+	depth:              int     = mconfig['depth']
+	nprojectionfeatures: int    = mconfig['nprojectionfeatures']
+	scale_factors:   List[int]  = mconfig['upscale_factors']
+	scale:              int = math.prod(scale_factors)
+	return DBPN(nchannels, scale, nfeatures, nprojectionfeatures, depth)
