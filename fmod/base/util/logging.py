@@ -75,6 +75,7 @@ class LogManager(object):
         overwrite = cfg().task.get("overwrite_log", True)
         self._lid = "" if overwrite else f"-{os.getpid()}"
         self.log_file = f'{self.log_dir}/{cid()}{self._lid}.log'
+        os.makedirs( os.path.dirname( self.log_file ), mode=0o777, exist_ok=True )
         self._log_stream = open(self.log_file, 'w')
         print( f"\n  --------- Opening log file:  '{self.log_file}' ---------  \n" )
 
