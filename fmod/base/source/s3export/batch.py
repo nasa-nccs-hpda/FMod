@@ -57,6 +57,9 @@ class S3ExportReader:
 		tile_data: np.ndarray = cut_tile( raw_data, origin )
 		xc: np.ndarray = cut_tile( self.x.values, origin )
 		yc: np.ndarray = cut_tile( self.y.values, origin )
+		print(f" xc shape {xc.shape} (y,x)")
+		print(f" yc shape {yc.shape} (y,x)")
+		print(f" tile_data shape {tile_data.shape} (y,x)")
 		return xa.DataArray( tile_data, name=varname, dims=['y', 'x'], coords={'x': xc, 'y': yc} )
 
 	def load_timeslice( self, origin: Tuple[int,int], varnames: List[str], date: datetime ) -> xarray.DataArray:
