@@ -15,7 +15,7 @@ class srRes(Enum):
 	High = 'hr'
 
 def dstr(date: datetime) -> str:
-	return '{:04}:{:02}:{:02}:{:02}'.format( date.year, date.month, date.day, date.hour )
+	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
 
 def data_filepath( varname: str, date: datetime, vres: srRes ) -> str:
 	root = cfg().platform.dataset_root
