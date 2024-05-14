@@ -20,7 +20,7 @@ if torch.cuda.is_available():
 
 origin: Tuple[int,int] = (0,0)
 varnames: List[str] = [ 'sst']
-date: datetime = datetime( )
+date: datetime = datetime( 2012,1,12,15 )
 vres = srRes.High
 
 batch = load_channel( origin, varnames[0], date, vres )
