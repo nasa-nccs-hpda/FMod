@@ -63,7 +63,7 @@ class MetaData(DatapipeMetaData):
 
 class ncBatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
-        super(ncBatchDataset, self).__init__(task_config)
+        super(ncBatchDataset, self).__init__(task_config, **kwargs)
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs',True)
         self.load_targets: bool = kwargs.pop('load_targets', True)

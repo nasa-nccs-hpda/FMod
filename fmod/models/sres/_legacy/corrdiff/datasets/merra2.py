@@ -1,15 +1,13 @@
-import numpy as np, xarray as xa
-import cftime, torch
+import xarray as xa
+import torch
 from fmod.models.corrdiff.nvidia.datasets.base import DownscalingDataset, ChannelMetadata
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, TypeVar
-from fmod.pipeline.merra2 import MERRA2Dataset
+from typing import Tuple, TypeVar
 from fmod.base.util.logging import lgm
 T_co = TypeVar('T_co', covariant=True)
-from datetime import date
 from fmod.base.util.dates import date_list
-from fmod.base.util.config import cfg, start_date,  cfg2args, pp
+from fmod.base.util.config import cfg, start_date
 from fmod.pipeline.trainer import DualModelTrainer
-from fmod.pipeline.merra2 import MERRA2Dataset
+from data.merra2 import MERRA2Dataset
 
 
 class M2DownscalingDataset(DownscalingDataset):

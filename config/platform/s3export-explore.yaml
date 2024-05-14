@@ -1,0 +1,7 @@
+root:      "/explore/nobackup/projects/ilab/data/SR"
+results:   "{root}/results"
+cache:     "{root}/cache"
+processed: '{root}/processed'
+
+dataset_root:  "/explore/nobackup/people/jli30/share/data/"
+dataset_files: "{res}_npy/{varname}/{varname}_{date}.npy"

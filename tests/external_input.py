@@ -1,7 +1,7 @@
-from fmod.pipeline.merra2 import MetaData, MERRA2NCDatapipe
-from nvidia.dali.backend import TensorListCPU, TensorGPU, TensorListGPU
+from data.merra2 import MetaData, MERRA2NCDatapipe
+from nvidia.dali.backend import TensorGPU
 from fmod.base.util.config import configure, cfg2meta
-import hydra, os, time, numpy as np
+import hydra
 
 hydra.initialize( version_base=None, config_path="../config" )
 configure( 'merra2-finetuning' )

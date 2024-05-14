@@ -1,18 +1,11 @@
-import torch, math
-import xarray
-from torch import Tensor
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
-from fmod.base.util.config import cfg, cfg_date
+import torch
+from typing import Any, Dict
+from fmod.base.util.config import cfg
 from fmod.base.util.ops import fmbdir
-from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
 from torch.nn import Module
-from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
-from fmod.pipeline.merra2 import array2tensor
-from enum import Enum
-import numpy as np
-import torch.nn as nn
-import time, os
+import os
 
 
 class CheckpointManager(object):

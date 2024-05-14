@@ -2,20 +2,19 @@ import torch, math
 import xarray
 from datetime import date
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
+from typing import Any, Dict, List, Tuple, Union, Sequence
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
-from fmod.pipeline.merra2 import array2tensor
+from data.merra2 import array2tensor
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
-from fmod.base.util.ops import fmbdir
 from fmod.models.sres.manager import SRModels
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.util.ops import nnan, pctnan, pctnant, ArrayOrTensor
+from fmod.base.util.logging import lgm, exception_handled
+from fmod.base.util.ops import pctnan, pctnant
 from fmod.pipeline.checkpoints import CheckpointManager
 import numpy as np
 import torch.nn as nn
-import time, os
+import time
 
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
