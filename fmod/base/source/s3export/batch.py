@@ -31,5 +31,4 @@ def open_datafile( varname: str, date: datetime, vres: srRes ) -> np.ndarray:
 def load_channel( origin: Tuple[int,int], varname: str, date: datetime, vres: srRes ) -> np.ndarray:
 	tile_size: int = cfg().task.tile_size
 	raw_data: np.ndarray = open_datafile( varname, date, vres )
-	print( raw_data.shape )
-	return raw_data
+	return raw_data[origin[0]:origin[0]+tile_size, origin[1]:origin[1]+tile_size]

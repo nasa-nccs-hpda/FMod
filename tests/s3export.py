@@ -1,4 +1,4 @@
-import torch, logging
+import torch, logging, numpy as np
 import hydra, os, time
 from datetime import datetime
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
@@ -23,5 +23,6 @@ varnames: List[str] = [ 'sst']
 date: datetime = datetime( 2012,1,12,15 )
 vres = srRes.High
 
-batch = load_channel( origin, varnames[0], date, vres )
+channel: np.ndarray = load_channel( origin, varnames[0], date, vres )
+print(channel.shape)
 
