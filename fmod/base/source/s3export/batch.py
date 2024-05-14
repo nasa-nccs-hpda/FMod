@@ -20,7 +20,7 @@ def dstr(date: datetime) -> str:
 def data_filepath( varname: str, date: datetime, vres: srRes ) -> str:
 	root = cfg().platform.dataset_root
 	subpath = cfg().platform.dataset_files.format( res=vres.value, varname=varname, date=dstr(date) )
-	fpath = f"{root}/{subpath}.npy"
+	fpath = f"{root}/{subpath}"
 	return fpath
 
 def open_datafile( varname: str, date: datetime, vres: srRes ) -> np.ndarray:
