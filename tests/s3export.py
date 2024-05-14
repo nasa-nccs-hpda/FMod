@@ -3,9 +3,10 @@ import hydra, os, time
 from datetime import datetime
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_range, cfg_date_range
+import xarray as xa
 from fmod.base.util.config import fmconfig, cfg
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.source.s3export.batch import load_channel, srRes
+from fmod.base.source.s3export.batch import load_channel, srRes, S3ExportReader
 
 hydra.initialize(version_base=None, config_path="../config")
 task="sres"
@@ -23,6 +24,9 @@ varnames: List[str] = [ 'sst']
 date: datetime = datetime( 2012,1,12,15 )
 vres = srRes.High
 
-channel: np.ndarray = load_channel( origin, varnames[0], date, vres )
-print(channel.shape)
+reader = S3ExportReader( vres )
+timeslice: xa.DataArray = reader.load_timeslice(origin,varnames,date)
+
+print(timeslice.shape)
+print(timeslice.dims)
 

@@ -1,7 +1,6 @@
 defaults:
   - platform: s3export-explore
-  - preprocess: merra2-sres
-  - task: merra2-sr-s1
+  - task: s3export-sr-s1
   - model: mscnn-s1
   - pipeline: sres
   - _self_
