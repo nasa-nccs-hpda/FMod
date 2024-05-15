@@ -63,6 +63,7 @@ class S3ExportReader:
 		print(f" xc shape {xc.shape} (y,x)")
 		print(f" yc shape {yc.shape} (y,x)")
 		print(f" tile_data shape {tile_data.shape} (y,x)")
+		del raw_data
 		return xa.DataArray( tile_data, name=varname, dims=['j', 'i'], coords=dict(x=xc, y=yc, **tcoords) )
 
 	def load_timeslice( self, origin: Tuple[int,int], varnames: List[str], date: datetime ) -> xarray.DataArray:
