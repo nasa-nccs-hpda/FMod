@@ -1,0 +1,6 @@
+defaults:
+  - platform: s3export-explore
+  - task: s3export-sr-s1
+  - model: unet-s1
+  - pipeline: sres
+  - _self_

@@ -31,6 +31,6 @@ print( "Read batch:")
 print( f"* shape:     {batch.shape}")
 print( f"* dims:      {batch.dims}")
 print( f"* channel:   {batch.coords['channel'].values.tolist()}")
-print( f"* batch[:4]: {batch.coords['batch'].values[:4]}")
+print( f"* batch[:4]: {batch.coords['batch'].values[:4]}\n\n")
 
 

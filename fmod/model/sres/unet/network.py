@@ -118,9 +118,9 @@ class UNet(nn.Module):
         return x
 
 
-class EMUL(nn.Module):
+class UNetSR(nn.Module):
     def __init__(self, n_channels: int, n_features: int, unet_depth: int, n_upscale_ops: int ):
-        super(EMUL, self).__init__()
+        super(UNetSR, self).__init__()
         self.n_channels: int = n_channels
         self.n_features: int = n_features
         self.workflow = nn.Sequential(
@@ -145,4 +145,4 @@ def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     upscale_factors: List[int]  = mconfig['upscale_factors']
     unet_depth:         int     = mconfig['unet_depth']
     n_upscale_ops = len(upscale_factors)
-    return EMUL( nchannels, nfeatures, unet_depth, n_upscale_ops )
+    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops )
