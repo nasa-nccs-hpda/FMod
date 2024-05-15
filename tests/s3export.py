@@ -27,8 +27,10 @@ vres = srRes.High
 reader = S3ExportReader( vres )
 batch: xa.DataArray = reader.load_temporal_batch(origin,(start_date,end_date))
 
-print(batch.shape)
-print(batch.dims)
-print(batch.coords['channel'].values.tolist())
-print(batch.coords['batch'].values)
+print( "Read batch:")
+print( f"* shape:     {batch.shape}")
+print( f"* dims:      {batch.dims}")
+print( f"* channel:   {batch.coords['channel'].values.tolist()}")
+print( f"* batch[:4]: {batch.coords['batch'].values[:4]}")
+
 
