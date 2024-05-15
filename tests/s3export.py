@@ -19,13 +19,13 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
 	torch.cuda.set_device(device.index)
 
-origin: Tuple[int,int] = (0,0)
+location: Tuple[int,int] = (0,0)
 start_date: datetime = datetime( 2012,1,12,1 )
 end_date:   datetime = datetime( 2012,1,15,1 )
 vres = srRes.High
 
 reader = S3ExportReader( vres )
-batch: xa.DataArray = reader.load_temporal_batch(origin,(start_date,end_date))
+batch: xa.DataArray = reader.load_temporal_batch(location,(start_date,end_date))
 
 print( "Read batch:")
 print( f"* shape:     {batch.shape}")
