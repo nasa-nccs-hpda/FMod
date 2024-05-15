@@ -29,6 +29,10 @@ def cut_tile( data_grid: np.ndarray, origin: Tuple[int,int] ):
 	tile_size: int = cfg().task.tile_size
 	return data_grid[origin[0]: origin[0] + tile_size, origin[1]: origin[1] + tile_size]
 
+def cut_coord( cdata: np.ndarray, origin: int ):
+	tile_size: int = cfg().task.tile_size
+	return cdata[ origin: origin + tile_size ]
+
 def coords_filepath() -> str:
 	return f"{cfg().platform.dataset_root}/xy_coords.nc"
 
@@ -43,6 +47,8 @@ class S3ExportReader:
 		coords: Dict[str,str] = cfg().task.coords
 		self.x: xa.DataArray = self.coords_dataset.data_vars[coords['x']]     # (y,x)
 		self.y: xa.DataArray = self.coords_dataset.data_vars[coords['y']]     # (y,x)
+		self.i: np.ndarray = self.coords_dataset.coords['i'].values
+		self.j: np.ndarray = self.coords_dataset.coords['j'].values
 		print(f" x coord shape = {self.x.shape} (y,x)")
 		print(f" y coord shape = {self.y.shape} (y,x)")
 
@@ -55,8 +61,9 @@ class S3ExportReader:
 		raw_data: np.ndarray = self.open_datafile( varname, date )                                        # (y,x)
 		print( f"Raw data shape = {raw_data.shape} (y,x)")
 		tile_data: np.ndarray = cut_tile( raw_data, origin )
-		xc: np.ndarray = cut_tile( self.x.values, origin )
-		yc: np.ndarray = cut_tile( self.y.values, origin )
+		tcoords = dict( i=cut_coord( self.i, origin[1] ), j=cut_coord( self.j, origin[0] ) )
+		xc: xa.DataArray = xa.DataArray( cut_tile( self.x.values, origin ), dims=['j','i'], coords=tcoords )
+		yc: xa.DataArray = xa.DataArray( cut_tile( self.y.values, origin ), dims=['j','i'], coords=tcoords )
 		print(f" xc shape {xc.shape} (y,x)")
 		print(f" yc shape {yc.shape} (y,x)")
 		print(f" tile_data shape {tile_data.shape} (y,x)")
