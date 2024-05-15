@@ -25,7 +25,7 @@ date: datetime = datetime( 2012,1,12,15 )
 vres = srRes.High
 
 reader = S3ExportReader( vres )
-timeslice: xa.DataArray = reader.load_timeslice(origin,varnames.keys(),date)
+timeslice: xa.DataArray = reader.load_timeslice(origin,varnames,date)
 
 print(timeslice.shape)
 print(timeslice.dims)
