@@ -58,15 +58,15 @@ class S3ExportReader:
 		return vardata
 
 	def load_channel( self, origin: Tuple[int,int], varname: str, date: datetime ) -> xa.DataArray:
-		raw_data: np.ndarray = self.open_datafile( varname, date )                                        # (y,x)
-		print( f"Raw data shape = {raw_data.shape} (y,x)")
-		tile_data: np.ndarray = cut_tile( raw_data, origin )
-		tcoords = dict( i=cut_coord( self.i, origin[1] ), j=cut_coord( self.j, origin[0] ) )
-		xc: xa.DataArray = xa.DataArray( cut_tile( self.x.values, origin ), dims=['j','i'], coords=tcoords )
-		yc: xa.DataArray = xa.DataArray( cut_tile( self.y.values, origin ), dims=['j','i'], coords=tcoords )
-		print(f" xc shape {xc.shape} (y,x)")
-		print(f" yc shape {yc.shape} (y,x)")
-		print(f" tile_data shape {tile_data.shape} (y,x)")
+		with self.open_datafile( varname, date ) as raw_data:                              # (y,x)
+			print( f"Raw data shape = {raw_data.shape} (y,x)")
+			tile_data: np.ndarray = cut_tile( raw_data, origin )
+			tcoords = dict( i=cut_coord( self.i, origin[1] ), j=cut_coord( self.j, origin[0] ) )
+			xc: xa.DataArray = xa.DataArray( cut_tile( self.x.values, origin ), dims=['j','i'], coords=tcoords )
+			yc: xa.DataArray = xa.DataArray( cut_tile( self.y.values, origin ), dims=['j','i'], coords=tcoords )
+			print(f" xc shape {xc.shape} (y,x)")
+			print(f" yc shape {yc.shape} (y,x)")
+			print(f" tile_data shape {tile_data.shape} (y,x)")
 		return xa.DataArray( tile_data, name=varname, dims=['j', 'i'], coords=dict(x=xc, y=yc, **tcoords) )
 
 	def load_timeslice( self, origin: Tuple[int,int], varnames: List[str], date: datetime ) -> xarray.DataArray:
