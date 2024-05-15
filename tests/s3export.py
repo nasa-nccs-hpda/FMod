@@ -20,12 +20,12 @@ if torch.cuda.is_available():
 	torch.cuda.set_device(device.index)
 
 origin: Tuple[int,int] = (0,0)
-varnames: List[str] = [ 'sst']
+varnames: Dict[str,str] = cfg().task.input_variables
 date: datetime = datetime( 2012,1,12,15 )
 vres = srRes.High
 
 reader = S3ExportReader( vres )
-timeslice: xa.DataArray = reader.load_timeslice(origin,varnames,date)
+timeslice: xa.DataArray = reader.load_timeslice(origin,varnames.keys(),date)
 
 print(timeslice.shape)
 print(timeslice.dims)
