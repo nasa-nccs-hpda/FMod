@@ -52,13 +52,9 @@ class S3ExportReader:
 		print(f" x coord shape = {self.x.shape} (y,x)")
 		print(f" y coord shape = {self.y.shape} (y,x)")
 
-	def open_datafile( self, varname: str, date: datetime ) -> np.ndarray:
-		fpath = data_filepath( varname, date, self.vres )
-		vardata: np.ndarray = np.load( fpath, allow_pickle=True, mmap_mode='r' )
-		return vardata
-
 	def load_channel( self, origin: Tuple[int,int], varname: str, date: datetime ) -> xa.DataArray:
-		with self.open_datafile( varname, date ) as raw_data:                              # (y,x)
+		fpath = data_filepath(varname, date, self.vres)
+		with np.load( fpath, allow_pickle=True, mmap_mode='r' ) as raw_data:
 			print( f"Raw data shape = {raw_data.shape} (y,x)")
 			tile_data: np.ndarray = cut_tile( raw_data, origin )
 			tcoords = dict( i=cut_coord( self.i, origin[1] ), j=cut_coord( self.j, origin[0] ) )
