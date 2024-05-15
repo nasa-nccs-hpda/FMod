@@ -55,19 +55,18 @@ class S3ExportReader:
 	def load_channel( self, origin: Tuple[int,int], varname: str, date: datetime ) -> xa.DataArray:
 		fpath = data_filepath(varname, date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
-		print( f"Raw data shape = {raw_data.shape} (y,x)")
+	#	print( f"Raw data shape = {raw_data.shape} (y,x)")
 		tile_data: np.ndarray = cut_tile( raw_data, origin )
 		tcoords = dict( i=cut_coord( self.i, origin[1] ), j=cut_coord( self.j, origin[0] ) )
 		xc: xa.DataArray = xa.DataArray( cut_tile( self.x.values, origin ), dims=['j','i'], coords=tcoords )
 		yc: xa.DataArray = xa.DataArray( cut_tile( self.y.values, origin ), dims=['j','i'], coords=tcoords )
-		print(f" xc shape {xc.shape} (y,x)")
-		print(f" yc shape {yc.shape} (y,x)")
-		print(f" tile_data shape {tile_data.shape} (y,x)")
-		return xa.DataArray( tile_data, name=varname, dims=['j', 'i'], coords=dict(x=xc, y=yc, **tcoords) )
+		print(f" load_channel: tile_data shape {tile_data.shape} (y,x)")
+		result = xa.DataArray( tile_data, name=varname, dims=['j', 'i'], coords=dict(x=xc, y=yc, **tcoords) )
+		return result.expand_dims( axis=0, dim=dict(channel=[varname]) )
 
 	def load_timeslice( self, origin: Tuple[int,int], varnames: Dict[str,str], date: datetime ) -> xarray.DataArray:
 		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in varnames.keys() ]
-		return xa.concat( arrays, xa.DataArray(name='channel',data=np.array(varnames.values), dims=['cidx'], coords={'cidx': range(0,len(varnames))} ) )
+		return xa.concat( arrays, "channel" )
 
 	def load_temporal_batch( self, origin: Tuple[int,int], varnames: List[str], date_range: Tuple[datetime,datetime] ) -> xarray.DataArray:
 		timeslices = [ self.load_timeslice(origin, varnames, date) for date in datelist( date_range ) ]
