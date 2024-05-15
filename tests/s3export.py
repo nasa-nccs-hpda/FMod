@@ -29,4 +29,5 @@ timeslice: xa.DataArray = reader.load_timeslice(origin,varnames,date)
 
 print(timeslice.shape)
 print(timeslice.dims)
+print(timeslice.coords['channel'].values.tolist())
 
