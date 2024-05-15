@@ -29,7 +29,7 @@ def cut_tile( data_grid: np.ndarray, origin: Tuple[int,int] ):
 	tile_size: int = cfg().task.tile_size
 	return data_grid[origin[0]: origin[0] + tile_size, origin[1]: origin[1] + tile_size]
 
-def cut_coord( cdata: np.ndarray, origin: int ):
+def cut_coord( cdata: np.ndarray, origin: int ) -> np.ndarray:
 	tile_size: int = cfg().task.tile_size
 	return cdata[ origin: origin + tile_size ]
 

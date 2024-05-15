@@ -1,7 +1,7 @@
 
 # FMod
 
-Foundation Models based on the Nvidia Modulus Framework with MERRA2 training / fine tuning.
+Foundation Models and Super Resolution with MERRA2 training / fine tuning.
 
 ## Installation
 
