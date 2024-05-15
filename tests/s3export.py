@@ -30,5 +30,5 @@ batch: xa.DataArray = reader.load_temporal_batch(origin,(start_date,end_date))
 print(batch.shape)
 print(batch.dims)
 print(batch.coords['channel'].values.tolist())
-print(batch.coords['batch'].values.tolist())
+print(batch.coords['batch'].values)
 

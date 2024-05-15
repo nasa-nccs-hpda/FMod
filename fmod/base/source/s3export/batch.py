@@ -67,7 +67,10 @@ class S3ExportReader:
 	def load_timeslice( self, origin: Tuple[int,int], date: datetime ) -> xa.DataArray:
 		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
-		return result.expand_dims(axis=0, dim=dict(batch=[np.datetime64(date)]))
+		tval = np.datetime64(date)
+		print( tval )
+		print( type(tval) )
+		return result.expand_dims(axis=0, dim=dict(batch=[tval]))
 
 	def load_temporal_batch( self, origin: Tuple[int,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice(origin,  date) for date in datelist( date_range ) ]
