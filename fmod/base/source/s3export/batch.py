@@ -1,4 +1,3 @@
-import xarray
 import xarray as xa, math, os
 from fmod.base.util.config import cfg
 import pandas as pd
@@ -49,6 +48,7 @@ class S3ExportReader:
 		self.y: xa.DataArray = self.coords_dataset.data_vars[coords['y']]     # (y,x)
 		self.i: np.ndarray = self.coords_dataset.coords['i'].values
 		self.j: np.ndarray = self.coords_dataset.coords['j'].values
+		self.varnames: Dict[str, str] = cfg().task.input_variables
 		print(f" x coord shape = {self.x.shape} (y,x)")
 		print(f" y coord shape = {self.y.shape} (y,x)")
 
@@ -64,10 +64,13 @@ class S3ExportReader:
 		result = xa.DataArray( tile_data, dims=['j', 'i'], coords=dict(x=xc, y=yc, **tcoords) )
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[1]]) )
 
-	def load_timeslice( self, origin: Tuple[int,int], varnames: Dict[str,str], date: datetime ) -> xarray.DataArray:
-		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in varnames.items() ]
-		return xa.concat( arrays, "channel" )
+	def load_timeslice( self, origin: Tuple[int,int], date: datetime ) -> xa.DataArray:
+		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
+		result = xa.concat( arrays, "channel" )
+		return result.expand_dims(axis=0, dim=dict(batch=[np.datetime64(date)]))
 
-	def load_temporal_batch( self, origin: Tuple[int,int], varnames: List[str], date_range: Tuple[datetime,datetime] ) -> xarray.DataArray:
-		timeslices = [ self.load_timeslice(origin, varnames, date) for date in datelist( date_range ) ]
+	def load_temporal_batch( self, origin: Tuple[int,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
+		timeslices = [ self.load_timeslice(origin,  date) for date in datelist( date_range ) ]
+		result: xa.DataArray = xa.concat(timeslices, "batch")
+		return result
 
