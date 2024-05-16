@@ -10,7 +10,7 @@ from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
-from data.merra2 import array2tensor
+from fmod.base.util.array import array2tensor
 from fmod.pipeline.checkpoints import CheckpointManager
 from enum import Enum
 import numpy as np

@@ -5,7 +5,7 @@ from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
-from data.merra2 import array2tensor
+from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.models.sres.manager import SRModels
