@@ -11,7 +11,7 @@ from fmod.base.source.s3export.batch import srRes, S3ExportReader
 hydra.initialize(version_base=None, config_path="../config")
 task="sres"
 model="mscnn"
-dataset="s3export"
+dataset="LLC4320"
 scenario="s1"
 fmconfig( task, model, dataset, scenario )
 
