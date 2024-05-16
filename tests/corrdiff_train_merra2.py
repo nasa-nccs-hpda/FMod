@@ -33,7 +33,7 @@ from modulus.launch.logging import PythonLogger, RankZeroLoggingWrapper
 from modulus.utils.generative import EasyDict
 
 from models.sres._legacy.corrdiff.nvidia import training_loop
-from fmod.models.corrdiff.datasets.dataset import init_dataset_from_config
+from fmod.model.corrdiff.datasets.dataset import init_dataset_from_config
 
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-corrdiff')

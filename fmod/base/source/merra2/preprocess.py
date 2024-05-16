@@ -8,12 +8,12 @@ import glob, sys, os, time, traceback
 from fmod.base.util.ops import fmbdir
 from fmod.base.util.dates import skw, dstr
 from datetime import date
-from fmod.pipeline.rescale import DataLoader, QType
+from fmod.controller.rescale import DataLoader, QType
 from fmod.base.util.ops import get_levels_config, increasing, replace_nans
 np.set_printoptions(precision=3, suppress=False, linewidth=150)
 from numpy.lib.format import write_array
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.pipeline.stats import StatsAccumulator, StatsEntry
+from fmod.controller.stats import StatsAccumulator, StatsEntry
 from fmod.base.io.loader import ncFormat
 from .model import cache_filepath, VarType
 from fmod.base.util.ops import nnan, pctnan, remove_filepath

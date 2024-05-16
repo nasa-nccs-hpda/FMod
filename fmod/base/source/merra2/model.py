@@ -1,7 +1,7 @@
 import xarray as xa, pandas as pd
 import os, time, math, numpy as np, shutil
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Literal
-from fmod.pipeline.stats import StatsAccumulator
+from fmod.controller.stats import StatsAccumulator
 from fmod.base.util.dates import drepr, date_list
 from fmod.base.util.config import get_data_indices, get_roi, get_dims
 from datetime import date

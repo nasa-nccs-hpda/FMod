@@ -1,8 +1,8 @@
 import torch, torch.nn as nn
 from collections import OrderedDict
-from fmod.models.sres.common.residual import Residual
-from fmod.models.sres.common.upsample import Upsample
-from fmod.models.sres.util import *
+from fmod.model.sres.common.residual import Residual
+from fmod.model.sres.common.upsample import Upsample
+from fmod.model.sres.util import *
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class SRDN(nn.Module):

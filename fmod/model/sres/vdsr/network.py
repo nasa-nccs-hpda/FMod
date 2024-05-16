@@ -2,8 +2,8 @@ import torch.nn as nn
 import torch, math
 from typing import Any, List, Tuple, Callable, Optional, Union, overload
 from fmod.base.util.config import cfg
-from fmod.models.sres.util import *
-from fmod.models.sres.common.cnn import BasicBlock, default_conv
+from fmod.model.sres.util import *
+from fmod.model.sres.common.cnn import BasicBlock, default_conv
 
 class VDSR(nn.Module):
 	def __init__( self,

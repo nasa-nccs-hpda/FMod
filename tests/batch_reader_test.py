@@ -3,7 +3,7 @@ import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_range, cfg_date_range
 from fmod.base.util.config import cfg, start_date,  cfg2args, pp
-from fmod.pipeline.ncbatch import ncBatchDataset
+from fmod.controller.ncbatch import ncBatchDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 hydra.initialize(version_base=None, config_path="../config")

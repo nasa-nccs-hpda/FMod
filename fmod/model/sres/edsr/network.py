@@ -1,8 +1,8 @@
 from ..common.residual import ResBlock
 from ..common.upsample import SPUpsample
-from fmod.models.sres.util import *
+from fmod.model.sres.util import *
 import torch, math, torch.nn as nn
-from fmod.models.sres.common.cnn import default_conv
+from fmod.model.sres.common.cnn import default_conv
 
 class EDSR(nn.Module):
     def __init__( self,

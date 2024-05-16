@@ -1,7 +1,7 @@
 import xarray as xa
 import numpy as np
 from fmod.base.util.config import cfg
-from fmod.models.sfno import sht
+from fmod.model.sfno import sht
 from typing import List, Union, Tuple, Optional, Dict, Type
 import torch
 

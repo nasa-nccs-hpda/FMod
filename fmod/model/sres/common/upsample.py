@@ -1,5 +1,5 @@
 import torch, math, torch.nn as nn
-from fmod.models.sres.util import *
+from fmod.model.sres.util import *
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 class Upsample(nn.Module):

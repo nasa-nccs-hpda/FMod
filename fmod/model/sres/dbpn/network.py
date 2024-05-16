@@ -1,9 +1,9 @@
 # Deep Back-Projection Networks For Super-Resolution
 # https://arxiv.org/abs/1803.02735
 
-from fmod.models.sres.util import *
+from fmod.model.sres.util import *
 import torch, math, torch.nn as nn
-from fmod.models.sres.common.cnn import default_conv
+from fmod.model.sres.common.cnn import default_conv
 
 conv_spec = { 2: (6, 2, 2),  4: (8, 4, 2),  8: (12, 8, 2) }
 

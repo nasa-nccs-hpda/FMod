@@ -10,7 +10,7 @@ import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
-from fmod.pipeline.checkpoints import CheckpointManager
+from fmod.controller.checkpoints import CheckpointManager
 import numpy as np
 import torch.nn as nn
 import time

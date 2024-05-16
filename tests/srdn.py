@@ -5,10 +5,10 @@ import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.dates import date_list
 from fmod.base.util.config import cfg, start_date,  cfg2args, pp
-from fmod.models.sres.srdn.network import SRDN
+from fmod.model.sres.srdn.network import SRDN
 from fmod.plot.training_results import ResultsPlotter
-from fmod.pipeline.trainer import DualModelTrainer
-from fmod.pipeline.merra2 import MERRA2Dataset
+from fmod.controller.trainer import DualModelTrainer
+from fmod.controller.merra2 import MERRA2Dataset
 
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-srdn-s1')

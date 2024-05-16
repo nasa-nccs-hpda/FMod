@@ -13,10 +13,10 @@ from modulus.utils.graphcast.loss import CellAreaWeightedLossFunction
 from modulus.launch.logging import PythonLogger, initialize_wandb, RankZeroLoggingWrapper
 from modulus.launch.utils import load_checkpoint, save_checkpoint
 from data.merra2 import MERRA2NCDatapipe
-from fmod.models.graphcast.train_utils import count_trainable_params
-from fmod.models.graphcast.loss.utils import grid_cell_area
-from fmod.models.graphcast.train_base import BaseTrainer
-from fmod.models.graphcast.validation import Validation
+from fmod.model.graphcast.train_utils import count_trainable_params
+from fmod.model.graphcast.loss.utils import grid_cell_area
+from fmod.model.graphcast.train_base import BaseTrainer
+from fmod.model.graphcast.validation import Validation
 from modulus.distributed import DistributedManager
 try: import apex
 except: pass

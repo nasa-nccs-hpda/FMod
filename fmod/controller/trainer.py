@@ -3,7 +3,7 @@ import xarray
 from torch import Tensor
 from typing import Any, Dict, List, Tuple
 from fmod.base.util.config import cfg
-from fmod.pipeline.downscale import Downscaler
+from fmod.controller.downscale import Downscaler
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
@@ -11,7 +11,7 @@ from fmod.base.util.ops import fmbdir
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.base.util.array import array2tensor
-from fmod.pipeline.checkpoints import CheckpointManager
+from fmod.controller.checkpoints import CheckpointManager
 from enum import Enum
 import numpy as np
 import torch.nn as nn

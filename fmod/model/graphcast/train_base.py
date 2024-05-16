@@ -2,8 +2,8 @@ import torch
 from torch.profiler import profile, record_function, ProfilerActivity
 from torch.cuda.amp import autocast
 from fmod.base.util.config import cfg
-from fmod.models.graphcast.constants import get_constants
-from fmod.models.graphcast.constants import Constants
+from fmod.model.graphcast.constants import get_constants
+from fmod.model.graphcast.constants import Constants
 
 class BaseTrainer:
 
