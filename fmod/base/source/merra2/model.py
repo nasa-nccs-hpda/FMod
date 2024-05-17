@@ -139,7 +139,7 @@ def access_data_subset( filepath, vres: str ) -> xa.Dataset:
 def load_dataset(  d: date, vres: str="high" ) -> xa.Dataset:
 	filepath =  cache_filepath( VarType.Dynamic, d, vres )
 	result: xa.Dataset = access_data_subset( filepath, vres )
-	lgm().log( f" * load_dataset[{vres}]({d}) {bounds(result)} nts={result.coords['time'].size} {filepath}")
+	lgm().log( f" * load_dataset[{vres}]({d}) {bounds(result)} nts={result.coords['time'].size} {filepath}", display=True)
 	return result
 
 def load_const_dataset( vres: str = "high" ) -> xa.Dataset:
