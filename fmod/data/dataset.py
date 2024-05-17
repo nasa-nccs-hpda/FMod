@@ -8,6 +8,6 @@ class Datasets(object):
 		self.task_config: DictConfig = task_config
 
 	def get_dataset(self, vres, load_inputs, load_base, load_targets) -> BaseDataset:
-		from fmod.data.ncbatch import BatchDataset
+		from fmod.data.batch import BatchDataset
 		input_dataset = BatchDataset( self.task_config, vres=vres, load_inputs=load_inputs, load_base=load_base, load_targets=load_targets )
 		return input_dataset

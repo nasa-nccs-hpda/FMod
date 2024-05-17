@@ -3,8 +3,9 @@ import torch, time, random
 from omegaconf import DictConfig, OmegaConf
 import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import nvidia.dali as dali
+from fmod.base.source.batch import SRBatch
 from fmod.base.util.logging import lgm
 from fmod.base.util.model import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
@@ -12,7 +13,6 @@ from fmod.base.util.dates import date_list, year_range, batches_range
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from modulus.datapipes.datapipe import Datapipe
-from fmod.base.source.merra2.model import FMBatch, BatchType, SRBatch
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
@@ -52,6 +52,10 @@ Tensor = torch.Tensor
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
+def cdim( ix: int, iy: int, dim: str ) -> int:
+    if dim == 'x': return ix
+    if dim == 'y': return iy
+
 @dataclass
 class MetaData(DatapipeMetaData):
     name: str = "MERRA2NC"
@@ -71,12 +75,22 @@ class BatchDataset(BaseDataset):
         self.day_index: int = 0
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
-        self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs)
+        self.origin: Dict[str,int] = task_config.origin
+        self.tile_size: Dict[str,int] = task_config.tile_size
+        self.tile_grid: Dict[str, int] = task_config.get( 'tile_grid', dict(x=1,y=1) )
+        self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
-        self.mu: xa.Dataset  = self.norms['mean_by_level']
-        self.sd: xa.Dataset  = self.norms['stddev_by_level']
-        self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
+        self.mu: xa.Dataset  = self.norms.get('mean_by_level')
+        self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
+        self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[date] = self.get_batch_start_dates()
+
+    def get_tile_locations(self) -> List[Dict[str,int]]:
+        tlocs = []
+        for ix in range( self.tile_size['x'] ):
+            for iy in range(self.tile_size['y']):
+                tlocs.append(  { d: self.origin['d'] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
+        return tlocs
 
     def randomize(self) -> List[date]:
         random.shuffle(self.batch_dates)
@@ -99,9 +113,9 @@ class BatchDataset(BaseDataset):
         if randomize: random.shuffle(start_dates)
         return start_dates
 
-    def get_batch(self, batch_date: date ) -> Dict[str,xa.DataArray]:
+    def get_batch(self, origin: Dict[str,int], batch_date: datetime ) -> Dict[str,xa.DataArray]:
         t0 = time.time()
-        self.srbatch.load( batch_date)
+        self.srbatch.load( origin, batch_date)
         batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.srbatch.current_batch, **self.task_config)
         self.log(batch_data, t0)
         return batch_data

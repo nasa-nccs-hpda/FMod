@@ -5,7 +5,7 @@ import xarray as xa
 import hydra, os, time
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.config import cfg, start_date,  cfg2args, get_roi, get_data_coords
-from fmod.controller.ncbatch import ncBatchDataset
+from fmod.controller.batch import BatchDataset
 
 hydra.initialize(version_base=None, config_path="../config")
 configure('merra2-srdn-s1')

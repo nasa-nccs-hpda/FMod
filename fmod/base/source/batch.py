@@ -7,8 +7,8 @@ from fmod.base.util.ops import format_timedeltas, fmbdir
 import xarray as xa
 import time, numpy as np
 from typing import Dict, List, Optional, Union
-from fmod.base.util.dates import date_list
-from datetime import date
+from fmod.base.util.dates import date_list, date_bounds
+from datetime import datetime, date
 from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from fmod.base.io.loader import ncFormat
@@ -219,7 +219,7 @@ class SRBatch:
 
 	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
 		self.vres = vres
-		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, **kwargs )
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, vres, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
 		self.days_per_batch = cfg().task.days_per_batch
@@ -238,18 +238,18 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
-	def load_batch(self, d: date, **kwargs) -> xa.Dataset:
-		dates = date_list(d, self.days_per_batch)
-		dsets = [ self.data_loader.load_dataset(day, self.vres) for day in dates ]
+	def load_batch(self, origin: Dict[str,int], d: datetime, **kwargs) -> xa.Dataset:
+		dates: Tuple[datetime,datetime] = date_bounds(d, self.days_per_batch)
+		dsets = [ self.data_loader.load_dataset( origin, dates ) for day in dates ]
 		dset = xa.concat(dsets, dim="time", coords="minimal")
 		return dset
 
-	def load(self, d: date) -> xa.Dataset:
+	def load(self, origin: Dict[str,int], d: datetime ) -> xa.Dataset:
 		if self.current_date != d:
 			t0 = time.time()
-			self.current_batch = self.load_batch(d)
+			self.current_batch = self.load_batch(origin,d)
 			self.current_date = d
-			lgm().log( f" -----> load {self.vres}-res batch[{d}]-> {self.data_loader.rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
+			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{d}]-> {self.data_loader.rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
 
 		return self.current_batch
 

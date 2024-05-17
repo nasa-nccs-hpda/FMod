@@ -26,8 +26,8 @@ weight_decay: 0.0
 error_threshold: 1.0
 
 origin: { x: -120, y: -60 }
-extent: { x: -1, y: -1 }
-tile_size: { x: 64, y: 64 }
+tile_size: { x: 16, y: 16 }
+tile_grid: { x: 4, y: 4 }
 levels:  [850, 1000]
 
 coords: { x: "lon", y: "lat", z: "level", t: "time" }

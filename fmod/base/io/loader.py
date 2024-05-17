@@ -46,6 +46,9 @@ class BaseDataset(IterableDataset):
 	def __getitem__(self, idx: int):
 		raise NotImplementedError()
 
+	def get_tile_locations(self) -> List[Tuple[int, int]]:
+		raise NotImplementedError()
+
 	def randomize(self):
 		raise NotImplementedError()
 
@@ -55,7 +58,7 @@ class BaseDataset(IterableDataset):
 	def __len__(self):
 		return self.steps_per_batch
 
-	def get_batch(self, start_date: date) -> Dict[str, xarray.DataArray]:
+	def get_batch(self, origin: Tuple[int,int], batch_date: date ) -> Dict[str, xarray.DataArray]:
 		raise NotImplementedError()
 
 	def get_current_batch(self) -> Dict[str, xarray.DataArray]:

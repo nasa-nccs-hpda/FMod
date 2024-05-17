@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fmod.base.util.config import start_date
 import random
 
@@ -34,6 +34,9 @@ def date_list( start: date, num_days: int )-> List[date]:
 		dates.append(d0)
 		d0 = next(d0)
 	return dates
+
+def date_bounds( start: datetime, num_days: int )-> Tuple[datetime,datetime]:
+	return start, start+timedelta(days=num_days)
 
 def cfg_date_range( task_config )-> List[date]:
 	start = date( str(task_config['start_date']) )
