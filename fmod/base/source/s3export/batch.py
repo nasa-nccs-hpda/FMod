@@ -34,7 +34,7 @@ def i2x( c: str ) -> str:
 	if c == "j": return "y"
 
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
-	return pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}H" )
+	return pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h" )
 
 class S3ExportDataLoader(SRDataLoader):
 
