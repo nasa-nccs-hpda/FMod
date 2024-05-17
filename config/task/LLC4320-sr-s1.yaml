@@ -11,13 +11,14 @@ start_date:  "10/02/2012"
 days_per_batch: 16
 hours_per_step: 1
 
-nbatches: 50
+nbatches: 5
 batch_iter: 20
-nepochs: 100
+nepochs: 10
 lr: 1e-4
 
-origin: (0,0)
-tile_size: 16
+origin: { x: 0, y: 0 }
+tile_size: { x: 16, y: 16 }
+tile_grid: { x: 4, y: 4 }
 
 coords: { 'x': 'XC', 'y': 'YC' }
 input_variables: { 'sst': sea_surface_temperature, 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
