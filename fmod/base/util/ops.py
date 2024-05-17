@@ -173,12 +173,10 @@ def parse_file_parts(file_name):
 	return dict(part.split("-", 1) for part in file_name.split("_"))
 
 def sformat( param: str, params: Dict[str,str] ) -> str:
-	print(f"\n sformat -----> {type(param)}: {param}")
 	try: return param.format(**params)
 	except KeyError: return param
 def pformat( param: Union[str,Dict[str,str]], params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
 	if type(param) is str: return sformat(param, params)
-	print( f"\n pformat -----> {type(param)}: {param}")
 	return { k: sformat(p, params) for k,p in param.items() }
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
