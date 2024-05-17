@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
 import hydra, traceback, os
 import numpy as np
@@ -106,10 +106,10 @@ def cfg_date( csection: str ) -> date:
     dcfg = cfg().get(csection)
     return date( dcfg.year, dcfg.month, dcfg.day )
 
-def start_date( task_config )-> date:
+def start_date( task_config )-> datetime:
     toks = [ int(tok) for tok in reversed(task_config.start_date.split("/")) ]
     print( f"Task start date: {task_config.start_date}: {toks}")
-    return  date( *toks )
+    return  datetime( *toks )
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
     differences = np.abs(array - target_value)

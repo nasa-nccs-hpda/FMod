@@ -85,6 +85,9 @@ class BatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[date] = self.get_batch_start_dates()
 
+    def get_current_batch(self) -> Dict[str, xa.DataArray]:
+        return self.get_batch(self.origin,self.current_date)
+
     def get_tile_locations(self) -> List[Dict[str,int]]:
         tlocs = []
         for ix in range( self.tile_size['x'] ):
