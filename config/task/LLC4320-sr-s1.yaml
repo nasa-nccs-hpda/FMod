@@ -7,7 +7,7 @@ device: "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
 
-start_date:  "01/01/1995"
+start_date:  "10/02/2012"
 days_per_batch: 16
 hours_per_step: 1
 
