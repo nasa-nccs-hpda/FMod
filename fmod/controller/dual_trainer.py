@@ -1,13 +1,13 @@
 import torch, math
 import xarray
-from datetime import date, datetime
+from datetime import date
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
-from fmod.data.batch import BatchDataset
+from fmod.base.io.loader import BaseDataset
 from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
@@ -54,8 +54,8 @@ class ModelTrainer(object):
 
 	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
-		self.input_dataset: BatchDataset = model_manager.datasets['input']
-		self.target_dataset: BatchDataset = model_manager.datasets['target']
+		self.input_dataset: BaseDataset = model_manager.datasets['input']
+		self.target_dataset: BaseDataset = model_manager.datasets['target']
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
 		self.min_loss = float('inf')
@@ -69,8 +69,8 @@ class ModelTrainer(object):
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
 		self.train_dates = self.input_dataset.train_dates
-		self.upscale_factors = cfg().model.upscale_factors
-		self.scale_factor = math.prod(self.upscale_factors)
+		self.downscale_factors = cfg().model.downscale_factors
+		self.scale_factor = math.prod(self.downscale_factors)
 		self.coerce_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 
@@ -164,7 +164,7 @@ class ModelTrainer(object):
 
 	def get_multiscale_targets(self, hr_targ: Tensor) -> List[Tensor]:
 		targets: List[Tensor] = [hr_targ]
-		for usf in self.upscale_factors[:-1]:
+		for usf in self.downscale_factors[:-1]:
 			targets.append( torch.nn.functional.interpolate(targets[-1], scale_factor=1.0/usf, mode='bilinear') )
 		targets.reverse()
 		return targets
@@ -187,9 +187,9 @@ class ModelTrainer(object):
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
-	def get_batch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin,batch_date)
-		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin,batch_date)
+	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(batch_date)
+		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
@@ -198,50 +198,48 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	@exception_handled
-	def train(self, **kwargs):
-		seed = kwargs.get('seed', 333)
-		load_state = kwargs.get('load_state', '')
+	def train(self, **kwargs ):
+		seed = kwargs.get('seed',333)
+		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		self.scheduler = kwargs.get('scheduler', None)
+		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.weight_decay)
-		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
+		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
 		epoch0, nepochs, batch_iter, acc_loss = 0, cfg().task.nepochs, cfg().task.batch_iter, float('inf')
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
-			epoch0 = train_state.get('epoch', 0)
+			epoch0 = train_state.get('epoch',0)
 			nepochs += epoch0
 		else:
-			print(" *** No checkpoint loaded: training from scratch *** ")
+			print( " *** No checkpoint loaded: training from scratch *** ")
 
-		tile_locs: List[Dict[str, int]] = self.input_dataset.get_tile_locations()
-		for epoch in range(epoch0, nepochs):
+		for epoch in range(epoch0,nepochs):
 			print(f'Epoch {epoch + 1}/{nepochs}: ')
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
-			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True)
+			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			acc_loss = 0.0
 			self.model.train()
-			for tloc in tile_locs:
-				batch_dates: List[date] = self.input_dataset.randomize()
-				for batch_date in batch_dates:
-					train_data: Dict[str, Tensor] = self.get_batch(tloc,batch_date)
-					inp: Tensor = train_data['input']
-					target: Tensor = train_data['target']
-					for biter in range(batch_iter):
-						bidx = torch.randperm(inp.shape[0])
-						prd: TensorOrTensors = self.model(inp[bidx, ...])
-						loss: torch.Tensor = self.loss(prd, target[bidx, ...])
-						acc_loss += loss.item()
-						lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True)
+			batch_dates: List[date] = self.input_dataset.randomize()
+			for batch_date in batch_dates:
+				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
+				inp: Tensor = train_data['input']
+				target: Tensor   = train_data['target']
+				for biter in range(batch_iter):
+					bidx = torch.randperm(inp.shape[0])
+					prd: TensorOrTensors = self.model( inp[bidx,...] )
+					loss: torch.Tensor  = self.loss( prd, target[bidx,...] )
+					acc_loss += loss.item()
+					lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
-						self.optimizer.zero_grad(set_to_none=True)
-						loss.backward()
-						self.optimizer.step()
+					self.optimizer.zero_grad(set_to_none=True)
+					loss.backward()
+					self.optimizer.step()
 
 				if save_state:
 					self.checkpoint_manager.save_checkpoint(epoch, acc_loss)
@@ -255,8 +253,8 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 
 		print(f'--------------------------------------------------------------------------------')
-		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		print(f' -------> Training model with {ntotal_params} took {train_time / 60:.2f} min.')
+		ntotal_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
 		return acc_loss
 

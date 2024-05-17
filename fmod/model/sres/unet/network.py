@@ -142,7 +142,7 @@ class UNetSR(nn.Module):
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     nchannels:          int     = mconfig['nchannels']
     nfeatures:          int     = mconfig['nfeatures']
-    upscale_factors: List[int]  = mconfig['upscale_factors']
+    downscale_factors: List[int]  = mconfig['downscale_factors']
     unet_depth:         int     = mconfig['unet_depth']
-    n_upscale_ops = len(upscale_factors)
+    n_upscale_ops = len(downscale_factors)
     return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops )

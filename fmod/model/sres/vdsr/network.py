@@ -41,7 +41,7 @@ class VDSR(nn.Module):
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
 	nchannels:          int     = mconfig['nchannels']
 	nfeatures:          int     = mconfig['nfeatures']
-	scale_factors:   List[int]  = mconfig['upscale_factors']
+	scale_factors:   List[int]  = mconfig['downscale_factors']
 	kernel_size:        Size2   = mconfig['kernel_size']
 	nrlayers:           int     = mconfig['nrlayers']
 	conv: Callable[[int,int,Size2,bool],nn.Module] = default_conv

@@ -46,8 +46,8 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 
 
 def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.ndarray, sample_input: xa.DataArray, sample_target: xa.DataArray ) -> Dict[str,xa.DataArray]:
-	upscale_factors: List[int] = cfg().model.upscale_factors
-	upscale_factor = math.prod(upscale_factors)
+	downscale_factors: List[int] = cfg().model.downscale_factors
+	upscale_factor = math.prod(downscale_factors)
 	upsampler = nn.UpsamplingBilinear2d(scale_factor=upscale_factor)
 	upsampled_input: np.ndarray = upsampler( torch.from_numpy( inputs.reshape(sample_input.shape) ) ).numpy()
 	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),

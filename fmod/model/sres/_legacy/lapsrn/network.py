@@ -113,6 +113,6 @@ class LapSrn(nn.Module):
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     nchannels:          int     = mconfig['nchannels']
     nfeatures:          int     = mconfig['nfeatures']
-    upscale_factors: List[int]  = mconfig['upscale_factors']
+    downscale_factors: List[int]  = mconfig['downscale_factors']
     unet_depth:         int     = mconfig['unet_depth']
-    return LapSrn( nchannels, nfeatures, upscale_factors, unet_depth )
+    return LapSrn( nchannels, nfeatures, downscale_factors, unet_depth )

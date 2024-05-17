@@ -56,7 +56,7 @@ class SRDN(nn.Module):
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
 	nchannels:          int     = mconfig['nchannels']
 	nfeatures:   Dict[str,int]  = mconfig['nfeatures']
-	scale_factors:   List[int]  = mconfig['upscale_factors']
+	scale_factors:   List[int]  = mconfig['downscale_factors']
 	kernel_size:  Dict[str,int] = mconfig['kernel_size']
 	nrlayers:           int     = mconfig['nrlayers']
 	usmethod:           str     = mconfig['usmethod']

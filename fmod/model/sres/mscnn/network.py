@@ -35,17 +35,17 @@ class Crossscale(nn.Module):
         return self.conv(x)
 
 class MSCNN(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, upscale_factors: List[int], unet_depth: int = 0 ):
+    def __init__(self, n_channels: int, nfeatures: int, downscale_factors: List[int], unet_depth: int = 0 ):
         super(MSCNN, self).__init__()
         self.n_channels: int = n_channels
         self.unet_depth: int = unet_depth
-        self.upscale_factors = upscale_factors
+        self.downscale_factors = downscale_factors
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
         self.upscale: nn.ModuleList = nn.ModuleList()
         self.upsample: nn.ModuleList = nn.ModuleList()
         self.crossscale: nn.ModuleList = nn.ModuleList()
         self.unet: Optional[UNet] = UNet( nfeatures, unet_depth ) if unet_depth > 0 else None
-        for iL, usf in enumerate(upscale_factors):
+        for iL, usf in enumerate(downscale_factors):
             self.upscale.append(  Upscale( nfeatures, nfeatures, usf ) )
             self.crossscale.append(  Crossscale( nfeatures, self.n_channels ) )
             self.upsample.append( Upsample(usf) )
@@ -54,7 +54,7 @@ class MSCNN(nn.Module):
         features, results = self.inc(x), [x]
         if self.unet_depth > 0:
             features = self.unet(features)
-        for iL, usf in enumerate(self.upscale_factors):
+        for iL, usf in enumerate(self.downscale_factors):
             features = self.upscale[iL](features)
             xave = self.upsample[iL](results[-1])
             xres = self.crossscale[iL](features)
@@ -64,6 +64,6 @@ class MSCNN(nn.Module):
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     nchannels:          int     = mconfig['nchannels']
     nfeatures:          int     = mconfig['nfeatures']
-    upscale_factors: List[int]  = mconfig['upscale_factors']
+    downscale_factors: List[int]  = mconfig['downscale_factors']
     unet_depth:         int     = mconfig['unet_depth']
-    return MSCNN( nchannels, nfeatures, upscale_factors, unet_depth )
+    return MSCNN( nchannels, nfeatures, downscale_factors, unet_depth )

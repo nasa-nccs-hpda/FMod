@@ -20,8 +20,9 @@ def dstr(date: datetime) -> str:
 	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
 
 def data_filepath( varname: str, date: datetime, vres: srRes ) -> str:
-	root = cfg().platform.dataset_root
-	subpath = cfg().platform.dataset_files.format( res=vres.value, varname=varname, date=dstr(date) )
+	root: str = cfg().platform.dataset_root
+	usf: int = math.prod( cfg().model.downscale_factors )
+	subpath: str = cfg().platform.dataset_files[vres.value].format( res=vres.value, varname=varname, date=dstr(date), usf={usf} )
 	fpath = f"{root}/{subpath}"
 	return fpath
 

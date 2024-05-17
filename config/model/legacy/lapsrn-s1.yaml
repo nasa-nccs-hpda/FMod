@@ -3,7 +3,7 @@ name: ???
 nfeatures: 64
 rdepth: 1
 rlayers: 8
-upscale_factors: [2,2]
+downscale_factors: [2,2]
 usmethod: replicate # replicate # transpose
 loss_fn: l2 # charbonnier
 training_version: merra2-lapsrn.1

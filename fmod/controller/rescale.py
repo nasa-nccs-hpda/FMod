@@ -133,7 +133,7 @@ class DataLoader(object):
 			vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
 		vlores: xa.DataArray = vhires
-		scale_factor = math.prod( cfg().model.upscale_factors )
+		scale_factor = math.prod( cfg().model.downscale_factors )
 		for dim in [ 'x', 'y']:
 			cargs = { dim: scale_factor }
 			vlores = vlores.coarsen( boundary="trim", coord_func="min", **cargs ).reduce( redop, keep_attrs=True )

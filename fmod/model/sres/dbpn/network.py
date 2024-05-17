@@ -116,6 +116,6 @@ def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
 	nfeatures:          int     = mconfig['nfeatures']
 	depth:              int     = mconfig['depth']
 	nprojectionfeatures: int    = mconfig['nprojectionfeatures']
-	scale_factors:   List[int]  = mconfig['upscale_factors']
+	scale_factors:   List[int]  = mconfig['downscale_factors']
 	scale:              int = math.prod(scale_factors)
 	return DBPN(nchannels, scale, nfeatures, nprojectionfeatures, depth)
