@@ -62,7 +62,7 @@ class MetaData(DatapipeMetaData):
     ddp_sharding: bool = True
 
 class BatchDataset(BaseDataset):
-    def __init__(self, task_config: DictConfig, **kwargs):
+    def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs',True)
@@ -71,7 +71,7 @@ class BatchDataset(BaseDataset):
         self.day_index: int = 0
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
-        self.srbatch: SRBatch = SRBatch( task_config, **kwargs)
+        self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs)
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']

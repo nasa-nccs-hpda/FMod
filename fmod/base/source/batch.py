@@ -217,8 +217,8 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, task_config: DictConfig, **kwargs):
-		self.vres = kwargs.get('vres', "high" )
+	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
+		self.vres = vres
 		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
