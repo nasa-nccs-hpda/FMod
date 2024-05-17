@@ -74,8 +74,8 @@ class S3ExportDataLoader(SRDataLoader):
 		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
 		return xa.concat(timeslices, "batch")
 
-	def load_norm_data(self) -> Optional[xa.DataArray]:
-		return None
+	def load_norm_data(self) -> Dict[str,xa.DataArray]:
+		return {}
 
 	def load_dataset(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		return  self.load_temporal_batch( origin, date_range )

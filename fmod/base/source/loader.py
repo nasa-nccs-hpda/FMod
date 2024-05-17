@@ -50,7 +50,7 @@ class SRDataLoader(object):
 
 class FMDataLoader(object):
 
-	def load_norm_data(self):
+	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 
 	def load_dataset(self, d: date, vres: str):
