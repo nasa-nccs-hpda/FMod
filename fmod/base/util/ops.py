@@ -179,7 +179,7 @@ def sformat( param: str, params: Dict[str,str] ) -> str:
 def pformat( param: Union[str,Dict[str,str]], params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
 	if type(param) is str: return sformat(param, params)
 	print( f"\n pformat -----> {type(param)}: {param}")
-	return { k: sformat(p, params) for k,p in params.items() }
+	return { k: sformat(p, params) for k,p in param.items() }
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 	parms = dict(pdict.items())
