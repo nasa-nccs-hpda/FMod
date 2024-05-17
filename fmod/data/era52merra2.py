@@ -2,15 +2,16 @@ import numpy as np, xarray as xa
 import torch, dali, dataclasses
 import nvidia.dali.plugin.pytorch as dali_pth
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
-from fmod.base.util.dates import date_list, year_range
+from fmod.base.util.dates import year_range
 from fmod.base.util.config import cfg2meta, cfg
 from typing import Iterable, List, Tuple, Union, Optional, Dict
 from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
-from fmod.base.source.merra2 import batch
+from base.source import batch
+
 Tensor = torch.Tensor
 
 @dataclass

@@ -1,22 +1,25 @@
 import xarray as xa, math, os
-from fmod.base.util.config import cfg
-from datetime import date
-from fmod.base.util.dates import drepr, date_list
-from nvidia.dali import fn
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
+from omegaconf import DictConfig, OmegaConf
+from fmod.base.source.loader import SRDataLoader, FMDataLoader
 from fmod.base.util.ops import format_timedeltas, fmbdir
-from fmod.base.io.loader import data_suffix, path_suffix
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-import numpy as np
+import xarray as xa
+import time, numpy as np
+from typing import Dict, List, Optional, Union
+from fmod.base.util.dates import date_list
+from datetime import date
+from fmod.base.util.logging import lgm, log_timing
+from fmod.base.util.config import cfg
+from fmod.base.io.loader import ncFormat
+from fmod.base.util.ops import remove_filepath
 
-predef_norms = [ 'year_progress', 'year_progress_sin', 'year_progress_cos', 'day_progress', 'day_progress_sin', 'day_progress_cos' ]
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24
 SEC_PER_DAY = _SEC_PER_HOUR * _HOUR_PER_DAY
 _AVG_DAY_PER_YEAR = 365.24219
 AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
-
+predef_norms = [ 'year_progress', 'year_progress_sin', 'year_progress_cos', 'day_progress', 'day_progress_sin', 'day_progress_cos' ]
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
@@ -28,18 +31,34 @@ class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
 
-def cache_filepath(vartype: VarType, d: date = None, vres: str="high") -> str:
-	version = cfg().task.dataset_version
-	if vartype == VarType.Dynamic:
-		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-		fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{data_suffix(vres)}"
-	else:
-		fpath = f"{fmbdir('processed')}/{version}/const{data_suffix(vres)}"
-	os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
-	return fpath
+def index_of_cval(  data: Union[xa.Dataset,xa.DataArray], dim:str, cval: float)-> int:
+	coord: np.ndarray = data.coords[dim].values
+	cindx: np.ndarray = np.where(coord==cval)[0]
+	return cindx.tolist()[0] if cindx.size else -1
 
-def stats_filepath(version: str, statname: str, vres: str="high") -> str:
-	return f"{fmbdir('processed')}/{version}/stats{path_suffix(vres)}/{statname}"
+def get_index_roi(dataset: xa.Dataset, vres: str) -> Optional[Dict[str,slice]]:
+	roi: Optional[Dict[str, List[float]]] = cfg().task.get('roi')
+	if roi is None: return None
+	cbounds: Dict = {}
+	for dim in ['x', 'y']:
+		croi: List[float] = roi[dim]
+		coord: List[float] = dataset.coords[dim].values.tolist()
+		iroi: int =  index_of_cval( dataset, dim, croi[0] )
+		crisize = round( (croi[1]-croi[0]) / (coord[1] - coord[0] ) )
+		cbounds[dim] = slice( iroi, iroi + crisize )
+	return cbounds
+
+def furbish( dset: xa.Dataset ) -> xa.Dataset:
+	dvars: Dict = { vname: dvar.squeeze() for vname, dvar in dset.data_vars.items() }
+	coords: Dict = { cname: cval for cname, cval in dset.coords.items() }
+	attrs: Dict = { aname: aval for aname, aval in dset.attrs }
+	attrs['datetime'] = coords.pop('datetime', attrs.get('datetime',None) )
+	return xa.Dataset( dvars, coords, attrs )
+
+# def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
+# 	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
+# 	return xa.merge( [dynamics, constants], compat='override' )
+
 def get_target_steps(btype: BatchType):
 	if btype == BatchType.Training: return cfg().task.train_steps
 	elif btype == BatchType.Forecast: return cfg().task.eval_steps
@@ -55,35 +74,7 @@ def get_days_per_batch(btype: BatchType):
 	batch_steps: int = cfg().task.nsteps_input + len(target_steps)
 	if btype == BatchType.Training: return 1 + math.ceil((batch_steps - 1) / steps_per_day)
 	elif btype == BatchType.Forecast: return math.ceil(batch_steps / steps_per_day)
-def rename_vars( dataset: xa.Dataset ) -> xa.Dataset:
-	model_varname_map, model_coord_map = {}, {}
-	if 'input_variables' in cfg().task:
-		model_varname_map = {v: k for k, v in cfg().task['input_variables'].items() if v in dataset.data_vars}
-	if 'coords' in cfg().task:
-		model_coord_map = {k: v for k, v in cfg().task['coords'].items() if k in dataset.coords}
-	return dataset.rename(**model_varname_map, **model_coord_map)
 
-def subset_datavars( dataset: xa.Dataset ) -> xa.Dataset:
-	data_vars = {k: dataset.data_vars[v] for k, v in cfg().task['input_variables'].items() if v in dataset.data_vars}
-	return xa.Dataset( data_vars=data_vars, coords=dataset.coords, attrs=dataset.attrs )
-
-def rename_coords( dataset: xa.Dataset ) -> xa.Dataset:
-	model_coord_map = {}, {}
-	if 'coords' in cfg().task:
-		model_coord_map = {k: v for k, v in cfg().task['coords'].items() if k in dataset.coords}
-	return dataset.rename(**model_coord_map)
-
-def _open_dataset( filepath, **kwargs) -> xa.Dataset:
-	dataset: xa.Dataset = xa.open_dataset(filepath, **kwargs)
-	return rename_vars(dataset)
-
-def load_dataset( d: date, vres: str, **kwargs ):
-	filepath =  cache_filepath( VarType.Dynamic,  d, vres )
-	return _open_dataset( filepath, **kwargs)
-
-def load_const_dataset(  vres: str = "high", **kwargs ):
-	filepath =  cache_filepath(VarType.Constant, vres=vres)
-	return _open_dataset( filepath, **kwargs )
 
 def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
 	constant_vars: List[str] = self.task_config.get('constants',[])
@@ -99,16 +90,6 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 			constants[vname] = dvar
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
 	return xa.merge( [dynamics, constants], compat='override' )
-
-def load_batch( d: date, vres: str="high", **kwargs ):
-	filepath = cache_filepath(VarType.Dynamic, d, vres)
-	device = cfg().task.device.lower()
-	header: xa.Dataset = xa.open_dataset(filepath + "/header.nc", engine="netcdf4", **kwargs)
-	files: List[str] = [ f"{vn}.npy" for vn in header.attrs['data_vars'] ]
-	coords: Mapping[str, xa.DataArray] = header.data_vars
-	data = fn.readers.numpy(device=device, file_root=filepath, files=files)
-	print( f"loaded {len(files)}, result = {type(data)}")
-	return data
 
 def load_predef_norm_data() -> Dict[str,xa.Dataset]:
 	root, norms, drop_vars = fmbdir('model'), {}, None
@@ -201,5 +182,75 @@ def featurize_progress( name: str, dims: Sequence[str], progress: np.ndarray ) -
 		name + "_sin": xa.Variable(dims, np.sin(progress_phase)),
 		name + "_cos": xa.Variable(dims, np.cos(progress_phase)),
 	}
+
+class FMBatch:
+
+	def __init__(self, btype: BatchType, date_loader: FMDataLoader, **kwargs):
+		self.format = ncFormat( cfg().task.get('nc_format', 'standard') )
+		self.date_loader = date_loader
+		self.type: BatchType = btype
+		self.vres = kwargs.get('vres', "high" )
+		self.days_per_batch = get_days_per_batch(btype)
+		self.target_steps = get_target_steps(btype)
+		self.batch_steps: int = cfg().task.nsteps_input + len(self.target_steps)
+		self.constants: xa.Dataset = self.date_loader.load_const_dataset( **kwargs )
+		self.norm_data: Dict[str, xa.Dataset] = self.date_loader.load_norm_data()
+		self.current_batch: xa.Dataset = None
+
+	def load(self, d: date, **kwargs):
+		bdays = date_list(d, self.days_per_batch)
+		time_slices: List[xa.Dataset] = [ self.date_loader.load_dataset(d, self.vres) for d in bdays ]
+		self.current_batch: xa.Dataset = merge_batch(time_slices, self.constants)
+
+	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
+		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
+
+	def get_time_slice(self,  day_offset: int) -> xa.Dataset:
+		return self.current_batch.isel( time=day_offset )
+
+	@classmethod
+	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
+		features = xa.DataArray(data=list(data_batch.data_vars.keys()), name="features")
+		result = xa.concat( list(data_batch.data_vars.values()), dim=features )
+		result = result.transpose(..., "features")
+		return result
+
+class SRBatch:
+
+	def __init__(self, task_config: DictConfig, **kwargs):
+		self.vres = kwargs.get('vres', "high" )
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, **kwargs )
+		self.current_batch: xa.Dataset = None
+		self.current_date = None
+		self.days_per_batch = cfg().task.days_per_batch
+		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
+		self._constants: Optional[xa.Dataset] = None
+		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
+
+	@property
+	def constants(self)-> xa.Dataset:
+		if self._constants is None:
+			self._constants: xa.Dataset = self.data_loader.load_const_dataset(self.vres)
+		return self._constants
+
+	def merge_batch(self, slices: List[xa.Dataset]) -> xa.Dataset:
+		dynamics: xa.Dataset = xa.concat(slices, dim="time", coords="minimal")
+		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
+		return merged
+
+	def load_batch(self, d: date, **kwargs) -> xa.Dataset:
+		dates = date_list(d, self.days_per_batch)
+		dsets = [ self.data_loader.load_dataset(day, self.vres) for day in dates ]
+		dset = xa.concat(dsets, dim="time", coords="minimal")
+		return dset
+
+	def load(self, d: date) -> xa.Dataset:
+		if self.current_date != d:
+			t0 = time.time()
+			self.current_batch = self.load_batch(d)
+			self.current_date = d
+			lgm().log( f" -----> load {self.vres}-res batch[{d}]-> {self.data_loader.rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
+
+		return self.current_batch
 
 

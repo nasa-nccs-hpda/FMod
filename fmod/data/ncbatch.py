@@ -61,9 +61,9 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-class ncBatchDataset(BaseDataset):
+class BatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, **kwargs):
-        super(ncBatchDataset, self).__init__(task_config, **kwargs)
+        super(BatchDataset, self).__init__(task_config, **kwargs)
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs',True)
         self.load_targets: bool = kwargs.pop('load_targets', True)
@@ -71,8 +71,8 @@ class ncBatchDataset(BaseDataset):
         self.day_index: int = 0
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
-        self.fmbatch: SRBatch = SRBatch( **kwargs )
-        self.norms: Dict[str, xa.Dataset] = self.fmbatch.norm_data
+        self.srbatch: SRBatch = SRBatch( task_config, **kwargs)
+        self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms['mean_by_level']
         self.sd: xa.Dataset  = self.norms['stddev_by_level']
         self.dsd: xa.Dataset = self.norms['diffs_stddev_by_level']
@@ -101,8 +101,8 @@ class ncBatchDataset(BaseDataset):
 
     def get_batch(self, batch_date: date ) -> Dict[str,xa.DataArray]:
         t0 = time.time()
-        self.fmbatch.load( batch_date )
-        batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.fmbatch.current_batch, **self.task_config)
+        self.srbatch.load( batch_date)
+        batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.srbatch.current_batch, **self.task_config)
         self.log(batch_data, t0)
         return batch_data
 
@@ -112,9 +112,9 @@ class ncBatchDataset(BaseDataset):
         t0 = time.time()
         next_date = self.get_date()
         if self.current_date != next_date:
-            self.fmbatch.load( next_date )
+            self.srbatch.load( next_date)
             self.current_date = next_date
-        batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.fmbatch.current_batch, **self.task_config )
+        batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.srbatch.current_batch, **self.task_config)
         self.log( batch_inputs, t0 )
         self.day_index = self.day_index + 1
         return batch_inputs
