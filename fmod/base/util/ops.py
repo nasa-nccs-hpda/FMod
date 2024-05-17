@@ -177,6 +177,7 @@ def sformat( param: str, params: Dict[str,str] ) -> str:
 	except KeyError: return param
 def pformat( param: Union[str,Dict[str,str]], params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
 	if type(param) is str: return sformat(param, params)
+	print( f"\n -----> {type(param)}: {param}")
 	return { k: sformat(p, params) for k,p in params.items() }
 
 def resolve_links( pdict: DictConfig, pkey: str ) -> str:
