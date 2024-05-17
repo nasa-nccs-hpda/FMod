@@ -46,15 +46,15 @@ class S3ExportDataLoader(SRDataLoader):
 		self.tile_size: Dict[str,int] = self.task.tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 
-	def cut_coord(self, cdata: np.ndarray, origin: int) -> np.ndarray:
-		tile_size: int = self.task.tile_size
-		return cdata[origin: origin + tile_size]
+	def cut_coord(self, origin: Dict[str,int], c: str) -> np.ndarray:
+		cdata: np.ndarray = self.ijc[c]
+		return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
 	def cut_tile( self, data_grid: np.ndarray, origin: Dict[str,int] ):
 		return data_grid[ origin['y']: origin['y'] + self.tile_size['y'], origin['x']: origin['x'] + self.tile_size['x'] ]
 
 	def cut_xy_coords(self, origin: Dict[str,int] )-> Dict[str,xa.DataArray]:
-		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( self.ijc[c], origin[i2x(c)] ) for idx, c in enumerate(['i','j']) }
+		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
 		xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
 		return xycoords
 
