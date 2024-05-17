@@ -22,7 +22,7 @@ def dstr(date: datetime) -> str:
 def data_filepath( varname: str, date: datetime, vres: srRes ) -> str:
 	root: str = cfg().platform.dataset_root
 	usf: int = math.prod( cfg().model.downscale_factors )
-	subpath: str = cfg().platform.dataset_files[vres.value].format( res=vres.value, varname=varname, date=dstr(date), usf={usf} )
+	subpath: str = cfg().platform.dataset_files[vres.value].format( res=vres.value, varname=varname, date=dstr(date), usf=usf )
 	fpath = f"{root}/{subpath}"
 	return fpath
 

@@ -4,4 +4,4 @@ cache:     "{root}/cache"
 processed: '{root}/processed'
 
 dataset_root:  "/explore/nobackup/people/jli30/share/data/"
-dataset_files: { lr: "{res}_npy/{varname}/x{usf}/{varname}_{date}.npy", vr: "{res}_npy/{varname}/{varname}_{date}.npy" }
+dataset_files: { lr: "{res}_npy/{varname}/X{usf}/{varname}_{date}.npy", vr: "{res}_npy/{varname}/{varname}_{date}.npy" }

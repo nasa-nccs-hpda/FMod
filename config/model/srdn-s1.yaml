@@ -5,7 +5,7 @@ nfeatures:
   upscale: 128
   output: 1
 nrlayers: 16
-downscale_factors: [2,2]
+downscale_factors: [2]
 usmethod: replicate # replicate # transpose
 loss_fn: l2
 kernel_size:

@@ -1,8 +1,8 @@
 name: ???
 
 training_version: merra2-unet.1
-nfeatures: 16
-downscale_factors: [2,2]
+nfeatures: 64
+downscale_factors: [2]
 unet_depth: 4
 loss_fn: l2
 
