@@ -172,8 +172,6 @@ class ModelTrainer(object):
 		return targets
 
 	def loss(self, products: TensorOrTensors, target: Tensor ) -> torch.Tensor:
-		if self.sample_target is None:
-			self.sample_target = target
 		loss, ptype, self.layer_losses = None, type(products), []
 		if ptype == torch.Tensor:
 			print(f"Loss: target{target.size}, product{products.size}")
@@ -197,6 +195,7 @@ class ModelTrainer(object):
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
+		if self.sample_target is None: self.sample_target = btarget
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
@@ -258,7 +257,7 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 
 		print(f'--------------------------------------------------------------------------------')
-		ntotal_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
 		return acc_loss
