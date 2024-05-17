@@ -57,6 +57,7 @@ class ModelTrainer(object):
 		super(ModelTrainer, self).__init__()
 		self.input_dataset: BaseDataset = model_manager.datasets['input']
 		self.target_dataset: BaseDataset = model_manager.datasets['target']
+		self.sample_target: xarray.DataArray = None
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
 		self.min_loss = float('inf')
@@ -171,6 +172,8 @@ class ModelTrainer(object):
 		return targets
 
 	def loss(self, products: TensorOrTensors, target: Tensor ) -> torch.Tensor:
+		if self.sample_target is None:
+			self.sample_target = target
 		loss, ptype, self.layer_losses = None, type(products), []
 		if ptype == torch.Tensor:
 			print(f"Loss: target{target.size}, product{products.size}")

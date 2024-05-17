@@ -17,9 +17,7 @@ class SRModels:
 		self.device = device
 		self.datasets: Dict[str,BaseDataset] = dict( input = input_dataset, target = target_dataset )
 		self.sample_input:  xa.DataArray = input_dataset.get_current_batch()['input']
-		self.sample_target: xa.DataArray = target_dataset.get_current_batch()['target']
 		print(f"sample_input: shape={self.sample_input.shape}")
-		print(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.shape[1]
 
 	def get_model(self) -> nn.Module:
