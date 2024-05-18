@@ -32,7 +32,7 @@ class SRDataLoader(object):
 	def load_dataset(self, name: str, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ):
 		raise NotImplementedError("SRDataLoader:load_dataset")
 
-	def load_const_dataset(self, origin: Tuple[int,int], date_range: Tuple[datetime,datetime] ):
+	def load_const_dataset(self, origin: Tuple[int,int] ):
 		raise NotImplementedError("SRDataLoader:load_const_dataset")
 
 	@classmethod
