@@ -78,8 +78,9 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
 		return {}
 
-	def load_dataset(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		return  self.load_temporal_batch( origin, date_range )
+	def load_dataset(self, name: str, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.Dataset:
+		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
+		return darray.to_dataset( name=name, promote_attrs=True)
 
 	def load_const_dataset(self)-> Optional[xa.DataArray]:
 		return None

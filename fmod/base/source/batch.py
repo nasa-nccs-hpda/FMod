@@ -219,6 +219,7 @@ class SRBatch:
 
 	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
 		self.vres = vres
+		self.name = "input" if self.vres == "low" else "target"
 		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, vres, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
@@ -240,8 +241,7 @@ class SRBatch:
 
 	def load_batch(self, origin: Dict[str,int], d: datetime, **kwargs) -> xa.Dataset:
 		dates: Tuple[datetime,datetime] = date_bounds(d, self.days_per_batch)
-		dsets = [ self.data_loader.load_dataset( origin, dates ) for day in dates ]
-		dset = xa.concat(dsets, dim="time", coords="minimal")
+		dset: xa.Dataset = self.data_loader.load_dataset( self.name, origin, dates )
 		return dset
 
 	def load(self, origin: Dict[str,int], d: datetime ) -> xa.Dataset:

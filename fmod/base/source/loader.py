@@ -29,7 +29,7 @@ class SRDataLoader(object):
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 
-	def load_dataset(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ):
+	def load_dataset(self, name: str, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ):
 		raise NotImplementedError("SRDataLoader:load_dataset")
 
 	def load_const_dataset(self, origin: Tuple[int,int], date_range: Tuple[datetime,datetime] ):
