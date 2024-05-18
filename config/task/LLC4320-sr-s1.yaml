@@ -20,7 +20,7 @@ origin: { x: 0, y: 0 }
 tile_size: { x: 16, y: 16 }
 tile_grid: { x: 4, y: 4 }
 
-coords: { 'x': 'XC', 'y': 'YC' }
+coords: { 'x': 'XC', 'y': 'YC', z: '' }
 input_variables: { 'sst': sea_surface_temperature, 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
 target_variables: [ 'sst' ]
 forcing_variables: []
