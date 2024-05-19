@@ -1,24 +1,16 @@
 import numpy as np, xarray as xa
 import torch, time, random
-from omegaconf import DictConfig, OmegaConf
-import nvidia.dali.plugin.pytorch as dali_pth
+from omegaconf import DictConfig
 from dataclasses import dataclass
-from datetime import date, timedelta, datetime
-import nvidia.dali as dali
+from datetime import date, datetime
 from fmod.base.source.batch import SRBatch
 from fmod.base.util.logging import lgm
-from fmod.base.util.model import normalize as dsnorm
-from nvidia.dali.tensors import TensorCPU, TensorListCPU
-from fmod.base.util.dates import date_list, year_range, batches_range
-from fmod.base.util.ops import format_timedeltas, fmbdir
-from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
-from modulus.datapipes.datapipe import Datapipe
+from base.util.scrap.model import normalize as dsnorm
+from fmod.base.util.ops import format_timedeltas
+from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
-from fmod.base.util.model import dataset_to_stacked
+from base.util.scrap.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
-from fmod.base.util.ops import nnan
-from torch import FloatTensor
-from fmod.base.util.ops import ArrayOrTensor
 import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.

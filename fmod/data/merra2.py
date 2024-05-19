@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 import nvidia.dali as dali
 from fmod.base.util.logging import lgm
-from fmod.base.util.model import normalize as dsnorm
+from base.util.scrap.model import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range
 from fmod.base.util.config import cfg2meta, cfg
@@ -14,7 +14,7 @@ from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
-from fmod.base.util.model import dataset_to_stacked
+from base.util.scrap.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import nnan
 from torch import FloatTensor

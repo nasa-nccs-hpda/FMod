@@ -5,7 +5,7 @@ from fmod.base.util.dates import date_list, year_range
 from fmod.base.util.config import cfg2meta, cfg
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
-from fmod.base.util.model import dataset_to_stacked
+from base.util.scrap.model import dataset_to_stacked
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
