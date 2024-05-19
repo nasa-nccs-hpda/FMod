@@ -309,7 +309,6 @@ class BatchDataset(BaseDataset):
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         darray.attrs['channels'] = channels
         result = darray.transpose( "time", "channels", coords['y'], coords['x'] )
-        print(f"ds2array{result.dims}: shape = {result.shape}")
         return result
 
     def get_device(self):
