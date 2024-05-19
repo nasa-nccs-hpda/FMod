@@ -4,7 +4,7 @@ from xarray.core.resample import DataArrayResample
 import xarray as xa, pandas as pd
 import numpy as np
 from fmod.base.util.config import cfg
-from base.util.scrap.model import dataset_to_stacked
+from fmod.base.util.model import dataset_to_stacked
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
 import math, glob, sys, os, time, traceback
 from xarray.core.dataset import DataVariables

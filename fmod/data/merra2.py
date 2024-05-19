@@ -14,7 +14,7 @@ from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType
 from modulus.datapipes.meta import DatapipeMetaData
-from base.util.scrap.model import dataset_to_stacked
+from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
 from fmod.base.util.ops import nnan
 from torch import FloatTensor

@@ -9,7 +9,7 @@ from base.util.scrap.model import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
-from base.util.scrap.model import dataset_to_stacked
+from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
 import pandas as pd
 
