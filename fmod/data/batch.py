@@ -75,7 +75,7 @@ class BatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
-        self.batch_dates: List[date] = self.get_batch_start_dates()
+        self.batch_dates: List[datetime] = self.get_batch_start_dates()
 
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
         return self.get_batch(self.origin,self.current_date)
@@ -98,10 +98,10 @@ class BatchDataset(BaseDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def get_date(self):
+    def get_date(self) -> datetime:
         return self.batch_dates[ self.day_index ]
 
-    def get_batch_start_dates(self, randomize: bool = True ) -> List[date]:
+    def get_batch_start_dates(self, randomize: bool = True ) -> List[datetime]:
         start_dates, ndates = [], len( self.train_dates )
         for dindex in range( 0, ndates, self.days_per_batch):
             start_dates.append( self.train_dates[ dindex ] )
@@ -119,7 +119,7 @@ class BatchDataset(BaseDataset):
         if self.day_index >= len( self.batch_dates ):
             raise StopIteration()
         t0 = time.time()
-        next_date = self.get_date()
+        next_date: datetime = self.get_date()
         if self.current_date != next_date:
             self.srbatch.load( next_date)
             self.current_date = next_date
@@ -236,15 +236,16 @@ class BatchDataset(BaseDataset):
         results = {}
 
         if self.load_inputs:
+            print(f"\nextract_batch_inputs_targets.load_inputs: ")
             input_varlist: List[str] = list(input_variables)+list(forcing_variables)
             selected_inputs: xa.Dataset = dataset[input_varlist]
-            lgm().debug(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}")
-            lgm().debug(f" >> >> dataset vars = {list(dataset.data_vars.keys())}")
-            lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
+            lgm().log(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}", display=True)
+            lgm().log(f" >> >> dataset vars = {list(dataset.data_vars.keys())}", display=True)
+            lgm().log(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}", display=True)
             input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
-            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )
-        #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
+            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}", display=True )
+            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array
 

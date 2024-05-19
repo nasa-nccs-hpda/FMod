@@ -3,7 +3,7 @@ from torch.utils.data.dataset import IterableDataset
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import cfg
 from enum import Enum
-from datetime import date
+from datetime import date, datetime
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.dates import date_list, year_range, batches_range
 
@@ -35,7 +35,7 @@ class BaseDataset(IterableDataset):
 	def __init__(self, task_config: DictConfig, **kwargs ):
 		super(BaseDataset, self).__init__()
 		self.task_config: DictConfig = task_config
-		self.train_dates: List[date] = batches_range(task_config)
+		self.train_dates: List[datetime] = batches_range(task_config)
 		self.days_per_batch: int = task_config.days_per_batch
 		self.hours_per_step: int = task_config.hours_per_step
 		self.steps_per_day = 24 // self.hours_per_step
