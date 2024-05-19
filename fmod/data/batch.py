@@ -299,6 +299,7 @@ class BatchDataset(BaseDataset):
                 if cname not in (merge_dims + list(sizes.keys())):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
+        print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}")
         darray.attrs['channels'] = channels
         result = darray.transpose( "time", "channels", coords['y'], coords['x'] )
         return result
