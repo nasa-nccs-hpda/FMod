@@ -61,9 +61,9 @@ class BatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
         self.task_config: DictConfig = task_config
-        self.load_inputs: bool = kwargs.pop('load_inputs',True)
-        self.load_targets: bool = kwargs.pop('load_targets', True)
-        self.load_base: bool = kwargs.pop('load_base', True)
+        self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
+        self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
+        self.load_base: bool = kwargs.pop('load_base', False)
         self.day_index: int = 0
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
