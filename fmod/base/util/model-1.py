@@ -616,7 +616,7 @@ def array_to_stacked( vname: str,  variable: xarray.DataArray, sizes: Mapping[st
   vdata: np.ndarray = variable.values if ("channels" in variable.dims) else np.expand_dims(variable.values,-1)
   coords = dict( **variable.coords )
   lgm().debug(f"  **> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}")
-  print( f"  **> stacked dvar {vname}{variable.dims}{variable.shape}: dims={dims}")
+  print( f"  **> stacked dvar {vname}{vdata.shape}: dims={list(dims.keys())}")
   return xarray.DataArray( data=vdata, coords=coords, dims=list(dims.keys()), name=vname )
 
 
