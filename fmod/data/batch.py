@@ -1,5 +1,5 @@
 import numpy as np, xarray as xa
-import torch, time, random
+import torch, time, random, traceback
 from omegaconf import DictConfig
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -300,6 +300,7 @@ class BatchDataset(BaseDataset):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}")
+        traceback.print_stack()
         darray.attrs['channels'] = channels
         result = darray.transpose( "time", "channels", darray.dims[1], darray.dims[2] )
         return result
