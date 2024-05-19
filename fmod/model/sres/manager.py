@@ -16,8 +16,11 @@ class SRModels:
 		self.model_name = cfg().model.name
 		self.device = device
 		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
-		self.sample_input:  xa.DataArray = input_dataset.get_current_batch()['input']
-		self.sample_target: xa.DataArray = target_dataset.get_current_batch()['target']
+		input_batch: Dict[str,xa.DataArray] = input_dataset.get_current_batch()
+		target_batch: Dict[str, xa.DataArray] = target_dataset.get_current_batch()
+		print( f" !!! Get Sample data !!! ", flush=True )
+		self.sample_input:  xa.DataArray = input_batch['input']
+		self.sample_target: xa.DataArray = target_batch['target']
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.shape[1]
