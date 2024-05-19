@@ -80,7 +80,11 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def load_dataset(self, name: str, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.Dataset:
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
-		return darray.to_dataset( dim="channel", promote_attrs=True)
+		print( f"load_dataset: {name}{darray.dims}{darray.shape}")
+		result = darray.to_dataset( dim="channel", promote_attrs=True)
+		for k, v in result.data_vars.items():
+			print(f" ~~~~ {k}{v.dims}{v.shape}")
+		return result
 
 	def load_const_dataset(self, origin: Tuple[int,int] )-> Optional[xa.DataArray]:
 		return None
