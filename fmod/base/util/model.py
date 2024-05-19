@@ -603,7 +603,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
         variable = variable.stack(channels=stack_to_channels_dims)
     dims["channels"] = variable.sizes.get("channels", 1)
     lgm().log(f"  ****> stacked dvar {vname}{variable.dims}: {variable.shape}, preserved_dims={preserved_dims}", display=True)
-    result = variable.set_dims(dims)
+    result = variable # variable.set_dims(dims)
     print(f">---> {result.dims}{result.shape}")
     return result
 
