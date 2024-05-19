@@ -140,7 +140,7 @@ def get_roi( coords: DataCoordinates ) -> Dict:
     return { dim: get_coord_bounds( coords[ dim ].values ) for dim in get_dims(coords) }
 
 def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) -> Dict[str,float]:
-    return { dim: closest_value( data.coords[ cfg().task.coords[dim] ].values, cval ) for dim, cval in target_coords.items() }
+    return { dim: closest_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
 def cdelta(dset: xarray.DataArray):
 	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() if dset.coords[k].size > 1 }
