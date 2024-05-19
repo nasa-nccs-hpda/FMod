@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 import nvidia.dali as dali
 from fmod.base.util.logging import lgm
-from base.util.scrap.model import normalize as dsnorm
+from fmod.base.util.model  import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range
 from fmod.base.util.config import cfg2meta, cfg

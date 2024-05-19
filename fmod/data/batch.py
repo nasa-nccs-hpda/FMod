@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from fmod.base.source.batch import SRBatch
 from fmod.base.util.logging import lgm
-from base.util.scrap.model import normalize as dsnorm
+from fmod.base.util.model  import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
