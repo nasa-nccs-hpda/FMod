@@ -250,9 +250,6 @@ class SRBatch:
 			self.current_batch: xa.Dataset = self.load_batch(origin,d)
 			self.current_date = d
 			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{d}]-> {self.data_loader.rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
-			for k,v in self.current_batch.data_vars.items():
-				print( f" ~~~~ {k}{v.dims}{v.shape}")
-
 		return self.current_batch
 
 
