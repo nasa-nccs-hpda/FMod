@@ -71,7 +71,7 @@ class ModelTrainer(object):
 		self.train_dates = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
-		self.coerce_to_data_grid()
+		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 
 	def configure_grid(self):
@@ -82,14 +82,15 @@ class ModelTrainer(object):
 		lmax = tar.shape[-2]
 		return grid_shape, gridops, lmax
 
-	def coerce_to_data_grid(self, **kwargs):
-		data: xarray.DataArray = self.input_dataset.get_current_batch()['input']
-		data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
-		dc = cdelta(data)
-		lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
-		cfg().task['origin'] = data_origin
-		cfg().task['extent'] = {dim: float(cval(data, dim, -1) + dc[cfg().task.coords[dim]]) for dim in data_origin.keys()}
-		print(f" *** coerce_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")
+	def conform_to_data_grid(self, **kwargs):
+		if cfg().task.conform_to_grid:
+			data: xarray.DataArray = self.input_dataset.get_current_batch()['input']
+			data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
+			dc = cdelta(data)
+			lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
+			cfg().task['origin'] = data_origin
+			cfg().task['extent'] = {dim: float(cval(data, dim, -1) + dc[cfg().task.coords[dim]]) for dim in data_origin.keys()}
+			print(f" *** conform_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")
 
 	@property
 	def sht(self):
