@@ -80,11 +80,12 @@ class BatchDataset(BaseDataset):
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
         return self.get_batch(self.origin,self.current_date)
 
-    def get_tile_locations(self) -> List[Dict[str,int]]:
+    def get_tile_locations(self) -> List[Tuple[int,int]]:
         tlocs = []
         for ix in range( self.tile_size['x'] ):
             for iy in range(self.tile_size['y']):
-                tlocs.append(  { d: self.origin['d'] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
+                tcoords = { d: self.origin['d'] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y'] }
+                tlocs.append( ( tcoords['y'], tcoords['x'] )  )
         return tlocs
 
     def randomize(self) -> List[date]:

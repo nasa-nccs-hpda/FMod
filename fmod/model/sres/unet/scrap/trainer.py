@@ -127,9 +127,9 @@ class ModelTrainer(object):
 			raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 		return loss
 
-	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(batch_date)
-		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
+	def get_batch(self, origin: Tuple[int,int], batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin, batch_date)
+		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin, batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
@@ -164,19 +164,21 @@ class ModelTrainer(object):
 			acc_loss: float = 0
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
+			tile_locations: List[Tuple[int, int]] = self.input_dataset.get_tile_locations()
 			for batch_date in batch_dates:
-				train_data: Dict[str,torch.Tensor] = self.get_batch(batch_date)
-				input: torch.Tensor = train_data['input']
-				target: torch.Tensor   = train_data['target']
-				prd:  torch.Tensor  = self.model( input )
-				lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}")
-				loss: torch.Tensor  = self.loss( prd, target )
-				acc_loss += loss.item() * train_data['input'].size(0)
-				lgm().log(f" ** Loss[{batch_date}]: {loss.item():.2f}")
+				for tloc in tile_locations:
+					train_data: Dict[str,torch.Tensor] = self.get_batch(tloc,batch_date)
+					input: torch.Tensor = train_data['input']
+					target: torch.Tensor   = train_data['target']
+					prd:  torch.Tensor  = self.model( input )
+					lgm().log( f" LOSS shapes: input={list(input.shape)}, target={list(target.shape)}, product={list(prd.shape)}")
+					loss: torch.Tensor  = self.loss( prd, target )
+					acc_loss += loss.item() * train_data['input'].size(0)
+					lgm().log(f" ** Loss[{batch_date}]: {loss.item():.2f}")
 
-				self.optimizer.zero_grad(set_to_none=True)
-				loss.backward()
-				self.optimizer.step()
+					self.optimizer.zero_grad(set_to_none=True)
+					loss.backward()
+					self.optimizer.step()
 
 			if self.scheduler is not None:
 				self.scheduler.step()

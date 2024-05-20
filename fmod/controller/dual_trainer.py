@@ -188,9 +188,9 @@ class ModelTrainer(object):
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
-	def get_batch(self, batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(batch_date)
-		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(batch_date)
+	def get_batch(self, origin: Tuple[int,int], batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin,batch_date)
+		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin,batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
@@ -227,23 +227,25 @@ class ModelTrainer(object):
 			acc_loss = 0.0
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
+			tile_locs: List[Tuple[int,int]] = self.input_dataset.get_tile_locations()
 			for batch_date in batch_dates:
-				train_data: Dict[str,Tensor] = self.get_batch(batch_date)
-				inp: Tensor = train_data['input']
-				target: Tensor   = train_data['target']
-				for biter in range(batch_iter):
-					bidx = torch.randperm(inp.shape[0])
-					prd: TensorOrTensors = self.model( inp[bidx,...] )
-					loss: torch.Tensor  = self.loss( prd, target[bidx,...] )
-					acc_loss += loss.item()
-					lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
+				for tile_loc in tile_locs:
+					train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
+					inp: Tensor = train_data['input']
+					target: Tensor   = train_data['target']
+					for biter in range(batch_iter):
+						bidx = torch.randperm(inp.shape[0])
+						prd: TensorOrTensors = self.model( inp[bidx,...] )
+						loss: torch.Tensor  = self.loss( prd, target[bidx,...] )
+						acc_loss += loss.item()
+						lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
-					self.optimizer.zero_grad(set_to_none=True)
-					loss.backward()
-					self.optimizer.step()
+						self.optimizer.zero_grad(set_to_none=True)
+						loss.backward()
+						self.optimizer.step()
 
-				if save_state:
-					self.checkpoint_manager.save_checkpoint(epoch, acc_loss)
+					if save_state:
+						self.checkpoint_manager.save_checkpoint(epoch, acc_loss)
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -254,7 +256,7 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 
 		print(f'--------------------------------------------------------------------------------')
-		ntotal_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
 		return acc_loss
