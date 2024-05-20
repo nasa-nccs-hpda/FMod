@@ -14,7 +14,7 @@ hours_per_step: 1
 nbatches: 5
 batch_iter: 20
 nepochs: 10
-lr: 1e-4
+lr: 5e-4
 
 origin: { x: 0, y: 0 }
 tile_size: { x: 16, y: 16 }
