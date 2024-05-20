@@ -84,7 +84,7 @@ class BatchDataset(BaseDataset):
         tlocs = []
         for ix in range( self.tile_size['x'] ):
             for iy in range(self.tile_size['y']):
-                tcoords = { d: self.origin['d'] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y'] }
+                tcoords = { d: self.origin[d] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y'] }
                 tlocs.append( ( tcoords['y'], tcoords['x'] )  )
         return tlocs
 
