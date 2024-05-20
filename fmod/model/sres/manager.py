@@ -25,6 +25,9 @@ class SRModels:
 		print(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.shape[1]
 
+	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
+		return self.datasets[dstype].get_channel_idxs(channels)
+
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
 		model_package = importlib.import_module(importpath)

@@ -7,7 +7,7 @@ from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
-from fmod.base.io.loader import BaseDataset
+from fmod.data.batch import BatchDataset
 from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
@@ -54,8 +54,8 @@ class ModelTrainer(object):
 
 	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
-		self.input_dataset: BaseDataset = model_manager.datasets['input']
-		self.target_dataset: BaseDataset = model_manager.datasets['target']
+		self.input_dataset: BatchDataset = model_manager.datasets['input']
+		self.target_dataset: BatchDataset = model_manager.datasets['target']
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
 		self.min_loss = float('inf')
@@ -68,6 +68,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
+		self.target_variables = cfg().task.target_variables
 		self.train_dates = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
@@ -238,7 +239,8 @@ class ModelTrainer(object):
 					for biter in range(batch_iter):
 						bidx = torch.randperm(inp.shape[0])
 						prd: TensorOrTensors = self.model( inp[bidx,...] )
-						loss: torch.Tensor  = self.loss( prd, target[bidx,...] )
+						trg: Tensor = self.get_train_target( target, bidx )
+						loss: torch.Tensor  = self.loss( prd, trg )
 						acc_loss += loss.item()
 						lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
@@ -262,6 +264,12 @@ class ModelTrainer(object):
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
 		return acc_loss
+
+	def get_train_target( self, target: Tensor, batch_perm: Tensor ) -> Tensor:
+		channel_idxs: List[int] = self.input_dataset.get_channel_idxs( self.target_variables )
+		result = target[batch_perm,channel_idxs,...]
+		print( f"get_train_target, input shape={target.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+		return result
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)

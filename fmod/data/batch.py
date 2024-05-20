@@ -77,6 +77,9 @@ class BatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
 
+    def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
+        return [ self.chanIds[dstype].index(cid) for cid in channels ]
+
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
         return self.get_batch(self.origin,self.current_date)
 
@@ -87,7 +90,7 @@ class BatchDataset(BaseDataset):
                 tlocs.append(  { d: self.origin[d] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
         return tlocs
 
-    def randomize(self) -> List[date]:
+    def randomize(self) -> List[datetime]:
         random.shuffle(self.batch_dates)
         return self.batch_dates
 
@@ -299,7 +302,7 @@ class BatchDataset(BaseDataset):
                 if cname not in (merge_dims + list(sizes.keys())):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
-        print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}", flush=True)
+     #   print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}", flush=True)
         darray.attrs['channels'] = channels
         result = darray.transpose( "time", "channels", darray.dims[1], darray.dims[2] )
         return result
