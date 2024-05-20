@@ -238,9 +238,8 @@ class ModelTrainer(object):
 					target: Tensor   = train_data['target']
 					for biter in range(batch_iter):
 						bidx = torch.randperm(inp.shape[0])
-						prd: TensorOrTensors = self.model( inp[bidx,...] )
-						trg: Tensor = self.get_train_target( target, bidx )
-						loss: torch.Tensor  = self.loss( prd, trg )
+						prd: TensorOrTensors = self.apply_network( inp, bidx )
+						loss: torch.Tensor  = self.loss( prd, target )
 						acc_loss += loss.item()
 						lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
@@ -265,10 +264,15 @@ class ModelTrainer(object):
 
 		return acc_loss
 
-	def get_train_target( self, target: Tensor, batch_perm: Tensor ) -> Tensor:
-		channel_idxs: List[int] = self.input_dataset.get_channel_idxs( self.target_variables )
-		result = target[batch_perm,channel_idxs,...]
-		print( f"get_train_target, input shape={target.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+	def apply_network( self, input_data: Tensor, batch_perm: Tensor ) -> TensorOrTensors:
+		product: TensorOrTensors = self.model( input_data[batch_perm, ...] )
+		channel_idxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
+		if type(product) == torch.Tensor:
+			result = product[batch_perm,channel_idxs,...]
+			print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+		else:
+			result = [ prod[batch_perm, channel_idxs, ...] for prod in product ]
+			print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		return result
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
