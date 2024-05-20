@@ -127,7 +127,7 @@ class ModelTrainer(object):
 			raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
 		return loss
 
-	def get_batch(self, origin: Tuple[int,int], batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+	def get_batch(self, origin: Dict[str,int], batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin, batch_date)
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin, batch_date)
 		binput: xarray.DataArray = input_batch['input']

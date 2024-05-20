@@ -1,6 +1,6 @@
 import torch, math
 import xarray
-from datetime import date
+from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
@@ -188,7 +188,7 @@ class ModelTrainer(object):
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
-	def get_batch(self, origin: Tuple[int,int], batch_date, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+	def get_batch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin,batch_date)
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin,batch_date)
 		binput: xarray.DataArray = input_batch['input']
@@ -226,8 +226,8 @@ class ModelTrainer(object):
 
 			acc_loss = 0.0
 			self.model.train()
-			batch_dates: List[date] = self.input_dataset.randomize()
-			tile_locs: List[Tuple[int,int]] = self.input_dataset.get_tile_locations()
+			batch_dates: List[datetime] = self.input_dataset.randomize()
+			tile_locs: List[Dict[str,int]] = self.input_dataset.get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
