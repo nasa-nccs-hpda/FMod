@@ -84,8 +84,7 @@ class BatchDataset(BaseDataset):
         tlocs = []
         for ix in range( self.tile_size['x'] ):
             for iy in range(self.tile_size['y']):
-                tcoords = { d: self.origin[d] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y'] }
-                tlocs.append( tcoords )
+                tlocs.append(  { d: self.origin['d'] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
         return tlocs
 
     def randomize(self) -> List[date]:
@@ -245,7 +244,7 @@ class BatchDataset(BaseDataset):
             input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}", display=True )
-            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
+        #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array
 

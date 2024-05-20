@@ -24,10 +24,10 @@ def data_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
 	format_suffix = ".dali" if ncformat == ncformat.DALI else ".nc"
 	downscale_factors: List[int] = cfg().model.downscale_factors
-	upscale_factor = math.prod(downscale_factors)
+	downscale_factor = math.prod(downscale_factors)
 	res_suffix = ""
 	if (vres == "low") and (ncformat == ncformat.SRES):
-		res_suffix = f".us{upscale_factor}"
+		res_suffix = f".us{downscale_factor}"
 	return res_suffix + format_suffix
 
 class BaseDataset(IterableDataset):

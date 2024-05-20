@@ -25,6 +25,8 @@ class SRDataLoader(object):
 	def __init__(self, task_config: DictConfig, vres: str ):
 		self.vres: srRes = srRes.from_config(vres)
 		self.task = task_config
+		self.downscale_factors: List[int] = cfg().model.downscale_factors
+		self.scalefactor = math.prod(self.downscale_factors)
 
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
