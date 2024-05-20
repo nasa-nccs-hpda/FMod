@@ -234,8 +234,8 @@ class ModelTrainer(object):
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
-					inp: Tensor = train_data['input']
-					target: Tensor   = train_data['target']
+					inp: Tensor = train_data['input'].squeeze()
+					target: Tensor   = train_data['target'].squeeze()
 					for biter in range(batch_iter):
 						bidx = torch.randperm(inp.shape[0])
 						prd: TensorOrTensors = self.apply_network( inp, bidx )
