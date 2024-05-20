@@ -239,7 +239,7 @@ class ModelTrainer(object):
 						prd: TensorOrTensors = self.apply_network( inp, bidx )
 						loss: torch.Tensor  = self.loss( prd, target )
 						acc_loss += loss.item()
-						lgm().log(f" ** Loss[{batch_date}:{biter}]:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
+						lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
 						self.optimizer.zero_grad(set_to_none=True)
 						loss.backward()
