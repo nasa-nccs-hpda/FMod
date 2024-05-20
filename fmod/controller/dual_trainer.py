@@ -152,8 +152,6 @@ class ModelTrainer(object):
 		return torch.mean(error)
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
-		print( f"output shape = {prd.shape}")
-		print( f"target shape = {tar.shape}")
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
@@ -269,10 +267,10 @@ class ModelTrainer(object):
 		channel_idxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
 		if type(product) == torch.Tensor:
 			result = product[batch_perm,channel_idxs,...]
-			print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
 			result = [ prod[batch_perm, channel_idxs, ...] for prod in product ]
-			print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
+	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		return result
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
