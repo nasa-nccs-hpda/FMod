@@ -151,6 +151,8 @@ class ModelTrainer(object):
 		return torch.mean(error)
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
+		print( f"output shape = {prd.shape}")
+		print( f"target shape = {tar.shape}")
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
@@ -283,13 +285,13 @@ class ModelTrainer(object):
 
 		return inputs, targets, predictions
 
-	def apply(self, date_index: int, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+	def apply(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 		seed = kwargs.get('seed',0)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		with torch.inference_mode():
-			input_batch = self.input_dataset[date_index]
-			target_batch = self.target_dataset[date_index]
+			input_batch = self.input_dataset.get_batch( origin, batch_date)
+			target_batch = self.target_dataset.get_batch( origin, batch_date)
 			inp: torch.Tensor = array2tensor( input_batch['input'] )
 			tar: torch.Tensor = array2tensor( target_batch['target'] )
 			out: TensorOrTensors = self.model(inp)
