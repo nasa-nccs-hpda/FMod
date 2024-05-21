@@ -272,10 +272,10 @@ class ModelTrainer(object):
 			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
 			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		if type(product) == torch.Tensor:
-			result = torch.take_along_dim(product,self.channel_idxs,dim=1)
+			result = torch.select(product,1, self.channel_idxs)
 	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
-			result = [ torch.take_along_dim(prod,self.channel_idxs,dim=1) for prod in product ]
+			result = [ torch.select(prod,1, self.channel_idxs) for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		return result
 
