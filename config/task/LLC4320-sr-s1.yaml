@@ -6,6 +6,7 @@ tensor_type: "torch"
 device: "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
+training_version: {name}-{dataset}.{scenario}
 
 start_date:  "10/02/2012"
 days_per_batch: 16

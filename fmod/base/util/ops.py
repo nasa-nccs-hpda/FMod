@@ -188,6 +188,8 @@ def resolve_links( pdict: DictConfig, pkey: str ) -> str:
 def fmbdir( dtype: str ) -> str:
 	return resolve_links( cfg().platform, dtype )
 
+def fmtp( dtype: str ) -> str:
+	return resolve_links( cfg().task, dtype )
 def print_norms( norms: Dict[str, xa.Dataset] ):
 	print(f"\n ----------------------------------------- Norm Data ----------------------------------------- ")
 	for norm in norms.keys():

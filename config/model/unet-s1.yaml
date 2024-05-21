@@ -1,6 +1,4 @@
 name: ???
-
-training_version: merra2-unet.1
 nfeatures: 64
 downscale_factors: [2]
 unet_depth: 4

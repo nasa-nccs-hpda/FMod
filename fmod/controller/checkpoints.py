@@ -1,7 +1,7 @@
 import torch
 from typing import Any, Dict
 from fmod.base.util.config import cfg
-from fmod.base.util.ops import fmbdir
+from fmod.base.util.ops import fmbdir, fmtp
 from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
 from torch.nn import Module
@@ -51,7 +51,7 @@ class CheckpointManager(object):
 
 	def checkpoint_path(self, version="current") -> str:
 		if version not in self._cpaths:
-			self._cpaths[version] =  str(os.path.join(fmbdir('results'), 'checkpoints/' + cfg().model.training_version + f".{version}.pt"))
+			self._cpaths[version] =  str(os.path.join(fmbdir('results'), 'checkpoints/' + fmtp('training_version') + f".{version}.pt"))
 			os.makedirs(os.path.dirname(self._cpaths[version]), 0o777, exist_ok=True)
 		return self._cpaths[version]
 

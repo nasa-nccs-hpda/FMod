@@ -3,7 +3,7 @@ import numpy as np
 from fmod.base.util.config import cfg
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal
 import glob, sys, os, time, traceback
-from fmod.base.util.ops import fmbdir
+from fmod.base.util.ops import fmbdir, fmtp
 from fmod.base.util.dates import skw, dstr
 from datetime import date
 from xarray.core.resample import DataArrayResample

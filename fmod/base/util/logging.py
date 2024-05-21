@@ -68,7 +68,7 @@ class LogManager(object):
         self._level = level
 
     def init_logging(self):
-        from fmod.base.util.ops import fmbdir
+        from fmod.base.util.ops import fmbdir, fmtp
         from fmod.base.util.config import cfg, cid
         self.log_dir =  f"{fmbdir('cache')}/logs"
 
