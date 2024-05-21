@@ -153,7 +153,7 @@ class ModelTrainer(object):
 		return torch.mean(error)
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
-		print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
+	#	print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
