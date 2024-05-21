@@ -213,7 +213,8 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, nepochs, batch_iter, acc_loss = 0, cfg().task.nepochs, cfg().task.batch_iter, float('inf')
+		epoch0, nepochs, batch_iter = 0, cfg().task.nepochs, cfg().task.batch_iter
+		loss: torch.Tensor = torch.tensor(float('inf'), device=self.device)
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -228,7 +229,6 @@ class ModelTrainer(object):
 			self.optimizer.zero_grad(set_to_none=True)
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
-			acc_loss = 0.0
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.randomize()
 			tile_locs: List[Dict[str,int]] = self.input_dataset.get_tile_locations()
@@ -240,8 +240,7 @@ class ModelTrainer(object):
 					for biter in range(batch_iter):
 						bidx = torch.randperm(inp.shape[0]) if shuffle_batch else None
 						prd: TensorOrTensors = self.apply_network( inp, bidx )
-						loss: torch.Tensor  = self.loss( prd, target )
-						acc_loss += loss.item()
+						loss = self.loss( prd, target )
 						lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
 						self.optimizer.zero_grad(set_to_none=True)
@@ -249,13 +248,13 @@ class ModelTrainer(object):
 						self.optimizer.step()
 
 					if save_state:
-						self.checkpoint_manager.save_checkpoint(epoch, acc_loss)
+						self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
 
 			if self.scheduler is not None:
 				self.scheduler.step()
 
 			epoch_time = time.time() - epoch_start
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {loss.item():.5f} {fmtfl(self.layer_losses)}', display=True)
 
 		train_time = time.time() - train_start
 
@@ -263,7 +262,7 @@ class ModelTrainer(object):
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
-		return acc_loss
+		return loss.item()
 
 	def apply_network( self, input_data: Tensor, batch_perm: Tensor = None ) -> TensorOrTensors:
 		net_input: Tensor = input_data if batch_perm is None else input_data[batch_perm, ...]
