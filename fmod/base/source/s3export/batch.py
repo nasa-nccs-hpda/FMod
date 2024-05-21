@@ -63,8 +63,10 @@ class S3ExportDataLoader(SRDataLoader):
 		origin = self.scale_coords(oindx)
 		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
 	#	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
-		xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
-		return xycoords
+	#	xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
+		xc = xa.DataArray(tcoords['i'].astype(np.float32), dims=['i'], coords=dict(i=tcoords['i']))
+		yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
+		return dict(x=xc, y=yc)
 
 	def load_channel( self, oindx: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
