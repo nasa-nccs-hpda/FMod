@@ -597,7 +597,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
 	"""
     stack_to_channels_dims = [ d for d in variable.dims if d not in preserved_dims]
     dims = {dim: variable.sizes.get(dim) or sizes[dim] for dim in preserved_dims}
-    lgm().log( f"#variable_to_stacked: {vname}{variable.dims}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}", display=True)
+    lgm().log( f"#variable_to_stacked: {vname}{variable.dims}{variable.shape}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}", display=True)
     if stack_to_channels_dims:
         variable = variable.stack(channels=stack_to_channels_dims)
     dims["channels"] = variable.sizes.get("channels", 1)
