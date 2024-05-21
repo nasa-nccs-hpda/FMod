@@ -22,19 +22,19 @@ class SRModels:
 		print( f" !!! Get Sample data !!! ", flush=True )
 		self.sample_input:  xa.DataArray = input_batch['input']
 		self.sample_target: xa.DataArray = target_batch['target']
+		self.cids: List[int] = self.get_channel_idxs(self.target_variables)
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")
-		self.model_config['nchannels'] = self.sample_input.shape[1]
+		self.model_config['nchannels'] = self.sample_input.sizes['channels']
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
 
 	def get_sample_target(self) -> xa.DataArray:
-		cids: List[int] = self.get_channel_idxs(self.target_variables)
-		return self.sample_target.isel(channels=cids)
+		return self.sample_target.isel(channels=self.cids) if (len(self.cids) > self.sample_input.sizes['channels']) else self.sample_target
 
 	def get_sample_input(self) -> xa.DataArray:
-		return self.sample_input
+		return self.sample_input.isel(channels=self.cids) if (len(self.cids) > self.sample_input.sizes['channels']) else self.sample_input
 
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
