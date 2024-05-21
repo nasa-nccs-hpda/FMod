@@ -34,7 +34,7 @@ class SRModels:
 		return self.sample_target.isel(channels=self.cids) if (len(self.cids) > self.sample_input.sizes['channels']) else self.sample_target
 
 	def get_sample_input(self) -> xa.DataArray:
-		result =  self.sample_input.isel(channels=self.cids) if (len(self.cids) > self.sample_input.sizes['channels']) else self.sample_input
+		result =  self.sample_input.isel(channels=self.cids) if (len(self.cids) < self.sample_input.sizes['channels']) else self.sample_input
 		print(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}", flush=True)
 		return result
 
