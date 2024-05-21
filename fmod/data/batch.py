@@ -247,8 +247,8 @@ class BatchDataset(BaseDataset):
             lgm().log(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}",display=True)
             input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
-            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}", display=True )
-            print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
+            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )
+            # print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
             self.chanIds['input'] = channels
             results['input'] = input_array
 
@@ -303,7 +303,7 @@ class BatchDataset(BaseDataset):
                 if cname not in (merge_dims + list(sizes.keys())):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
-        print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}", flush=True)
+        # print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}", flush=True)
         darray.attrs['channels'] = channels
         result = darray.transpose( "time", "channels", darray.dims[1], darray.dims[2] )
         return result

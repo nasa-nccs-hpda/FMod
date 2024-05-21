@@ -597,7 +597,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
 	"""
     stack_to_channels_dims = [ d for d in variable.dims if d not in preserved_dims]
     dims = {dim: variable.sizes.get(dim) or sizes[dim] for dim in preserved_dims}
-    lgm().log( f"#variable_to_stacked: {vname}{variable.dims}{variable.shape}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}", display=True)
+    lgm().log( f"#variable_to_stacked: {vname}{variable.dims}{variable.shape}: stack to channels {[ f'{d}[{variable.sizes.get(d,sizes.get(d,1))}]' for d in stack_to_channels_dims]}")
     if stack_to_channels_dims:
         variable = variable.stack(channels=stack_to_channels_dims)
     dims["channels"] = variable.sizes.get("channels", 1)
@@ -631,7 +631,7 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
     vdata: np.ndarray = stacked_data.values
     if "channels" not in coords:
         coords["channels"] = np.arange( stacked_data.sizes["channels"], dtype=np.int32 )
-    print( f"\ndataset_to_stacked: vdata{dims}{vdata.shape} coords={list(coords.keys())}\n" )
+    # print( f"\ndataset_to_stacked: vdata{dims}{vdata.shape} coords={list(coords.keys())}\n" )
     return xarray.DataArray(data=vdata, dims=dims, coords=coords)
 
 
