@@ -206,7 +206,6 @@ class ModelTrainer(object):
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
-		shuffle_batch = kwargs.get('shuffle_batch', False)
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -238,9 +237,8 @@ class ModelTrainer(object):
 					inp: Tensor = train_data['input'].squeeze()
 					target: Tensor   = train_data['target'].squeeze()
 					for biter in range(batch_iter):
-						bidx = torch.randperm(inp.shape[0]) if shuffle_batch else None
-						prd: TensorOrTensors = self.apply_network( inp, bidx )
-						loss = self.loss( prd, target )
+						prd, targ = self.apply_network( inp, target )
+						loss = self.loss( prd, targ )
 						lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
 						self.optimizer.zero_grad(set_to_none=True)
@@ -264,8 +262,10 @@ class ModelTrainer(object):
 
 		return loss.item()
 
-	def apply_network( self, input_data: Tensor, batch_perm: Tensor = None ) -> TensorOrTensors:
-		net_input: Tensor = input_data if batch_perm is None else input_data[batch_perm, ...]
+	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
+		batch_perm: Tensor = torch.randperm( input_data.shape[0] )
+		net_input: Tensor  = input_data[ batch_perm, ... ]
+		net_target: Tensor = target_data[ batch_perm, ... ]
 		product: TensorOrTensors = self.model( net_input )
 		if self.channel_idxs is None:
 			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
@@ -276,7 +276,7 @@ class ModelTrainer(object):
 		else:
 			result = [ torch.select(prod,1, self.channel_idxs) for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
-		return result
+		return result, net_target
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
@@ -322,7 +322,7 @@ class ModelTrainer(object):
 			train_data: Dict[str, Tensor] = self.get_batch(tile_loc, batch_date)
 			inp: Tensor = train_data['input'].squeeze()
 			target: Tensor = train_data['target'].squeeze()
-			prd: TensorOrTensors = self.apply_network(inp)
-			loss: torch.Tensor = self.loss(prd, target)
-			target_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
-			return target_input, npa(target), npa(prd), loss.item()
+			prd,targ = self.apply_network(inp,target)
+			loss: torch.Tensor = self.loss(prd, targ)
+			filtered_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
+			return filtered_input, npa(target), npa(prd), loss.item()

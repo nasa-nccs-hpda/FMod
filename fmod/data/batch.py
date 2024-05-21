@@ -88,6 +88,7 @@ class BatchDataset(BaseDataset):
         for ix in range( self.tile_size['x'] ):
             for iy in range(self.tile_size['y']):
                 tlocs.append(  { d: self.origin[d] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
+        random.shuffle(tlocs)
         return tlocs
 
     def randomize(self) -> List[datetime]:
