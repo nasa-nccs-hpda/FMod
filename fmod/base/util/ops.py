@@ -176,6 +176,7 @@ def sformat( param: str, params: Dict[str,str] ) -> str:
 	try: return param.format(**params)
 	except KeyError: return param
 def pformat( param: Union[str,Dict[str,str]], params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
+	print( f"pformat: param: {param}, params: {params}")
 	if type(param) is str: return sformat(param, params)
 	return { k: sformat(p, params) for k,p in param.items() }
 
