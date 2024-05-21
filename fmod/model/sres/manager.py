@@ -15,6 +15,7 @@ class SRModels:
 		self.model_config = dict( cfg().model.items() )
 		self.model_name = cfg().model.name
 		self.device = device
+		self.target_variables = cfg().task.target_variables
 		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
 		input_batch: Dict[str,xa.DataArray] = input_dataset.get_current_batch()
 		target_batch: Dict[str, xa.DataArray] = target_dataset.get_current_batch()
@@ -27,6 +28,13 @@ class SRModels:
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
+
+	def get_sample_target(self) -> xa.DataArray:
+		cids: List[int] = self.get_channel_idxs(self.target_variables)
+		return self.sample_target.isel(channels=cids)
+
+	def get_sample_input(self) -> xa.DataArray:
+		return self.sample_input
 
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
