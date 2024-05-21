@@ -84,7 +84,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		ax = axs[ itype//2, itype%2 ]
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
-		tslice: xa.DataArray = image.isel(batch=tslider.value)
+		tslice: xa.DataArray = image.isel(time=tslider.value)
 		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		if itype >= 2: rms_errors[tname] = RMSE(image-target)
