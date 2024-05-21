@@ -631,6 +631,7 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
     vdata: np.ndarray = stacked_data.values
     if "channels" not in coords:
         coords["channels"] = np.arange( stacked_data.sizes["channels"], dtype=np.int32 )
+    print( f"\ndataset_to_stacked: vdata{dims}{vdata.shape} coords={list(coords.keys())}\n" )
     return xarray.DataArray(data=vdata, dims=dims, coords=coords)
 
 
