@@ -67,6 +67,7 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	return xycoords
 
 	def load_channel( self, oindx: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
+		print( f"load_channel: {vid}({date}): oindx={oindx} ")
 		origin = self.scale_coords(oindx)
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
@@ -75,6 +76,7 @@ class S3ExportDataLoader(SRDataLoader):
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
 	def load_timeslice( self, oindx: Dict[str,int], date: datetime ) -> xa.DataArray:
+		print( f"load_timeslice({date}): {oindx} ")
 		origin = self.scale_coords(oindx)
 		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
@@ -92,6 +94,7 @@ class S3ExportDataLoader(SRDataLoader):
 		origin = self.scale_coords(oindx)
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
 		result = darray.to_dataset( dim="channel", promote_attrs=True)
+		print( f"Load Dataset {name}{result.dims} {date_range} oindx={oindx} shape={result.shape}")
 		return result
 
 	def load_const_dataset(self, origin: Tuple[int,int] )-> Optional[xa.DataArray]:
