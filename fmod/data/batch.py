@@ -242,9 +242,9 @@ class BatchDataset(BaseDataset):
         if self.load_inputs:
             input_varlist: List[str] = list(input_variables)+list(forcing_variables)
             selected_inputs: xa.Dataset = dataset[input_varlist]
-            lgm().log(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}",display=True)
+            lgm().log(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}")
             lgm().log(f" >> >> dataset vars = {list(dataset.data_vars.keys())}")
-            lgm().log(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}",display=True)
+            lgm().log(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
             input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )

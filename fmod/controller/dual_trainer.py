@@ -1,5 +1,5 @@
 import torch, math
-import xarray
+import xarray, traceback
 from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence
@@ -233,20 +233,24 @@ class ModelTrainer(object):
 			tile_locs: List[Dict[str,int]] = self.input_dataset.get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
-					train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
-					inp: Tensor = train_data['input'].squeeze()
-					target: Tensor   = train_data['target'].squeeze()
-					for biter in range(batch_iter):
-						prd, targ = self.apply_network( inp, target )
-						loss = self.loss( prd, targ )
-						lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
+					try:
+						train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
+						inp: Tensor = train_data['input'].squeeze()
+						target: Tensor   = train_data['target'].squeeze()
+						for biter in range(batch_iter):
+							prd, targ = self.apply_network( inp, target )
+							loss = self.loss( prd, targ )
+							lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 
-						self.optimizer.zero_grad(set_to_none=True)
-						loss.backward()
-						self.optimizer.step()
+							self.optimizer.zero_grad(set_to_none=True)
+							loss.backward()
+							self.optimizer.step()
 
-					if save_state:
-						self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
+						if save_state:
+							self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
+					except Exception as e:
+						print( f"\n !!!!! Error processing tile_loc={tile_loc}, batch_date={batch_date} !!!!! {e}")
+						traceback.print_exc()
 
 			if self.scheduler is not None:
 				self.scheduler.step()

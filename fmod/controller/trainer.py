@@ -86,7 +86,7 @@ class ModelTrainer(object):
 		return False
 
 	@property
-	def checkpoint_path(self) -> str:
+	def checkpoint_path(self, **kwargs ) -> str:
 		return str( os.path.join( fmbdir('results'), 'checkpoints/' + fmtp('training_version') + ".pt") )
 
 	@property
