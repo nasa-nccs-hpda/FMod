@@ -68,6 +68,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
+		self.channel_idxs: torch.IntTensor = None
 		self.target_variables = cfg().task.target_variables
 		self.train_dates = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
@@ -205,6 +206,7 @@ class ModelTrainer(object):
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', '' )
 		save_state = kwargs.get('save_state', True)
+		shuffle_batch = kwargs.get('shuffle_batch', False)
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -236,7 +238,7 @@ class ModelTrainer(object):
 					inp: Tensor = train_data['input'].squeeze()
 					target: Tensor   = train_data['target'].squeeze()
 					for biter in range(batch_iter):
-						bidx = torch.randperm(inp.shape[0])
+						bidx = torch.randperm(inp.shape[0]) if shuffle_batch else None
 						prd: TensorOrTensors = self.apply_network( inp, bidx )
 						loss: torch.Tensor  = self.loss( prd, target )
 						acc_loss += loss.item()
@@ -263,14 +265,16 @@ class ModelTrainer(object):
 
 		return acc_loss
 
-	def apply_network( self, input_data: Tensor, batch_perm: Tensor ) -> TensorOrTensors:
-		product: TensorOrTensors = self.model( input_data[batch_perm, ...] )
-		channel_idxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
+	def apply_network( self, input_data: Tensor, batch_perm: Tensor = None ) -> TensorOrTensors:
+		net_input: Tensor = input_data if batch_perm is None else input_data[batch_perm, ...]
+		product: TensorOrTensors = self.model( net_input )
+		if self.channel_idxs is None:
+			self.channel_idxs: torch.IntTensor = torch.IntTensor( self.input_dataset.get_channel_idxs(self.target_variables) ).to( self.device )
 		if type(product) == torch.Tensor:
-			result = product[batch_perm,channel_idxs,...]
+			result = torch.take_along_dim(product,self.channel_idxs,dim=1)
 	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
-			result = [ prod[batch_perm, channel_idxs, ...] for prod in product ]
+			result = [ prod[batch_perm, self.channel_idxs, ...] for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		return result
 
@@ -305,7 +309,7 @@ class ModelTrainer(object):
 			target_batch = self.target_dataset.get_batch( origin, batch_date)
 			inp: torch.Tensor = array2tensor( input_batch['input'] )
 			tar: torch.Tensor = array2tensor( target_batch['target'] )
-			out: TensorOrTensors = self.model(inp)
+			out: TensorOrTensors = self.apply_network(inp)
 			product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
 			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
 			return npa(inp), npa(tar), npa(product)
