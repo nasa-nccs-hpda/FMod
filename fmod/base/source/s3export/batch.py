@@ -57,7 +57,7 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def cut_tile( self, data_grid: np.ndarray, oindx: Dict[str,int] ):
 		origin = self.scale_coords(oindx)
-		print( f"Cut Tile: data_grid{data_grid.shape} oindx={oindx}, tile_size={self.tile_size}, origin={origin}")
+		# print( f"Cut Tile: data_grid{data_grid.shape} oindx={oindx}, tile_size={self.tile_size}, origin={origin}")
 		return data_grid[ origin['y']: origin['y'] + self.tile_size['y'], origin['x']: origin['x'] + self.tile_size['x'] ]
 
 	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
@@ -67,7 +67,7 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	return xycoords
 
 	def load_channel( self, oindx: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
-		print( f"load_channel: {vid}({date}): oindx={oindx} ")
+		# print( f"load_channel: {vid}({date}): oindx={oindx} ")
 		origin = self.scale_coords(oindx)
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
@@ -94,7 +94,7 @@ class S3ExportDataLoader(SRDataLoader):
 		origin = self.scale_coords(oindx)
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
 		result = darray.to_dataset( dim="channel", promote_attrs=True)
-		print( f" ... Load Dataset {name}{result.dims} {date_range} oindx={oindx} shape={result.shape}")
+		print( f" ... Load Dataset {name}{darray.dims} {date_range} oindx={oindx} shape={darray.shape}")
 		return result
 
 	def load_const_dataset(self, origin: Tuple[int,int] )-> Optional[xa.DataArray]:
