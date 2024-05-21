@@ -68,7 +68,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
-		self.channel_idxs: torch.IntTensor = None
+		self.channel_idxs: torch.LongTensor = None
 		self.target_variables = cfg().task.target_variables
 		self.train_dates = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
@@ -269,12 +269,13 @@ class ModelTrainer(object):
 		net_input: Tensor = input_data if batch_perm is None else input_data[batch_perm, ...]
 		product: TensorOrTensors = self.model( net_input )
 		if self.channel_idxs is None:
-			self.channel_idxs: torch.IntTensor = torch.IntTensor( self.input_dataset.get_channel_idxs(self.target_variables) ).to( self.device )
+			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
+			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		if type(product) == torch.Tensor:
 			result = torch.take_along_dim(product,self.channel_idxs,dim=1)
 	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
-			result = [ prod[batch_perm, self.channel_idxs, ...] for prod in product ]
+			result = [ torch.take_along_dim(prod,self.channel_idxs,dim=1) for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		return result
 
