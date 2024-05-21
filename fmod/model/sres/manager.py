@@ -2,7 +2,7 @@ import logging, torch, math
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import xarray as xa
-import os, time
+import os, time, numpy as np
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig
@@ -37,6 +37,9 @@ class SRModels:
 		result =  self.sample_input.isel(channels=self.cids) if (len(self.cids) < self.sample_input.sizes['channels']) else self.sample_input
 		print(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}", flush=True)
 		return result
+
+	def filter_targets(self, data_array: np.ndarray ) -> np.ndarray:
+		return np.take( data_array, self.cids, axis=1 )
 
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
