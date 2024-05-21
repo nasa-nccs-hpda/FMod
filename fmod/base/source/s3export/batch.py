@@ -57,21 +57,21 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def cut_tile( self, data_grid: np.ndarray, oindx: Dict[str,int] ):
 		origin = self.scale_coords(oindx)
+		print( f"Cut Tile: data_grid{data_grid.shape} oindx={oindx}, tile_size={self.tile_size}, origin={origin}")
 		return data_grid[ origin['y']: origin['y'] + self.tile_size['y'], origin['x']: origin['x'] + self.tile_size['x'] ]
 
-	def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
-		origin = self.scale_coords(oindx)
-		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
-		xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
-		return xycoords
+	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
+	# 	origin = self.scale_coords(oindx)
+	# 	tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
+	# 	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
+	# 	return xycoords
 
 	def load_channel( self, oindx: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
 		tile_data: np.ndarray = self.cut_tile( raw_data, origin )
-		tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
-		result = xa.DataArray( tile_data, dims=['j', 'i'], coords=dict(**tc, **tc['x'].coords), attrs=dict( fullname=vid[1] ) )
+		result = xa.DataArray( tile_data, dims=['j', 'i'], attrs=dict( fullname=vid[1] ) )
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
 	def load_timeslice( self, oindx: Dict[str,int], date: datetime ) -> xa.DataArray:
