@@ -42,7 +42,7 @@ class S3ExportDataLoader(SRDataLoader):
 		SRDataLoader.__init__(self, task_config, vres )
 		self.coords_dataset: xa.Dataset = xa.open_dataset( coords_filepath(), **kwargs)
 		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
-		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values for c in ['i','j'] }
+		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = self.scale_coords( self.task.tile_size )
 		self.varnames: Dict[str, str] = self.task.input_variables
 
@@ -57,26 +57,25 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def cut_tile( self, data_grid: np.ndarray, oindx: Dict[str,int] ):
 		origin = self.scale_coords(oindx)
-		# print( f"Cut Tile: data_grid{data_grid.shape} oindx={oindx}, tile_size={self.tile_size}, origin={origin}")
 		return data_grid[ origin['y']: origin['y'] + self.tile_size['y'], origin['x']: origin['x'] + self.tile_size['x'] ]
 
-	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
-	# 	origin = self.scale_coords(oindx)
-	# 	tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
-	# 	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
-	# 	return xycoords
+	def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
+		origin = self.scale_coords(oindx)
+		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
+	#	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
+		xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
+		return xycoords
 
 	def load_channel( self, oindx: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
-		# print( f"load_channel: {vid}({date}): oindx={oindx} ")
 		origin = self.scale_coords(oindx)
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
 		tile_data: np.ndarray = self.cut_tile( raw_data, origin )
-		result = xa.DataArray( tile_data, dims=['j', 'i'], attrs=dict( fullname=vid[1] ) )
+		tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
+		result = xa.DataArray( tile_data, dims=['j', 'i'], coords=dict(**tc, **tc['x'].coords), attrs=dict( fullname=vid[1] ) )
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
 	def load_timeslice( self, oindx: Dict[str,int], date: datetime ) -> xa.DataArray:
-		print( f"  ----> load_timeslice({date}): {oindx} ")
 		origin = self.scale_coords(oindx)
 		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
@@ -94,7 +93,6 @@ class S3ExportDataLoader(SRDataLoader):
 		origin = self.scale_coords(oindx)
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
 		result = darray.to_dataset( dim="channel", promote_attrs=True)
-		print( f" ... Load Dataset {name}{darray.dims} {date_range} oindx={oindx} shape={darray.shape}")
 		return result
 
 	def load_const_dataset(self, origin: Tuple[int,int] )-> Optional[xa.DataArray]:
