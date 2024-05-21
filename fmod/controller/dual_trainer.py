@@ -301,16 +301,29 @@ class ModelTrainer(object):
 
 		return inputs, targets, predictions
 
-	def apply(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-		seed = kwargs.get('seed',0)
+	# def apply1(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+	# 	seed = kwargs.get('seed',0)
+	# 	torch.manual_seed(seed)
+	# 	torch.cuda.manual_seed(seed)
+	# 	with torch.inference_mode():
+	# 		input_batch = self.input_dataset.get_batch( origin, batch_date)
+	# 		target_batch = self.target_dataset.get_batch( origin, batch_date)
+	# 		inp: torch.Tensor = array2tensor( input_batch['input'] )
+	# 		tar: torch.Tensor = array2tensor( target_batch['target'] )
+	# 		out: TensorOrTensors = self.apply_network(inp)
+	# 		product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
+	# 		lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
+	# 		return npa(inp), npa(tar), npa(product)
+
+	def apply(self, tile_loc: Dict[str, int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+		seed = kwargs.get('seed', 0)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		with torch.inference_mode():
-			input_batch = self.input_dataset.get_batch( origin, batch_date)
-			target_batch = self.target_dataset.get_batch( origin, batch_date)
-			inp: torch.Tensor = array2tensor( input_batch['input'] )
-			tar: torch.Tensor = array2tensor( target_batch['target'] )
-			out: TensorOrTensors = self.apply_network(inp)
-			product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
-			lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
-			return npa(inp), npa(tar), npa(product)
+			train_data: Dict[str, Tensor] = self.get_batch(tile_loc, batch_date)
+			inp: Tensor = train_data['input'].squeeze()
+			target: Tensor = train_data['target'].squeeze()
+			prd: TensorOrTensors = self.apply_network(inp)
+			loss: torch.Tensor = self.loss(prd, target)
+			target_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
+			return target_input, npa(target), npa(prd), loss.item()
