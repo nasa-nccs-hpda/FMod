@@ -325,4 +325,4 @@ class ModelTrainer(object):
 			prd,targ = self.apply_network(inp,target)
 			loss: torch.Tensor = self.loss(prd, targ)
 			filtered_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
-			return filtered_input, npa(target), npa(prd), loss.item()
+			return filtered_input,  npa(target),  npa(prd), loss.item()
