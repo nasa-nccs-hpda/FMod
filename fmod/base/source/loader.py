@@ -24,7 +24,7 @@ class SRDataLoader(object):
 
 	def __init__(self, task_config: DictConfig, vres: str ):
 		self.vres: srRes = srRes.from_config(vres)
-		print( f"\nSRDataLoader({vres}): {self.vres}\n" )
+		print( f"\nSRDataLoader({vres}):  {self.vres} \n" )
 		self.task = task_config
 		self.downscale_factors: List[int] = cfg().model.downscale_factors
 		self.scalefactor = math.prod(self.downscale_factors)
