@@ -67,6 +67,7 @@ class MetaData(DatapipeMetaData):
 class BatchDataset(BaseDataset):
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
+        self.srtype = 'input' if vres == "high" else 'target'
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
@@ -130,6 +131,7 @@ class BatchDataset(BaseDataset):
 
     def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
+        self.chanIds[self.srtype] = batch_data.coords['channel'].values.tolist()
         return batch_norm(batch_data)
 
     def __next__(self) -> Dict[str,xa.DataArray]:
