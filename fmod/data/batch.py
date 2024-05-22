@@ -1,5 +1,5 @@
 import numpy as np, xarray as xa
-import torch, time, random, traceback
+import torch, time, random, traceback, math
 from omegaconf import DictConfig
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -11,6 +11,7 @@ from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
+from fmod.base.util.config import cfg
 import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
@@ -45,10 +46,6 @@ Tensor = torch.Tensor
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
-def cdim( ix: int, iy: int, dim: str ) -> int:
-    if dim == 'x': return ix
-    if dim == 'y': return iy
-
 def batch_norm( batch_data: xa.DataArray):
     dims = ["time",batch_data.dims[-1],batch_data.dims[-2]]
     mean = batch_data.mean( dim=dims)
@@ -75,11 +72,9 @@ class BatchDataset(BaseDataset):
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
         self.load_base: bool = kwargs.pop('load_base', False)
         self.day_index: int = 0
+        self.current_origin: Dict[str, int] = task_config.origin
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
-        self.origin: Dict[str,int] = task_config.origin
-        self.tile_size: Dict[str,int] = task_config.tile_size
-        self.tile_grid: Dict[str, int] = task_config.get( 'tile_grid', dict(x=1,y=1) )
         self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
@@ -92,18 +87,11 @@ class BatchDataset(BaseDataset):
         return [ self.chanIds[dstype].index(cid) for cid in channels ]
 
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
-        return self.get_batch(self.origin,self.current_date)
+        return self.get_batch(self.current_origin,self.current_date)
 
     def get_current_batch_array(self) -> xa.DataArray:
-        return self.get_batch_array(self.origin,self.current_date)
-    def get_tile_locations(self) -> List[Dict[str,int]]:
-        tlocs = []
-        for ix in range( self.tile_grid['x'] ):
-            for iy in range(self.tile_grid['y']):
-                tlocs.append(  { d: self.origin[d] + cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
-        random.shuffle(tlocs)
-        print( f"\n get_tile_locations[{self.srtype}]: tlocs={tlocs} \n")
-        return tlocs
+        return self.get_batch_array(self.current_origin,self.current_date)
+
 
     def randomize(self) -> List[datetime]:
         random.shuffle(self.batch_dates)
@@ -129,6 +117,7 @@ class BatchDataset(BaseDataset):
     def get_batch(self, origin: Dict[str,int], batch_date: datetime ) -> Dict[str,xa.DataArray]:
         t0 = time.time()
         self.srbatch.load( origin, batch_date)
+        self.current_origin = origin
         batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.srbatch.current_batch, **self.task_config)
         self.log(batch_data, t0)
         return batch_data
@@ -136,6 +125,7 @@ class BatchDataset(BaseDataset):
     def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         self.chanIds[self.srtype] = batch_data.coords['channel'].values.tolist()
+        self.current_origin = origin
         return batch_norm(batch_data)
 
     def __next__(self) -> Dict[str,xa.DataArray]:

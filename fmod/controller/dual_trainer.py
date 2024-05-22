@@ -1,5 +1,5 @@
 import torch, math
-import xarray, traceback
+import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence
@@ -49,12 +49,39 @@ def shuffle( data: Tensor ) -> Tensor:
 	idx = torch.randperm(data.shape[0])
 	return data[idx,...]
 
+class TileGrid(object):
+
+    def __init__(self, ):
+        self.origin: Dict[str,int] = cfg().task.origin
+        self.tile_size: Dict[str,int] = cfg().task.tile_size
+        self.tile_grid: Dict[str, int] = cfg().task.get( 'tile_grid', dict(x=1,y=1) )
+        downscale_factors: List[int] = cfg().model.downscale_factors
+        self.downscale_factor = math.prod(downscale_factors)
+
+    def get_tile_locations(self) -> List[Dict[str,int]]:
+        tlocs = []
+        for ix in range( self.tile_grid['x'] ):
+            for iy in range(self.tile_grid['y']):
+                tlocs.append(  { d: self.origin[d] + self.cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
+        random.shuffle(tlocs)
+        print( f"\n get_tile_locations: tlocs={tlocs} \n")
+        return tlocs
+
+    @classmethod
+    def cdim(cls, ix: int, iy: int, dim: str) -> int:
+        if dim == 'x': return ix
+        if dim == 'y': return iy
+
+    def downscale(self, origin: Dict[str,int] ):
+        return { d: v*self.downscale_factor for d,v in origin.items() }
+
 class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
 	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
+		self.tile_grid = TileGrid()
 		self.input_dataset: BatchDataset = model_manager.datasets['input']
 		self.target_dataset: BatchDataset = model_manager.datasets['target']
 		self.device: torch.device = model_manager.device
@@ -239,7 +266,7 @@ class ModelTrainer(object):
 
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.randomize()
-			tile_locs: List[Dict[str,int]] = self.input_dataset.get_tile_locations()
+			tile_locs: List[Dict[str,int]] = self.tile_grid.get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					try:
