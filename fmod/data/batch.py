@@ -49,7 +49,7 @@ def cdim( ix: int, iy: int, dim: str ) -> int:
     if dim == 'x': return ix
     if dim == 'y': return iy
 
-def local_norm( batch_data: xa.DataArray ):
+def batch_norm( batch_data: xa.DataArray):
     dims = ["time",batch_data.dims[-1],batch_data.dims[-2]]
     mean = batch_data.mean( dim=dims)
     std = batch_data.std(dim=dims)
@@ -130,7 +130,7 @@ class BatchDataset(BaseDataset):
 
     def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
-        return local_norm(batch_data)
+        return batch_norm(batch_data)
 
     def __next__(self) -> Dict[str,xa.DataArray]:
         if self.day_index >= len( self.batch_dates ):
