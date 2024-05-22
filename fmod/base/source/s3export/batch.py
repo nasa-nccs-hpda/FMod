@@ -94,8 +94,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_batch(self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
-		print( f"load_batch: chanIds={darray.coords['channel'].values.tolist()} ")
-		# chanIds
+		darray.attrs['chanIds'] = darray.coords['channel'].values.tolist()
 		return darray
 
 	def load_const_dataset(self, origin: Dict[str,int] )-> Optional[xa.DataArray]:
