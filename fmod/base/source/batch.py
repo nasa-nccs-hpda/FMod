@@ -241,7 +241,7 @@ class SRBatch:
 
 	def load_batch(self, origin: Dict[str,int], d: datetime, **kwargs) -> xa.DataArray:
 		dates: Tuple[datetime,datetime] = date_bounds(d, self.days_per_batch)
-		darray: xa.DataArray = self.data_loader.load_batch( self.name, origin, dates )
+		darray: xa.DataArray = self.data_loader.load_batch( origin, dates )
 		return darray
 
 	def load(self, origin: Dict[str,int], d: datetime ) -> xa.DataArray:
