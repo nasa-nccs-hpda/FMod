@@ -44,7 +44,6 @@ class S3ExportDataLoader(SRDataLoader):
 		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
 		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = self.scale_coords( self.task.tile_size )
-		print( f"S3ExportDataLoader({vres}): tile_size = {self.tile_size}" )
 		self.varnames: Dict[str, str] = self.task.input_variables
 
 	def scale_coords(self, c: Dict[str,int]) -> Dict[str,int]:
