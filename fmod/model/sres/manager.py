@@ -22,7 +22,7 @@ class SRModels:
 		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")
-		self.model_config['nchannels'] = self.sample_input.sizes['channels']
+		self.model_config['nchannels'] = self.sample_input.sizes['channel']
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
