@@ -19,7 +19,7 @@ class SRModels:
 		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
 		self.sample_input:  xa.DataArray = input_dataset.get_current_batch_array()
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array()
-		self.cids: List[int] = self.get_channel_idxs(self.target_variables)
+		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.sizes['channels']
