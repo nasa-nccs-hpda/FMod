@@ -17,11 +17,8 @@ class SRModels:
 		self.device = device
 		self.target_variables = cfg().task.target_variables
 		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
-		input_batch: Dict[str,xa.DataArray] = input_dataset.get_current_batch()
-		target_batch: Dict[str, xa.DataArray] = target_dataset.get_current_batch()
-		print( f" !!! Get Sample data !!! ", flush=True )
-		self.sample_input:  xa.DataArray = input_batch['input']
-		self.sample_target: xa.DataArray = target_batch['target']
+		self.sample_input:  xa.DataArray = input_dataset.get_current_batch_array()
+		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array()
 		self.cids: List[int] = self.get_channel_idxs(self.target_variables)
 		print(f"sample_input: shape={self.sample_input.shape}")
 		print(f"sample_target: shape={self.sample_target.shape}")

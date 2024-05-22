@@ -90,6 +90,8 @@ class BatchDataset(BaseDataset):
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
         return self.get_batch(self.origin,self.current_date)
 
+    def get_current_batch_array(self) -> xa.DataArray:
+        return self.get_batch_array(self.origin,self.current_date)
     def get_tile_locations(self) -> List[Dict[str,int]]:
         tlocs = []
         for ix in range( self.tile_size['x'] ):
