@@ -44,6 +44,7 @@ class S3ExportDataLoader(SRDataLoader):
 		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
 		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = self.scale_coords( self.task.tile_size )
+		print( f"S3ExportDataLoader({vres}): tile_size = {self.tile_size}" )
 		self.varnames: Dict[str, str] = self.task.input_variables
 
 	def scale_coords(self, c: Dict[str,int]) -> Dict[str,int]:
@@ -87,6 +88,7 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def load_temporal_batch( self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
+		print( f"load_temporal_batch[{date_range[0]}:{date_range[1]}]: origin = {oindx} (scaled({self.vres}): {origin})")
 		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
 		return xa.concat(timeslices, "time")
 
