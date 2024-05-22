@@ -65,6 +65,8 @@ class MetaData(DatapipeMetaData):
     ddp_sharding: bool = True
 
 class BatchDataset(BaseDataset):
+    chanIds: Dict[str,List[str]] = {}
+
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
         self.srtype = 'input' if vres == "high" else 'target'
@@ -86,6 +88,7 @@ class BatchDataset(BaseDataset):
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
 
     def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
+        print( f"get_channel_idxs: dstype={dstype}, srtype={self.srtype}, chanIds={self.chanIds}")
         return [ self.chanIds[dstype].index(cid) for cid in channels ]
 
     def get_current_batch(self) -> Dict[str, xa.DataArray]:
