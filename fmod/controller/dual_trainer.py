@@ -78,7 +78,7 @@ class ModelTrainer(object):
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 
 	def configure_grid(self):
-		tar: xarray.DataArray = self.target_dataset.get_current_batch()['target']
+		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
 		grid_shape = tar.shape[-2:]
 		gridops = GridOps(*grid_shape)
 		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}", display=True)
