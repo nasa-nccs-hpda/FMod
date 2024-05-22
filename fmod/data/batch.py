@@ -15,6 +15,7 @@ import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
+ArrayOrDataset = Union[xa.DataArray,xa.Dataset]
 
 class TensorRole:
     INPUT = "input"
@@ -47,6 +48,12 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 def cdim( ix: int, iy: int, dim: str ) -> int:
     if dim == 'x': return ix
     if dim == 'y': return iy
+
+def local_norm( batch_data: xa.DataArray ):
+    dims = ["time",batch_data.dims[-1],batch_data.dims[-2]]
+    mean = batch_data.mean( dim=dims)
+    std = batch_data.std(dim=dims)
+    return (batch_data-mean)/std
 
 @dataclass
 class MetaData(DatapipeMetaData):
@@ -118,6 +125,10 @@ class BatchDataset(BaseDataset):
         batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.srbatch.current_batch, **self.task_config)
         self.log(batch_data, t0)
         return batch_data
+
+    def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
+        batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
+        return local_norm(batch_data)
 
     def __next__(self) -> Dict[str,xa.DataArray]:
         if self.day_index >= len( self.batch_dates ):

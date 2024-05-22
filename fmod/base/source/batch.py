@@ -223,15 +223,15 @@ class SRBatch:
 		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, vres, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
+		self.current_origin = None
 		self.days_per_batch = cfg().task.days_per_batch
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
 		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
 
-	@property
-	def constants(self)-> xa.Dataset:
+	def constants(self, origin: Dict[str,int] )-> xa.Dataset:
 		if self._constants is None:
-			self._constants: xa.Dataset = self.data_loader.load_const_dataset(self.vres)
+			self._constants: xa.Dataset = self.data_loader.load_const_dataset(origin)
 		return self._constants
 
 	def merge_batch(self, slices: List[xa.Dataset]) -> xa.Dataset:
@@ -239,17 +239,18 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
-	def load_batch(self, origin: Dict[str,int], d: datetime, **kwargs) -> xa.Dataset:
+	def load_batch(self, origin: Dict[str,int], d: datetime, **kwargs) -> xa.DataArray:
 		dates: Tuple[datetime,datetime] = date_bounds(d, self.days_per_batch)
-		dset: xa.Dataset = self.data_loader.load_dataset( self.name, origin, dates )
-		return dset
+		darray: xa.DataArray = self.data_loader.load_batch( self.name, origin, dates )
+		return darray
 
-	def load(self, origin: Dict[str,int], d: datetime ) -> xa.Dataset:
-		if self.current_date != d:
+	def load(self, origin: Dict[str,int], d: datetime ) -> xa.DataArray:
+		if (self.current_date != d) and (self.current_origin != origin):
 			t0 = time.time()
-			self.current_batch: xa.Dataset = self.load_batch(origin,d)
+			self.current_batch: xa.DataArray = self.load_batch(origin,d)
 			self.current_date = d
-			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{d}]-> {self.data_loader.rcoords(self.current_batch)}, time = {time.time()-t0:.3f} sec", display=True )
+			self.current_origin = origin
+			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{d}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec", display=True )
 		return self.current_batch
 
 

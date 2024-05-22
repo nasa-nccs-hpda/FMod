@@ -12,12 +12,13 @@ from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
-import numpy as np
+import numpy as np, xarray as xa
 import torch.nn as nn
 import time
 
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
+
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
 	return str( [ f"{mv:.2f}" for mv in means ] )
@@ -201,6 +202,14 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
+	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		binput:  xarray.DataArray  = self.input_dataset.get_batch_array(origin,batch_date)
+		btarget:  xarray.DataArray = self.target_dataset.get_batch_array(origin,batch_date)
+		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
+		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
+		else:          return dict( input=binput,               target=btarget )
+
 	@exception_handled
 	def train(self, **kwargs ):
 		seed = kwargs.get('seed',333)
@@ -234,7 +243,7 @@ class ModelTrainer(object):
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					try:
-						train_data: Dict[str,Tensor] = self.get_batch(tile_loc,batch_date)
+						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 						inp: Tensor = train_data['input'].squeeze()
 						target: Tensor   = train_data['target'].squeeze()
 						for biter in range(batch_iter):
@@ -323,7 +332,7 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		with torch.inference_mode():
-			train_data: Dict[str, Tensor] = self.get_batch(tile_loc, batch_date)
+			train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 			inp: Tensor = train_data['input'].squeeze()
 			target: Tensor = train_data['target'].squeeze()
 			prd,targ = self.apply_network(inp,target)

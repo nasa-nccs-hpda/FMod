@@ -91,13 +91,12 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
 		return {}
 
-	def load_dataset(self, name: str, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.Dataset:
+	def load_dataset(self, name: str, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
-		result = darray.to_dataset( dim="channel", promote_attrs=True)
-		return result
+		return darray
 
-	def load_const_dataset(self, origin: Tuple[int,int] )-> Optional[xa.DataArray]:
+	def load_const_dataset(self, origin: Dict[str,int] )-> Optional[xa.DataArray]:
 		return None
 
 
