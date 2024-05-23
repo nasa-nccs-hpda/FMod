@@ -46,7 +46,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: List[str] = sample.coords['channels'].values.tolist()
+	channels: List[str] = sample.coords['channel'].values.tolist()
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', time.size  )
 	fsize = kwargs.get( 'fsize', 5.0 )

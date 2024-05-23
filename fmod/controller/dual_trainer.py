@@ -284,7 +284,7 @@ class ModelTrainer(object):
 							prd, targ = self.apply_network( inp, target )
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
-							lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
+							lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
