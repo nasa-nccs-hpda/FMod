@@ -1,5 +1,4 @@
-import xarray, math
-from torch.utils.data.dataset import IterableDataset
+import xarray as xa, math
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import cfg
 from enum import Enum
@@ -30,7 +29,7 @@ def data_suffix(vres: str="high") -> str:
 		res_suffix = f".us{downscale_factor}"
 	return res_suffix + format_suffix
 
-class BaseDataset(IterableDataset):
+class BaseDataset(object):
 
 	def __init__(self, task_config: DictConfig, **kwargs ):
 		super(BaseDataset, self).__init__()
@@ -42,9 +41,7 @@ class BaseDataset(IterableDataset):
 		self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
 		self.chanIds: Dict[str,List[str]] = {}
 		self.current_date: date = self.train_dates[0]
-
-	def __getitem__(self, idx: int):
-		raise NotImplementedError()
+		self.current_origin: Dict[str, int] = task_config.origin
 
 	def get_tile_locations(self) -> List[Dict[str,int]]:
 		raise NotImplementedError()
@@ -58,8 +55,14 @@ class BaseDataset(IterableDataset):
 	def __len__(self):
 		return self.steps_per_batch
 
-	def get_batch(self, origin: Dict[str,int], batch_date: date ) -> Dict[str, xarray.DataArray]:
+	def get_batch(self, origin: Dict[str,int], batch_date: date ) -> Dict[str, xa.DataArray]:
 		raise NotImplementedError()
 
-	def get_current_batch(self) -> Dict[str, xarray.DataArray]:
+	def get_batch_array(self, origin: Dict[str,int], batch_date: date ) -> xa.DataArray:
 		raise NotImplementedError()
+
+	def get_current_batch(self) -> Dict[str, xa.DataArray]:
+		return self.get_batch(self.current_origin, self.current_date)
+
+	def get_current_batch_array(self) -> xa.DataArray:
+		return self.get_batch_array(self.current_origin, self.current_date)

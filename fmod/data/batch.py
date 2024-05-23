@@ -62,7 +62,7 @@ class MetaData(DatapipeMetaData):
     ddp_sharding: bool = True
 
 class BatchDataset(BaseDataset):
-    chanIds: Dict[str,List[str]] = {}
+
 
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
@@ -72,7 +72,6 @@ class BatchDataset(BaseDataset):
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
         self.load_base: bool = kwargs.pop('load_base', False)
         self.day_index: int = 0
-        self.current_origin: Dict[str, int] = task_config.origin
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs )
@@ -81,25 +80,15 @@ class BatchDataset(BaseDataset):
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
+        self.chanIds: List[str] = None
 
-    def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
-        print( f"get_channel_idxs: dstype={dstype}, srtype={self.srtype}, chanIds={self.chanIds}")
-        return [ self.chanIds[dstype].index(cid) for cid in channels ]
-
-    def get_current_batch(self) -> Dict[str, xa.DataArray]:
-        return self.get_batch(self.current_origin,self.current_date)
-
-    def get_current_batch_array(self) -> xa.DataArray:
-        return self.get_batch_array(self.current_origin,self.current_date)
-
+    def get_channel_idxs(self, channels: List[str] ) -> List[int]:
+        print( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
+        return [ self.chanIds.index(cid) for cid in channels ]
 
     def randomize(self) -> List[datetime]:
         random.shuffle(self.batch_dates)
         return self.batch_dates
-
-    def __getitem__(self, idx: int):
-        self.day_index = idx
-        return self.__next__()
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
@@ -114,32 +103,12 @@ class BatchDataset(BaseDataset):
         if randomize: random.shuffle(start_dates)
         return start_dates
 
-    def get_batch(self, origin: Dict[str,int], batch_date: datetime ) -> Dict[str,xa.DataArray]:
-        t0 = time.time()
-        self.srbatch.load( origin, batch_date)
-        self.current_origin = origin
-        batch_data: Dict[str, xa.DataArray] = self.extract_batch_inputs_targets(self.srbatch.current_batch, **self.task_config)
-        self.log(batch_data, t0)
-        return batch_data
-
     def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
-        self.chanIds[self.srtype] = batch_data.coords['channel'].values.tolist()
+        if self.chanIds is None:
+            self.chanIds = batch_data.coords['channel'].values.tolist()
         self.current_origin = origin
         return batch_norm(batch_data)
-
-    def __next__(self) -> Dict[str,xa.DataArray]:
-        if self.day_index >= len( self.batch_dates ):
-            raise StopIteration()
-        t0 = time.time()
-        next_date: datetime = self.get_date()
-        if self.current_date != next_date:
-            self.srbatch.load( next_date)
-            self.current_date = next_date
-        batch_inputs: Dict[str,xa.DataArray] = self.extract_batch_inputs_targets( self.srbatch.current_batch, **self.task_config)
-        self.log( batch_inputs, t0 )
-        self.day_index = self.day_index + 1
-        return batch_inputs
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
         lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")
