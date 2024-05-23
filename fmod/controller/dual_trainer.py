@@ -275,6 +275,7 @@ class ModelTrainer(object):
 			batch_dates: List[datetime] = self.input_dataset.randomize()
 			tile_locs: List[Dict[str,int]] = self.tile_grid.get_tile_locations()
 			for batch_date in batch_dates:
+				self.model_manager.memmap_batch_data( batch_date )
 				for tile_loc in tile_locs:
 					try:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)

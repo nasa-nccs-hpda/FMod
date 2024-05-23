@@ -7,6 +7,7 @@ from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig
 import importlib
+from datetime import datetime
 from fmod.data.batch import BatchDataset
 
 class SRModels:
@@ -23,6 +24,10 @@ class SRModels:
 		lgm().log(f"sample_input: shape={self.sample_input.shape}")
 		lgm().log(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.sizes['channel']
+
+	def memmap_batch_data(self, start: datetime):
+		for bdset in self.datasets.values():
+			bdset.memmap_batch_data(start)
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)

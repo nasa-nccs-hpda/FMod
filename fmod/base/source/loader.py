@@ -35,6 +35,9 @@ class SRDataLoader(object):
 	def load_const_dataset(self, origin: Dict[str,int] ):
 		raise NotImplementedError("SRDataLoader:load_const_dataset")
 
+	def memmap_batch_data( self, dates: Tuple[datetime,datetime] ):
+		raise NotImplementedError("SRDataLoader:load_const_dataset")
+
 	@classmethod
 	def rcoords( cls, dset: xa.Dataset ):
 		c = dset.coords

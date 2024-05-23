@@ -45,6 +45,7 @@ class S3ExportDataLoader(SRDataLoader):
 #		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
+		self.memmaps = Dict[str,np.memmap] = {}
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
 	# 	cdata: np.ndarray = self.ijc[c]
@@ -63,9 +64,19 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
 	# 	return dict(x=xc, y=yc) #, **tcoords)
 
+	def memmap_batch_data( self, date_range: Tuple[datetime,datetime] ):
+		self.memmaps = {}
+		for date in datelist(date_range):
+			for vid in self.varnames.keys():
+				self.memmaps[(vid,date)] = self.memmap_timeslice( vid, date )
+
+	def memmap_timeslice(self, vid: str, date: datetime ) -> np.memmap:
+		fpath = data_filepath(vid, date, self.vres)
+		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode='r')
+		return raw_data
+
 	def load_channel( self, idx: int, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
-		fpath = data_filepath(vid[0], date, self.vres)
-		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
+		raw_data: np.memmap = self.memmaps.get( (vid[0],date), self.memmap_tileslice(vid[0], date) )
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
 		if idx == 0: lgm().log( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")

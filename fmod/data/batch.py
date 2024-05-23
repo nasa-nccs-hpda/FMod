@@ -85,6 +85,9 @@ class BatchDataset(BaseDataset):
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
         self.chanIds: List[str] = None
 
+    def memmap_batch_data(self, start: datetime):
+        self.srbatch.memmap_batch_data(start)
+
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
         if self.vres == srRes.Low:  return c
         else:                       return {k: v * self.scalefactor for k, v in c.items()}
