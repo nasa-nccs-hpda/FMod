@@ -109,6 +109,8 @@ class ModelTrainer(object):
 		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 
+	def get_tile_locations(self) -> List[Dict[str,int]]:
+		return self.tile_grid.get_tile_locations()
 	def configure_grid(self):
 		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
 		grid_shape = tar.shape[-2:]
