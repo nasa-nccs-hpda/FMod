@@ -57,7 +57,6 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def cut_tile( self, data_grid: np.ndarray, origin: Dict[str,int] ):
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
-		print(f"cut_tile: tile_bnds={tile_bnds}")
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
 	def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
@@ -87,7 +86,7 @@ class S3ExportDataLoader(SRDataLoader):
 		origin = self.scale_coords(oindx)
 		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
 		result = xa.concat(timeslices, "time")
-		print( f"load_temporal_batch[{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}")
+		print( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}")
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
