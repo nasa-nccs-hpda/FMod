@@ -60,7 +60,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
 		tslice: xa.DataArray = image.isel(time=tslider.value)
-		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
+		cslice: xa.DataArray = tslice.isel(channel=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="i", y="j", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		ax.set_title(f" {tname} ")
 
