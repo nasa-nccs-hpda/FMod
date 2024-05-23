@@ -74,7 +74,7 @@ class S3ExportDataLoader(SRDataLoader):
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
-		if idx == 0: print( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}")
+		if idx == 0: print( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
 		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
@@ -84,8 +84,7 @@ class S3ExportDataLoader(SRDataLoader):
 		result = result.expand_dims(axis=0, dim=dict(time=[np.datetime64(date)]))
 		return result
 
-	def load_temporal_batch( self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		origin = self.scale_coords(oindx)
+	def load_temporal_batch( self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin,  date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
 		print( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}")
