@@ -82,14 +82,14 @@ class S3ExportDataLoader(SRDataLoader):
 		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
 		result = result.expand_dims(axis=0, dim=dict(time=[np.datetime64(date)]))
-		print( f"load_timeslice[{date}]:{result.dims}:{result.shape}, origin={oindx} (scaled({self.vres}): {origin})")
 		return result
 
 	def load_temporal_batch( self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
-		print( f"load_temporal_batch[{date_range[0]}:{date_range[1]}]: origin = {oindx} (scaled({self.vres}): {origin})")
 		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
-		return xa.concat(timeslices, "time")
+		result = xa.concat(timeslices, "time")
+		print( f"load_temporal_batch[{date_range[0]}]:{result.dims}:{result.shape}, origin={oindx} (scaled({self.vres}): {origin})")
+		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
 		return {}
