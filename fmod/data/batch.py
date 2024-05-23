@@ -83,7 +83,7 @@ class BatchDataset(BaseDataset):
         self.chanIds: List[str] = None
 
     def get_channel_idxs(self, channels: List[str] ) -> List[int]:
-        print( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
+        lgm().log( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
         return [ self.chanIds.index(cid) for cid in channels ]
 
     def randomize(self) -> List[datetime]:

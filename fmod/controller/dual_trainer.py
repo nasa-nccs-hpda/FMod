@@ -115,7 +115,7 @@ class ModelTrainer(object):
 		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
 		grid_shape = tar.shape[-2:]
 		gridops = GridOps(*grid_shape)
-		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}", display=True)
+		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}")
 		lmax = tar.shape[-2]
 		return grid_shape, gridops, lmax
 
@@ -374,4 +374,4 @@ class ModelTrainer(object):
 			prd,targ = self.apply_network(inp,target)
 			loss: torch.Tensor = self.loss(prd, targ)
 			filtered_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
-			return filtered_input,  npa(target),  npa(prd), loss.item()
+			return filtered_input,  npa(targ),  npa(prd), loss.item()

@@ -20,8 +20,8 @@ class SRModels:
 		self.sample_input:  xa.DataArray = input_dataset.get_current_batch_array()
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array()
 		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
-		print(f"sample_input: shape={self.sample_input.shape}")
-		print(f"sample_target: shape={self.sample_target.shape}")
+		lgm().log(f"sample_input: shape={self.sample_input.shape}")
+		lgm().log(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.sizes['channel']
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
@@ -29,11 +29,12 @@ class SRModels:
 
 	def get_sample_target(self) -> xa.DataArray:
 		result =  self.sample_target.isel(channel=self.cids) if (len(self.cids) < self.sample_target.sizes['channel']) else self.sample_target
-		print(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target.dims}{self.sample_target.shape}, result{result.shape}", flush=True)
+		lgm().log(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target.dims}{self.sample_target.shape}, result{result.shape}")
 		return result
+
 	def get_sample_input(self) -> xa.DataArray:
 		result =  self.sample_input.isel(channel=self.cids) if (len(self.cids) < self.sample_input.sizes['channel']) else self.sample_input
-		print(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}", flush=True)
+		lgm().log(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}")
 		return result
 
 	def filter_targets(self, data_array: np.ndarray ) -> np.ndarray:

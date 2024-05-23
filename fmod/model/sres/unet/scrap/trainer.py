@@ -52,7 +52,7 @@ class ModelTrainer(object):
 		tar: xarray.DataArray = sample_results['target']
 		self.grid_shape = tar.shape[-2:]
 		self.gridops = GridOps(*self.grid_shape)
-		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}", display=True)
+		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}")
 		self.lmax = tar.shape[-2]
 		self._sht, self._isht = None, None
 		self.scheduler = None
