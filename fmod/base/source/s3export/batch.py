@@ -73,6 +73,7 @@ class S3ExportDataLoader(SRDataLoader):
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
 		tile_data: np.ndarray = self.cut_tile( raw_data, origin )
 		tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
+		print( f"load_channel: tile_data{tile_data.shape}")
 		result = xa.DataArray( tile_data, dims=['j', 'i'], coords=dict(**tc, **tc['x'].coords, **tc['y'].coords), attrs=dict( fullname=vid[1] ) )
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 

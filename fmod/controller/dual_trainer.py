@@ -290,7 +290,6 @@ class ModelTrainer(object):
 					except Exception as e:
 						print( f"\n !!!!! Error processing tile_loc={tile_loc}, batch_date={batch_date} !!!!! {e}")
 						print( traceback.format_exc() )
-						raise e
 
 			if self.scheduler is not None:
 				self.scheduler.step()
