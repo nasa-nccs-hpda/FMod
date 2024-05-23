@@ -282,7 +282,7 @@ class ModelTrainer(object):
 						target: Tensor   = train_data['target'].squeeze()
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
-							print( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
 							lgm().log(f" ** Loss({batch_date}:{biter}:{list(tile_loc.values())})-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True )
 

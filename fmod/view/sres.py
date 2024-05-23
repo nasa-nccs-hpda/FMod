@@ -70,7 +70,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: List[str] = sample.attrs['channels']
+	channels: List[str] = sample.coords['channels'].values.tolist()
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )

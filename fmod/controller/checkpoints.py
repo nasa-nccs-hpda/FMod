@@ -24,7 +24,7 @@ class CheckpointManager(object):
 
 	def save_checkpoint(self, epoch: int, loss: float ):
 		cpath = self._save_state( epoch, loss )
-		lgm().log(f"Saving current model to {cpath}", display=True)
+		lgm().log(f"     Saving current model to {cpath}", display=True)
 		if loss < self.min_loss:
 			cppath = self._save_state( epoch, loss, "best" )
 			lgm().log(f"   ---- Saving best model (loss={loss:.4f}) to {cppath}", display=True )
