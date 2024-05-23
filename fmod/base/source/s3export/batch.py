@@ -41,8 +41,8 @@ class S3ExportDataLoader(SRDataLoader):
 	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
 		SRDataLoader.__init__(self, task_config, vres )
 		self.coords_dataset: xa.Dataset = xa.open_dataset( coords_filepath(), **kwargs)
-		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
-		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
+#		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
+#		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = self.scale_coords( self.task.tile_size )
 		self.varnames: Dict[str, str] = self.task.input_variables
 
@@ -50,31 +50,31 @@ class S3ExportDataLoader(SRDataLoader):
 		if self.vres == srRes.Low:  return c
 		else:                       return { k: v * self.scalefactor for k, v in c.items() }
 
-	def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
-		origin = self.scale_coords(oindx)
-		cdata: np.ndarray = self.ijc[c]
-		return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
+	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
+	# 	origin = self.scale_coords(oindx)
+	# 	cdata: np.ndarray = self.ijc[c]
+	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
 	def cut_tile( self, data_grid: np.ndarray, origin: Dict[str,int] ):
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
-	def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
-		origin = self.scale_coords(oindx)
-		tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
-	#	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
-	#	xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
-		xc = xa.DataArray(tcoords['i'].astype(np.float32), dims=['i'], coords=dict(i=tcoords['i']))
-		yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
-		return dict(x=xc, y=yc) #, **tcoords)
+	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
+	# 	origin = self.scale_coords(oindx)
+	# 	tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
+	# #	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
+	# #	xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
+	# 	xc = xa.DataArray(tcoords['i'].astype(np.float32), dims=['i'], coords=dict(i=tcoords['i']))
+	# 	yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
+	# 	return dict(x=xc, y=yc) #, **tcoords)
 
 	def load_channel( self, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
 		tile_data: np.ndarray = self.cut_tile( raw_data, origin )
-		tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
+	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
 		print( f"load_channel: tile_data{tile_data.shape}")
-		result = xa.DataArray( tile_data, dims=['j', 'i'], coords=dict(**tc, **tc['x'].coords, **tc['y'].coords), attrs=dict( fullname=vid[1] ) )
+		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
 	def load_timeslice( self, origin: Dict[str,int], date: datetime ) -> xa.DataArray:
