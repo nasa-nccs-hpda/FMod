@@ -13,6 +13,7 @@ from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from fmod.base.io.loader import ncFormat
 from fmod.base.util.ops import remove_filepath
+from fmod.base.source.loader import srRes
 
 _SEC_PER_HOUR = 3600
 _HOUR_PER_DAY = 24
@@ -217,10 +218,11 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs):
 		self.vres = vres
 		self.name = "input" if self.vres == "low" else "target"
-		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, vres, **kwargs )
+		self.tile_size: Dict[str, int] = tile_size
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, vres, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
 		self.current_origin = None

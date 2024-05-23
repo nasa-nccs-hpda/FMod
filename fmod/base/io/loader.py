@@ -39,6 +39,8 @@ class BaseDataset(object):
 		self.hours_per_step: int = task_config.hours_per_step
 		self.steps_per_day = 24 // self.hours_per_step
 		self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
+		self.downscale_factors: List[int] = cfg().model.downscale_factors
+		self.scalefactor = math.prod(self.downscale_factors)
 		self.chanIds: Dict[str,List[str]] = {}
 		self.current_date: date = self.train_dates[0]
 		self.current_origin: Dict[str, int] = task_config.origin

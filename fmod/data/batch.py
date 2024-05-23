@@ -11,6 +11,7 @@ from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
+from fmod.base.source.loader import srRes
 from fmod.base.util.config import cfg
 import pandas as pd
 
@@ -66,7 +67,8 @@ class BatchDataset(BaseDataset):
 
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
-        self.srtype = 'input' if vres == "high" else 'target'
+        self.vres: srRes = srRes.from_config(vres)
+        self.srtype = 'input' if self.vres == srRes.High else 'target'
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
@@ -74,13 +76,18 @@ class BatchDataset(BaseDataset):
         self.day_index: int = 0
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
-        self.srbatch: SRBatch = SRBatch( task_config, vres, **kwargs )
+        self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
+        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, self.vres, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
         self.chanIds: List[str] = None
+
+    def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
+        if self.vres == srRes.Low:  return c
+        else:                       return {k: v * self.scalefactor for k, v in c.items()}
 
     def get_channel_idxs(self, channels: List[str] ) -> List[int]:
         lgm().log( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
@@ -103,7 +110,8 @@ class BatchDataset(BaseDataset):
         if randomize: random.shuffle(start_dates)
         return start_dates
 
-    def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
+    def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
+        origin = self.scale_coords(oindx)
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         if self.chanIds is None:
             self.chanIds = batch_data.coords['channel'].values.tolist()

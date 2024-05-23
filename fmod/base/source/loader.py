@@ -22,11 +22,9 @@ class srRes(Enum):
 		if sval == "high": return cls.High
 class SRDataLoader(object):
 
-	def __init__(self, task_config: DictConfig, vres: str ):
-		self.vres: srRes = srRes.from_config(vres)
+	def __init__(self, task_config: DictConfig, vres: srRes ):
+		self.vres: srRes = vres
 		self.task = task_config
-		self.downscale_factors: List[int] = cfg().model.downscale_factors
-		self.scalefactor = math.prod(self.downscale_factors)
 
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
@@ -43,10 +41,10 @@ class SRDataLoader(object):
 		return '[' + ','.join([f"{k}:{c[k].size}" for k in c.keys()]) + ']'
 
 	@classmethod
-	def get_loader(cls, task_config: DictConfig, vres: str, ** kwargs ) -> 'SRDataLoader':
+	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, ** kwargs ) -> 'SRDataLoader':
 		if task_config.dataset == "LLC4320":
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
-			return S3ExportDataLoader( task_config, vres, **kwargs )
+			return S3ExportDataLoader( task_config, tile_size, vres, **kwargs )
 		elif task_config.dataset == "merra2":
 			return
 

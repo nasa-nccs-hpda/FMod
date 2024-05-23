@@ -38,20 +38,15 @@ def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 
 class S3ExportDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, vres: str, **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs):
 		SRDataLoader.__init__(self, task_config, vres )
 		self.coords_dataset: xa.Dataset = xa.open_dataset( coords_filepath(), **kwargs)
 #		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
 #		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
-		self.tile_size: Dict[str,int] = self.scale_coords( self.task.tile_size )
+		self.tile_size: Dict[str,int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 
-	def scale_coords(self, c: Dict[str,int]) -> Dict[str,int]:
-		if self.vres == srRes.Low:  return c
-		else:                       return { k: v * self.scalefactor for k, v in c.items() }
-
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
-	# 	origin = self.scale_coords(oindx)
 	# 	cdata: np.ndarray = self.ijc[c]
 	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
@@ -61,7 +56,6 @@ class S3ExportDataLoader(SRDataLoader):
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
 	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
-	# 	origin = self.scale_coords(oindx)
 	# 	tcoords: Dict[str,np.ndarray] = { c:  self.cut_coord( origin, c ) for idx, c in enumerate(['i','j']) }
 	# #	xycoords: Dict[str,xa.DataArray] = { cv: xa.DataArray( self.cut_tile( self.xyc[cv].values, origin ), dims=['j','i'], coords=tcoords ) for cv in ['x','y'] }
 	# #	xycoords: Dict[str, xa.DataArray] = {cv[0]: xa.DataArray(tcoords[cv[1]].astype(np.float32), dims=[cv[1]], coords=tcoords) for cv in [('x','i'), ('y','j')]}
@@ -93,13 +87,14 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
 		return {}
 
-	def load_batch(self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		origin = self.scale_coords(oindx)
+	def load_batch(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
 		return darray
 
 	def load_const_dataset(self, origin: Dict[str,int] )-> Optional[xa.DataArray]:
 		return None
+
+
 
 
 
