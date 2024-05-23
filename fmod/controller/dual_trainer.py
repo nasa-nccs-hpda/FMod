@@ -49,7 +49,10 @@ def shuffle( data: Tensor ) -> Tensor:
 	idx = torch.randperm(data.shape[0])
 	return data[idx,...]
 
-def ts( t: Tensor ) -> str: return f"{t.dim()}{t.shape}"
+def tas( ta: Any ) -> str:
+	return list(ta) if (type(ta) is torch.Size) else ta
+def ts( t: Tensor ) -> str:
+	return f"{tas(t.dim())}{tas(t.shape)}"
 
 class TileGrid(object):
 
@@ -308,7 +311,7 @@ class ModelTrainer(object):
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		batch_perm: Tensor = torch.randperm( input_data.shape[0] )
 		net_input: Tensor  = input_data[ batch_perm, ... ]
-		net_target: Tensor = target_data[ batch_perm, ... ]
+		target: Tensor = target_data[ batch_perm, ... ]
 		product: TensorOrTensors = self.model( net_input )
 		if self.channel_idxs is None:
 			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
@@ -319,6 +322,7 @@ class ModelTrainer(object):
 		else:
 			result = [ torch.select(prod,1, self.channel_idxs) for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
+		net_target = torch.select( target,1, self.channel_idxs )
 		return result, net_target
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
