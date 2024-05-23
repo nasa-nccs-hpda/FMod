@@ -55,9 +55,9 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	cdata: np.ndarray = self.ijc[c]
 	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
-	def cut_tile( self, data_grid: np.ndarray, origin: Dict[str,int] ):
+	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ):
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
-		print( f"cut_tile: tile_bnds = {tile_bnds}")
+		if idx == 0: print( f"     ------------------>> cut_tile: tile_bnds = {tile_bnds}")
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
 	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
@@ -69,24 +69,24 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
 	# 	return dict(x=xc, y=yc) #, **tcoords)
 
-	def load_channel( self, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
+	def load_channel( self, idx: int, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
 		fpath = data_filepath(vid[0], date, self.vres)
 		raw_data: np.memmap = np.load( fpath, allow_pickle=True, mmap_mode='r' )
-		tile_data: np.ndarray = self.cut_tile( raw_data, origin )
+		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
-		print( f"load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}")
+		if idx == 0: print( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}")
 		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
-	def load_timeslice( self, origin: Dict[str,int], date: datetime ) -> xa.DataArray:
-		arrays: List[xa.DataArray] = [ self.load_channel( origin, vid, date ) for vid in self.varnames.items() ]
+	def load_timeslice( self, idx: int, origin: Dict[str,int], date: datetime ) -> xa.DataArray:
+		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
 		result = result.expand_dims(axis=0, dim=dict(time=[np.datetime64(date)]))
 		return result
 
 	def load_temporal_batch( self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		origin = self.scale_coords(oindx)
-		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
+		timeslices = [ self.load_timeslice( idx, origin,  date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
 		print( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}")
 		return result

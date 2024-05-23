@@ -49,7 +49,7 @@ def shuffle( data: Tensor ) -> Tensor:
 	idx = torch.randperm(data.shape[0])
 	return data[idx,...]
 
-def ts( t: Tensor ) -> str: return f"{list(t.dim())}{list(t.shape)}"
+def ts( t: Tensor ) -> str: return f"{t.dim()}{t.shape}"
 
 class TileGrid(object):
 
