@@ -85,10 +85,9 @@ class S3ExportDataLoader(SRDataLoader):
 		return result
 
 	def load_temporal_batch( self, oindx: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		origin = self.scale_coords(oindx)
-		timeslices = [ self.load_timeslice(origin,  date ) for date in datelist( date_range ) ]
+		timeslices = [ self.load_timeslice(oindx,  date ) for date in datelist( date_range ) ]
 		result = xa.concat(timeslices, "time")
-		print( f"load_temporal_batch[{date_range[0]}]:{result.dims}:{result.shape}, origin={oindx} (scaled({self.vres}): {origin})")
+		print( f"load_temporal_batch[{date_range[0]}]:{result.dims}:{result.shape}, origin={oindx}")
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
