@@ -62,7 +62,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
-	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
+	ims, labels, ptypes, nvars = {}, {}, [''], 1
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
@@ -78,32 +78,33 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		for icol in range(ncols):
 			ax = axs[ irow, icol ]
 			if icol == ncols-1:
-				label = ['targets','predictions'][irow]
-				image = images[ label ]
+				labels[(irow,icol)] = ['targets','predictions'][irow]
+				image = images[ labels[(irow,icol)] ]
 			else:
-				label = ['input', 'upsampled'][irow]
-				image = images[label]
+				labels[(irow,icol)] = ['input', 'upsampled'][irow]
+				image = images[ labels[(irow,icol)] ]
 				image = image.isel( channel=icol )
 			ax.set_aspect(0.5)
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-			tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 			# if irow == 1:
 			# 	rms_errors = RMSE(image-target)
 			# 	rmserror: str = f" RMSE={rms_errors:.3f}"
 			# else: rmserror = ""
-			ax.set_title(f" {label} {rmserror}")
+			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 	@exception_handled
 	def time_update(sindex: int):
 		fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}")
-		for itype, (tname, image) in enumerate(images.items()):
-			ax1 = axs[ itype//2, itype%2 ]
-			tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-			ims[itype].set_data( tslice1.values.squeeze() )
-			rmserror = "" # if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
-			ax1.set_title(f"{tname} {rmserror}")
+		for irow in [0, 1]:
+			for icol in range(ncols):
+				ax1 = axs[ irow, icol ]
+				tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+				ims[(irow,icol)].set_data( tslice1.values.squeeze() )
+				rmserror = "" # if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
+				ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
 		fig.canvas.draw_idle()
 
 
