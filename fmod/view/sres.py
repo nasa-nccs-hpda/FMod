@@ -93,7 +93,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype//2, itype%2 ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 			ax1.set_title(f"{tname} {rmserror}")
@@ -106,7 +106,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype//2, itype%2 ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, batch=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values )
 			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 			ax1.set_title(f"{tname} {rmserror}")
