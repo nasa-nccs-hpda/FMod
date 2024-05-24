@@ -94,7 +94,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-			ims[itype].set_data( tslice1.values )
+			ims[itype].set_data( tslice1.values.squeeze() )
 			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 			ax1.set_title(f"{tname} {rmserror}")
 		fig.canvas.draw_idle()
@@ -107,7 +107,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype//2, itype%2 ]
 			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-			ims[itype].set_data( tslice1.values )
+			ims[itype].set_data( tslice1.values.squeeze() )
 			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 			ax1.set_title(f"{tname} {rmserror}")
 		fig.canvas.draw_idle()
