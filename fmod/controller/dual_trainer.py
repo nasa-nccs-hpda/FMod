@@ -294,8 +294,8 @@ class ModelTrainer(object):
 				for tile_loc in tile_locs:
 					try:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-						inp: Tensor = train_data['input'].squeeze()
-						target: Tensor   = train_data['target'].squeeze()
+						inp: Tensor = train_data['input']
+						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
 
