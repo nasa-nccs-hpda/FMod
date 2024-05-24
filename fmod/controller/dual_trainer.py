@@ -250,10 +250,10 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_current_input(self) -> np.ndarray:
-		return None if (self.current_input is None) else npa( self.get_target_channels( self.current_input ) )
+		return None if (self.current_input is None) else npa( self.current_input )
 
 	def get_current_upsampled(self) -> np.ndarray:
-		return None if (self.current_upsampled is None) else npa( self.get_target_channels( self.current_upsampled ) )
+		return None if (self.current_upsampled is None) else npa( self.current_upsampled )
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
 

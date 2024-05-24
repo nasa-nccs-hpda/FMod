@@ -65,55 +65,48 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: List[str] = sample.coords['channel'].values.tolist()
-	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
-	target: xa.DataArray = images['targets']
-	rms_errors: Dict[str,float] = {}
+	ncols = sample.shape[1]+1
+	rmserror = ""
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
+		fig, axs = plt.subplots(nrows=2, ncols=ncols, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
 
-	for itype, (tname, image) in enumerate(images.items()):
-		ax = axs[ itype//2, itype%2 ]
-		ax.set_aspect(0.5)
-		vrange = cscale( image, 2.0 )
-		tslice: xa.DataArray = image.isel(time=tslider.value)
-		cslice: xa.DataArray = tslice.isel(channel=cslider.value).fillna( 0.0 )
-		ims[itype] =  cslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-		if itype >= 2: rms_errors[tname] = RMSE(image-target)
-		rmserror: str = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
-		ax.set_title(f" {tname} {rmserror}")
+	for irow in [0,1]:
+		for icol in range(ncols):
+			ax = axs[ irow, icol ]
+			if icol == ncols-1:
+				label = ['targets','predictions'][irow]
+				image = images[ label ]
+			else:
+				label = ['input', 'upsampled'][irow]
+				image = images[label]
+				image = image.isel( channel=icol )
+			ax.set_aspect(0.5)
+			vrange = cscale( image, 2.0 )
+			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+			tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			# if irow == 1:
+			# 	rms_errors = RMSE(image-target)
+			# 	rmserror: str = f" RMSE={rms_errors:.3f}"
+			# else: rmserror = ""
+			ax.set_title(f" {label} {rmserror}")
 
 	@exception_handled
 	def time_update(sindex: int):
-		cindex = cslider.value
-		fig.suptitle(f'Timestep: {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"time_update: tindex={sindex}, cindex={cindex}")
+		fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
+		lgm().log( f"time_update: tindex={sindex}")
 		for itype, (tname, image) in enumerate(images.items()):
 			ax1 = axs[ itype//2, itype%2 ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+			tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 			ims[itype].set_data( tslice1.values.squeeze() )
-			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
+			rmserror = "" # if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
 			ax1.set_title(f"{tname} {rmserror}")
 		fig.canvas.draw_idle()
 
-	@exception_handled
-	def channel_update(cindex: int):
-		sindex = tslider.value
-		fig.suptitle(f'Forecast day {sindex}, Channel: {channels[cindex]}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"level_update: cindex={cindex}, tindex={tslider.value}")
-		for itype, (tname, image) in enumerate(images.items()):
-			ax1 = axs[ itype//2, itype%2 ]
-			tslice1: xa.DataArray =  image.isel( channels=cindex, time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-			ims[itype].set_data( tslice1.values.squeeze() )
-			rmserror = "" if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
-			ax1.set_title(f"{tname} {rmserror}")
-		fig.canvas.draw_idle()
 
 	tslider.set_callback( time_update )
-	cslider.set_callback( channel_update )
-	fig.suptitle(f' ** Channel: {channels[0]}', fontsize=10, va="top", y=1.0 )
-	return ipw.VBox([fig.canvas,tslider, cslider])
+	fig.suptitle(f' ** ', fontsize=10, va="top", y=1.0 )
+	return ipw.VBox([fig.canvas,tslider])
 

@@ -37,8 +37,10 @@ class SRModels:
 		lgm().log(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target.dims}{self.sample_target.shape}, result{result.shape}")
 		return result
 
-	def get_sample_input(self) -> xa.DataArray:
-		result =  self.sample_input.isel(channel=self.cids) if (len(self.cids) < self.sample_input.sizes['channel']) else self.sample_input
+	def get_sample_input(self, targets_only: bool = False) -> xa.DataArray:
+		result = self.sample_input
+		if targets_only and (len(self.cids) < self.sample_input.sizes['channel']):
+			result =  self.sample_input.isel(channel=self.cids)
 		lgm().log(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}")
 		return result
 

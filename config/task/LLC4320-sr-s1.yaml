@@ -9,11 +9,11 @@ downscale_method: 'interp:linear'
 training_version: '{name}-{dataset}.{scenario}'
 
 start_date:  "9/13/2011"
-days_per_batch: 16
+days_per_batch: 4
 hours_per_step: 4
 
-nbatches: 24
-batch_iter: 4
+nbatches: 1
+batch_iter: 1
 nepochs: 1
 lr: 1e-3
 
