@@ -23,7 +23,7 @@ tile_grid: { x: 4, y: 4 }
 conform_to_grid: false
 
 coords: { 'x': 'XC', 'y': 'YC', z: '' }
-input_variables: { 'sst': sea_surface_temperature, 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
+input_variables: { 'sst': sea_surface_temperature }
 target_variables: [ 'sst' ]
 forcing_variables: []
 
