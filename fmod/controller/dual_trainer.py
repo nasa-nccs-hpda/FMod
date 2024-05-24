@@ -248,7 +248,7 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_current_input(self) -> np.ndarray:
-		return None if (self.current_input is None) else npa( self.current_input )
+		return None if (self.current_input is None) else npa( torch.select( self.current_input,1, self.channel_idxs) )
 
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
