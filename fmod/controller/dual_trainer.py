@@ -108,6 +108,9 @@ class ModelTrainer(object):
 		self.scale_factor = math.prod(self.downscale_factors)
 		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
+		self.current_input: torch.Tensor = None
+		self.current_target: torch.Tensor = None
+		self.current_product: TensorOrTensors = None
 
 	def get_tile_locations(self) -> List[Dict[str,int]]:
 		return self.tile_grid.get_tile_locations()
@@ -244,6 +247,15 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
+	def get_current_input(self) -> np.ndarray:
+		return None if (self.current_input is None) else npa( self.current_input )
+
+	def get_current_target(self) -> np.ndarray:
+		return None if (self.current_target is None) else npa( self.current_target )
+
+	def get_current_product(self) -> np.ndarray:
+		return None if (self.current_product is None) else npa( self.current_product )
+
 	@exception_handled
 	def train(self, **kwargs ):
 		seed = kwargs.get('seed',333)
@@ -286,7 +298,9 @@ class ModelTrainer(object):
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
 							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}]-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
-
+							self.current_input = inp
+							self.current_target = targ
+							self.current_product = prd
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
 							self.optimizer.step()
