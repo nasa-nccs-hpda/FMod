@@ -45,7 +45,7 @@ class S3ExportDataLoader(SRDataLoader):
 #		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
-		self.memmaps = Dict[str,np.memmap] = {}
+		self.memmaps: Dict[Tuple[str,datetime],np.memmap] = {}
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
 	# 	cdata: np.ndarray = self.ijc[c]
@@ -76,7 +76,7 @@ class S3ExportDataLoader(SRDataLoader):
 		return raw_data
 
 	def load_channel( self, idx: int, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
-		raw_data: np.memmap = self.memmaps.get( (vid[0],date), self.memmap_tileslice(vid[0], date) )
+		raw_data: np.memmap = self.memmaps.get( (vid[0],date), self.memmap_timeslice(vid[0], date) )
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
 		if idx == 0: lgm().log( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
