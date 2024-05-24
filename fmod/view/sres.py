@@ -62,7 +62,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
-	ims, labels, ptypes, nvars = {}, {}, [''], 1
+	ims, labels, rms_errors = {}, {}, {}
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
@@ -77,6 +77,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	for irow in [0,1]:
 		for icol in range(ncols):
 			ax = axs[ irow, icol ]
+			rmserror = ""
 			if icol == ncols-1:
 				labels[(irow,icol)] = ['targets','predictions'][irow]
 				image = images[ labels[(irow,icol)] ]
@@ -84,14 +85,12 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 				labels[(irow,icol)] = ['input', 'upsampled'][irow]
 				image = images[ labels[(irow,icol)] ]
 				image = image.isel( channel=icol )
+				if irow == 2:
+					rmserror = f"{ RMSE( image - images[ labels[(0, icol)] ] ) :.3f}"
 			ax.set_aspect(0.5)
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			# if irow == 1:
-			# 	rms_errors = RMSE(image-target)
-			# 	rmserror: str = f" RMSE={rms_errors:.3f}"
-			# else: rmserror = ""
 			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 	@exception_handled
