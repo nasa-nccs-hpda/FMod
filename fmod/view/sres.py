@@ -69,7 +69,6 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
 	ncols = sample.shape[1]+1
-	rmserror = ""
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=2, ncols=ncols, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
@@ -85,12 +84,13 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 				labels[(irow,icol)] = ['input', 'upsampled'][irow]
 				image = images[ labels[(irow,icol)] ]
 				image = image.isel( channel=icol )
-				if irow == 2:
-					rmserror = f"{ RMSE( image - images[ labels[(0, icol)] ] ) :.3f}"
 			ax.set_aspect(0.5)
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			if (irow == 1) and (icol != ncols-1):
+				target = images[labels[(0, icol)]].isel(channel=icol).isel(time=tslider.value).squeeze(drop=True)
+				rmserror = f"{RMSE(tslice - target):.3f}"
 			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 	@exception_handled
@@ -100,9 +100,19 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		for irow in [0, 1]:
 			for icol in range(ncols):
 				ax1 = axs[ irow, icol ]
+				rmserror = ""
+				if icol == ncols - 1:
+					labels[(irow, icol)] = ['targets', 'predictions'][irow]
+					image = images[labels[(irow, icol)]]
+				else:
+					labels[(irow, icol)] = ['input', 'upsampled'][irow]
+					image = images[labels[(irow, icol)]]
+					image = image.isel(channel=icol)
 				tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 				ims[(irow,icol)].set_data( tslice1.values.squeeze() )
-				rmserror = "" # if (itype < 2) else f" RMSE={rms_errors[tname]:.3f}"
+				if (irow == 1) and (icol != ncols - 1):
+					target = images[labels[(0, icol)]].isel(channel=icol).isel(time=tslider.value).squeeze(drop=True)
+					rmserror = f"{RMSE(tslice1 - target):.3f}"
 				ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
 		fig.canvas.draw_idle()
 
