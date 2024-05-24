@@ -39,7 +39,7 @@ def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
 	return xarray.concat( members, dim="batch" )
 
 def npa( tensor: Tensor ) -> np.ndarray:
-	return tensor.detach().cpu().numpy().squeeze()
+	return tensor.detach().cpu().numpy()
 
 def fmtfl( flist: List[float] ) -> str:
 	svals = ','.join( [ f"{fv:.4f}" for fv in flist ] )
