@@ -107,9 +107,8 @@ def cfg_date( csection: str ) -> date:
     return date( dcfg.year, dcfg.month, dcfg.day )
 
 def start_date( task_config )-> datetime:
-    toks = [ int(tok) for tok in reversed(task_config.start_date.split("/")) ]
-    print( f"Task start date: {task_config.start_date}: {toks}")
-    return  datetime( *toks )
+    toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+    return  datetime( month=toks[0], day=toks[1], year=toks[2] )
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
     differences = np.abs(array - target_value)
