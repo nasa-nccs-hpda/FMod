@@ -45,18 +45,19 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 	return (fvar-stats[ statnames['mean'] ]) / stats[ statnames['std'] ]
 
 
-def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.ndarray, sample_input: xa.DataArray, sample_target: xa.DataArray ) -> Dict[str,xa.DataArray]:
+def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.ndarray, upsampled: np.ndarray, sample_input: xa.DataArray, sample_target: xa.DataArray ) -> Dict[str,xa.DataArray]:
 
 	print(f"sample_input shape = {sample_input.shape}")
 	print(f"sample_target shape = {sample_target.shape}")
 	print( f"inputs shape = {inputs.shape}")
 	print(f"targets shape = {targets.shape}")
 	print(f"predictions shape = {predictions.shape}")
+	print(f"upsampled shape = {upsampled.shape}")
 
 	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),
 					targets=     sample_target.copy( data=targets.reshape(sample_target.shape) ),
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
-					upsampled=   sample_target.copy( data=upsampled_input.reshape(sample_target.shape) ) )
+					upsampled=   sample_target.copy( data=upsampled.reshape(sample_target.shape) ) )
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
