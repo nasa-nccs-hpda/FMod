@@ -334,6 +334,7 @@ class ModelTrainer(object):
 		batch_perm: Tensor = torch.randperm( input_data.shape[0] )
 		net_input: Tensor  = input_data[ batch_perm, ... ]
 		target: Tensor = target_data[ batch_perm, ... ]
+		print( f"apply_network, input shape = {net_input.shape}, target shape = {target.shape}")
 		product: TensorOrTensors = self.model( net_input )
 		if self.channel_idxs is None:
 			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
