@@ -106,9 +106,11 @@ class ModelTrainer(object):
 		self.train_dates = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
+		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
 		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.current_input: torch.Tensor = None
+		self.current_upsampled: torch.Tensor = None
 		self.current_target: torch.Tensor = None
 		self.current_product: TensorOrTensors = None
 
@@ -248,8 +250,10 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_current_input(self) -> np.ndarray:
-		return None if (self.current_input is None) else npa( torch.select( self.current_input,1, self.channel_idxs) )
+		return None if (self.current_input is None) else npa( self.get_target_channels( self.current_input ) )
 
+	def get_current_upsampled(self) -> np.ndarray:
+		return None if (self.current_upsampled is None) else npa( self.get_target_channels( self.current_upsampled ) )
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
 
@@ -287,7 +291,6 @@ class ModelTrainer(object):
 			batch_dates: List[datetime] = self.input_dataset.randomize()
 			tile_locs: List[Dict[str,int]] = self.tile_grid.get_tile_locations()
 			for batch_date in batch_dates:
-				self.model_manager.memmap_batch_data( batch_date )
 				for tile_loc in tile_locs:
 					try:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
@@ -295,10 +298,12 @@ class ModelTrainer(object):
 						target: Tensor   = train_data['target'].squeeze()
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
+
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
 							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}]-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
+							self.current_upsampled = self.upsampler(inp)
 							self.current_target = targ
 							self.current_product = prd
 							self.optimizer.zero_grad(set_to_none=True)
@@ -334,13 +339,17 @@ class ModelTrainer(object):
 			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
 			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		if type(product) == torch.Tensor:
-			result = torch.select(product,1, self.channel_idxs)
+			result = self.get_target_channels(product)
 	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
-			result = [ torch.select(prod,1, self.channel_idxs) for prod in product ]
+			result = [ self.get_target_channels(prod) for prod in product ]
 	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
-		net_target = torch.select( target,1, self.channel_idxs )
+		net_target = self.get_target_channels( target )
 		return result, net_target
+
+	def get_target_channels(self, batch_data: Tensor) -> Tensor:
+		channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
+		if len(channels) == 1: return channels[0]
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
