@@ -56,29 +56,30 @@ def ts( t: Tensor ) -> str:
 
 class TileGrid(object):
 
-    def __init__(self, ):
-        self.origin: Dict[str,int] = cfg().task.origin
-        self.tile_size: Dict[str,int] = cfg().task.tile_size
-        self.tile_grid: Dict[str, int] = cfg().task.get( 'tile_grid', dict(x=1,y=1) )
-        downscale_factors: List[int] = cfg().model.downscale_factors
-        self.downscale_factor = math.prod(downscale_factors)
+	def __init__(self, ):
+		self.origin: Dict[str,int] = cfg().task.origin
+		self.tile_size: Dict[str,int] = cfg().task.tile_size
+		self.tile_grid: Dict[str, int] = cfg().task.get( 'tile_grid', dict(x=1,y=1) )
+		self.tlocs: List[Dict[str,int]] = []
+		downscale_factors: List[int] = cfg().model.downscale_factors
+		self.downscale_factor = math.prod(downscale_factors)
 
-    def get_tile_locations(self) -> List[Dict[str,int]]:
-        tlocs = []
-        for ix in range( self.tile_grid['x'] ):
-            for iy in range(self.tile_grid['y']):
-                tlocs.append(  { d: self.origin[d] + self.cdim(ix,iy,d)*self.tile_size[d] for d in ['x','y']} )
-        random.shuffle(tlocs)
-        print( f"\n get_tile_locations: tlocs={tlocs} \n")
-        return tlocs
+	def get_tile_locations(self, randomize=False) -> List[Dict[str, int]]:
+		if len(self.tlocs) == 0:
+			for ix in range(self.tile_grid['x']):
+				for iy in range(self.tile_grid['y']):
+					tloc = {d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] for d in ['x', 'y']}
+					self.tlocs.append(tloc)
+		if randomize: random.shuffle(self.tlocs)
+		return self.tlocs
 
-    @classmethod
-    def cdim(cls, ix: int, iy: int, dim: str) -> int:
-        if dim == 'x': return ix
-        if dim == 'y': return iy
+	@classmethod
+	def cdim(cls, ix: int, iy: int, dim: str) -> int:
+		if dim == 'x': return ix
+		if dim == 'y': return iy
 
-    def downscale(self, origin: Dict[str,int] ):
-        return { d: v*self.downscale_factor for d,v in origin.items() }
+def downscale(self, origin: Dict[str,int] ):
+	return { d: v*self.downscale_factor for d,v in origin.items() }
 
 class ModelTrainer(object):
 
@@ -193,7 +194,7 @@ class ModelTrainer(object):
 		return torch.mean(error)
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
-	#	print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
+		#	print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
 		if cfg().model.loss_fn == 'l2':
 			loss = self.l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
@@ -221,11 +222,11 @@ class ModelTrainer(object):
 			loss = self.single_product_loss(products[-1], target)
 		else:
 			targets: List[Tensor] = self.get_multiscale_targets(target)
-		#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-		#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
+			#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
+			#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
-		#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
+				#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				loss = layer_loss if (loss is None) else (loss + layer_loss)
 				self.layer_losses.append( layer_loss.item() )
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
@@ -288,7 +289,7 @@ class ModelTrainer(object):
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			self.model.train()
-			batch_dates: List[datetime] = self.input_dataset.randomize()
+			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			tile_locs: List[Dict[str,int]] = self.tile_grid.get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
@@ -341,10 +342,10 @@ class ModelTrainer(object):
 			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		if type(product) == torch.Tensor:
 			result = self.get_target_channels(product)
-	#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
 			result = [ self.get_target_channels(prod) for prod in product ]
-	#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
+		#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		net_target = self.get_target_channels( target )
 		return result, net_target
 

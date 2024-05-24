@@ -96,9 +96,10 @@ class BatchDataset(BaseDataset):
         lgm().log( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
         return [ self.chanIds.index(cid) for cid in channels ]
 
-    def randomize(self) -> List[datetime]:
-        random.shuffle(self.batch_dates)
-        return self.batch_dates
+    def get_batch_dates(self, randomize=False ) -> List[datetime]:
+        dates = self.batch_dates.copy()
+        if randomize: random.shuffle(dates)
+        return dates
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
