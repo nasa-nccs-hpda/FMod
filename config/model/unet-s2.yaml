@@ -1,0 +1,9 @@
+name: ???
+nfeatures: 64
+downscale_factors: [2]
+unet_depth: 4
+loss_fn: l2
+
+
+
+
