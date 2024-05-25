@@ -4,6 +4,7 @@ from datetime import datetime
 from typing  import List, Tuple, Union, Optional, Dict
 from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
+import pandas as pd
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
 from fmod.base.util.config import cfg
@@ -42,8 +43,8 @@ class DataPlot(object):
 		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
-		self.time: np.ndarray = self.sample_input.coords['time'].values
-		self.tslider: StepSlider = StepSlider( 'Time:', self.time.size  )
+		self.time: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values ]
+		self.tslider: StepSlider = StepSlider( 'Time:', len(self.time)  )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 
