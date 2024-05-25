@@ -36,6 +36,7 @@ def date_list( start: datetime, num_days: int )-> List[datetime]:
 	return dates
 
 def date_bounds( start: datetime, num_days: int )-> Tuple[datetime,datetime]:
+	print( start ); print( num_days )
 	return start, start+timedelta(days=num_days)
 
 def cfg_date_range( task_config )-> List[datetime]:
