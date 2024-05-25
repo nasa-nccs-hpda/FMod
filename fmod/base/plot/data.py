@@ -36,9 +36,10 @@ class DataPlot(object):
 	def __init__(self, input_dataset:  BatchDataset, target_dataset:  BatchDataset, **kwargs):
 		self.input_dataset = input_dataset
 		self.target_dataset = target_dataset
+		self.channel = kwargs.get('channel',0)
 		fsize = kwargs.get('fsize', 8.0)
-		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array()
-		self.sample_target: xa.DataArray = input_dataset.get_current_batch_array()
+		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
+		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.time_coord: xa.DataArray = xaformat_timedeltas( self.sample_input.coords['time'] )
 		self.tslider: StepSlider = StepSlider( 'Time:', self.time_coord.size  )
 		with plt.ioff():
