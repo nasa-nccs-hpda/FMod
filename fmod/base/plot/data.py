@@ -34,19 +34,46 @@ def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 class DataPlot(object):
 
 	def __init__(self, input_dataset:  BatchDataset, target_dataset:  BatchDataset, **kwargs):
-		self.input_dataset = input_dataset
-		self.target_dataset = target_dataset
-		self.channel = kwargs.get('channel',0)
-		fsize = kwargs.get('fsize', 8.0)
+		self.input_dataset:  BatchDataset = input_dataset
+		self.target_dataset:  BatchDataset = target_dataset
+		self.channel: int = kwargs.get('channel',0)
+		fsize: float = kwargs.get('fsize', 8.0)
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
-		self.time_coord: xa.DataArray = xaformat_timedeltas( self.sample_input.coords['time'] )
+		self.time_coord: np.ndarray = self.sample_input.coords['time'].values
 		self.tslider: StepSlider = StepSlider( 'Time:', self.time_coord.size  )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 
-		print( f" * sample_input{self.sample_input.dims}{self.sample_input.shape}" )
+		print( f" * sample_input{self.sample_input.dims}{self.sample_input.shape}"    )
 		print( f" * sample_target{self.sample_target.dims}{self.sample_target.shape}" )
+		print( f" * time_coord[{self.time_coord.dtype}]  = {self.time_coord.tolist()}" )
+
+	def get_dset(self, icol: int ) -> BatchDataset:
+		return self.input_dataset if icol == 0 else self.target_dataset
+	#
+	# def generate_plot( self, origin ):
+	# 	for icol in [1,2]:
+	# 		ax = self.axs[ icol ]
+	# 		rmserror = ""
+	# 		dset: BatchDataset = self.get_dset(icol)
+	# 		tindx: int = self.tslider.value
+	# 		image = dset.get_batch(origin,cdate)
+	#
+	# 		if icol == ncols-1:
+	# 			labels[(irow,icol)] = ['targets','predictions'][irow]
+	# 			image = images[ labels[(irow,icol)] ]
+	# 			if irow == 0: target = image
+	# 		else:
+	# 			labels[(irow,icol)] = ['input', 'upsampled'][irow]
+	# 			image = images[ labels[(irow,icol)] ]
+	# 			image = image.isel( channel=icol )
+	# 		ax.set_aspect(0.5)
+	# 		vrange = cscale( image, 2.0 )
+	# 		tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+	# 		ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+	# 		if irow == 1: rmserror = f"{RMSE(tslice - target):.3f}"
+	# 		ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 
 
