@@ -64,12 +64,14 @@ class TileGrid(object):
 		downscale_factors: List[int] = cfg().model.downscale_factors
 		self.downscale_factor = math.prod(downscale_factors)
 
+	def get_tile_origin( self, ix: int, iy: int ) -> Dict[str, int]:
+		return {d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] for d in ['x', 'y']}
+
 	def get_tile_locations(self, randomize=False) -> List[Dict[str, int]]:
 		if len(self.tlocs) == 0:
 			for ix in range(self.tile_grid['x']):
 				for iy in range(self.tile_grid['y']):
-					tloc = {d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] for d in ['x', 'y']}
-					self.tlocs.append(tloc)
+					self.tlocs.append( self.get_tile_origin(ix,iy) )
 		if randomize: random.shuffle(self.tlocs)
 		return self.tlocs
 

@@ -1,5 +1,6 @@
 import math, torch, numpy as np
 import xarray as xa
+from datetime import datetime
 from typing  import List, Tuple, Union, Optional, Dict
 from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
@@ -9,7 +10,7 @@ from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from fmod.base.util.grid import GridOps
+from fmod.controller.dual_trainer import TileGrid
 from fmod.data.batch import BatchDataset
 from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -38,42 +39,47 @@ class DataPlot(object):
 		self.target_dataset:  BatchDataset = target_dataset
 		self.channel: int = kwargs.get('channel',0)
 		fsize: float = kwargs.get('fsize', 8.0)
+		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
-		self.time_coord: np.ndarray = self.sample_input.coords['time'].values
+		self.time: np.ndarray = self.sample_input.coords['time'].values
 		self.tslider: StepSlider = StepSlider( 'Time:', self.time_coord.size  )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 
 		print( f" * sample_input{self.sample_input.dims}{self.sample_input.shape}"    )
 		print( f" * sample_target{self.sample_target.dims}{self.sample_target.shape}" )
-		print( f" * time_coord[{self.time_coord.dtype}]  = {self.time_coord.tolist()}" )
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
-	#
-	# def generate_plot( self, origin ):
-	# 	for icol in [1,2]:
-	# 		ax = self.axs[ icol ]
-	# 		rmserror = ""
-	# 		dset: BatchDataset = self.get_dset(icol)
-	# 		tindx: int = self.tslider.value
-	# 		image = dset.get_batch(origin,cdate)
-	#
-	# 		if icol == ncols-1:
-	# 			labels[(irow,icol)] = ['targets','predictions'][irow]
-	# 			image = images[ labels[(irow,icol)] ]
-	# 			if irow == 0: target = image
-	# 		else:
-	# 			labels[(irow,icol)] = ['input', 'upsampled'][irow]
-	# 			image = images[ labels[(irow,icol)] ]
-	# 			image = image.isel( channel=icol )
-	# 		ax.set_aspect(0.5)
-	# 		vrange = cscale( image, 2.0 )
-	# 		tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-	# 		ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-	# 		if irow == 1: rmserror = f"{RMSE(tslice - target):.3f}"
-	# 		ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
+
+	@property
+	def ctime(self) -> datetime:
+		return self.time[self.tslider.value]
+
+	def generate_plot( self, ix: int=0, iy: int=0 ):
+		for icol in [1,2]:
+			ax = self.axs[ icol ]
+			rmserror = ""
+			origin: Dict[str, int] = self.tile_grid.get_tile_origin( ix, iy )
+			dset: BatchDataset = self.get_dset(icol)
+			image: xa.DataArray = dset.get_batch_array(origin,self.ctime)
+			print(f" * PLOT[{icol}]: image{image.dims}{image.shape}")
+
+			# if icol == ncols-1:
+			# 	labels[(irow,icol)] = ['targets','predictions'][irow]
+			# 	image = images[ labels[(irow,icol)] ]
+			# 	if irow == 0: target = image
+			# else:
+			# 	labels[(irow,icol)] = ['input', 'upsampled'][irow]
+			# 	image = images[ labels[(irow,icol)] ]
+			# 	image = image.isel( channel=icol )
+			# ax.set_aspect(0.5)
+			# vrange = cscale( image, 2.0 )
+			# tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+			# ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+			# if irow == 1: rmserror = f"{RMSE(tslice - target):.3f}"
+			# ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 
 
