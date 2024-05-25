@@ -43,7 +43,7 @@ class DataPlot(object):
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.time: np.ndarray = self.sample_input.coords['time'].values
-		self.tslider: StepSlider = StepSlider( 'Time:', self.time_coord.size  )
+		self.tslider: StepSlider = StepSlider( 'Time:', self.time.size  )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 
