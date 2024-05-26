@@ -73,7 +73,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ncols = sample.shape[1]+1
 
 	with plt.ioff():
-		fig, axs = plt.subplots(nrows=2, ncols=ncols, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
+		fig, axs = plt.subplots(nrows=2, ncols=ncols, figsize=[fsize*2,fsize], layout="tight")
 
 	for irow in [0,1]:
 		for icol in range(ncols):
