@@ -21,6 +21,11 @@ def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 	vmax = meanv + stretch*stdv
 	return vmin, vmax
 
+def norm(array):
+	array = array - array.mean()
+	array = array / array.std()
+	return array
+
 class DataPlot(object):
 	ptypes = ["input", "target"]
 
@@ -41,7 +46,7 @@ class DataPlot(object):
 		self.cslider: StepSlider = StepSlider('Channel:', len(self.channel_coord))
 		self.start_time = cfg().task.start_date
 		with plt.ioff():
-			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
+			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=False, figsize=[fsize*2,fsize], layout="tight")
 			self.fig.suptitle(f'Tile [{self.iy},{self.ix}]', fontsize=14, va="top", y=1.0)
 		self.ims: Dict[int,AxesImage] = {}
 		self.tslider.set_callback(self.time_update)
@@ -65,7 +70,7 @@ class DataPlot(object):
 			ax = self.axs[ icol ]
 			dset: BatchDataset = self.get_dset(icol)
 			batch: xa.DataArray = dset.get_batch_array( self.origin, self.start_date )
-			image: xa.DataArray = batch.isel( channel=self.channel_index, time=self.time_index ).squeeze()
+			image: xa.DataArray = norm( batch.isel( channel=self.channel_index, time=self.time_index ).squeeze() )
 			if icol in self.ims:
 				self.ims[icol].set_data(image.values)
 			else:
