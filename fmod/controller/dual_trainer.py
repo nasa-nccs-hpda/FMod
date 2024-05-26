@@ -244,9 +244,13 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
-	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		binput:  xarray.DataArray  = self.input_dataset.get_batch_array(origin,batch_date)
 		btarget:  xarray.DataArray = self.target_dataset.get_batch_array(origin,batch_date)
+		if shuffle:
+			batch_perm: Tensor = torch.randperm(binput.shape[0])
+			binput: xarray.DataArray = binput[ batch_perm, ... ]
+			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
@@ -339,9 +343,8 @@ class ModelTrainer(object):
 		return loss.item()
 
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
-		batch_perm: Tensor = torch.randperm( input_data.shape[0] )
-		net_input: Tensor  = input_data # [ batch_perm, ... ]
-		target: Tensor = target_data # [ batch_perm, ... ]
+		net_input: Tensor  = input_data
+		target: Tensor = target_data
 		product: TensorOrTensors = self.model( net_input )
 		if type(product) == torch.Tensor:
 			result  =  self.get_target_channels(product)
