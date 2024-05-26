@@ -340,18 +340,17 @@ class ModelTrainer(object):
 
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		batch_perm: Tensor = torch.randperm( input_data.shape[0] )
-		net_input: Tensor  = input_data[ batch_perm, ... ]
-		target: Tensor = target_data[ batch_perm, ... ]
-		print( f"apply_network, input shape = {net_input.shape}, target shape = {target.shape}")
+		net_input: Tensor  = input_data # [ batch_perm, ... ]
+		target: Tensor = target_data # [ batch_perm, ... ]
 		product: TensorOrTensors = self.model( net_input )
-		if type(product) == torch.Tensor:
-			result = self.get_target_channels(product)
-		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
-		else:
-			result = [ self.get_target_channels(prod) for prod in product ]
-		#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
+		# if type(product) == torch.Tensor:
+		# 	result = self.get_target_channels(product)
+		# #		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+		# else:
+		# 	result = [ self.get_target_channels(prod) for prod in product ]
+		# #		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		net_target = self.get_target_channels( target )
-		return result, net_target
+		return product, net_target
 
 	def get_target_channels(self, batch_data: Tensor) -> Tensor:
 		if self.channel_idxs is None:
