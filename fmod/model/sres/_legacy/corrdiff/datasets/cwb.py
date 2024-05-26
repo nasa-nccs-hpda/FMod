@@ -199,7 +199,7 @@ class FilterTime(DownscalingDataset):
         """
         self._dataset = dataset
         self._filter_fn = filter_fn
-        self._indices = [i for i, t in enumerate(self._dataset.time()) if filter_fn(t)]
+        self._indices = [i for i, t in enumerate(self._dataset.time_coord()) if filter_fn(t)]
 
     def longitude(self):
         """Get longitude values from the dataset."""
@@ -219,7 +219,7 @@ class FilterTime(DownscalingDataset):
 
     def time(self):
         """Get time values from the dataset."""
-        time = self._dataset.time()
+        time = self._dataset.time_coord()
         return [time[i] for i in self._indices]
 
     def info(self):
@@ -481,7 +481,7 @@ class ZarrDataset(DownscalingDataset):
 
     def time(self):
         """Get time values from the dataset."""
-        return self._dataset.time()
+        return self._dataset.time_coord()
 
     def image_shape(self):
         """Get the shape of the image (same for input and output)."""

@@ -66,7 +66,7 @@ class MERRA2NCDatapipe(Datapipe):
         self,
         data_dir: str,
         stats_dir: Optional[str] = None,
-        channels: Optional[List[int]] = cfg().platform.channels,
+        channels: Optional[List[int]] = cfg().platform.channel_coord,
         batch_size: int = cfg().platform.steps_per_batch,
         num_steps: int = cfg().platform.num_steps,
         stride: int = cfg().platform.stride,

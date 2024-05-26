@@ -26,7 +26,7 @@ from training.time import convert_datetime_to_cftime
 
 p = training.YParams.YParams("era5-cwb-v3.yaml", "validation_small")
 ds = training.dataset.get_zarr_dataset(p, train=False)
-times = ds.time()
+times = ds.time_coord()
 random.shuffle(times)
 subset = times[:200]
 subset = sorted([convert_datetime_to_cftime(t, cls=datetime.datetime) for t in subset])

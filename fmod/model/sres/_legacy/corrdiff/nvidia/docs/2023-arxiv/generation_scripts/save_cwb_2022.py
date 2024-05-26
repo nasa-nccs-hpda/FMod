@@ -88,6 +88,6 @@ output = xr.concat(output, dim="time")
 xlat = cwb["XLAT"]
 xlong = cwb["XLONG"]
 interpolated = output.interp(lat=xlat, lon=xlong)
-interpolated["target"] = cwb.rename(channel="cwb_channel").fields.sel(time=output.time)
+interpolated["target"] = cwb.rename(channel="cwb_channel").fields.sel(time=output.time_coord)
 interpolated.attrs["history"] = " ".join(sys.argv)
 interpolated.to_netcdf(OUTPUT, mode="w")

@@ -34,11 +34,11 @@ class DataPlot(object):
 		fsize: float = kwargs.get('fsize', 6.0)
 		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array()
-		self.time: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values ]
-		self.channels: List[str] = self.sample_input.coords['channel'].values.tolist()
-		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}, channels = {self.channels}")
-		self.tslider: StepSlider = StepSlider('Time:', len(self.time) )
-		self.cslider: StepSlider = StepSlider('Channel:', len(self.channels))
+		self.time_coord: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values]
+		self.channel_coord: List[str] = self.sample_input.coords['channel'].values.tolist()
+		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}, channels = {self.channel_coord}")
+		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coord))
+		self.cslider: StepSlider = StepSlider('Channel:', len(self.channel_coord))
 		self.start_time = cfg().task.start_date
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
@@ -51,12 +51,11 @@ class DataPlot(object):
 
 	@property
 	def channel(self) -> str:
-		return  self.channels[self.channel_index]
+		return  self.channel_coord[ self.channel_index ]
 
 	@property
 	def datetime(self) -> str:
-		dtime: datetime = self.time[self.time_index]
-		return  dtime.strftime("%H:%d/%m/%Y")
+		return  self.time_coord[ self.time_index ].strftime("%H:%d/%m/%Y")
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
@@ -72,7 +71,7 @@ class DataPlot(object):
 			else:
 				vrange = cscale(image, 2.0)
 				self.ims[icol] = image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
-			ax.set_title(f" {self.ptypes[icol]} {self.channel}[{self.time}]", fontsize=10 )
+			ax.set_title(f" {self.ptypes[icol]} {self.channel}[{self.datetime}]", fontsize=10 )
 		self.fig.canvas.draw_idle()
 
 	def time_update(self, tindex: int = 0 ):

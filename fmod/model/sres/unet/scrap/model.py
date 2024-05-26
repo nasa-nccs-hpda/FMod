@@ -387,7 +387,7 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 	DATASET_wleap = xr.open_dataset(filepath)
 	DATASET_wleap = self.domain.applyDom(DATASET_wleap)
 
-	DATASET = DATASET_wleap.sel(time=~((DATASET_wleap.time.dt.month == 2) & (DATASET_wleap.time.dt.day == 29)))
+	DATASET = DATASET_wleap.sel(time=~((DATASET_wleap.time_coord.dt.month == 2) & (DATASET_wleap.time_coord.dt.day == 29)))
 
 	del DATASET_wleap
 
@@ -396,7 +396,7 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 	DATASET_ref_wleap = self.domain.applyDom(DATASET_ref_wleap)
 
 	# Delete leap years for reference dataset comparison
-	DATASET_ref = DATASET_ref_wleap.sel(time=~((DATASET_ref_wleap.time.dt.month == 2) & (DATASET_ref_wleap.time.dt.day == 29)))
+	DATASET_ref = DATASET_ref_wleap.sel(time=~((DATASET_ref_wleap.time_coord.dt.month == 2) & (DATASET_ref_wleap.time_coord.dt.day == 29)))
 	DATASET_ref = DATASET_ref.sel(time=slice(ref_period[0], ref_period[1]))
 
 	years = np.asarray([y for y in to_datetime(DATASET_ref['time'].values).year])
@@ -421,7 +421,7 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 
 	if aero_ext:
 		aero_dataset = xr.open_dataset(filepath_aero)
-		aero_dataset = aero_dataset.sel(time=DATASET.time, method='pad')
+		aero_dataset = aero_dataset.sel(time=DATASET.time_coord, method='pad')
 		aero_dataset = aero_dataset.sel(lon=DATASET.lon, lat=DATASET.lat, method='nearest')[aero_var]
 		if aero_stdz:
 			aero_array = normalize(aero_dataset.values[:, :, :, None], "AERO")
@@ -431,7 +431,7 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 		INPUT_2D_ARRAY = np.concatenate([INPUT_2D_SDTZ, aero_array], axis=3)
 	else:
 		INPUT_2D_ARRAY = INPUT_2D_SDTZ
-	nbdays = DATASET.time.groupby('time.year').count()[0].values
+	nbdays = DATASET.time_coord.groupby('time.year').count()[0].values
 	'''
 	MAKE THE 1D INPUT ARRAY
 	CONTAINS MEANS, STD, GHG, SEASON IF ASKED
@@ -439,15 +439,15 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 	INPUT_1D = []
 
 	# Load and treat ghg gasses
-	yr_b = str(DATASET.time.dt.year.values[0])
-	yr_e = str(DATASET.time.dt.year.values[-1] + 1)
+	yr_b = str(DATASET.time_coord.dt.year.values[0])
+	yr_e = str(DATASET.time_coord.dt.year.values[-1] + 1)
 	if 'RCP' in filepath_forc:
 		forcings = pd.read_csv(filepath_forc)[:-300]
 	else:
 		forcings = pd.read_csv(filepath_forc)
 	forcings.index = pd.to_datetime(forcings['year'], format='%Y')
 	forcingsd = forcings.loc[yr_b:yr_e].resample('D').ffill()
-	forcingsd = forcingsd.loc[DATASET.time.dt.date]
+	forcingsd = forcingsd.loc[DATASET.time_coord.dt.date]
 
 	forcings_ref = forcings.loc[ref_period[0]:ref_period[1]].resample('D').ffill()
 
@@ -519,7 +519,7 @@ def make(self, filepath, filepath_ref, stand, var_list, ref_period,
 	# to a 4D array by concatenating to the var dimension. Please see graphing and notes for more information.
 	INPUT_1D_ARRAY = np.concatenate(INPUT_1D, axis=3)
 
-	timeout = DATASET.time
+	timeout = DATASET.time_coord
 
 	DATASET.close()
 	return INPUT_2D_ARRAY, INPUT_1D_ARRAY, timeout

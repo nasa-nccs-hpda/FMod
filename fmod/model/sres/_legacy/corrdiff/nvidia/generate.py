@@ -325,7 +325,7 @@ def get_dataset_and_sampler(dataset_cfg, times):
         convert_datetime_to_cftime(datetime.datetime.strptime(time, time_format))
         for time in times
     ]
-    all_times = dataset.time()
+    all_times = dataset.time_coord()
     time_indices = [all_times.index(t) for t in plot_times]
     sampler = time_indices
 
@@ -368,7 +368,7 @@ def generate_and_save(
     writer_executor = ThreadPoolExecutor(max_workers=num_writer_workers)
     writer_threads = []
 
-    times = dataset.time()
+    times = dataset.time_coord()
 
     for image_tar, image_lr, index in iter(data_loader):
         time_index += 1
