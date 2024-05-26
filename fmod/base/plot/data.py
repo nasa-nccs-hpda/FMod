@@ -33,9 +33,9 @@ class DataPlot(object):
 		fsize: float = kwargs.get('fsize', 6.0)
 		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array()
-		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}")
 		self.time: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values ]
 		self.channels: List[str] = self.sample_input.coords['channel'].values.tolist()
+		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}, channels = {self.channels}")
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time) )
 		self.cslider: StepSlider = StepSlider('Channel:', len(self.channels))
 		self.start_time = cfg().task.start_date
