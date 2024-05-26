@@ -38,6 +38,8 @@ class DataPlot(object):
 	def __init__(self, input_dataset:  BatchDataset, target_dataset:  BatchDataset, **kwargs):
 		self.input_dataset:  BatchDataset = input_dataset
 		self.target_dataset:  BatchDataset = target_dataset
+		self.ix: int = kwargs.get('ix',0)
+		self.iy: int = kwargs.get('iy',0)
 		self.channel: int = kwargs.get('channel',0)
 		fsize: float = kwargs.get('fsize', 8.0)
 		self.tile_grid: TileGrid = TileGrid()
@@ -47,9 +49,11 @@ class DataPlot(object):
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time) )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
-
+		self.ims: Dict[int,AxesImage] = {}
 		print( f" * sample_input{self.sample_input.dims}{self.sample_input.shape}"    )
 		print( f" * sample_target{self.sample_target.dims}{self.sample_target.shape}" )
+		self.tslider.set_callback(self.time_update)
+		self.origin: Dict[str, int] = self.tile_grid.get_tile_origin(self.ix, self.iy)
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
@@ -58,14 +62,25 @@ class DataPlot(object):
 	def ctime(self) -> datetime:
 		return self.time[self.tslider.value]
 
-	def generate_plot( self, ix: int=0, iy: int=0 ):
+	def generate_plot( self ):
 		for icol in [0,1]:
 			ax = self.axs[ icol ]
-			rmserror = ""
-			origin: Dict[str, int] = self.tile_grid.get_tile_origin( ix, iy )
 			dset: BatchDataset = self.get_dset(icol)
-			image: xa.DataArray = dset.get_batch_array(origin,self.ctime)
-			print(f" * PLOT[{icol}]: image{image.dims}{image.shape}")
+			batch: xa.DataArray = dset.get_batch_array( self.origin,self.ctime )
+			image: xa.DataArray = batch.isel( channel=self.channel ).squeeze()
+			if icol in self.ims:
+				self.ims[icol].set_data(image.values)
+			else:
+				vrange = cscale(image, 2.0)
+				self.ims[icol] = image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
+
+	def time_update(self, sindex: int = 0 ):
+		self.generate_plot()
+		self.fig.canvas.draw_idle()
+
+	def plot(self):
+		self.time_update()
+		return ipw.VBox([self.fig.canvas, self.tslider])
 
 			# if icol == ncols-1:
 			# 	labels[(irow,icol)] = ['targets','predictions'][irow]
