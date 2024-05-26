@@ -344,7 +344,7 @@ class ModelTrainer(object):
 		target: Tensor = target_data # [ batch_perm, ... ]
 		product: TensorOrTensors = self.model( net_input )
 		if type(product) == torch.Tensor:
-			result = self.get_target_channels(product)
+			result  =  self.get_target_channels(product)
 		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
 			result = [ self.get_target_channels(prod) for prod in product ]
