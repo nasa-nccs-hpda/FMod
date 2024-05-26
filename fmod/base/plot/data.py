@@ -1,32 +1,20 @@
-import math, torch, numpy as np
-import xarray as xa
 from datetime import datetime
-from typing  import List, Tuple, Union, Optional, Dict
-from fmod.base.util.ops import xaformat_timedeltas, print_data_column
-import matplotlib.ticker as ticker
-import pandas as pd
-import matplotlib.pyplot as plt
+from typing import List, Tuple, Dict
+
 import ipywidgets as ipw
-from fmod.base.util.config import cfg
-from torch import nn
-from matplotlib.axes import Axes
+import matplotlib.pyplot as plt
+import pandas as pd
+import xarray as xa
 from matplotlib.image import AxesImage
+
+from fmod.base.plot.widgets import StepSlider
+from fmod.base.util.config import cfg
 from fmod.controller.dual_trainer import TileGrid
 from fmod.data.batch import BatchDataset
-from fmod.base.plot.widgets import StepSlider
-from fmod.base.util.logging import lgm, exception_handled, log_timing
 
-def rms( dvar: xa.DataArray, **kwargs ) -> float:
-	varray: np.ndarray = dvar.isel( **kwargs, missing_dims="ignore", drop=True ).values
-	return np.sqrt( np.mean( np.square( varray ) ) )
-
-def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
-	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
-	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
-
-def RMSE( diff: xa.DataArray ) -> float:
-	d2: xa.DataArray = diff*diff
-	return np.sqrt( d2.mean(keep_attrs=True) )
+def start_date( task_config )-> datetime:
+	toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+	return  datetime( month=toks[0], day=toks[1], year=toks[2] )
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 	meanv, stdv, minv = pvar.values.mean(), pvar.values.std(), pvar.values.min()
 	vmin = max( minv, meanv - stretch*stdv )
@@ -47,35 +35,31 @@ class DataPlot(object):
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.time: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values ]
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time) )
+		self.start_time = cfg().task.start_date
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 		self.ims: Dict[int,AxesImage] = {}
-		print( f" * sample_input{self.sample_input.dims}{self.sample_input.shape}"    )
-		print( f" * sample_target{self.sample_target.dims}{self.sample_target.shape}" )
 		self.tslider.set_callback(self.time_update)
 		self.origin: Dict[str, int] = self.tile_grid.get_tile_origin(self.ix, self.iy)
+		self.start_date = start_date( cfg().task )
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
 
-	@property
-	def ctime(self) -> datetime:
-		return self.time[self.tslider.value]
-
-	def generate_plot( self ):
+	def generate_plot( self, tindex: int ):
 		for icol in [0,1]:
 			ax = self.axs[ icol ]
 			dset: BatchDataset = self.get_dset(icol)
-			batch: xa.DataArray = dset.get_batch_array( self.origin,self.ctime )
-			image: xa.DataArray = batch.isel( channel=self.channel ).squeeze()
+			batch: xa.DataArray = dset.get_batch_array( self.origin, self.start_date )
+			image: xa.DataArray = batch.isel( channel=self.channel, time=tindex ).squeeze()
 			if icol in self.ims:
 				self.ims[icol].set_data(image.values)
 			else:
 				vrange = cscale(image, 2.0)
 				self.ims[icol] = image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 
-	def time_update(self, sindex: int = 0 ):
-		self.generate_plot()
+	def time_update(self, tindex: int = 0 ):
+		self.generate_plot(tindex)
 		self.fig.canvas.draw_idle()
 
 	def plot(self):
