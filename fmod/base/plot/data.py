@@ -59,7 +59,7 @@ class DataPlot(object):
 		return self.time[self.tslider.value]
 
 	def generate_plot( self, ix: int=0, iy: int=0 ):
-		for icol in [1,2]:
+		for icol in [0,1]:
 			ax = self.axs[ icol ]
 			rmserror = ""
 			origin: Dict[str, int] = self.tile_grid.get_tile_origin( ix, iy )
