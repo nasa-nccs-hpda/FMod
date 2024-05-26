@@ -29,7 +29,7 @@ class DataPlot(object):
 		self.ix: int = kwargs.get('ix',0)
 		self.iy: int = kwargs.get('iy',0)
 		self.channel: int = kwargs.get('channel',0)
-		fsize: float = kwargs.get('fsize', 8.0)
+		fsize: float = kwargs.get('fsize', 6.0)
 		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
