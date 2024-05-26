@@ -58,7 +58,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 	return dict(    input=       sample_input.copy(  data=inputs.reshape(sample_input.shape) ),
 					targets=     sample_target.copy( data=targets.reshape(sample_target.shape) ),
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
-					upsampled=   xa.DataArray( upsampled, dims=['time','channel','y','x'], coords=dict(time=tc['time'],channel=ic['channel'],y=tc['y'],x=tc['x'])  ) )
+					upsampled=   sample_target.copy( data=predictions.reshape(upsampled.shape) ) )
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
