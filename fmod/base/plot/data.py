@@ -28,42 +28,51 @@ class DataPlot(object):
 		self.target_dataset:  BatchDataset = target_dataset
 		self.ix: int = kwargs.get('ix',0)
 		self.iy: int = kwargs.get('iy',0)
-		self.channel: int = kwargs.get('channel',0)
+		self.channel_index: int = 0
+		self.time_index: int = 0
 		fsize: float = kwargs.get('fsize', 6.0)
 		self.tile_grid: TileGrid = TileGrid()
-		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array().isel(channel=self.channel)
-		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array().isel(channel=self.channel)
+		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array()
+		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}")
 		self.time: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values ]
+		self.channels: List[str] = self.sample_input.coords['channel'].values.tolist()
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time) )
+		self.cslider: StepSlider = StepSlider('Channel:', len(self.channels))
 		self.start_time = cfg().task.start_date
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True, figsize=[fsize*2,fsize], layout="tight")
 		self.ims: Dict[int,AxesImage] = {}
 		self.tslider.set_callback(self.time_update)
+		self.cslider.set_callback(self.channel_update)
 		self.origin: Dict[str, int] = self.tile_grid.get_tile_origin(self.ix, self.iy)
 		self.start_date = start_date( cfg().task )
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
 
-	def generate_plot( self, tindex: int ):
+	def generate_plot( self ):
 		for icol in [0,1]:
 			ax = self.axs[ icol ]
 			dset: BatchDataset = self.get_dset(icol)
 			batch: xa.DataArray = dset.get_batch_array( self.origin, self.start_date )
-			image: xa.DataArray = batch.isel( channel=self.channel, time=tindex ).squeeze()
+			image: xa.DataArray = batch.isel( channel=self.channel_index, time=self.time_index ).squeeze()
 			if icol in self.ims:
 				self.ims[icol].set_data(image.values)
 			else:
 				vrange = cscale(image, 2.0)
 				self.ims[icol] = image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
-
-	def time_update(self, tindex: int = 0 ):
-		self.generate_plot(tindex)
 		self.fig.canvas.draw_idle()
 
+	def time_update(self, tindex: int = 0 ):
+		self.time_index = tindex
+		self.generate_plot()
+
+	def channel_update(self, cindex: int = 0 ):
+		self.channel_index = cindex
+		self.generate_plot()
+
 	def plot(self):
-		self.time_update()
+		self.generate_plot()
 		return ipw.VBox([self.fig.canvas, self.tslider])
 
 			# if icol == ncols-1:
