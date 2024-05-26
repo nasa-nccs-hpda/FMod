@@ -234,11 +234,15 @@ class ModelTrainer(object):
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
-	def get_batch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+	def get_batch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin,batch_date)
 		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin,batch_date)
 		binput: xarray.DataArray = input_batch['input']
 		btarget: xarray.DataArray = target_batch['target']
+		if shuffle:
+			batch_perm: Tensor = torch.randperm(binput.shape[0])
+			binput: xarray.DataArray = binput[ batch_perm, ... ]
+			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
 		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
