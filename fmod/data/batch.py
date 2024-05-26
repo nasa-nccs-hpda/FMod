@@ -47,8 +47,9 @@ Tensor = torch.Tensor
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
     return xa.Dataset( {vn: xa.DataArray( np.array(dval) ) for vn, dval in dvals.items()} )
 
-def batch_norm( batch_data: xa.DataArray):
-    dims = ["time",batch_data.dims[-1],batch_data.dims[-2]]
+def norm( batch_data: xa.DataArray, batch=False):
+    dims = [batch_data.dims[-1],batch_data.dims[-2]]
+    if batch: dims.append('time')
     mean = batch_data.mean(dim=dims)
     std = batch_data.std(dim=dims)
     return (batch_data-mean)/std
@@ -118,7 +119,7 @@ class BatchDataset(BaseDataset):
         origin = self.scale_coords(oindx)
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         self.current_origin = origin
-        return batch_norm(batch_data)
+        return norm(batch_data)
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
         lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")
