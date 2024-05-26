@@ -154,7 +154,6 @@ class MERRA2Dataset(BaseDataset):
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}")
         #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
-            self.chanIds['input'] = channels
             results.append(input_array)
 
         if self.load_base:
@@ -168,7 +167,6 @@ class MERRA2Dataset(BaseDataset):
             target_array: xa.DataArray = ds2array( self.normalize(targets[list(target_variables)]) )
             lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
             lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={cfg().task.device}")
-            self.chanIds['target'] = target_array.attrs['channels']
             results.append(target_array)
 
         return results

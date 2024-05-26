@@ -49,7 +49,7 @@ def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
 
 def batch_norm( batch_data: xa.DataArray):
     dims = ["time",batch_data.dims[-1],batch_data.dims[-2]]
-    mean = batch_data.mean( dim=dims)
+    mean = batch_data.mean(dim=dims)
     std = batch_data.std(dim=dims)
     return (batch_data-mean)/std
 
@@ -83,7 +83,6 @@ class BatchDataset(BaseDataset):
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
-        self.chanIds: List[str] = None
 
     def memmap_batch_data(self, start: datetime):
         self.srbatch.memmap_batch_data(start)
@@ -93,8 +92,9 @@ class BatchDataset(BaseDataset):
         else:                       return {k: v * self.scalefactor for k, v in c.items()}
 
     def get_channel_idxs(self, channels: List[str] ) -> List[int]:
-        lgm().log( f"get_channel_idxs: srtype={self.srtype}, chanIds={self.chanIds}")
-        return [ self.chanIds.index(cid) for cid in channels ]
+        cidxs = [ self.srbatch.channels.index(cid) for cid in channels ]
+        print(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
+        return cidxs
 
     def get_batch_dates(self, randomize=False ) -> List[datetime]:
         dates = self.batch_dates.copy()
@@ -117,8 +117,6 @@ class BatchDataset(BaseDataset):
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
-        if self.chanIds is None:
-            self.chanIds = batch_data.coords['channel'].values.tolist()
         self.current_origin = origin
         return batch_norm(batch_data)
 
@@ -198,7 +196,6 @@ class BatchDataset(BaseDataset):
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
         #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
-            self.chanIds['input'] = channels
             results['input'] = input_array
 
         if self.load_base:
@@ -212,7 +209,6 @@ class BatchDataset(BaseDataset):
             target_array: xa.DataArray = self.ds2array( self.normalize(targets[list(target_variables)]) )
             lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
             lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
-            self.chanIds['target'] = target_array.attrs['channels']
             results['target'] = target_array
 
         return results
@@ -239,7 +235,6 @@ class BatchDataset(BaseDataset):
             channels = input_array.attrs.get('channels', [])
             lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )
             # print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
-            self.chanIds['input'] = channels
             results['input'] = input_array
 
         if self.load_base:
@@ -253,7 +248,6 @@ class BatchDataset(BaseDataset):
             target_array: xa.DataArray = self.batch2array( self.normalize(dataset[list(target_variables)]) )
             lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
             lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
-            self.chanIds['target'] = target_array.attrs['channels']
             results['target'] = target_array
 
         return results

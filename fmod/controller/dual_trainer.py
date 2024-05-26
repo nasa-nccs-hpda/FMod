@@ -339,9 +339,6 @@ class ModelTrainer(object):
 		target: Tensor = target_data[ batch_perm, ... ]
 		print( f"apply_network, input shape = {net_input.shape}, target shape = {target.shape}")
 		product: TensorOrTensors = self.model( net_input )
-		if self.channel_idxs is None:
-			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
-			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		if type(product) == torch.Tensor:
 			result = self.get_target_channels(product)
 		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
@@ -352,8 +349,11 @@ class ModelTrainer(object):
 		return result, net_target
 
 	def get_target_channels(self, batch_data: Tensor) -> Tensor:
+		if self.channel_idxs is None:
+			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
+			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
-		if len(channels) == 1: return channels[0]
+		return channels[0] if (len(channels) == 1) else torch.cat( channels, dim = 1 )
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)

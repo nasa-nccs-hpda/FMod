@@ -230,6 +230,7 @@ class SRBatch:
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
 		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
+		self.channels: List[str] = None
 
 	def memmap_batch_data(self, start: datetime):
 		dates: Tuple[datetime,datetime] = date_bounds(start, self.days_per_batch)
@@ -248,6 +249,8 @@ class SRBatch:
 	def load_batch(self, origin: Dict[str,int], start: datetime) -> xa.DataArray:
 		dates: Tuple[datetime,datetime] = date_bounds(start, self.days_per_batch)
 		darray: xa.DataArray = self.data_loader.load_batch( origin, dates )
+		if self.channels is None:
+			self.channels = darray.coords["channel"].values.tolist()
 		return  darray
 
 	def load(self, origin: Dict[str,int], start: datetime ) -> xa.DataArray:

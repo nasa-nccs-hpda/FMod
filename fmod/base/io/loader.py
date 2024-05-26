@@ -41,7 +41,6 @@ class BaseDataset(object):
 		self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
 		self.downscale_factors: List[int] = cfg().model.downscale_factors
 		self.scalefactor = math.prod(self.downscale_factors)
-		self.chanIds: Dict[str,List[str]] = {}
 		self.current_date: date = self.train_dates[0]
 		self.current_origin: Dict[str, int] = task_config.origin
 
@@ -50,9 +49,6 @@ class BaseDataset(object):
 
 	def randomize(self):
 		raise NotImplementedError()
-
-	def channel_ids(self, role: str) -> List[str]:
-		return self.chanIds[role]
 
 	def __len__(self):
 		return self.steps_per_batch
