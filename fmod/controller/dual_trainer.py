@@ -343,14 +343,14 @@ class ModelTrainer(object):
 		net_input: Tensor  = input_data # [ batch_perm, ... ]
 		target: Tensor = target_data # [ batch_perm, ... ]
 		product: TensorOrTensors = self.model( net_input )
-		# if type(product) == torch.Tensor:
-		# 	result = self.get_target_channels(product)
-		# #		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
-		# else:
-		# 	result = [ self.get_target_channels(prod) for prod in product ]
-		# #		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
+		if type(product) == torch.Tensor:
+			result = self.get_target_channels(product)
+		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+		else:
+			result = [ self.get_target_channels(prod) for prod in product ]
+		#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
 		net_target = self.get_target_channels( target )
-		return product, net_target
+		return result, net_target
 
 	def get_target_channels(self, batch_data: Tensor) -> Tensor:
 		if self.channel_idxs is None:
