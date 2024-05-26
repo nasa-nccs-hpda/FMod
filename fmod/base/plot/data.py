@@ -47,7 +47,7 @@ class DataPlot(object):
 		self.start_time = cfg().task.start_date
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=False, figsize=[fsize*2,fsize], layout="tight")
-			self.fig.suptitle(f'Tile [{self.iy},{self.ix}]', fontsize=14, va="top", y=1.0)
+			self.fig.suptitle(f'Cape Basin: Tile [{self.iy},{self.ix}]', fontsize=14, va="top", y=1.0)
 		self.ims: Dict[int,AxesImage] = {}
 		self.tslider.set_callback(self.time_update)
 		self.cslider.set_callback(self.channel_update)
