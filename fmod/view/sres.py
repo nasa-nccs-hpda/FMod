@@ -92,7 +92,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 			if irow == 1:
-				print( f"{labels[(irow,icol)]}>>> image{list(image.shape)}: ({image.mean():.2f}, {image.std():.2f})  <--->  target{list(target.shape)}: ({target.mean():.2f}, {target.std():.2f})")
+			#	print( f"{labels[(irow,icol)]}>>> image{list(image.shape)}: ({image.mean():.2f}, {image.std():.2f})  <--->  target{list(target.shape)}: ({target.mean():.2f}, {target.std():.2f})")
 				rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
 			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
@@ -115,7 +115,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 					image = image.isel(channel=icol)
 				tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 				ims[(irow,icol)].set_data( tslice1.values.squeeze() )
-				if irow == 1: rmserror = f"{RMSE(tslice1 - target):.3f}"
+				if irow == 1: rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
 				ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
 		fig.canvas.draw_idle()
 
