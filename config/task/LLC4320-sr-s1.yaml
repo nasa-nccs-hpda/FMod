@@ -19,7 +19,7 @@ lr: 1e-3
 
 origin: { x: 0, y: 0 }
 tile_size: { x: 16, y: 16 }
-tile_grid: { x: 4, y: 4 }
+tile_grid: { x: 6, y: 8 }
 conform_to_grid: false
 
 coords: { 'x': 'XC', 'y': 'YC', z: '' }
