@@ -60,6 +60,14 @@ def tas( ta: Any ) -> str:
 def ts( t: Tensor ) -> str:
 	return f"{tas(t.dim())}{tas(t.shape)}"
 
+def unsqueeze( tensor: Tensor ) -> Tensor:
+	if tensor.ndim == 2:
+		tensor = torch.unsqueeze(tensor, 0)
+		tensor = torch.unsqueeze(tensor, 0)
+	elif tensor.ndim == 3:
+		tensor = torch.unsqueeze(tensor, 1)
+	return tensor
+
 class TileGrid(object):
 
 	def __init__(self, context: LearningContext = LearningContext.Training):
@@ -126,11 +134,8 @@ class ModelTrainer(object):
 		self.current_product: TensorOrTensors = None
 
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
-		upsampled = self.upsampler(tensor)
-		if renorm:
-			if tensor.ndim == 3: upsampled = torch.unsqueeze(upsampled, 1)
-			upsampled = nn.functional.normalize( upsampled )
-		return upsampled
+		upsampled = self.upsampler( unsqueeze( tensor ) )
+		return nn.functional.normalize( upsampled ) if renorm else upsampled
 
 	def configure_grid(self):
 		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
