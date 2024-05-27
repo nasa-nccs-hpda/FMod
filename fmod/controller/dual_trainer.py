@@ -12,6 +12,7 @@ from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
+from enum import Enum
 import numpy as np, xarray as xa
 from fmod.controller.stats import l2loss
 import torch.nn as nn
@@ -19,6 +20,10 @@ import time
 
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
+
+class LearningContext(Enum):
+	Training = 'train'
+	Validation = 'val'
 
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
@@ -57,10 +62,13 @@ def ts( t: Tensor ) -> str:
 
 class TileGrid(object):
 
-	def __init__(self, ):
-		self.origin: Dict[str,int] = cfg().task.origin
+	def __init__(self, context: LearningContext = LearningContext.Training):
+		self.context = context
+		cfg_origin = "origin" if LearningContext == LearningContext.Training else "val_origin"
+		cfg_tgrid  = "tile_grid" if LearningContext == LearningContext.Training else "val_tile_grid"
+		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
-		self.tile_grid: Dict[str, int] = cfg().task.get( 'tile_grid', dict(x=1,y=1) )
+		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
 		self.tlocs: List[Dict[str,int]] = []
 		downscale_factors: List[int] = cfg().model.downscale_factors
 		self.downscale_factor = math.prod(downscale_factors)
@@ -90,7 +98,6 @@ class ModelTrainer(object):
 
 	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
-		self.tile_grid = TileGrid()
 		self.input_dataset: BatchDataset = model_manager.datasets['input']
 		self.target_dataset: BatchDataset = model_manager.datasets['target']
 		self.device: torch.device = model_manager.device
@@ -118,8 +125,13 @@ class ModelTrainer(object):
 		self.current_target: torch.Tensor = None
 		self.current_product: TensorOrTensors = None
 
-	def get_tile_locations(self) -> List[Dict[str,int]]:
-		return self.tile_grid.get_tile_locations()
+	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
+		upsampled = self.upsampler(tensor)
+		if renorm:
+			if tensor.ndim == 3: upsampled = torch.unsqueeze(upsampled, 1)
+			upsampled = nn.functional.normalize( upsampled )
+		return upsampled
+
 	def configure_grid(self):
 		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
 		grid_shape = tar.shape[-2:]
@@ -301,7 +313,7 @@ class ModelTrainer(object):
 
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
-			tile_locs: List[Dict[str,int]] = self.tile_grid.get_tile_locations()
+			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					try:
@@ -315,7 +327,7 @@ class ModelTrainer(object):
 							loss = self.loss( prd, targ )
 							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
-							self.current_upsampled = self.upsampler(inp)
+							self.current_upsampled = self.upsample(inp)
 							self.current_target = targ
 							self.current_product = prd
 							self.optimizer.zero_grad(set_to_none=True)
