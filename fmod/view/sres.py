@@ -24,7 +24,7 @@ def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	return np.sqrt( np.mean( np.square( varray ) ) )
 
 def tensor( dvar: xa.DataArray ) -> torch.Tensor:
-	return torch.from_numpy( dvar.values )
+	return torch.from_numpy( dvar.values.squeeze() )
 
 def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
 	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
