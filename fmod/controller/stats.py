@@ -1,7 +1,11 @@
-import numpy as np, xarray as xa
+import numpy as np, xarray as xa, torch
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 import os, pandas as pd
 
+def l2loss(cls, prd: torch.Tensor, tar: torch.Tensor, squared=False) -> torch.Tensor:
+    loss = ((prd - tar) ** 2).mean()
+    if not squared: loss = torch.sqrt(loss)
+    return loss
 class StatsEntry:
 
     def __init__(self, varname: str ):

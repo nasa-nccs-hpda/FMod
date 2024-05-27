@@ -13,6 +13,7 @@ from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
 import numpy as np, xarray as xa
+from fmod.controller.stats import l2loss
 import torch.nn as nn
 import time
 
@@ -156,11 +157,6 @@ class ModelTrainer(object):
 	def loader_args(self) -> Dict[str, Any]:
 		return { k: cfg().model.get(k) for k in self.model_cfg }
 
-	def l2loss(self, prd: torch.Tensor, tar: torch.Tensor, squared=False) -> torch.Tensor:
-		loss = ((prd - tar) ** 2).mean()
-		if not squared: loss = torch.sqrt(loss)
-		return loss
-
 	def l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
 		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
 		if relative:
@@ -198,7 +194,7 @@ class ModelTrainer(object):
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		#	print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
 		if cfg().model.loss_fn == 'l2':
-			loss = self.l2loss(prd, tar)
+			loss = l2loss(prd, tar)
 		elif cfg().model.loss_fn == 'l2s':
 			loss = self.l2loss_sphere(prd, tar)
 		elif cfg().model.loss_fn == "spectral-l2s":
@@ -255,8 +251,8 @@ class ModelTrainer(object):
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
 			binput: xarray.DataArray = binput[ batch_perm, ... ]
 			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
-		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
+		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}")
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
@@ -317,7 +313,7 @@ class ModelTrainer(object):
 
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
-							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}]-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}]{prd.shape}-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
 							self.current_upsampled = self.upsampler(inp)
 							self.current_target = targ

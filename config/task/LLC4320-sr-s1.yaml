@@ -13,7 +13,7 @@ days_per_batch: 64
 hours_per_step: 4
 
 nbatches: 6
-batch_iter: 2
+batch_iter: 1
 nepochs: 10
 lr: 1e-3
 

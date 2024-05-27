@@ -5,6 +5,7 @@ from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
+from fmod.controller.stats import l2loss
 from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
@@ -22,13 +23,12 @@ def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	varray: np.ndarray = dvar.isel( **kwargs, missing_dims="ignore", drop=True ).values
 	return np.sqrt( np.mean( np.square( varray ) ) )
 
+def tensor( dvar: xa.DataArray ) -> torch.Tensor:
+	return torch.from_numpy( dvar.values )
+
 def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
 	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
 	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
-
-def RMSE( diff: xa.DataArray ) -> float:
-	d2: xa.DataArray = diff*diff
-	return np.sqrt( d2.mean(keep_attrs=True) )
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 	meanv, stdv, minv = pvar.values.mean(), pvar.values.std(), pvar.values.min()
 	vmin = max( minv, meanv - stretch*stdv )
@@ -91,7 +91,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			if irow == 1: rmserror = f"{RMSE(tslice - target):.3f}"
+			if irow == 1: rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
 			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 	@exception_handled
