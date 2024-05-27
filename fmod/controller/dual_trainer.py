@@ -364,6 +364,43 @@ class ModelTrainer(object):
 
 		return loss.item()
 
+	@exception_handled
+	def evaluate(self, date_index:int=0, tile_index:int=0, **kwargs ):
+		seed = kwargs.get('seed',333)
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
+		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		self.checkpoint_manager.load_checkpoint("best")
+
+		proc_start = time.time()
+		loss: torch.Tensor = None
+		tile_loc: Dict[str,int] =  TileGrid( LearningContext.Validation ).get_tile_locations()[tile_index]
+		batch_date: datetime = self.input_dataset.get_batch_start_dates()[date_index]
+		try:
+			train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+			inp: Tensor = train_data['input']
+			target: Tensor   = train_data['target']
+			prd, targ = self.apply_network( inp, target )
+			lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+			loss = self.loss( prd, targ )
+			lgm().log(f" ** Loss({batch_date}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+			self.current_input = inp
+			self.current_upsampled = self.upsample(inp)
+			self.current_target = targ
+			self.current_product = prd
+
+		except Exception as e:
+			print( f"\n !!!!! Error processing tile_loc={tile_loc}, batch_date={batch_date} !!!!! {e}")
+			print( traceback.format_exc() )
+			return loss.item()
+
+		proc_time = time.time() - proc_start
+		print(f'--------------------------------------------------------------------------------')
+		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		print(f' -------> Evaluating model with {ntotal_params} took {proc_time} sec.')
+		return loss.item()
+
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
 		target: Tensor = target_data
