@@ -65,7 +65,6 @@ class MetaData(DatapipeMetaData):
 
 class BatchDataset(BaseDataset):
 
-
     def __init__(self, task_config: DictConfig, vres: str, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
         self.vres: srRes = srRes.from_config(vres)
