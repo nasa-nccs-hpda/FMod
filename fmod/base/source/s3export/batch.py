@@ -73,7 +73,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def memmap_timeslice(self, vid: str, date: datetime ) -> np.memmap:
 		fpath = data_filepath(vid, date, self.vres)
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode='r')
-		print( f"Loaded {vid}({date.strftime("%H:%d/%m/%Y")}): shape={raw_data.shape}")
+		print( f"Loaded {vid}({date.strftime('%H:%d/%m/%Y')}): shape={raw_data.shape}")
 		return raw_data
 
 	def load_channel( self, idx: int, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
