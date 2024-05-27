@@ -68,6 +68,11 @@ def unsqueeze( tensor: Tensor ) -> Tensor:
 		tensor = torch.unsqueeze(tensor, 1)
 	return tensor
 
+def normalize( tensor: Tensor ) -> Tensor:
+	tensor = unsqueeze( tensor )
+	tensor = tensor - tensor.mean(dim=[2,3], keepdim=True)
+	return tensor / tensor.std(dim=[2,3], keepdim=True)
+
 class TileGrid(object):
 
 	def __init__(self, context: LearningContext = LearningContext.Training):
@@ -135,7 +140,7 @@ class ModelTrainer(object):
 
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
-		return nn.functional.normalize( upsampled ) if renorm else upsampled
+		return normalize( upsampled ) if renorm else upsampled
 
 	def configure_grid(self):
 		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
