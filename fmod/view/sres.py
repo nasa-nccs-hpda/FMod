@@ -91,7 +91,9 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			if irow == 1: rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
+			if irow == 1:
+				print( f"{labels[(irow,icol)]}>>> image{list(image.shape)}: ({image.mean():.2f}, {image.std():.2f})  <--->  target{list(target.shape)}: ({target.mean():.2f}, {target.std():.2f})")
+				rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
 			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
 
 	@exception_handled
