@@ -313,7 +313,7 @@ class ModelTrainer(object):
 
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
-							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}]{prd.shape}-->>  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+							lgm().log(f" ** Loss({batch_date}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
 							self.current_upsampled = self.upsampler(inp)
 							self.current_target = targ
