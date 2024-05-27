@@ -22,6 +22,9 @@ tile_size: { x: 16, y: 16 }
 tile_grid: { x: 6, y: 8 }
 conform_to_grid: false
 
+val_origin: { x: 80, y: 125 }
+val_tile_grid: { x: 6, y: 1 }
+
 coords: { 'x': 'XC', 'y': 'YC', z: '' }
 input_variables: { 'sst': sea_surface_temperature, 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
 target_variables: [ 'sst' ]

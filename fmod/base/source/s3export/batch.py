@@ -45,7 +45,7 @@ class S3ExportDataLoader(SRDataLoader):
 #		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
 		self.tile_size: Dict[str,int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
-		self.memmaps: Dict[Tuple[str,datetime],np.memmap] = {}
+		self.shape = None
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
 	# 	cdata: np.ndarray = self.ijc[c]
@@ -64,16 +64,19 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	yc = xa.DataArray(tcoords['j'].astype(np.float32), dims=['j'], coords=dict(j=tcoords['j']))
 	# 	return dict(x=xc, y=yc) #, **tcoords)
 
-	def memmap_batch_data( self, date_range: Tuple[datetime,datetime] ):
-		self.memmaps = {}
+	def memmap_batch_data( self, date_range: Tuple[datetime,datetime] ) -> Dict[Tuple[str,datetime],np.memmap] :
+		memmaps = {}
 		for date in datelist(date_range):
 			for vid in self.varnames.keys():
-				self.memmaps[(vid,date)] = self.memmap_timeslice( vid, date )
+				memmaps[(vid,date)] = self.memmap_timeslice( vid, date )
+		return memmaps
 
 	def memmap_timeslice(self, vid: str, date: datetime ) -> np.memmap:
 		fpath = data_filepath(vid, date, self.vres)
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode='r')
-		print( f"Loaded {vid}({date.strftime('%H:%d/%m/%Y')}): shape={raw_data.shape}")
+		if self.shape is None:
+			print( f"Loaded {vid}({date.strftime('%H:%d/%m/%Y')}): shape={raw_data.shape}")
+			self.shape = list( raw_data.shape )
 		return raw_data
 
 	def load_channel( self, idx: int, origin: Dict[str,int], vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
