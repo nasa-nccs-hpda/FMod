@@ -72,8 +72,8 @@ class TileGrid(object):
 
 	def __init__(self, context: LearningContext = LearningContext.Training):
 		self.context = context
-		cfg_origin = "origin" if LearningContext == LearningContext.Training else "val_origin"
-		cfg_tgrid  = "tile_grid" if LearningContext == LearningContext.Training else "val_tile_grid"
+		cfg_origin = "origin" if context == LearningContext.Training else "val_origin"
+		cfg_tgrid  = "tile_grid" if context == LearningContext.Training else "val_tile_grid"
 		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
 		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
