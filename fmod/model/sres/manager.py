@@ -6,7 +6,7 @@ import os, time, numpy as np
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig
-import importlib
+import importlib, pandas as pd
 from datetime import datetime
 from fmod.data.batch import BatchDataset
 
@@ -20,6 +20,7 @@ class SRModels:
 		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
 		self.sample_input:  xa.DataArray = input_dataset.get_current_batch_array()
 		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array()
+		self.time: np.ndarray = self.sample_input.coords['time'].values
 		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
 		lgm().log(f"sample_input: shape={self.sample_input.shape}")
 		lgm().log(f"sample_target: shape={self.sample_target.shape}")
@@ -31,6 +32,16 @@ class SRModels:
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
+
+	def get_temporal_features(self):
+		sday, syear,  t0 = [],[], self.time[0]
+		for t in self.time:
+			tp: np.timedelta64 = (t-t0)*2*np.pi
+			td: float = float(tp/np.timedelta64(1,'D'))
+			sday.append( (np.sin(td),np.cos(td)) )
+			ty: float = float(tp/np.timedelta64(1,'Y'))
+			syear.append( (np.sin(ty),np.cos(ty)) )
+			print( f"{pd.Timestamp(t).to_pydatetime().strftime('%H:%d/%m/%Y'): td={td:.2f} ty={ty:.2f}}" )
 
 	def get_sample_target(self) -> xa.DataArray:
 		result =  self.sample_target.isel(channel=self.cids) if (len(self.cids) < self.sample_target.sizes['channel']) else self.sample_target
