@@ -113,6 +113,7 @@ class UNet(nn.Module):
         for iL in range(self.depth):
             skip.insert(0, x)
             x: torch.Tensor = self.downscale[iL](x)
+        print( f"UNet base shape: {list(x.shape)}")
         for iL in range(self.depth):
             x = self.upscale[iL](x,skip[iL])
         return x
