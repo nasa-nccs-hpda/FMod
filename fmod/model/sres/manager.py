@@ -34,13 +34,12 @@ class SRModels:
 		return self.datasets[dstype].get_channel_idxs(channels)
 
 	def get_temporal_features(self):
-		sday, syear,  t0 = [],[], self.time[0]
+		sday, syear,  t0, pi2 = [],[], self.time[0], 2*np.pi
 		for idx, t in enumerate(self.time):
-			tp: np.timedelta64 = (t-t0)*2*np.pi
-			td: float = float(tp/np.timedelta64(1,'D'))
-			sday.append( (np.sin(td),np.cos(td)) )
-			ty: float = float(tp/np.timedelta64(365,'D'))
-			syear.append( (np.sin(ty),np.cos(ty)) )
+			td: float = float((t-t0)/np.timedelta64(1,'D'))
+			sday.append( (np.sin(td*pi2),np.cos(td*pi2)) )
+			ty: float = float((t-t0)/np.timedelta64(365,'D'))
+			syear.append( (np.sin(ty*pi2),np.cos(ty*pi2)) )
 			print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%H:%d/%m/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
 
 	def get_sample_target(self) -> xa.DataArray:
