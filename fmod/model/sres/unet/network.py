@@ -151,5 +151,6 @@ def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     downscale_factors: List[int]  = mconfig['downscale_factors']
     unet_depth:         int       = mconfig['unet_depth']
     temporal_features: np.ndarray = mconfig['temporal_features']
+    device:         torch.device  = mconfig['device']
     n_upscale_ops = len(downscale_factors)
-    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops, torch.from_numpy(temporal_features) )
+    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops, torch.from_numpy(temporal_features).to(device) )
