@@ -60,7 +60,7 @@ class DataPlot(object):
 
 	@property
 	def datetime(self) -> str:
-		return  self.time_coord[ self.time_index ].strftime("%H:%d/%m/%Y")
+		return  self.time_coord[ self.time_index ].strftime("%d/%m/%Y:%H")
 
 	def get_dset(self, icol: int ) -> BatchDataset:
 		return self.input_dataset if icol == 0 else self.target_dataset
