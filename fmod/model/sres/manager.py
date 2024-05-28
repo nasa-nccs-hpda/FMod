@@ -35,7 +35,7 @@ class SRModels:
 
 	def get_temporal_features(self):
 		sday, syear,  t0 = [],[], self.time[0]
-		for idx, t in enumerate(self.time.tolist()):
+		for idx, t in enumerate(self.time):
 			tp: np.timedelta64 = (t-t0)*2*np.pi
 			td: float = float(tp/np.timedelta64(1,'D'))
 			sday.append( (np.sin(td),np.cos(td)) )
