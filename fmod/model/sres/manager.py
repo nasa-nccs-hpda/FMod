@@ -39,7 +39,7 @@ class SRModels:
 			tp: np.timedelta64 = (t-t0)*2*np.pi
 			td: float = float(tp/np.timedelta64(1,'D'))
 			sday.append( (np.sin(td),np.cos(td)) )
-			ty: float = float(tp/np.timedelta64(1,'Y'))
+			ty: float = float(tp/np.timedelta64(365,'D'))
 			syear.append( (np.sin(ty),np.cos(ty)) )
 			print( f"{pd.Timestamp(t).to_pydatetime().strftime('%H:%d/%m/%Y')}: td=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
 
