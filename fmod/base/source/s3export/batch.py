@@ -90,7 +90,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_timeslice( self, idx: int, origin: Dict[str,int], date: datetime ) -> xa.DataArray:
 		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, date ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
-		result = result.expand_dims(axis=0, dim=dict(time=[np.datetime64(date)]))
+		result = result.expand_dims(axis=0, dim=dict(time=np.array(np.datetime64(date),dtype='datetime64[ns]')))
 		return result
 
 	def load_temporal_batch( self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
