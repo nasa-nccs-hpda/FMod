@@ -329,13 +329,13 @@ class ModelTrainer(object):
 				for tile_loc in tile_locs:
 					try:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-						print( f" ** Processing BATCH start={batch_date.strftime('%m/%d:%H/%Y')}, tile={tile_loc}")
+						lgm().log( f" ** Processing BATCH start={batch_date.strftime('%m/%d:%H/%Y')}, tile={tile_loc}")
 						inp: Tensor = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
 
-							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+							lgm().log( f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
 							lgm().log(f" ** Loss({batch_date.strftime('%m/%d:%H/%Y')}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
