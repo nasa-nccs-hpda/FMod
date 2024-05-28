@@ -102,6 +102,7 @@ class UNet(nn.Module):
         self.depth: int = depth
         self.downscale = nn.ModuleList()
         self.upscale = nn.ModuleList()
+        self.base_shape = None
 
         for iL in range(depth):
             usf, dsf = 2 ** (depth-iL-1), 2 ** iL
@@ -113,7 +114,9 @@ class UNet(nn.Module):
         for iL in range(self.depth):
             skip.insert(0, x)
             x: torch.Tensor = self.downscale[iL](x)
-        print( f"UNet base shape: {list(x.shape)}")
+        if self.base_shape is None:
+            print( f"\n ----------------- UNet base shape: {list(x.shape)} ----------------- \n")
+            self.base_shape = list(x.shape)
         for iL in range(self.depth):
             x = self.upscale[iL](x,skip[iL])
         return x

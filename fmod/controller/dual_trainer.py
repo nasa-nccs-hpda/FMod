@@ -323,6 +323,7 @@ class ModelTrainer(object):
 
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
+			print( f"BATCH START DATES: {[d.strftime('%d/%m/%Y:%H') for d in batch_dates]}")
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
