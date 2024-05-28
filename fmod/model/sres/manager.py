@@ -10,6 +10,16 @@ import importlib, pandas as pd
 from datetime import datetime
 from fmod.data.batch import BatchDataset
 
+def get_temporal_features( time: np.ndarray ) -> np.ndarray:
+	sday, syear, t0, pi2 = [], [], time[0], 2 * np.pi
+	for idx, t in enumerate(time):
+		td: float = float((t - t0) / np.timedelta64(1, 'D'))
+		sday.append((np.sin(td * pi2), np.cos(td * pi2)))
+		ty: float = float((t - t0) / np.timedelta64(365, 'D'))
+		syear.append([np.sin(ty * pi2), np.cos(ty * pi2)])
+	# print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
+	tfeats = np.concatenate([np.array(tf) for tf in [sday, syear]], axis=1)
+	return tfeats.reshape(list(tfeats.shape) + [1, 1])
 class SRModels:
 
 	def __init__(self, input_dataset: BatchDataset, target_dataset: BatchDataset, device: torch.device):
@@ -25,6 +35,7 @@ class SRModels:
 		lgm().log(f"sample_input: shape={self.sample_input.shape}")
 		lgm().log(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.sizes['channel']
+		self.model_config['temporal_features'] = get_temporal_features(self.time)
 
 	def memmap_batch_data(self, start: datetime):
 		for bdset in self.datasets.values():
@@ -32,19 +43,6 @@ class SRModels:
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
-
-	def get_temporal_features(self):
-		sday, syear,  t0, pi2 = [],[], self.time[0], 2*np.pi
-		for idx, t in enumerate(self.time):
-			td: float = float((t-t0)/np.timedelta64(1,'D'))
-			sday.append( (np.sin(td*pi2),np.cos(td*pi2)) )
-			ty: float = float((t-t0)/np.timedelta64(365,'D'))
-			syear.append( [np.sin(ty*pi2),np.cos(ty*pi2)] )
-			# print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
-		tfeats = np.concatenate( [ np.array(tf) for tf in [sday,syear] ], axis=1 )
-		tfeats = np.expand_dims(tfeats, axis=-1)
-		tfeats = np.expand_dims(tfeats, axis=-1)
-		print( f"temporal_feature shapes = {tfeats.shape}" )
 
 	def get_sample_target(self) -> xa.DataArray:
 		result =  self.sample_target.isel(channel=self.cids) if (len(self.cids) < self.sample_target.sizes['channel']) else self.sample_target
