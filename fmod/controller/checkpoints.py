@@ -24,10 +24,10 @@ class CheckpointManager(object):
 
 	def save_checkpoint(self, epoch: int, loss: float ):
 		cpath = self._save_state( epoch, loss )
-		lgm().log(f"     Saving current model to {cpath}", display=True)
+		lgm().log(f" -- Checkpoint saved --", display=True)
 		if loss < self.min_loss:
 			cppath = self._save_state( epoch, loss, "best" )
-			lgm().log(f"   ---- Saving best model (loss={loss:.4f}) to {cppath}", display=True )
+			lgm().log(f"   ---- Saving best model (loss={loss:.4f})", display=True )
 			self.min_loss = loss
 
 	def _load_state(self, version: str ) -> Dict[str,Any]:
@@ -49,6 +49,7 @@ class CheckpointManager(object):
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
 		else:
 			print( f"No checkpoint file found at '{cppath}': starting from scratch.")
+		print( f" ------ Saving checkpoints to '{self.checkpoint_path()}' ------ " )
 		return train_state
 
 	def checkpoint_path(self, version="current") -> str:
