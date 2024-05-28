@@ -41,7 +41,7 @@ class SRModels:
 			sday.append( (np.sin(td),np.cos(td)) )
 			ty: float = float(tp/np.timedelta64(1,'Y'))
 			syear.append( (np.sin(ty),np.cos(ty)) )
-			print( f"{pd.Timestamp(t).to_pydatetime().strftime('%H:%d/%m/%Y'): td={td:.2f} ty={ty:.2f}}" )
+			print( f"{pd.Timestamp(t).to_pydatetime().strftime('%H:%d/%m/%Y')}: td=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
 
 	def get_sample_target(self) -> xa.DataArray:
 		result =  self.sample_target.isel(channel=self.cids) if (len(self.cids) < self.sample_target.sizes['channel']) else self.sample_target
