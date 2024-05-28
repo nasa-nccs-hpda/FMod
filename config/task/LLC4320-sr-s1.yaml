@@ -1,12 +1,12 @@
 name: ???
 scenario: ???
 dataset: ???
+training_version: ???
 
 tensor_type: "torch"
 device: "gpu"
 num_workers: 4
 downscale_method: 'interp:linear'
-training_version: '{name}-{dataset}.{scenario}'
 
 start_date:  "9/13/2011"
 days_per_batch: 64

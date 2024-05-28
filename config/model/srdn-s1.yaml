@@ -12,4 +12,3 @@ kernel_size:
   features: 3
   hidden: 3
   output: 9
-training_version: merra2-srdn.1

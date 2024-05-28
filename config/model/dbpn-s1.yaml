@@ -6,4 +6,3 @@ scale: 4
 nprojectionfeatures: 32
 downscale_factors: [2]
 loss_fn: l2
-training_version: merra2-dbpn.1
