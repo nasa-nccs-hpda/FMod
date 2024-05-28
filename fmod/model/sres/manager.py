@@ -18,7 +18,7 @@ def get_temporal_features( time: np.ndarray ) -> np.ndarray:
 		ty: float = float((t - t0) / np.timedelta64(365, 'D'))
 		syear.append([np.sin(ty * pi2), np.cos(ty * pi2)])
 	# print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
-	tfeats = np.concatenate([np.array(tf) for tf in [sday, syear]], axis=1)
+	tfeats = np.concatenate([np.array(tf,dtype=np.float32) for tf in [sday, syear]], axis=1)
 	return tfeats.reshape(list(tfeats.shape) + [1, 1])
 class SRModels:
 
