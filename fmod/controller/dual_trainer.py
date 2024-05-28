@@ -323,12 +323,13 @@ class ModelTrainer(object):
 
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
-			print( f"BATCH START DATES: {[d.strftime('%d/%m/%Y:%H') for d in batch_dates]}")
+			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			for batch_date in batch_dates:
 				for tile_loc in tile_locs:
 					try:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+						print( f" ** Processing BATCH start={batch_date.strftime('%m/%d:%H/%Y')}, tile={tile_loc}")
 						inp: Tensor = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
@@ -336,7 +337,7 @@ class ModelTrainer(object):
 
 							lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
-							lgm().log(f" ** Loss({batch_date.strftime('%d/%m/%Y:%H')}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+							lgm().log(f" ** Loss({batch_date.strftime('%m/%d:%H/%Y')}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 							self.current_input = inp
 							self.current_upsampled = self.upsample(inp)
 							self.current_target = targ
@@ -385,7 +386,7 @@ class ModelTrainer(object):
 			prd, targ = self.apply_network( inp, target )
 			lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 			loss = self.loss( prd, targ )
-			lgm().log(f" ** Loss({batch_date.strftime('%d/%m/%Y:%H')}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+			lgm().log(f" ** Loss({batch_date.strftime('%m/%d:%H/%Y')}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
 			self.current_input = inp
 			self.current_upsampled = self.upsample(inp)
 			self.current_target = targ
