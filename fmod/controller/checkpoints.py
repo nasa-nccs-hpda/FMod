@@ -47,6 +47,8 @@ class CheckpointManager(object):
 				lgm().log(f"Loaded model from {cppath}, loss = {self.min_loss:.2f}", display=True)
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
+		else:
+			print( f"No checkpoint file found at '{cppath}': starting from scratch.")
 		return train_state
 
 	def checkpoint_path(self, version="current") -> str:
