@@ -40,7 +40,7 @@ class SRModels:
 			sday.append( (np.sin(td*pi2),np.cos(td*pi2)) )
 			ty: float = float((t-t0)/np.timedelta64(365,'D'))
 			syear.append( [np.sin(ty*pi2),np.cos(ty*pi2)] )
-			print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
+			# print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
 		tfeats = [ np.array(tf) for tf in [sday,syear] ]
 		print( "temporal_feature shapes = " + str( [ f"{tf.shape}" for tf in tfeats ] ) )
 
