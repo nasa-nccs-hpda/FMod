@@ -306,7 +306,6 @@ class ModelTrainer(object):
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
 		epoch0, nepochs, batch_iter = 0, cfg().task.nepochs, cfg().task.batch_iter
-		loss: torch.Tensor = torch.tensor(float('inf'), device=self.device)
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -327,16 +326,17 @@ class ModelTrainer(object):
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			for batch_date in batch_dates:
 				try:
-					losses, inp, prd, targ = 0.0, None, None, None
+					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
+					inp, prd, targ = None, None, None
 					for tile_loc in tile_locs:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
-							loss = self.loss( prd, targ )
+							loss: torch.Tensor = self.loss( prd, targ )
 							losses += loss
-							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}, loss={loss:.4f}")
+							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
 							self.optimizer.step()
@@ -345,7 +345,7 @@ class ModelTrainer(object):
 					self.current_target = targ
 					self.current_product = prd
 					self.current_upsampled = self.upsample(inp)
-					ave_loss = losses / len(tile_locs)
+					ave_loss = losses.item() / len(tile_locs)
 					lgm().log(f" ** Loss {batch_date.strftime('%m/%d/%Y')}:  {ave_loss:.4f}", display=True, end="" )
 					if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
 
@@ -368,7 +368,7 @@ class ModelTrainer(object):
 		return loss.item()
 
 	@exception_handled
-	def evaluate(self, date_index:int=0, tile_index:int=0, **kwargs ):
+	def evaluate(self, date_index:int=0, **kwargs ):
 		seed = kwargs.get('seed',333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -377,24 +377,28 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint("best")
 
 		proc_start = time.time()
-		loss: torch.Tensor = None
-		tile_loc: Dict[str,int] =  TileGrid( LearningContext.Validation ).get_tile_locations()[tile_index]
+		tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Validation ).get_tile_locations()
 		batch_date: datetime = self.input_dataset.get_batch_start_dates()[date_index]
 		try:
-			train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-			inp: Tensor = train_data['input']
-			target: Tensor   = train_data['target']
-			prd, targ = self.apply_network( inp, target )
-			lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-			loss = self.loss( prd, targ )
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
+			losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+			inp, prd, targ = None, None, None
+			for tile_loc in tile_locs:
+				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+				inp = train_data['input']
+				target: Tensor   = train_data['target']
+				prd, targ = self.apply_network( inp, target )
+				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+				loss: torch.Tensor = self.loss( prd, targ )
+				losses += loss
+			ave_loss = losses.item() / len(tile_locs)
+			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True, end="" )
 			self.current_input = inp
 			self.current_upsampled = self.upsample(inp)
 			self.current_target = targ
 			self.current_product = prd
 
 		except Exception as e:
-			print( f"\n !!!!! Error processing tile_loc={tile_loc}, batch_date={batch_date} !!!!! {e}")
+			print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
 			print( traceback.format_exc() )
 			return loss.item()
 
