@@ -285,7 +285,8 @@ class ModelTrainer(object):
 
 	def get_current_upsampled(self, targets_only: bool = True) -> np.ndarray:
 		if self.current_upsampled is not None:
-			curr_upsampled: Tensor = self.get_target_channels(self.current_upsampled) if targets_only else self.current_upsampled
+			ndim: int = len(self.current_upsampled.shape)
+			curr_upsampled: Tensor = self.get_target_channels(self.current_upsampled) if (targets_only and ndim==4) else self.current_upsampled
 			return npa( curr_upsampled )
 
 	def get_current_target(self) -> np.ndarray:
