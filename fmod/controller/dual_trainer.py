@@ -388,7 +388,7 @@ class ModelTrainer(object):
 			for tile_loc in tile_locs:
 				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 				inp = train_data['input']
-				ups: Tensor = self.upsample(inp) # self.get_target_channels( self.upsample(inp) )
+				ups: Tensor = self.get_target_channels( self.upsample(inp) )
 				target: Tensor   = train_data['target']
 				prd, targ = self.apply_network( inp, target )
 				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)} ups{ts(ups)}", display=True)
