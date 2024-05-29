@@ -305,7 +305,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, nepochs, batch_iter = 0, cfg().task.nepochs, cfg().task.batch_iter
+		epoch0, epoch_loss, nepochs, batch_iter = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -315,7 +315,6 @@ class ModelTrainer(object):
 			print( " *** No checkpoint loaded: training from scratch *** ")
 
 		for epoch in range(epoch0,nepochs):
-			print(f'Epoch {epoch + 1}/{nepochs}: ')
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
@@ -324,6 +323,7 @@ class ModelTrainer(object):
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
+			epoch_losses = []
 			for batch_date in batch_dates:
 				try:
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
@@ -346,8 +346,8 @@ class ModelTrainer(object):
 					self.current_product = prd
 					self.current_upsampled = self.upsample(inp)
 					ave_loss = losses.item() / len(tile_locs)
+					epoch_losses.append(ave_loss)
 					lgm().log(f" ** Loss {batch_date.strftime('%m/%d/%Y')}:  {ave_loss:.4f}", display=True, end="" )
-					if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
 
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
@@ -357,18 +357,18 @@ class ModelTrainer(object):
 				self.scheduler.step()
 
 			epoch_time = time.time() - epoch_start
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {loss.item():.5f} {fmtfl(self.layer_losses)}', display=True)
+			epoch_loss = np.array(epoch_losses).mean()
+			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
+			if save_state: self.checkpoint_manager.save_checkpoint(epoch, epoch_loss)
 
 		train_time = time.time() - train_start
-
-		print(f'--------------------------------------------------------------------------------')
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 
-		return loss.item()
+		return epoch_loss
 
 	@exception_handled
-	def evaluate(self, date_index:int=0, **kwargs ):
+	def evaluate(self,  **kwargs ):
 		seed = kwargs.get('seed',333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -378,20 +378,24 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Validation ).get_tile_locations()
-		batch_date: datetime = self.input_dataset.get_batch_start_dates()[date_index]
+		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
 		try:
-			losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+			epoch_losses = []
 			inp, prd, targ = None, None, None
-			for tile_loc in tile_locs:
-				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-				inp = train_data['input']
-				target: Tensor   = train_data['target']
-				prd, targ = self.apply_network( inp, target )
-				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-				loss: torch.Tensor = self.loss( prd, targ )
-				losses += loss
-			ave_loss = losses.item() / len(tile_locs)
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True, end="" )
+			for batch_date in batch_dates:
+				losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+
+				for tile_loc in tile_locs:
+					train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+					inp = train_data['input']
+					target: Tensor   = train_data['target']
+					prd, targ = self.apply_network( inp, target )
+					lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+					loss: torch.Tensor = self.loss( prd, targ )
+					losses += loss
+				ave_loss = losses.item() / len(tile_locs)
+				epoch_losses.append(ave_loss)
+				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True, end="" )
 			self.current_input = inp
 			self.current_upsampled = self.upsample(inp)
 			self.current_target = targ
@@ -403,10 +407,10 @@ class ModelTrainer(object):
 			return loss.item()
 
 		proc_time = time.time() - proc_start
-		print(f'--------------------------------------------------------------------------------')
+		epoch_loss = np.array(epoch_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		print(f' -------> Evaluating model with {ntotal_params} took {proc_time} sec.')
-		return loss.item()
+		print(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, LOSS = {epoch_loss:.4f}')
+		return epoch_loss
 
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
