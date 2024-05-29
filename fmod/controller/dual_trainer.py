@@ -346,7 +346,7 @@ class ModelTrainer(object):
 					self.current_target = targ
 					self.current_product = prd
 					self.current_upsampled = self.upsample(inp)
-					ave_loss = losses.item() / len(tile_locs)
+					ave_loss = losses.item() / ( len(tile_locs) * len(batch_iter) )
 					epoch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
 
