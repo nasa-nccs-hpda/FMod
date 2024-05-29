@@ -381,36 +381,30 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		try:
-			for batch_date in batch_dates:
-				model_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
-				interp_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+		for batch_date in batch_dates:
+			model_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+			interp_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
 
-				for tile_loc in tile_locs:
-					train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-					inp = train_data['input']
-					ups = self.upsample(inp) # self.get_target_channels( self.upsample(inp) )
-					target: Tensor   = train_data['target']
-					prd, targ = self.apply_network( inp, target )
-					lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-					model_loss: torch.Tensor  = self.loss( prd, targ )
-					model_loss += model_loss
-					interp_loss: torch.Tensor = self.loss( ups, targ )
-					interp_loss += interp_loss
-				ave_model_loss = model_loss.item() / len(tile_locs)
-				batch_model_losses.append(ave_model_loss)
-				ave_interp_loss = interp_loss.item() / len(tile_locs)
-				batch_interp_losses.append(ave_interp_loss)
-				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True )
-			self.current_input = inp
-			self.current_upsampled = ups
-			self.current_target = targ
-			self.current_product = prd
-
-		except Exception as e:
-			print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
-			print( traceback.format_exc() )
-			return {}
+			for tile_loc in tile_locs:
+				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+				inp = train_data['input']
+				ups = self.upsample(inp) # self.get_target_channels( self.upsample(inp) )
+				target: Tensor   = train_data['target']
+				prd, targ = self.apply_network( inp, target )
+				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+				model_loss: torch.Tensor  = self.loss( prd, targ )
+				model_loss += model_loss
+				interp_loss: torch.Tensor = self.loss( ups, targ )
+				interp_loss += interp_loss
+			ave_model_loss = model_loss.item() / len(tile_locs)
+			batch_model_losses.append(ave_model_loss)
+			ave_interp_loss = interp_loss.item() / len(tile_locs)
+			batch_interp_losses.append(ave_interp_loss)
+			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True )
+		self.current_input = inp
+		self.current_upsampled = ups
+		self.current_target = targ
+		self.current_product = prd
 
 		proc_time = time.time() - proc_start
 		eval_model_loss = np.array(batch_model_losses).mean()
