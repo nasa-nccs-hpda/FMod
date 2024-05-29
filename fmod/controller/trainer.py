@@ -126,7 +126,7 @@ class ModelTrainer(object):
 	@exception_handled
 	def train(self, model: nn.Module, **kwargs ):
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', '' )
+		load_state = kwargs.get( 'load_state', 'current' )
 		save_state = kwargs.get('save_state', True)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -182,7 +182,7 @@ class ModelTrainer(object):
 			if save_state:
 				self.checkpoint_manager.save_checkpoint( epoch, acc_loss )
 				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
 
 		train_time = time.time() - train_start
 
@@ -302,7 +302,7 @@ class DualModelTrainer(object):
 	def train(self, model: nn.Module, **kwargs ):
 		print( f" *------> training: {kwargs}" )
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', '' )
+		load_state = kwargs.get( 'load_state', 'current' )
 		save_state = kwargs.get('save_state', True)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)

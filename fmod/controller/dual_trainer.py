@@ -297,7 +297,7 @@ class ModelTrainer(object):
 	@exception_handled
 	def train(self, **kwargs ):
 		seed = kwargs.get('seed',333)
-		load_state = kwargs.get( 'load_state', '' )
+		load_state = kwargs.get( 'load_state', 'current' )
 		save_state = kwargs.get('save_state', True)
 
 		torch.manual_seed(seed)
@@ -359,7 +359,7 @@ class ModelTrainer(object):
 
 			epoch_time = time.time() - epoch_start
 			epoch_loss = np.array(epoch_losses).mean()
-			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + epoch_losses )
 
 		train_time = time.time() - train_start
@@ -374,7 +374,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		self.checkpoint_manager.load_checkpoint("best")
+		self.checkpoint_manager.load_checkpoint()
 
 		proc_start = time.time()
 		tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Validation ).get_tile_locations()
@@ -389,7 +389,7 @@ class ModelTrainer(object):
 				for tile_loc in tile_locs:
 					train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 					inp = train_data['input']
-					ups = self.upsample(inp)
+					ups = self.get_target_channels( self.upsample(inp) )
 					target: Tensor   = train_data['target']
 					prd, targ = self.apply_network( inp, target )
 					lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
