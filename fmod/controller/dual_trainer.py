@@ -58,7 +58,7 @@ def shuffle( data: Tensor ) -> Tensor:
 def tas( ta: Any ) -> str:
 	return list(ta) if (type(ta) is torch.Size) else ta
 def ts( t: Tensor ) -> str:
-	return f"{tas(t.dim())}{tas(t.shape)}"
+	return tas(t.shape)
 
 def unsqueeze( tensor: Tensor ) -> Tensor:
 	if tensor.ndim == 2:
@@ -388,10 +388,10 @@ class ModelTrainer(object):
 			for tile_loc in tile_locs:
 				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 				inp = train_data['input']
-				ups = self.upsample(inp) # self.get_target_channels( self.upsample(inp) )
+				ups: Tensor = self.upsample(inp) # self.get_target_channels( self.upsample(inp) )
 				target: Tensor   = train_data['target']
 				prd, targ = self.apply_network( inp, target )
-				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+				lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)} ups{ts(ups)}", display=True)
 				model_loss: torch.Tensor  = self.loss( prd, targ )
 				model_loss += model_loss
 				interp_loss: torch.Tensor = self.loss( ups, targ )
