@@ -326,31 +326,32 @@ class ModelTrainer(object):
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			for batch_date in batch_dates:
-				for tile_loc in tile_locs:
-					try:
+				try:
+					losses, inp, prd, targ = 0.0, None, None, None
+					for tile_loc in tile_locs:
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
-						lgm().log( f" ** Processing BATCH start={batch_date.strftime('%m/%d:%H/%Y')}, tile={tile_loc}")
-						inp: Tensor = train_data['input']
+						inp = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
-
-							lgm().log( f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							loss = self.loss( prd, targ )
-							lgm().log(f" ** Loss {batch_date.strftime('%m/%d/%Y')}:{biter}:[{tile_loc['y']:3d},{tile_loc['x']:3d}] {list(prd.shape)}->{list(targ.shape)}:  {loss.item():.5f}  {fmtfl(self.layer_losses)}", display=True, end="" )
-							self.current_input = inp
-							self.current_upsampled = self.upsample(inp)
-							self.current_target = targ
-							self.current_product = prd
+							losses += loss
+							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}, loss={loss:.4f}")
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
 							self.optimizer.step()
 
-						if save_state:
-							self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
-					except Exception as e:
-						print( f"\n !!!!! Error processing tile_loc={tile_loc}, batch_date={batch_date} !!!!! {e}")
-						print( traceback.format_exc() )
+					self.current_input = inp
+					self.current_target = targ
+					self.current_product = prd
+					self.current_upsampled = self.upsample(inp)
+					ave_loss = losses / len(tile_locs)
+					lgm().log(f" ** Loss {batch_date.strftime('%m/%d/%Y')}:  {ave_loss:.4f}", display=True, end="" )
+					if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss.item() )
+
+				except Exception as e:
+					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
+					print( traceback.format_exc() )
 
 			if self.scheduler is not None:
 				self.scheduler.step()
