@@ -64,7 +64,8 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 
 @exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
-	ims, labels, rms_errors, target = {}, {}, {}, ""
+	ims, labels = {}, {}
+	losses: Dict[str,float] = kwargs.get( 'losses', {} )
 	sample: xa.DataArray = images['input']
 	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
@@ -82,7 +83,6 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			if icol == ncols-1:
 				labels[(irow,icol)] = ['targets','predictions'][irow]
 				image = images[ labels[(irow,icol)] ]
-				if irow == 0: target = image
 			else:
 				labels[(irow,icol)] = ['input', 'upsampled'][irow]
 				image = images[ labels[(irow,icol)] ]
@@ -91,16 +91,15 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 			vrange = cscale( image, 2.0 )
 			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			if irow == 1:
-			#	print( f"{labels[(irow,icol)]}>>> image{list(image.shape)}: ({image.mean():.2f}, {image.std():.2f})  <--->  target{list(target.shape)}: ({target.mean():.2f}, {target.std():.2f})")
-				rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
-			ax.set_title(f" {labels[(irow,icol)]} {rmserror}")
+			label = labels[(irow,icol)]
+			if (irow == 1) and (label in losses):
+				rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+			ax.set_title(f" {label} {rmserror}")
 
 	@exception_handled
 	def time_update(sindex: int):
 		fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
 		lgm().log( f"time_update: tindex={sindex}")
-		target = None
 		for irow in [0, 1]:
 			for icol in range(ncols):
 				ax1 = axs[ irow, icol ]
@@ -108,14 +107,14 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 				if icol == ncols - 1:
 					labels[(irow, icol)] = ['targets', 'predictions'][irow]
 					image = images[labels[(irow, icol)]]
-					if irow == 0: target = image
 				else:
 					labels[(irow, icol)] = ['input', 'upsampled'][irow]
 					image = images[labels[(irow, icol)]]
 					image = image.isel(channel=icol)
 				tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
 				ims[(irow,icol)].set_data( tslice1.values.squeeze() )
-				if irow == 1: rmserror = f"{l2loss(tensor(image),tensor(target)):.3f}"
+				if (irow == 1) and (label in losses):
+					rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
 				ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
 		fig.canvas.draw_idle()
 

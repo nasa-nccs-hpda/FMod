@@ -348,7 +348,7 @@ class ModelTrainer(object):
 					self.current_upsampled = self.upsample(inp)
 					ave_loss = losses.item() / len(tile_locs)
 					epoch_losses.append(ave_loss)
-					lgm().log(f" ** BATCH {batch_date.strftime('%m/%d/%Y')}: Loss= {ave_loss:.4f}", display=True )
+					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
 
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
@@ -365,8 +365,7 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
-
-		return epoch_loss
+		return dict( predictions=epoch_loss )
 
 	@exception_handled
 	def evaluate(self,  **kwargs ):
@@ -380,38 +379,45 @@ class ModelTrainer(object):
 		proc_start = time.time()
 		tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Validation ).get_tile_locations()
 		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
+		batch_model_losses, batch_interp_losses = [], []
+		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		try:
-			epoch_losses = []
-			inp, prd, targ = None, None, None
 			for batch_date in batch_dates:
-				losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+				model_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+				interp_loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
 
 				for tile_loc in tile_locs:
 					train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 					inp = train_data['input']
+					ups = self.upsample(inp)
 					target: Tensor   = train_data['target']
 					prd, targ = self.apply_network( inp, target )
 					lgm().log( f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-					loss: torch.Tensor = self.loss( prd, targ )
-					losses += loss
-				ave_loss = losses.item() / len(tile_locs)
-				epoch_losses.append(ave_loss)
-				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True )
+					model_loss: torch.Tensor  = self.loss( prd, targ )
+					model_loss += model_loss
+					interp_loss: torch.Tensor = self.loss( ups, targ )
+					interp_loss += interp_loss
+				ave_model_loss = model_loss.item() / len(tile_locs)
+				batch_model_losses.append(ave_model_loss)
+				ave_interp_loss = interp_loss.item() / len(tile_locs)
+				batch_interp_losses.append(ave_interp_loss)
+				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True )
 			self.current_input = inp
-			self.current_upsampled = self.upsample(inp)
+			self.current_upsampled = ups
 			self.current_target = targ
 			self.current_product = prd
 
 		except Exception as e:
 			print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
 			print( traceback.format_exc() )
-			return loss.item()
+			return {}
 
 		proc_time = time.time() - proc_start
-		epoch_loss = np.array(epoch_losses).mean()
+		eval_model_loss = np.array(batch_model_losses).mean()
+		eval_interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		print(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, LOSS = {epoch_loss:.4f}')
-		return epoch_loss
+		print(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
+		return dict( predictions=eval_model_loss, upsampled=eval_interp_loss )
 
 	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
