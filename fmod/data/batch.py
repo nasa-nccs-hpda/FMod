@@ -93,7 +93,7 @@ class BatchDataset(BaseDataset):
 
     def get_channel_idxs(self, channels: List[str] ) -> List[int]:
         cidxs = [ self.srbatch.channels.index(cid) for cid in channels ]
-        print(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
+        lgm().log(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
         return cidxs
 
     def get_batch_dates(self, randomize=False ) -> List[datetime]:

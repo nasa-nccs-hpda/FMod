@@ -305,11 +305,12 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, []
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
 			epoch0 = train_state.get('epoch',0)
+			loss_history = train_state.get('losses',[])
 			nepochs += epoch0
 		else:
 			print( " *** No checkpoint loaded: training from scratch *** ")
@@ -347,7 +348,7 @@ class ModelTrainer(object):
 					self.current_upsampled = self.upsample(inp)
 					ave_loss = losses.item() / len(tile_locs)
 					epoch_losses.append(ave_loss)
-					lgm().log(f" ** Loss {batch_date.strftime('%m/%d/%Y')}:  {ave_loss:.4f}", display=True, end="" )
+					lgm().log(f" ** BATCH {batch_date.strftime('%m/%d/%Y')}: Loss= {ave_loss:.4f}", display=True )
 
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
@@ -359,7 +360,7 @@ class ModelTrainer(object):
 			epoch_time = time.time() - epoch_start
 			epoch_loss = np.array(epoch_losses).mean()
 			lgm().log(f'Epoch {epoch}, time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
-			if save_state: self.checkpoint_manager.save_checkpoint(epoch, epoch_loss)
+			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + epoch_losses )
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
@@ -395,7 +396,7 @@ class ModelTrainer(object):
 					losses += loss
 				ave_loss = losses.item() / len(tile_locs)
 				epoch_losses.append(ave_loss)
-				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True, end="" )
+				lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_loss:.4f}", display=True )
 			self.current_input = inp
 			self.current_upsampled = self.upsample(inp)
 			self.current_target = targ
