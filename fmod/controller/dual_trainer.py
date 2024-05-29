@@ -432,7 +432,7 @@ class ModelTrainer(object):
 			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
 		result =  channels[0] if (len(channels) == 1) else torch.cat( channels, dim = 1 )
-		print( f"get_target_channels: cidxs={self.channel_idxs} {list(batch_data.shape)} -> {list(result.shape)}")
+		return result
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
