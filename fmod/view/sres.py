@@ -67,7 +67,6 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, labels = {}, {}
 	losses: Dict[str,float] = kwargs.get( 'losses', {} )
 	sample: xa.DataArray = images['input']
-	print( f"Plotting {len(images)} images, sample{sample.dims}: {sample.shape}")
 	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
@@ -78,23 +77,24 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 
 	for irow in [0,1]:
 		for icol in range(ncols):
-			ax = axs[ irow, icol ]
-			rmserror = ""
-			if icol == ncols-1:
-				labels[(irow,icol)] = ['targets','predictions'][irow]
-				image = images[ labels[(irow,icol)] ]
-			else:
-				labels[(irow,icol)] = ['input', 'upsampled'][irow]
-				image = images[ labels[(irow,icol)] ]
-				image = image.isel( channel=icol )
-			ax.set_aspect(0.5)
-			vrange = cscale( image, 2.0 )
-			tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-			ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-			label = labels[(irow,icol)]
-			if (irow == 1) and (label in losses):
-				rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-			ax.set_title(f" {label} {rmserror}")
+			if len(images) > 0:
+				ax = axs[ irow, icol ]
+				rmserror = ""
+				if icol == ncols-1:
+					labels[(irow,icol)] = ['targets','predictions'][irow]
+					image = images[ labels[(irow,icol)] ]
+				else:
+					labels[(irow,icol)] = ['input', 'upsampled'][irow]
+					image = images[ labels[(irow,icol)] ]
+					image = image.isel( channel=icol )
+				ax.set_aspect(0.5)
+				vrange = cscale( image, 2.0 )
+				tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+				ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+				label = labels[(irow,icol)]
+				if (irow == 1) and (label in losses):
+					rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+				ax.set_title(f" {label} {rmserror}")
 
 	@exception_handled
 	def time_update(sindex: int):
@@ -102,20 +102,21 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		lgm().log( f"time_update: tindex={sindex}")
 		for irow in [0, 1]:
 			for icol in range(ncols):
-				ax1 = axs[ irow, icol ]
-				rmserror = ""
-				if icol == ncols - 1:
-					labels[(irow, icol)] = ['targets', 'predictions'][irow]
-					image = images[labels[(irow, icol)]]
-				else:
-					labels[(irow, icol)] = ['input', 'upsampled'][irow]
-					image = images[labels[(irow, icol)]]
-					image = image.isel(channel=icol)
-				tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-				ims[(irow,icol)].set_data( tslice1.values.squeeze() )
-				if (irow == 1) and (label in losses):
-					rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-				ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
+				if len(images) > 0:
+					ax1 = axs[ irow, icol ]
+					rmserror = ""
+					if icol == ncols - 1:
+						labels[(irow, icol)] = ['targets', 'predictions'][irow]
+						image = images[labels[(irow, icol)]]
+					else:
+						labels[(irow, icol)] = ['input', 'upsampled'][irow]
+						image = images[labels[(irow, icol)]]
+						image = image.isel(channel=icol)
+					tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+					ims[(irow,icol)].set_data( tslice1.values.squeeze() )
+					if (irow == 1) and (label in losses):
+						rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+					ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
 		fig.canvas.draw_idle()
 
 
