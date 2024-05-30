@@ -382,8 +382,8 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
-			model_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
-			interp_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
+			model_losses: float = 0.0
+			interp_losses: float = 0.0
 
 			for tile_loc in tile_locs:
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
@@ -392,12 +392,12 @@ class ModelTrainer(object):
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
 				model_loss: torch.Tensor = self.loss(prd, targ)
-				model_losses += model_loss
+				model_losses += model_loss.item()
 				interp_loss: torch.Tensor = self.loss(ups, targ)
-				interp_losses += interp_loss
-			ave_model_loss = model_losses.item() / len(tile_locs)
+				interp_losses += interp_loss.item()
+			ave_model_loss = model_losses / len(tile_locs)
 			batch_model_losses.append(ave_model_loss)
-			ave_interp_loss = interp_losses.item() / len(tile_locs)
+			ave_interp_loss = interp_losses / len(tile_locs)
 			batch_interp_losses.append(ave_interp_loss)
 			lgm().log(f" ** Loss { batch_date.strftime('%m/%d:%H/%Y') }:  {ave_model_loss:.4f}", display=True)
 		self.current_input = inp
