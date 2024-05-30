@@ -338,7 +338,6 @@ class ModelTrainer(object):
 							prd, targ = self.apply_network( inp, target )
 							loss: torch.Tensor = self.loss( prd, targ )
 							losses += loss
-							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
 							self.optimizer.step()
@@ -392,7 +391,6 @@ class ModelTrainer(object):
 				ups: Tensor = self.get_target_channels(self.upsample(inp))
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
-				lgm().log(f"apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)} ups{ts(ups)}", display=True)
 				model_loss: torch.Tensor = self.loss(prd, targ)
 				model_losses += model_loss
 				interp_loss: torch.Tensor = self.loss(ups, targ)
