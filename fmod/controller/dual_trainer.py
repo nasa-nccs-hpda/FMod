@@ -369,7 +369,7 @@ class ModelTrainer(object):
 		return dict( predictions=epoch_loss )
 
 	@exception_handled
-	def evaluate(self,  **kwargs ):
+	def evaluate(self, tileset: LearningContext, **kwargs ):
 		seed = kwargs.get('seed',333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -378,7 +378,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 
 		proc_start = time.time()
-		tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Validation ).get_tile_locations()
+		tile_locs: List[Dict[str,int]] =  TileGrid( tileset ).get_tile_locations()
 		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
