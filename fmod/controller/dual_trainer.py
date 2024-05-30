@@ -399,7 +399,7 @@ class ModelTrainer(object):
 			batch_model_losses.append(ave_model_loss)
 			ave_interp_loss = interp_losses.item() / len(tile_locs)
 			batch_interp_losses.append(ave_interp_loss)
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True)
+			lgm().log(f" ** Loss { batch_date.strftime('%m/%d:%H/%Y') }:  {ave_model_loss:.4f}", display=True)
 		self.current_input = inp
 		self.current_upsampled = ups
 		self.current_target = targ
