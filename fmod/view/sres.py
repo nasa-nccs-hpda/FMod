@@ -79,7 +79,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		for icol in range(ncols):
 			if len(images) > 0:
 				ax = axs[ irow, icol ]
-				rmserror = ""
+				rmserror  =  ""
 				if icol == ncols-1:
 					labels[(irow,icol)] = ['targets','predictions'][irow]
 					image = images[ labels[(irow,icol)] ]
