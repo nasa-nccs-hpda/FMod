@@ -325,7 +325,7 @@ class ModelTrainer(object):
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
-			epoch_losses = []
+			batch_losses = []
 			for batch_date in batch_dates:
 				try:
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
@@ -347,8 +347,8 @@ class ModelTrainer(object):
 					self.current_target = targ
 					self.current_product = prd
 					self.current_upsampled = self.upsample(inp)
-					ave_loss = losses.item() / (  len(tile_locs) * batch_iter  )
-					epoch_losses.append(ave_loss)
+					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
+					batch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
 
 				except Exception as e:
@@ -359,9 +359,9 @@ class ModelTrainer(object):
 				self.scheduler.step()
 
 			epoch_time = time.time() - epoch_start
-			epoch_loss = np.array(epoch_losses).mean()
+			epoch_loss = np.array(batch_losses).mean()
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
-			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + epoch_losses )
+			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
