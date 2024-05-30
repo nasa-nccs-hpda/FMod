@@ -62,7 +62,6 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
 					upsampled=   x_upsampled )
 
-@exception_handled
 def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, labels = {}, {}
 	losses: Dict[str,float] = kwargs.get( 'losses', {} )
