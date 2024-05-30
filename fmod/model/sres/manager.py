@@ -35,7 +35,8 @@ class SRModels:
 		lgm().log(f"sample_input: shape={self.sample_input.shape}")
 		lgm().log(f"sample_target: shape={self.sample_target.shape}")
 		self.model_config['nchannels'] = self.sample_input.sizes['channel']
-		self.model_config['temporal_features'] = get_temporal_features(self.time)
+		if self.model_config.get('use_temporal_features', False ):
+			self.model_config['temporal_features'] = get_temporal_features(self.time)
 		self.model_config['device'] = device
 
 	def memmap_batch_data(self, start: datetime):
