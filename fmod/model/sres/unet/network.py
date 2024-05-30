@@ -146,11 +146,12 @@ class UNetSR(nn.Module):
         return upscale
 
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
-    nchannels:          int       = mconfig['nchannels']
-    nfeatures:          int       = mconfig['nfeatures']
-    downscale_factors: List[int]  = mconfig['downscale_factors']
-    unet_depth:         int       = mconfig['unet_depth']
-    temporal_features: np.ndarray = mconfig['temporal_features']
-    device:         torch.device  = mconfig['device']
+    nchannels:          int                 = mconfig['nchannels']
+    nfeatures:          int                 = mconfig['nfeatures']
+    downscale_factors: List[int]            = mconfig['downscale_factors']
+    unet_depth:         int                 = mconfig['unet_depth']
+    temporal_features: Optional[np.ndarray] = mconfig.get('temporal_features',None)
+    device:         torch.device            = mconfig['device']
     n_upscale_ops = len(downscale_factors)
-    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops, torch.from_numpy(temporal_features).to(device) )
+    tfeat: torch.Tensor = None if (temporal_features is None) else torch.from_numpy(temporal_features).to(device)
+    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops, tfeat )
