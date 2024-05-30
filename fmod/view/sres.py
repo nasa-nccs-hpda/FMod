@@ -121,5 +121,6 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 
 	tslider.set_callback( time_update )
 	fig.suptitle(f' ** ', fontsize=10, va="top", y=1.0 )
+	print( "Returning plot!")
 	return ipw.VBox([fig.canvas,tslider])
 
