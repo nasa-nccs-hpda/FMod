@@ -85,6 +85,7 @@ class UNetUpscale(nn.Module):
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         xup = self.up(x)
+        print(f"UNetUpscale: x{list(x.shape)} -> xup{list(xup.shape)} + skip{list(skip.shape)}")
         y: torch.Tensor = torch.cat([xup, skip], dim=1 )
         return self.conv(y)
 
