@@ -296,7 +296,8 @@ class ModelTrainer(object):
 		return None if (self.current_product is None) else npa( self.current_product )
 
 	@exception_handled
-	def train(self, **kwargs ):
+	def train(self, **kwargs ) -> Dict[str,float]:
+		if cfg().task['nepochs'] == 0: return {}
 		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', 'current' )
 		save_state = kwargs.get('save_state', True)
@@ -359,7 +360,7 @@ class ModelTrainer(object):
 				self.scheduler.step()
 
 			epoch_time = time.time() - epoch_start
-			epoch_loss = np.array(batch_losses).mean()
+			epoch_loss: float = np.array(batch_losses).mean()
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
 
