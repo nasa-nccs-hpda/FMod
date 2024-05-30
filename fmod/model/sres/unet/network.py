@@ -23,6 +23,19 @@ class DoubleConv(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.double_conv(x)
 
+class Conv(nn.Module):
+
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding='same', bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.double_conv(x)
+
 
 class MPDownscale(nn.Module):
 
@@ -126,15 +139,16 @@ class UNet(nn.Module):
 
 
 class UNetSR(nn.Module):
-    def __init__(self, n_channels: int, n_features: int, unet_depth: int, n_upscale_ops: int, temporal_features: torch.Tensor ):
+    def __init__(self, n_channels: int, n_features: int, n_outputs: int, unet_depth: int, n_upscale_ops: int, temporal_features: torch.Tensor ):
         super(UNetSR, self).__init__()
         self.n_channels: int = n_channels
         self.n_features: int = n_features
+        self.n_outputs: int = n_outputs
         self.workflow = nn.Sequential(
             DoubleConv( n_channels, n_features ),
             UNet( n_features, unet_depth, temporal_features ),
+            OutConv( n_features, n_outputs ),
             self.get_upscale_layers( n_upscale_ops ),
-            OutConv( n_features, self.n_channels ),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -143,7 +157,7 @@ class UNetSR(nn.Module):
     def get_upscale_layers(self, nlayers: int) -> nn.Module:
         upscale = nn.Sequential()
         for iL in range(nlayers):
-            upscale.add_module( f"ups{iL}", Upscale( self.n_features, self.n_features) )
+            upscale.add_module( f"ups{iL}", Upscale( self.n_outputs, self.n_outputs) )
         return upscale
 
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:

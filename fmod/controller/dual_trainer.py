@@ -134,7 +134,6 @@ class ModelTrainer(object):
 		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.current_input: torch.Tensor = None
-		self.current_upsampled: torch.Tensor = None
 		self.current_target: torch.Tensor = None
 		self.current_product: TensorOrTensors = None
 
@@ -284,12 +283,6 @@ class ModelTrainer(object):
 			curr_input: Tensor = self.get_target_channels(self.current_input) if targets_only else self.current_input
 			return npa( curr_input )
 
-	def get_current_upsampled(self, targets_only: bool = True) -> np.ndarray:
-		if self.current_upsampled is not None:
-			ndim: int = len(self.current_upsampled.shape)
-			curr_upsampled: Tensor = self.get_target_channels(self.current_upsampled) if (targets_only and ndim==4) else self.current_upsampled
-			return npa( curr_upsampled )
-
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
 
@@ -348,7 +341,6 @@ class ModelTrainer(object):
 					self.current_input = inp
 					self.current_target = targ
 					self.current_product = prd
-					self.current_upsampled = self.upsample(inp)
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
