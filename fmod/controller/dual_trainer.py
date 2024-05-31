@@ -363,40 +363,38 @@ class ModelTrainer(object):
 		return dict( predictions=epoch_loss )
 
 	@exception_handled
-	def evaluate(self, tileset: LearningContext, **kwargs ):
-		seed = kwargs.get('seed',333)
+	def evaluate(self, tileset: LearningContext, **kwargs):
+		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
-		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		self.checkpoint_manager.load_checkpoint()
 
 		proc_start = time.time()
-		tile_locs: List[Dict[str,int]] =  TileGrid( tileset ).get_tile_locations()
+		tile_locs: List[Dict[str, int]] = TileGrid(tileset).get_tile_locations()
 		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
-			model_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
-			interp_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
-
+			model_losses = 0.0
+			interp_losses = 0.0
 			for tile_loc in tile_locs:
-				train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 				inp = train_data['input']
-				ups: Tensor = self.get_target_channels( self.upsample(inp) )
-				target: Tensor   = train_data['target']
-				prd, targ = self.apply_network( inp, target )
-				model_loss: torch.Tensor  = self.loss( prd, targ )
-				model_losses += model_loss
-				interp_loss: torch.Tensor = self.loss( ups, targ )
-				interp_losses += interp_loss
-			ave_model_loss = model_losses.item() / len(tile_locs)
+				ups: Tensor = self.get_target_channels(self.upsample(inp))
+				target: Tensor = train_data['target']
+				prd, targ = self.apply_network(inp, target)
+				model_loss: torch.Tensor = self.loss(prd, targ)
+				model_losses += model_loss.item()
+				interp_loss: torch.Tensor = self.loss(ups, targ)
+				interp_losses += interp_loss.item()
+			ave_model_loss = model_losses / len(tile_locs)
 			batch_model_losses.append(ave_model_loss)
-			ave_interp_loss = interp_losses.item() / len(tile_locs)
+			ave_interp_loss = interp_losses / len(tile_locs)
 			batch_interp_losses.append(ave_interp_loss)
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True )
+			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True)
 		self.current_input = inp
-		self.current_upsampled = ups
 		self.current_target = targ
 		self.current_product = prd
 
@@ -405,15 +403,15 @@ class ModelTrainer(object):
 		eval_interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
-		return dict( predictions=eval_model_loss, upsampled=eval_interp_loss )
+		return dict(predictions=eval_model_loss, upsampled=eval_interp_loss)
 
-	def apply_network( self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
+	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
 		target: Tensor = target_data
 		product: TensorOrTensors = self.model( net_input )
 		if type(product) == torch.Tensor:
 			result  =  self.get_target_channels(product)
-		#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
+			#		print( f"get_train_target, input shape={input_data.shape}, product shape={product.shape}, output shape={result.shape}, channel_idxs={channel_idxs}")
 		else:
 			result = [ self.get_target_channels(prod) for prod in product ]
 		#		print(f"get_train_target, input shape={input_data.shape}, product shape={product[0].shape}, output shape={result[0].shape}, channel_idxs={channel_idxs}")
@@ -450,19 +448,19 @@ class ModelTrainer(object):
 
 		return inputs, targets, predictions
 
-	# def apply1(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-	# 	seed = kwargs.get('seed',0)
-	# 	torch.manual_seed(seed)
-	# 	torch.cuda.manual_seed(seed)
-	# 	with torch.inference_mode():
-	# 		input_batch = self.input_dataset.get_batch( origin, batch_date)
-	# 		target_batch = self.target_dataset.get_batch( origin, batch_date)
-	# 		inp: torch.Tensor = array2tensor( input_batch['input'] )
-	# 		tar: torch.Tensor = array2tensor( target_batch['target'] )
-	# 		out: TensorOrTensors = self.apply_network(inp)
-	# 		product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
-	# 		lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
-	# 		return npa(inp), npa(tar), npa(product)
+		# def apply1(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+		# 	seed = kwargs.get('seed',0)
+		# 	torch.manual_seed(seed)
+		# 	torch.cuda.manual_seed(seed)
+		# 	with torch.inference_mode():
+		# 		input_batch = self.input_dataset.get_batch( origin, batch_date)
+		# 		target_batch = self.target_dataset.get_batch( origin, batch_date)
+		# 		inp: torch.Tensor = array2tensor( input_batch['input'] )
+		# 		tar: torch.Tensor = array2tensor( target_batch['target'] )
+		# 		out: TensorOrTensors = self.apply_network(inp)
+		# 		product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
+		# 		lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
+		# 		return npa(inp), npa(tar), npa(product)
 
 	def apply(self, tile_loc: Dict[str, int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
 		seed = kwargs.get('seed', 0)
