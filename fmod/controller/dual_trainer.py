@@ -284,8 +284,9 @@ class ModelTrainer(object):
 			return npa( curr_input )
 
 	def get_current_upsampled(self) -> np.ndarray:
-		inp: np.ndarray = self.get_current_input()
-		return self.upsample( torch.from_numpy( inp ) ).numpy(dtype=torch.float32)
+		inp: np.ndarray = self.get_current_input().astype(np.float32)
+		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
+		return ups.numpy()
 
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
