@@ -139,7 +139,6 @@ class ModelTrainer(object):
 
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
-		print(f"MT.upsample Tile: {list(tensor.shape)} -> {list(upsampled.shape)}")
 		return normalize( upsampled ) if renorm else upsampled
 
 	def configure_grid(self):
