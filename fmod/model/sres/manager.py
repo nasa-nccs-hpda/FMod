@@ -39,10 +39,6 @@ class SRModels:
 			self.model_config['temporal_features'] = get_temporal_features(self.time)
 		self.model_config['device'] = device
 
-	def memmap_batch_data(self, start: datetime):
-		for bdset in self.datasets.values():
-			bdset.memmap_batch_data(start)
-
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)
 

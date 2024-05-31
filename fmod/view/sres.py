@@ -10,8 +10,8 @@ from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from fmod.base.util.grid import GridOps
-from fmod.base.io.loader import BaseDataset
+from fmod.controller.dual_trainer import LearningContext
+from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
@@ -62,7 +62,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
 					upsampled=   x_upsampled )
 
-def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
+def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs ):
 	ims, labels = {}, {}
 	losses: Dict[str,float] = kwargs.get( 'losses', {} )
 	sample: xa.DataArray = images['input']
@@ -70,6 +70,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
 	fsize = kwargs.get( 'fsize', 6.0 )
 	ncols = sample.shape[1]+1
+	tile_grid = TileSelectionGrid(context)
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=2, ncols=ncols, figsize=[fsize*2,fsize], layout="tight")
@@ -91,8 +92,11 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 				tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
 				ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 				label = labels[(irow,icol)]
-				if (irow == 1) and (label in losses):
-					rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+				if irow == 1:
+					if label in losses :
+						rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+					if icol == 0:
+						tile_grid.overlay_grid( ax )
 				ax.set_title(f" {label} {rmserror}")
 
 	@exception_handled

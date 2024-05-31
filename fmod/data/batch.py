@@ -84,9 +84,6 @@ class BatchDataset(BaseDataset):
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.batch_dates: List[datetime] = self.get_batch_start_dates()
 
-    def memmap_batch_data(self, start: datetime):
-        self.srbatch.memmap_batch_data(start)
-
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
         if self.vres == srRes.Low:  return c
         else:                       return {k: v * self.scalefactor for k, v in c.items()}

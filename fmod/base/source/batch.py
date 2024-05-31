@@ -232,10 +232,6 @@ class SRBatch:
 		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
 		self.channels: List[str] = None
 
-	def memmap_batch_data(self, start: datetime):
-		dates: Tuple[datetime,datetime] = date_bounds(start, self.days_per_batch)
-		self.data_loader.memmap_batch_data(dates)
-
 	def constants(self, origin: Dict[str,int] )-> xa.Dataset:
 		if self._constants is None:
 			self._constants: xa.Dataset = self.data_loader.load_const_dataset(origin)
