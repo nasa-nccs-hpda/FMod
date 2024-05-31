@@ -346,6 +346,8 @@ class ModelTrainer(object):
 					self.current_input = inp
 					self.current_target = targ
 					self.current_product = prd
+					ups: np.ndarray = self.get_current_upsampled()
+					print( f"  ---- UPSAMPLED{list(ups.shape)} ---- ")
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
