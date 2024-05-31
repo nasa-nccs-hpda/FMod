@@ -283,6 +283,10 @@ class ModelTrainer(object):
 			curr_input: Tensor = self.get_target_channels(self.current_input) if targets_only else self.current_input
 			return npa( curr_input )
 
+	def get_current_upsampled(self) -> np.ndarray:
+		inp: np.ndarray = self.get_current_input()
+		return self.upsample( torch.from_numpy( inp ) ).numpy(dtype=torch.float32)
+
 	def get_current_target(self) -> np.ndarray:
 		return None if (self.current_target is None) else npa( self.current_target )
 
