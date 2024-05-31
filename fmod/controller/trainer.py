@@ -176,13 +176,13 @@ class ModelTrainer(object):
 				self.scheduler.step()
 
 			acc_loss = acc_loss / len(self.dataset)
-			epoch_time = time.time() - epoch_start
+			epoch_time = (time.time() - epoch_start)/60.0
 
 			cp_msg = ""
 			if save_state:
 				self.checkpoint_manager.save_checkpoint( epoch, acc_loss )
 				cp_msg = "  ** model saved ** "
-			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {acc_loss:.2f}  {cp_msg}', display=True)
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, loss: {acc_loss:.2f}  {cp_msg}', display=True)
 
 		train_time = time.time() - train_start
 

@@ -356,9 +356,9 @@ class ModelTrainer(object):
 			if self.scheduler is not None:
 				self.scheduler.step()
 
-			epoch_time = time.time() - epoch_start
+			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
-			lgm().log(f'Epoch Execution time: {epoch_time:.1f}, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
 
 		train_time = time.time() - train_start
