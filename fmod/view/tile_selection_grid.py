@@ -33,7 +33,7 @@ class TileSelectionGrid(object):
 		if (self.tiles is None) or refresh:
 			self.tiles = []
 			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations()
-			[w,h] =  [ self.tile_grid.tile_size[c] for c in ['x','y'] ]
+			[w,h] =  [ self.tile_grid.tile_size['x'], -self.tile_grid.tile_size['y'] ]
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
 				r = Rectangle( xy, w, h, fill=False, lw=kwargs.get('lw',1), ec=kwargs.get('color','b') )
