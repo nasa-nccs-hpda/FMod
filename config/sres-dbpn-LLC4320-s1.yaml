@@ -1,0 +1,6 @@
+defaults:
+  - platform: LLC4320-explore
+  - task: LLC4320-sr-s1
+  - model: dbpn-s1
+  - pipeline: sres
+  - _self_
