@@ -21,6 +21,9 @@ from matplotlib.patches import  Rectangle, Patch
 def default_selection_callabck( tilerec: Dict[str,float]):
 	print( f" **** Tile selection: {tilerec} ****")
 
+def r2str( r: Rectangle ) -> str:
+	return f"({r.get_x()},{r.get_y()})x({r.get_width()},{r.get_height()})"
+
 class TileSelectionGrid(object):
 
 	def __init__(self, lcontext: LearningContext):
@@ -33,7 +36,7 @@ class TileSelectionGrid(object):
 		if (self.tiles is None) or refresh:
 			self.tiles = []
 			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations()
-			[w,h] =  [ self.tile_grid.tile_size['x'], -self.tile_grid.tile_size['y'] ]
+			[w,h] =  [ self.tile_grid.tile_size['x'], self.tile_grid.tile_size['y'] ]
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
 				r = Rectangle( xy, w, h, fill=False, lw=kwargs.get('lw',1), ec=kwargs.get('color','b') )
@@ -50,6 +53,7 @@ class TileSelectionGrid(object):
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
 		print( f" %%%%  TileSelectionGrid:  overlay grid with {len(self.tiles)} tiles %%%% ")
+		print( f" ---> Tiles: {[r2str(t) for t in self.tiles]}")
 		p = PatchCollection( self.tiles, alpha=kwargs.get('aplha',0.4) )
 		ax.add_collection(p)
 		ax.figure.canvas.mpl_connect('pick_event', self.onpick )
