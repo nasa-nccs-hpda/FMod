@@ -26,7 +26,6 @@ class Upsample(nn.Module):
 
 
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
-		print( f"Upsample: x{list(x.shape)}")
 		y: torch.Tensor =  self.usnet(x)
 		return  y
 
