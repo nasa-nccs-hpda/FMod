@@ -78,6 +78,7 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 	if sample is not None:
 		batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
 		tslider: StepSlider = StepSlider( 'Time:', batch.size  )
+		tile_grid.overlay_grid( axs[1,0] )
 
 		for irow in [0,1]:
 			for icol in range(ncols):
@@ -99,8 +100,6 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 					if irow == 1:
 						if label in losses :
 							rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-						if icol == 0:
-							tile_grid.overlay_grid( ax )
 					ax.set_title(f" {label} {rmserror}")
 
 		@exception_handled

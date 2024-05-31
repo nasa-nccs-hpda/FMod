@@ -49,6 +49,7 @@ class TileSelectionGrid(object):
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
+		print( f" %%%% TileSelectionGrid: overlay grid with {len(self.tiles)} tiles %%%% ")
 		p = PatchCollection( self.tiles, alpha=kwargs.get('aplha',0.4) )
 		ax.add_collection(p)
 		ax.figure.canvas.mpl_connect('pick_event', self.onpick )
