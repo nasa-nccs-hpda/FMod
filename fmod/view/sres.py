@@ -65,66 +65,71 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs ):
 	ims, labels = {}, {}
 	losses: Dict[str,float] = kwargs.get( 'losses', {} )
-	sample: xa.DataArray = images['input']
-	batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	tslider: StepSlider = StepSlider( 'Time:', batch.size  )
+	sample: xa.DataArray = images.get('input', None)
 	fsize = kwargs.get( 'fsize', 6.0 )
-	ncols = sample.shape[1]+1
+	ncols = (sample.shape[1]+1) if (sample is not None) else 2
 	tile_grid = TileSelectionGrid(context)
 
 	with plt.ioff():
 		fig, axs = plt.subplots(nrows=2, ncols=ncols, figsize=[fsize*2,fsize], layout="tight")
 
-	for irow in [0,1]:
-		for icol in range(ncols):
-			if len(images) > 0:
-				ax = axs[ irow, icol ]
-				rmserror  =  ""
-				if icol == ncols-1:
-					labels[(irow,icol)] = ['targets','predictions'][irow]
-					image = images[ labels[(irow,icol)] ]
-				else:
-					labels[(irow,icol)] = ['input', 'upsampled'][irow]
-					image = images[ labels[(irow,icol)] ]
-					image = image.isel( channel=icol )
-				ax.set_aspect(0.5)
-				vrange = cscale( image, 2.0 )
-				tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-				ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-				label = labels[(irow,icol)]
-				if irow == 1:
-					if label in losses :
-						rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-					if icol == 0:
-						tile_grid.overlay_grid( ax )
-				ax.set_title(f" {label} {rmserror}")
+	panels = [fig.canvas]
 
-	@exception_handled
-	def time_update(sindex: int):
-		fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
-		lgm().log( f"time_update: tindex={sindex}")
-		for irow in [0, 1]:
+	if sample is not None:
+		batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
+		tslider: StepSlider = StepSlider( 'Time:', batch.size  )
+
+		for irow in [0,1]:
 			for icol in range(ncols):
 				if len(images) > 0:
-					ax1 = axs[ irow, icol ]
-					rmserror = ""
-					if icol == ncols - 1:
-						labels[(irow, icol)] = ['targets', 'predictions'][irow]
-						image = images[labels[(irow, icol)]]
+					ax = axs[ irow, icol ]
+					rmserror  =  ""
+					if icol == ncols-1:
+						labels[(irow,icol)] = ['targets','predictions'][irow]
+						image = images[ labels[(irow,icol)] ]
 					else:
-						labels[(irow, icol)] = ['input', 'upsampled'][irow]
-						image = images[labels[(irow, icol)]]
-						image = image.isel(channel=icol)
-					tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-					ims[(irow,icol)].set_data( tslice1.values.squeeze() )
-					if (irow == 1) and (label in losses):
-						rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-					ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
-		fig.canvas.draw_idle()
+						labels[(irow,icol)] = ['input', 'upsampled'][irow]
+						image = images[ labels[(irow,icol)] ]
+						image = image.isel( channel=icol )
+					ax.set_aspect(0.5)
+					vrange = cscale( image, 2.0 )
+					tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+					ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+					label = labels[(irow,icol)]
+					if irow == 1:
+						if label in losses :
+							rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+						if icol == 0:
+							tile_grid.overlay_grid( ax )
+					ax.set_title(f" {label} {rmserror}")
+
+		@exception_handled
+		def time_update(sindex: int):
+			fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
+			lgm().log( f"time_update: tindex={sindex}")
+			for irow in [0, 1]:
+				for icol in range(ncols):
+					if len(images) > 0:
+						ax1 = axs[ irow, icol ]
+						rmserror = ""
+						if icol == ncols - 1:
+							labels[(irow, icol)] = ['targets', 'predictions'][irow]
+							image = images[labels[(irow, icol)]]
+						else:
+							labels[(irow, icol)] = ['input', 'upsampled'][irow]
+							image = images[labels[(irow, icol)]]
+							image = image.isel(channel=icol)
+						tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+						ims[(irow,icol)].set_data( tslice1.values.squeeze() )
+						if (irow == 1) and (label in losses):
+							rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
+						ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
+			fig.canvas.draw_idle()
 
 
-	tslider.set_callback( time_update )
-	fig.suptitle(f' ** ', fontsize=10, va="top", y=1.0 )
-	print( "Returning plot!")
-	return ipw.VBox([fig.canvas,tslider])
+		tslider.set_callback( time_update )
+		panels.append(tslider)
+		fig.suptitle(f' ** ', fontsize=10, va="top", y=1.0 )
+		print( "Returning plot!")
+	return ipw.VBox(panels)
 
