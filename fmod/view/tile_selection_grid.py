@@ -3,7 +3,7 @@ import torch, math
 import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Union, Sequence
+from typing import Any, Dict, List, Tuple, Union, Sequence, Callable
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.array import array2tensor
 from fmod.controller.dual_trainer import TileGrid
@@ -18,11 +18,15 @@ from fmod.controller.dual_trainer import LearningContext
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import  Rectangle, Patch
 
+def default_selection_callabck( tilerec: Dict[str,float]):
+	print( f" **** Tile selection: {tilerec} ****")
+
 class TileSelectionGrid(object):
 
 	def __init__(self, lcontext: LearningContext):
 		self.tile_grid: TileGrid = TileGrid(lcontext)
 		self.tiles: List[Rectangle] = None
+		self._selection_callabck = default_selection_callabck
 
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
@@ -36,9 +40,12 @@ class TileSelectionGrid(object):
 				r.set_picker(True)
 				self.tiles.append( r )
 
+	def set_selection_callabck(self, selection_callabck: Callable):
+		self._selection_callabck = selection_callabck
+
 	def onpick(self,event):
 		rect: Rectangle = event.artist
-		print( f'Selected rect: ({rect.get_x()}, {rect.get_y()})')
+		self._selection_callabck( dict(x=rect.get_x(), y=rect.get_y()) )
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
