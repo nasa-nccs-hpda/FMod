@@ -377,7 +377,7 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: List[Dict[str, int]] = TileGrid(tileset).get_tile_locations()
-		batch_dates: List[datetime] = self.input_dataset.get_batch_start_dates()
+		batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
