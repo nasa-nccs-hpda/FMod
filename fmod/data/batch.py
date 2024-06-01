@@ -2,7 +2,7 @@ import numpy as np, xarray as xa
 import torch, time, random, traceback, math
 from omegaconf import DictConfig
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from fmod.base.source.batch import SRBatch
 from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
@@ -13,6 +13,7 @@ from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import BaseDataset
 from fmod.base.source.loader import srRes
 from fmod.base.util.config import cfg
+from random import randint
 import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
@@ -82,7 +83,10 @@ class BatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
-        self.batch_dates: List[datetime] = self.get_batch_start_dates()
+
+    @property
+    def batch_dates(self)-> List[datetime]:
+        return self.get_batch_start_dates()
 
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
         if self.vres == srRes.Low:  return c
@@ -93,21 +97,14 @@ class BatchDataset(BaseDataset):
         lgm().log(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
         return cidxs
 
-    def get_batch_dates(self, randomize=False ) -> List[datetime]:
-        dates = self.batch_dates.copy()
-        if randomize: random.shuffle(dates)
-        return dates
-
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def get_date(self) -> datetime:
-        return self.batch_dates[ self.day_index ]
-
-    def get_batch_start_dates(self, randomize: bool = True ) -> List[datetime]:
+    def get_batch_dates(self, randomize: bool = True ) -> List[datetime]:
         start_dates, ndates = [], len( self.train_dates )
+        offset: int = randint(0, self.days_per_batch-1)
         for dindex in range( 0, ndates, self.days_per_batch):
-            start_dates.append( self.train_dates[ dindex ] )
+            start_dates.append( self.train_dates[ dindex ] +  timedelta( days=offset ) )
         if randomize: random.shuffle(start_dates)
         return start_dates
 
