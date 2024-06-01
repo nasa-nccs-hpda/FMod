@@ -29,7 +29,7 @@ class TileSelectionGrid(object):
 	def __init__(self, lcontext: LearningContext):
 		self.tile_grid: TileGrid = TileGrid(lcontext)
 		self.tiles: List[Rectangle] = None
-		self._selection_callabck = default_selection_callabck
+		self._selection_callback = default_selection_callabck
 
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
@@ -44,15 +44,15 @@ class TileSelectionGrid(object):
 				self.tiles.append( r )
 
 	def set_selection_callabck(self, selection_callabck: Callable):
-		self._selection_callabck = selection_callabck
+		self._selection_callback = selection_callabck
 
 	def onpick(self,event):
 		rect: Rectangle = event.artist
-		self._selection_callabck( dict(x=rect.get_x(), y=rect.get_y()) )
+		self._selection_callback( dict(x=rect.get_x(), y=rect.get_y()) )
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
-		print( f" %%%%  TileSelectionGrid:  overlay grid with {len(self.tiles)} tiles %%%% ")
+		print( f" %%%%  TileSelectionGrid({self._selection_callback}):  overlay grid with {len(self.tiles)} tiles %%%% ")
 		print( f" ---> Tiles: {[r2str(t) for t in self.tiles]}")
 		p = PatchCollection( self.tiles, alpha=kwargs.get('aplha',0.4) )
 		ax.add_collection(p)
