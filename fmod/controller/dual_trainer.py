@@ -268,7 +268,6 @@ class ModelTrainer(object):
 	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		binput:  xarray.DataArray  = self.input_dataset.get_batch_array(origin,batch_date)
 		btarget:  xarray.DataArray = self.target_dataset.get_batch_array(origin,batch_date)
-		print(f" LOSS: input{list(binput.shape)}, targ{list(btarget.shape)}")
 		if shuffle:
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
 			binput: xarray.DataArray = binput[ batch_perm, ... ]
