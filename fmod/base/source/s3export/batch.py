@@ -38,12 +38,12 @@ def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 
 class S3ExportDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, vres: srRes, **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs):
 		SRDataLoader.__init__(self, task_config, vres )
 		self.coords_dataset: xa.Dataset = xa.open_dataset( coords_filepath(), **kwargs)
 #		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
 #		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
-		self.tile_size: Dict[str,int] = cfg().task.tile_size
+		self.tile_size: Dict[str,int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 		self.use_memmap = task_config.get('use_memmap', False)
 		self.shape = None
@@ -105,7 +105,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_temporal_batch( self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin,  date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}", display=True)
+		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}")
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:

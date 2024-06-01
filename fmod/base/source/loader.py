@@ -44,7 +44,7 @@ class SRDataLoader(object):
 	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, ** kwargs ) -> 'SRDataLoader':
 		if task_config.dataset == "LLC4320":
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
-			return S3ExportDataLoader( task_config, vres, **kwargs )
+			return S3ExportDataLoader( task_config, tile_size, vres, **kwargs )
 		elif task_config.dataset == "merra2":
 			return
 
