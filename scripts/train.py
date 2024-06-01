@@ -12,7 +12,7 @@ from fmod.data.batch import BatchDataset
 hydra.initialize(version_base=None, config_path="../config")
 
 task = "sres"
-model = "edsr"
+model = "vdsr"
 dataset = "LLC4320"
 scenario = "s1"
 fmconfig(task, model, dataset, scenario)
