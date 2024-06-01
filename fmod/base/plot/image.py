@@ -9,6 +9,10 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
+def color_range( image: np.ndarray, stretch=2.0) -> Tuple[float, float]:
+	istd, imean = image.std(), image.mean()
+	return imean - istd * stretch, imean + istd * stretch
+
 def nnan(varray: np.ndarray) -> int: return np.count_nonzero(np.isnan(varray))
 def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	varray: np.ndarray = dvar.isel( **kwargs, missing_dims="ignore", drop=True ).values

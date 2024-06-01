@@ -5,12 +5,13 @@ import numpy as np
 
 class GridOps:
 
-	def __init__(self, nlat, nlon, grid='equiangular', radius=6.37122E6 ):
+	def __init__(self, nlat, nlon, device: str, grid='equiangular', radius=6.37122E6 ):
 		super().__init__()
 		self.nlat = nlat
 		self.nlon = nlon
 		self.grid = grid
 		self.radius = radius
+		self.device = device
 
 		# compute gridpoints
 		if self.grid == "legendre-gauss":
@@ -22,15 +23,10 @@ class GridOps:
 		else:
 			raise Exception( f"Unknown grid: {self.grid}")
 
-		self.quad_weights = torch.as_tensor(quad_weights).reshape(-1, 1).cuda()
+		self.quad_weights = torch.as_tensor(quad_weights).reshape(-1, 1).to(device)
 
 		self.lats = -torch.as_tensor(np.arcsin(cost))
 		self.lons = torch.linspace(0, 2 * np.pi, self.nlon + 1, dtype=torch.float64)[:nlon]
-
-	@classmethod
-	def color_range(cls, image: np.ndarray, stretch=2.0 ) -> Tuple[float,float]:
-		istd, imean = image.std(), image.mean()
-		return imean - istd*stretch, imean + istd*stretch
 
 	def integrate_grid(self, ugrid, dimensionless=False, polar_opt=0):
 		dlon = 2 * torch.pi / self.nlon

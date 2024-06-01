@@ -59,7 +59,7 @@ class ModelTrainer(object):
 		else:
 			self.grid_shape = inp.shape[-2:]
 			lmax = math.ceil(self.grid_shape[0] / cfg().model.get('scale_factor',1))
-		self.gridops = GridOps(*self.grid_shape)
+		self.gridops = GridOps(*self.grid_shape,self.device)
 		lgm().log(f"SHAPES: input{list(inp.shape)}, target{list(tar.shape)}, (nlat, nlon)={self.grid_shape}, lmax={lmax}")
 	#	self.sht = harmonics.RealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 	#	self.isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
@@ -236,7 +236,7 @@ class DualModelTrainer(object):
 		self.input_data_iter = iter(input_dataset)
 		self.target_data_iter = iter(target_dataset)
 		lmax = math.ceil(self.output_grid[0] / cfg().model.get('scale_factor',1))
-		self.gridops = GridOps(*self.output_grid)
+		self.gridops = GridOps(*self.output_grid,self.device)
 		self.sht = harmonics.RealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.isht = harmonics.InverseRealSHT( *self.output_grid, lmax=lmax, mmax=lmax, grid='equiangular', csphase=False)
 		self.scheduler = None

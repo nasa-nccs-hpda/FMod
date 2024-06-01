@@ -9,6 +9,7 @@ from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.base.plot.image import color_range
 from fmod.base.util.ops import nnan, pctnan
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
@@ -71,7 +72,7 @@ class ResultsPlotter:
 		self.ichannel: int = 0
 		self.istep: int = 0
 		self.create_figure(**kwargs)
-		self.gridops = GridOps(nlat, nlon)
+		self.gridops = GridOps(nlat, nlon, device)
 		self.cslider: StepSlider = StepSlider( 'Channel:', self.nchan,  self.channel_update )
 		self.sslider: StepSlider = StepSlider( 'Step:', self.nsteps,  self.step_update )
 		self.vrange: Tuple[float,float] = (0.0,0.0)
@@ -131,7 +132,7 @@ class ResultsPlotter:
 
 	def image_data(self, ip: int, timeslice: np.ndarray) -> np.ndarray:
 		image_data: np.ndarray = timeslice[0, self.ichannel] if (timeslice.ndim == 4) else timeslice[self.ichannel]
-		if ip == 0: self.vrange = self.gridops.color_range(image_data, 2.0)
+		if ip == 0: self.vrange = color_range(image_data, 2.0)
 		return image_data
 
 
