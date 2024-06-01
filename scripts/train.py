@@ -20,7 +20,7 @@ fmconfig(task, model, dataset, scenario)
 
 load_state = "current"
 save_state = True
-cfg().task['nepochs'] = 1
+cfg().task['nepochs'] = 3
 eval_tileset = LearningContext.Validation
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
