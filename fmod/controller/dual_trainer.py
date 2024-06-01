@@ -335,7 +335,7 @@ class ModelTrainer(object):
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
-							print( f" LOSS: prd{prd.shape}, targ{targ.shape}")
+							print( f" LOSS: prd{list(prd.shape)}, targ{list(target.shape)}")
 							loss: torch.Tensor = self.loss( prd, targ )
 							losses += loss
 							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
