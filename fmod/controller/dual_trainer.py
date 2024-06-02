@@ -136,6 +136,9 @@ class ModelTrainer(object):
 		self.current_input: torch.Tensor = None
 		self.current_target: torch.Tensor = None
 		self.current_product: TensorOrTensors = None
+		self.eval_input: torch.Tensor = None
+		self.eval_target: torch.Tensor = None
+		self.eval_product: TensorOrTensors = None
 
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
@@ -279,11 +282,21 @@ class ModelTrainer(object):
 
 	def get_current_input(self, targets_only: bool = True ) -> np.ndarray:
 		if self.current_input is not None:
-			curr_input: Tensor = self.get_target_channels(self.current_input) if targets_only else self.current_input
-			return npa( curr_input )
+			curinput: Tensor = self.get_target_channels(self.current_input) if targets_only else self.current_input
+			return npa( curinput )
+
+	def get_eval_input(self, targets_only: bool = True ) -> np.ndarray:
+		if self.eval_input is not None:
+			evinput: Tensor = self.get_target_channels(self.eval_input) if targets_only else self.eval_input
+			return npa( evinput )
 
 	def get_current_upsampled(self) -> np.ndarray:
 		inp: np.ndarray = self.get_current_input().astype(np.float32)
+		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
+		return ups.numpy()
+
+	def get_eval_upsampled(self) -> np.ndarray:
+		inp: np.ndarray = self.get_eval_input().astype(np.float32)
 		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
 		return ups.numpy()
 
@@ -292,6 +305,13 @@ class ModelTrainer(object):
 
 	def get_current_product(self) -> np.ndarray:
 		return None if (self.current_product is None) else npa( self.current_product )
+
+
+	def get_eval_target(self) -> np.ndarray:
+		return None if (self.eval_target is None) else npa( self.eval_target )
+
+	def get_eval_product(self) -> np.ndarray:
+		return None if (self.eval_product is None) else npa( self.eval_product )
 
 	@exception_handled
 	def train(self, **kwargs ) -> Dict[str,float]:
@@ -305,7 +325,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, []
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -358,13 +378,14 @@ class ModelTrainer(object):
 
 			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
-			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, loss: {epoch_loss:.5f} {fmtfl(self.layer_losses)}', display=True)
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
+			eval_losses = self.evaluate( LearningContext.Validation )
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f} eval-loss: {eval_losses["valuation"]:.4f}', display=True)
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
-		return dict( predictions=epoch_loss )
+		return dict( predictions=epoch_loss, **eval_losses )
 
 	@exception_handled
 	def evaluate(self, tileset: LearningContext, **kwargs):
@@ -397,17 +418,17 @@ class ModelTrainer(object):
 			batch_model_losses.append(ave_model_loss)
 			ave_interp_loss = interp_losses / len(tile_locs)
 			batch_interp_losses.append(ave_interp_loss)
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}", display=True)
-		self.current_input = inp
-		self.current_target = targ
-		self.current_product = prd
+			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}")
+		self.eval_input = inp
+		self.eval_target = targ
+		self.eval_product = prd
 
 		proc_time = time.time() - proc_start
 		eval_model_loss = np.array(batch_model_losses).mean()
 		eval_interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		print(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
-		return dict(predictions=eval_model_loss, upsampled=eval_interp_loss)
+		lgm().log(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
+		return dict(valuation=eval_model_loss, upsampled=eval_interp_loss)
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
