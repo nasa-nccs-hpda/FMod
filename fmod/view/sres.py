@@ -92,11 +92,13 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 					else:
 						labels[(irow,icol)] = ['input', 'domain'][irow]
 						image = images[ labels[(irow,icol)] ]
-						image = image.isel( channel=icol )
+						if 'channel' in image.dims:
+							image = image.isel( channel=icol )
 					ax.set_aspect(0.5)
 					vrange = cscale( image, 2.0 )
-					tslice: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-					ims[(irow,icol)] = tslice.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
+					if 'time' in image.dims:
+						image: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
+					ims[(irow,icol)] = image.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 					label = labels[(irow,icol)]
 					if irow == 1:
 						if label in losses :
@@ -118,9 +120,11 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 						else:
 							labels[(irow, icol)] = ['input', 'upsampled'][irow]
 							image = images[labels[(irow, icol)]]
-							image = image.isel(channel=icol)
-						tslice1: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-						ims[(irow,icol)].set_data( tslice1.values.squeeze() )
+							if 'channel' in image.dims:
+								image = image.isel(channel=icol)
+						if 'time' in image.dims:
+							image: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
+						ims[(irow,icol)].set_data( image.values.squeeze() )
 						if (irow == 1) and (label in losses):
 							rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
 						ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
