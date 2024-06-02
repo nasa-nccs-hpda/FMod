@@ -9,7 +9,7 @@ from fmod.base.plot.widgets import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.plot.image import color_range
+from fmod.base.plot.forecast import color_range
 from fmod.base.util.ops import nnan, pctnan
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]

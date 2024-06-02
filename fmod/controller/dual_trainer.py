@@ -140,6 +140,12 @@ class ModelTrainer(object):
 		self.eval_target: torch.Tensor = None
 		self.eval_product: TensorOrTensors = None
 
+	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
+		return self.model_manager.get_sample_input( targets_only )
+
+	def get_sample_target(self) -> xa.DataArray:
+		return self.model_manager.get_sample_target()
+
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
 		return normalize( upsampled ) if renorm else upsampled
