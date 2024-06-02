@@ -90,6 +90,7 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 						labels[(irow,icol)] = ['targets',lc_label][irow]
 						image = images[ labels[(irow,icol)] ]
 					else:
+						print( f"mplplot: image types = {list(images.keys())}")
 						labels[(irow,icol)] = ['input', 'domain'][irow]
 						image = images[ labels[(irow,icol)] ]
 						if 'channel' in image.dims:

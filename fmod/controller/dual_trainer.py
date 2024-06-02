@@ -286,9 +286,9 @@ class ModelTrainer(object):
 			return npa( curinput )
 
 	def get_eval_input(self, targets_only: bool = True ) -> np.ndarray:
-		if self.eval_input is not None:
-			evinput: Tensor = self.get_target_channels(self.eval_input) if targets_only else self.eval_input
-			return npa( evinput )
+		if self.eval_input is None: self.evaluate(LearningContext.Validation)
+		evinput: Tensor = self.get_target_channels(self.eval_input) if targets_only else self.eval_input
+		return npa( evinput )
 
 	def get_current_upsampled(self) -> np.ndarray:
 		inp: np.ndarray = self.get_current_input().astype(np.float32)
@@ -308,9 +308,11 @@ class ModelTrainer(object):
 
 
 	def get_eval_target(self) -> np.ndarray:
+		if self.eval_target is None: self.evaluate(LearningContext.Validation)
 		return None if (self.eval_target is None) else npa( self.eval_target )
 
 	def get_eval_product(self) -> np.ndarray:
+		if self.eval_product is None: self.evaluate(LearningContext.Validation)
 		return None if (self.eval_product is None) else npa( self.eval_product )
 
 	@exception_handled
