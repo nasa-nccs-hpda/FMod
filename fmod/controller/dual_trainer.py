@@ -380,7 +380,7 @@ class ModelTrainer(object):
 			epoch_loss: float = np.array(batch_losses).mean()
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
 			eval_losses = self.evaluate( LearningContext.Validation )
-			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f} eval-loss: {eval_losses["valuation"]:.4f}', display=True)
+			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f} eval-loss: {eval_losses["validation"]:.4f}', display=True)
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
@@ -428,7 +428,7 @@ class ModelTrainer(object):
 		eval_interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		lgm().log(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
-		return dict(valuation=eval_model_loss, upsampled=eval_interp_loss)
+		return dict(validation=eval_model_loss, upsampled=eval_interp_loss)
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data

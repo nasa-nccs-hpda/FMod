@@ -40,11 +40,9 @@ sample_target: xa.DataArray = model_manager.get_sample_target()
 train_losses: Dict[str, float] = trainer.train(load_state=load_state, save_state=save_state)
 print( f"Completed Training, loss = {train_losses['predictions']:.3f}")
 
-# Validating the Model
-
-eval_losses = trainer.evaluate(eval_tileset)
 print( f"Completed Validation:")
-print( f" * validation loss = {eval_losses['predictions']:.3f}")
-print( f" * upsampled  loss = {eval_losses['upsampled']:.3f}")
+print( f" * training loss = {train_losses['predictions']:.3f}")
+print( f" * validation  loss = {train_losses['validation']:.3f}")
+print( f" * upsampled  loss = {train_losses['upsampled']:.3f}")
 
 
