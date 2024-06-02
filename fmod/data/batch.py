@@ -84,9 +84,14 @@ class BatchDataset(BaseDataset):
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
 
+    def load_global_timeslice(self, date_index: int = 0, **kwargs ) -> xa.DataArray:
+        vid: str = kwargs.get( 'vid', self.task_config.target_variables[0] )
+        global_timeslice: np.ndarray =  self.srbatch.load_global_timeslice( vid, self.train_dates[date_index] )
+        return xa.DataArray( global_timeslice, dims=['y','x'] )
+
     @property
     def batch_dates(self)-> List[datetime]:
-        return self.get_batch_start_dates()
+        return self.get_batch_dates()
 
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
         if self.vres == srRes.Low:  return c

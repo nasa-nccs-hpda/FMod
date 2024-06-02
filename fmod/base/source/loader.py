@@ -26,6 +26,9 @@ class SRDataLoader(object):
 		self.vres: srRes = vres
 		self.task = task_config
 
+	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
+		raise NotImplementedError("SRDataLoader:load_norm_data")
+
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 

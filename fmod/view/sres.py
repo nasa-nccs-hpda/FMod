@@ -89,7 +89,7 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 						labels[(irow,icol)] = ['targets','predictions'][irow]
 						image = images[ labels[(irow,icol)] ]
 					else:
-						labels[(irow,icol)] = ['input', 'upsampled'][irow]
+						labels[(irow,icol)] = ['input', 'domain'][irow]
 						image = images[ labels[(irow,icol)] ]
 						image = image.isel( channel=icol )
 					ax.set_aspect(0.5)
