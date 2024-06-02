@@ -18,12 +18,13 @@ from fmod.controller.stats import l2loss
 import torch.nn as nn
 import time
 
-Tensors = Sequence[Tensor]
-TensorOrTensors = Union[Tensor, Tensors]
-
 class LearningContext(Enum):
 	Training = 'train'
 	Validation = 'val'
+
+Tensors = Sequence[Tensor]
+TensorOrTensors = Union[Tensor, Tensors]
+MLTensors = Dict[ LearningContext, torch.Tensor]
 
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
@@ -133,12 +134,9 @@ class ModelTrainer(object):
 		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
 		self.conform_to_data_grid()
 		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
-		self.current_input: torch.Tensor = None
-		self.current_target: torch.Tensor = None
-		self.current_product: TensorOrTensors = None
-		self.eval_input: torch.Tensor = None
-		self.eval_target: torch.Tensor = None
-		self.eval_product: TensorOrTensors = None
+		self.input: MLTensors = {}
+		self.target: MLTensors = {}
+		self.product: MLTensors = {}
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
@@ -286,40 +284,23 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
-	def get_current_input(self, targets_only: bool = True ) -> np.ndarray:
-		if self.current_input is not None:
-			curinput: Tensor = self.get_target_channels(self.current_input) if targets_only else self.current_input
-			return npa( curinput )
+	def get_ml_input(self, context: LearningContext, targets_only: bool = True ) -> np.ndarray:
+		if context not in self.input: self.evaluate(context)
+		ml_input: Tensor = self.get_target_channels(self.input[context]) if targets_only else self.input[context]
+		return npa( ml_input ).astype(np.float32)
 
-	def get_eval_input(self, targets_only: bool = True ) -> np.ndarray:
-		if self.eval_input is None: self.evaluate(LearningContext.Validation)
-		evinput: Tensor = self.get_target_channels(self.eval_input) if targets_only else self.eval_input
-		return npa( evinput )
-
-	def get_current_upsampled(self) -> np.ndarray:
-		inp: np.ndarray = self.get_current_input().astype(np.float32)
+	def get_ml_upsampled(self, context: LearningContext) -> np.ndarray:
+		inp: np.ndarray = self.get_ml_input(context)
 		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
 		return ups.numpy()
 
-	def get_eval_upsampled(self) -> np.ndarray:
-		inp: np.ndarray = self.get_eval_input().astype(np.float32)
-		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
-		return ups.numpy()
+	def get_ml_target(self, context: LearningContext) -> np.ndarray:
+		if context not in self.target: self.evaluate(context)
+		return npa( self.target[context] )
 
-	def get_current_target(self) -> np.ndarray:
-		return None if (self.current_target is None) else npa( self.current_target )
-
-	def get_current_product(self) -> np.ndarray:
-		return None if (self.current_product is None) else npa( self.current_product )
-
-
-	def get_eval_target(self) -> np.ndarray:
-		if self.eval_target is None: self.evaluate(LearningContext.Validation)
-		return None if (self.eval_target is None) else npa( self.eval_target )
-
-	def get_eval_product(self) -> np.ndarray:
-		if self.eval_product is None: self.evaluate(LearningContext.Validation)
-		return None if (self.eval_product is None) else npa( self.eval_product )
+	def get_ml_product(self, context: LearningContext) -> np.ndarray:
+		if context not in self.product: self.evaluate(context)
+		return npa(self.product[context])
 
 	@exception_handled
 	def train(self, **kwargs ) -> Dict[str,float]:
@@ -333,7 +314,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, LearningContext.Training
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -370,9 +351,9 @@ class ModelTrainer(object):
 							loss.backward()
 							self.optimizer.step()
 
-					self.current_input = inp
-					self.current_target = targ
-					self.current_product = prd
+					self.input[context] = inp
+					self.target[context] = targ
+					self.product[context] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
@@ -396,7 +377,7 @@ class ModelTrainer(object):
 		return dict( predictions=epoch_loss, **eval_losses )
 
 	@exception_handled
-	def evaluate(self, tileset: LearningContext, **kwargs):
+	def evaluate(self, context: LearningContext, **kwargs):
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -405,9 +386,9 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 
 		proc_start = time.time()
-		tile_locs: List[Dict[str, int]] = TileGrid(tileset).get_tile_locations()
+		tile_locs: List[Dict[str, int]] = TileGrid(context).get_tile_locations()
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
-		batch_model_losses, batch_interp_losses = [], []
+		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
 			model_losses = 0.0
@@ -427,16 +408,16 @@ class ModelTrainer(object):
 			ave_interp_loss = interp_losses / len(tile_locs)
 			batch_interp_losses.append(ave_interp_loss)
 			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}")
-		self.eval_input = inp
-		self.eval_target = targ
-		self.eval_product = prd
+		self.input[context] = inp
+		self.target[context] = targ
+		self.product[context] = prd
 
 		proc_time = time.time() - proc_start
-		eval_model_loss = np.array(batch_model_losses).mean()
-		eval_interp_loss = np.array(batch_interp_losses).mean()
+		model_loss = np.array(batch_model_losses).mean()
+		interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		lgm().log(f' -------> Evaluating model with {ntotal_params} took {proc_time:.2f} sec, model loss = {eval_model_loss:.4f}, interp loss = {eval_interp_loss:.4f}')
-		return dict(validation=eval_model_loss, upsampled=eval_interp_loss)
+		lgm().log(f' -------> Exec {context.name} model with {ntotal_params} took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
+		return dict(validation=model_loss, upsampled=interp_loss)
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data

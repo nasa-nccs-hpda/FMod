@@ -10,6 +10,7 @@ from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
+from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
 from fmod.controller.dual_trainer import ModelTrainer
 from fmod.controller.dual_trainer import LearningContext
 from fmod.view.tile_selection_grid import TileSelectionGrid
@@ -50,96 +51,90 @@ def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
 class SRPlot(object):
-	def __init__(self, trainer: ModelTrainer):
-		self.trainer = trainer
+	def __init__(self, trainer: ModelTrainer, context: LearningContext, **kwargs):
+		self.trainer: ModelTrainer = trainer
+		self.context: LearningContext = context
+		self.channel = kwargs.get('channel', 0)
+		self.splabels = [['input', self.upscale_plot_label], ['target', 'prediction']]
 		self.sample_input: xa.DataArray  = trainer.get_sample_input()
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
-		self.input = to_xa( self.sample_input, trainer.get_current_input() )
-		self.target = to_xa( self.sample_target, trainer.get_current_target() )
-		self.prediction = to_xa( self.sample_target, trainer.get_current_product() )
-		self.tcoords = self.sample_target.coords
-		self.icoords = self.sample_input.coords
+		self.input: xa.DataArray = to_xa( self.sample_input, trainer.get_ml_input(context) )
+		self.target: xa.DataArray = to_xa( self.sample_target, trainer.get_ml_target(context) )
+		self.prediction: xa.DataArray = to_xa( self.sample_target, trainer.get_ml_product(context) )
+		self.domain: xa.DataArray  = trainer.target_dataset.load_global_timeslice()
+		self.tcoords: DataArrayCoordinates = self.sample_target.coords
+		self.icoords: DataArrayCoordinates = self.sample_input.coords
+		self.time_coords: xa.DataArray = xaformat_timedeltas(self.sample_input.coords['time'])
+		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'])
 
 		if self.prediction.ndim == 3:
-			self.upsampled = to_xa( self.sample_target, trainer.get_current_upsampled())
+			self.upsampled = to_xa( self.sample_target, trainer.get_ml_upsampled())
 		else:
-			coords = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			self.upsampled = xa.DataArray( trainer.get_current_upsampled(), dims=['time', 'channel', 'y', 'x'], coords=coords)
+			coords: Dict[str,DataArrayCoordinates] = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
+			data: np.ndarray = trainer.get_ml_upsampled(self.context)
+			self.upsampled = xa.DataArray( data, dims=['time', 'channel', 'y', 'x'], coords=coords )
 
+		self.images_data: Dict[str,xa.DataArray] = dict( upsampled = self.upsampled, input = self.input, target = self.target, prediction = self.prediction, domain = self.domain )
 
-	def mplplot( self, images: Dict[str,xa.DataArray], context: LearningContext, **kwargs ):
-		ims, labels = {}, {}
-		losses: Dict[str,float] = kwargs.get( 'losses', {} )
-		sample: xa.DataArray = images.get('input', None)
+		self.losses: Dict[str,float] = kwargs.get( 'losses', {} )
+		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
-		ncols = (sample.shape[1]+1) if (sample is not None) else 2
-		tile_grid = TileSelectionGrid(context)
-
+		self.tile_grid = TileSelectionGrid(self.context)
+		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
-			fig, axs = plt.subplots(nrows=2, ncols=ncols, figsize=[fsize*2,fsize], layout="tight")
+			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
+		self.panels = [self.fig.canvas,self.tslider]
+		self.tslider.set_callback( self.time_update )
 
-		panels = [fig.canvas]
+	@property
+	def upscale_plot_label(self):
+		return "upsampled" if (self.context == LearningContext.Validation) else "domain"
 
-		if sample is not None:
-			batch: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-			tslider: StepSlider = StepSlider( 'Time:', batch.size  )
-			tile_grid.overlay_grid( axs[1,0] )
+	def image(self, ir: int, ic: int) -> xa.DataArray:
+		itype = self.splabels[ir][ic]
+		image = self.images_data[itype]
+		image.attrs['itype'] = itype
+		return image
 
-			for irow in [0,1]:
-				for icol in range(ncols):
-					if len(images) > 0:
-						ax = axs[ irow, icol ]
-						rmserror  =  ""
-						if icol == ncols-1:
-							lc_label = 'predictions' if context == LearningContext.Training else 'validation'
-							labels[(irow,icol)] = ['targets',lc_label][irow]
-							image = images[ labels[(irow,icol)] ]
-						else:
-							print( f"mplplot: image types = {list(images.keys())}")
-							labels[(irow,icol)] = ['input', 'domain'][irow]
-							image = images[ labels[(irow,icol)] ]
-							if 'channel' in image.dims:
-								image = image.isel( channel=icol )
-						ax.set_aspect(0.5)
-						vrange = cscale( image, 2.0 )
-						if 'time' in image.dims:
-							image: xa.DataArray = image.isel(time=tslider.value).squeeze(drop=True)
-						ims[(irow,icol)] = image.plot.imshow( ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
-						label = labels[(irow,icol)]
-						if irow == 1:
-							if label in losses :
-								rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-						ax.set_title(f" {label} {rmserror}")
+	@exception_handled
+	def time_update(self, sindex: int):
+		self.update_subplots(sindex)
 
-			@exception_handled
-			def time_update(sindex: int):
-				fig.suptitle(f'Timestep: {sindex}', fontsize=10, va="top", y=1.0)
-				lgm().log( f"time_update: tindex={sindex}")
-				for irow in [0, 1]:
-					for icol in range(ncols):
-						if len(images) > 0:
-							ax1 = axs[ irow, icol ]
-							rmserror = ""
-							if icol == ncols - 1:
-								labels[(irow, icol)] = ['targets', 'predictions'][irow]
-								image = images[labels[(irow, icol)]]
-							else:
-								labels[(irow, icol)] = ['input', 'upsampled'][irow]
-								image = images[labels[(irow, icol)]]
-								if 'channel' in image.dims:
-									image = image.isel(channel=icol)
-							if 'time' in image.dims:
-								image: xa.DataArray =  image.isel( time=sindex, drop=True, missing_dims="ignore").fillna( 0.0 )
-							ims[(irow,icol)].set_data( image.values.squeeze() )
-							if (irow == 1) and (label in losses):
-								rmserror = f"{losses[label]:.3f}" if (label in losses) else ""
-							ax1.set_title(f"{labels[(irow,icol)]} {rmserror}")
-				fig.canvas.draw_idle()
+	def plot( self ):
+		self.tile_grid.overlay_grid( self.axs[1,0] )
+		self.update_subplots()
+		return ipw.VBox(self.panels)
 
+	def update_subplots(self, time_index: int = 0):
+		self.fig.suptitle(f'Timestep: {time_index}', fontsize=10, va="top", y=1.0)
 
-			tslider.set_callback( time_update )
-			panels.append(tslider)
-			fig.suptitle(f' ** ', fontsize=10, va="top", y=1.0 )
-			print( "Returning plot!")
-		return ipw.VBox(panels)
+		for irow in [0, 1]:
+			for icol in [0, 1]:
+				self.generate_subplot(irow, icol)
+
+		self.fig.canvas.draw_idle()
+
+	def generate_subplot(self, irow: int, icol: int):
+		ax = self.axs[irow, icol]
+		ax.set_aspect(0.5)
+		image = self.get_subplot_image(irow,icol)
+		ax.set_title( self.get_subplot_title(irow,image) )
+		vrange = cscale(image, 2.0)
+		self.ims.setdefault( (irow, icol),  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]) )
+
+	def get_subplot_title(self,irow,image) -> str:
+		label = image.attrs['itype']
+		rmserror = ""
+		if irow == 1:
+			if label in self.losses:
+				rmserror = f"{self.losses[label]:.3f}" if (label in self.losses) else ""
+		return f"{label} {rmserror}"
+
+	def get_subplot_image(self, irow: int, icol: int) -> xa.DataArray:
+		image: xa.DataArray = self.image(irow, icol)
+		if 'channel' in image.dims:
+			image = image.isel(channel=self.channel)
+		if 'time' in image.dims:
+			image = image.isel(time=self.tslider.value).squeeze(drop=True)
+		return image
 
