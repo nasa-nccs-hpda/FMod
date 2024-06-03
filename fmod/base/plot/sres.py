@@ -51,7 +51,7 @@ def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
 def onclick(event):
-	print('Mouse click: button=%d, dbl=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (event.button, event.dblclick, event.x, event.y, event.xdata, event.ydata))
+	lgm().log('Mouse click: button=%d, dbl=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (event.button, event.dblclick, event.x, event.y, event.xdata, event.ydata), display=True)
 
 class SRPlot(object):
 	def __init__(self, trainer: ModelTrainer, context: LearningContext, **kwargs):
