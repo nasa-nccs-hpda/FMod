@@ -15,7 +15,12 @@ from fmod.base.source.loader import SRDataLoader
 import numpy as np
 
 S = 'x'
-CoordIdx = Union[Dict[str,int],Tuple[int,int]]
+CoordIdx = Union[ Dict[str,int], Tuple[int,int] ]
+
+def cTup2Dict( c: CoordIdx ) -> Dict[str,int]:
+	if type(c) is tuple: c = dict(x=c[0], y=c[1])
+	return c
+
 
 def dstr(date: datetime) -> str:
 	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
@@ -53,8 +58,7 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	cdata: np.ndarray = self.ijc[c]
 	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
-	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: CoordIdx ):
-		if type( origin ) is tuple: origin = dict(x=origin[0], y=origin[1])
+	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ):
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
 		if idx == 0: lgm().debug( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}")
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
@@ -91,7 +95,7 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
 		raw_data: np.memmap = self.open_timeslice(vid[0], date)
-		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
+		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
 		if idx == 0: lgm().debug( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
 		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),

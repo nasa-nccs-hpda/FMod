@@ -345,14 +345,13 @@ class ModelTrainer(object):
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
-			tile_locs: List[Dict[str,int]] =  TileGrid( LearningContext.Training ).get_tile_locations()
+			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( LearningContext.Training ).get_tile_locations()
 			batch_losses = []
 			for batch_date in batch_dates:
 				try:
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
-					for tile_loc in tile_locs:
-						print( f" ***** get_srbatch: tile_loc = {tile_loc}")
+					for tIdx, tile_loc in tile_locs.items():
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
