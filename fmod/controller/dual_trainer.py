@@ -137,6 +137,7 @@ class ModelTrainer(object):
 		self.input: MLTensors = {}
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
+		self.current_losses: Dict[str,float] = None
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
@@ -373,7 +374,8 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
-		return dict( prediction=epoch_loss, **eval_losses )
+		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
+		return self.current_losses
 
 	def evaluate(self, context: LearningContext, **kwargs):
 		seed = kwargs.get('seed', 333)

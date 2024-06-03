@@ -76,7 +76,7 @@ class SRPlot(object):
 
 		self.images_data: Dict[str,xa.DataArray] = dict( upsampled = self.upsampled, input = self.input, target = self.target, domain = self.domain )
 		self.images_data[ self.result_plot_label ] = self.prediction
-		self.losses: Dict[str,float] = kwargs.get( 'losses', {} )
+		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
 		self.tile_grid = TileSelectionGrid(self.context)
@@ -85,7 +85,7 @@ class SRPlot(object):
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
-		print( f"SRPlot: losses{list(self.losses.keys())} {list(self.losses.values())}" )
+		print( f"SRPlot[{self.context.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}" )
 
 	@property
 	def upscale_plot_label(self) -> str:
