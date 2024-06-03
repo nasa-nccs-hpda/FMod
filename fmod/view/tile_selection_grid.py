@@ -3,7 +3,7 @@ import torch, math
 import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Union, Sequence, Callable
+from typing import Any, Dict, List, Tuple, Union, Sequence, Callable, Optional
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.array import array2tensor
 from fmod.controller.dual_trainer import TileGrid
@@ -31,9 +31,13 @@ class TileSelectionGrid(object):
 
 	def __init__(self, lcontext: LearningContext):
 		self.tile_grid: TileGrid = TileGrid(lcontext)
-		self.tiles: List[Rectangle] = None
+		self.tiles: Dict[Tuple[int, int], Rectangle] = None
 		self._selection_callback = default_selection_callabck
 
+	def get_selected(self, x: float, y: float ) -> Optional[Tuple[int,int]]:
+		for xyi, r in self.tiles.items():
+			if r.contains_point( (x,y) ):
+				return xyi
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
 		randomized = kwargs.get('randomized', False)
@@ -41,11 +45,11 @@ class TileSelectionGrid(object):
 		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
 			self.tiles = []
-			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations(randomized,downscaled)
-			for tloc in tile_locs:
+			tile_locs: Dict[Tuple[int, int], Dict[str, int]] = self.tile_grid.get_tile_locations(randomized, downscaled)
+			for xyi, tloc in tile_locs.items():
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, ts['x'], ts['y'], fill=False, picker=True, linewidth=kwargs.get('lw',1), edgecolor=kwargs.get('color','white') )
-				self.tiles.append( r )
+				r = Rectangle(xy, ts['x'], ts['y'], fill=False, picker=True, linewidth=kwargs.get('lw', 1), edgecolor=kwargs.get('color', 'white'))
+				self.tiles[xyi] = r
 
 	def set_selection_callabck(self, selection_callabck: Callable):
 		self._selection_callback = selection_callabck
@@ -59,6 +63,6 @@ class TileSelectionGrid(object):
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
-		p = PatchCollection( self.tiles, match_original=True )
+		p = PatchCollection( self.tiles.values(), match_original=True )
 		ax.add_collection(p)
 		ax.figure.canvas.mpl_connect('pick_event', onpick_test )

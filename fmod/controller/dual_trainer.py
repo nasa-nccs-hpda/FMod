@@ -26,6 +26,11 @@ Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ LearningContext, torch.Tensor]
 
+def rshuffle(a: Dict[Tuple[int,int],Any] ) -> Dict[Tuple[int,int],Any]:
+	a1: List[ Tuple[ Tuple[int,int],Any ] ] = list(a.items())
+	random.shuffle(a1)
+	return dict( a1 )
+
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
 	return str( [ f"{mv:.2f}" for mv in means ] )
@@ -86,7 +91,7 @@ class TileGrid(object):
 		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
 		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
-		self.tlocs: List[Dict[str,int]] = []
+		self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
 		downscale_factors: List[int] = cfg().model.downscale_factors
 		self.downscale_factor = math.prod(downscale_factors)
 
@@ -98,12 +103,12 @@ class TileGrid(object):
 		sf = self.downscale_factor if downscaled else 1
 		return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
 
-	def get_tile_locations(self, randomize=False, downscaled: bool = False ) -> List[Dict[str, int]]:
+	def get_tile_locations(self, randomize=False, downscaled: bool = False ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
 		if len(self.tlocs) == 0:
 			for ix in range(self.tile_grid['x']):
 				for iy in range(self.tile_grid['y']):
-					self.tlocs.append( self.get_tile_origin(ix,iy,downscaled) )
-		if randomize: random.shuffle(self.tlocs)
+					self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
+		if randomize: rshuffle(self.tlocs)
 		return self.tlocs
 
 	@classmethod
@@ -394,14 +399,14 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 
 		proc_start = time.time()
-		tile_locs: List[Dict[str, int]] = TileGrid(context).get_tile_locations()
+		tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] = TileGrid(context).get_tile_locations()
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
 			model_losses = 0.0
 			interp_losses = 0.0
-			for tile_loc in tile_locs:
+			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 				inp = train_data['input']
 				ups: Tensor = self.get_target_channels(self.upsample(inp))
