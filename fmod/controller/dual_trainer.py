@@ -2,7 +2,7 @@ import torch, math
 import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Union, Sequence
+from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
@@ -141,7 +141,7 @@ class ModelTrainer(object):
 		self.layer_losses = []
 		self.channel_idxs: torch.LongTensor = None
 		self.target_variables = cfg().task.target_variables
-		self.train_dates = self.input_dataset.train_dates
+		self.train_dates: List[datetime] = self.input_dataset.train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
 		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
@@ -151,6 +151,12 @@ class ModelTrainer(object):
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
 		self.current_losses: Dict[str,float] = None
+		self.time_index: Optional[int] = None
+		self.tile_index: Optional[Tuple[int,int]] = None
+
+	@property
+	def current_date(self) -> datetime:
+		return self.train_dates[self.time_index]
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
@@ -397,6 +403,8 @@ class ModelTrainer(object):
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		self.checkpoint_manager.load_checkpoint()
+		self.time_index = kwargs.get('time_index', self.time_index)
+		self.tile_index = kwargs.get('tile_index', self.tile_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] = TileGrid(context).get_tile_locations()
@@ -404,23 +412,16 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
-			model_losses = 0.0
-			interp_losses = 0.0
-			for xyi, tile_loc in tile_locs.items():
-				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
-				inp = train_data['input']
-				ups: Tensor = self.get_target_channels(self.upsample(inp))
-				target: Tensor = train_data['target']
-				prd, targ = self.apply_network(inp, target)
-				model_loss: torch.Tensor = self.loss(prd, targ)
-				model_losses += model_loss.item()
-				interp_loss: torch.Tensor = self.loss(ups, targ)
-				interp_losses += interp_loss.item()
-			ave_model_loss = model_losses / len(tile_locs)
-			batch_model_losses.append(ave_model_loss)
-			ave_interp_loss = interp_losses / len(tile_locs)
-			batch_interp_losses.append(ave_interp_loss)
-			lgm().log(f" ** Loss {batch_date.strftime('%m/%d:%H/%Y')}:  {ave_model_loss:.4f}")
+			if (self.current_date is None) or (batch_date==self.current_date):
+				for xyi, tile_loc in tile_locs.items():
+					if (self.tile_index is None) or (xyi == self.tile_index):
+						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
+						inp = train_data['input']
+						ups: Tensor = self.get_target_channels(self.upsample(inp))
+						target: Tensor = train_data['target']
+						prd, targ = self.apply_network(inp, target)
+						batch_model_losses.append( self.loss(prd, targ).item() )
+						batch_interp_losses.append( self.loss(ups, targ).item() )
 		self.input[context] = inp
 		self.target[context] = targ
 		self.product[context] = prd

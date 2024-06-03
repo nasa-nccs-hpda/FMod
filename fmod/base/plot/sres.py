@@ -55,27 +55,16 @@ class SRPlot(object):
 		self.trainer: ModelTrainer = trainer
 		self.context: LearningContext = context
 		self.channel = kwargs.get('channel', 0)
+		self.time_index = kwargs.get('time_index', 0)
+		self.tile_index = kwargs.get('tile_index', (0,0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
-		self.sample_input: xa.DataArray  = trainer.get_sample_input()
+		self.sample_input: xa.DataArray = trainer.get_sample_input()
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
-		self.input: xa.DataArray = to_xa( self.sample_input, trainer.get_ml_input(context) )
-		self.target: xa.DataArray = to_xa( self.sample_target, trainer.get_ml_target(context) )
-		self.prediction: xa.DataArray = to_xa( self.sample_target, trainer.get_ml_product(context) )
-		self.domain: xa.DataArray  = trainer.target_dataset.load_global_timeslice()
 		self.tcoords: DataArrayCoordinates = self.sample_target.coords
 		self.icoords: DataArrayCoordinates = self.sample_input.coords
 		self.time_coords: xa.DataArray = xaformat_timedeltas(self.sample_input.coords['time'])
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'])
-
-		if self.prediction.ndim == 3:
-			self.upsampled = to_xa( self.sample_target, trainer.get_ml_upsampled())
-		else:
-			coords: Dict[str,DataArrayCoordinates] = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			data: np.ndarray = trainer.get_ml_upsampled(self.context)
-			self.upsampled = xa.DataArray( data, dims=['time', 'channel', 'y', 'x'], coords=coords )
-
-		self.images_data: Dict[str,xa.DataArray] = dict( upsampled = self.upsampled, input = self.input, target = self.target, domain = self.domain )
-		self.images_data[ self.result_plot_label ] = self.prediction
+		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
@@ -83,15 +72,40 @@ class SRPlot(object):
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
-			self.fig.canvas.mpl_connect('button_press_event', self.onclick)
+			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
 		print( f"SRPlot[{self.context.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}" )
 
-	def onclick(self,event):
+	def update_tile_data(self) -> Dict[str, xa.DataArray]:
+		self.trainer.evaluate( self.context, tile_index=self.tile_index, time_index=self.time_index )
+		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.context))
+		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.context))
+		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.context))
+		domain: xa.DataArray = self.trainer.target_dataset.load_global_timeslice()
+
+		if prediction.ndim == 3:
+			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.context))
+		else:
+			coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
+			data: np.ndarray = self.trainer.get_ml_upsampled(self.context)
+			upsampled = xa.DataArray(data, dims=['time', 'channel', 'y', 'x'], coords=coords)
+
+		images_data: Dict[str, xa.DataArray] = dict(upsampled=upsampled, input=model_input, target=target, domain=domain)
+		images_data[self.result_plot_label] = prediction
+		return images_data
+
+	def select_point(self,event):
 		lgm().log(f'Mouse click: button={event.button}, dbl={event.dblclick}, x={event.xdata:.2f}, y={event.ydata:.2f}')
-		selected_tile: Optional[Tuple[int,int]] = self.tile_grid.get_selected( event.xdata, event.ydata)
-		lgm().log( f" ---> selected_tile = {selected_tile}")
+		selected_tile: Optional[Tuple[int, int]] = self.tile_grid.get_selected(event.xdata, event.ydata)
+		self.select_tile( selected_tile )
+
+	def select_tile(self, selected_tile: Tuple[int,int]):
+		if selected_tile is not None:
+			self.tile_index = selected_tile
+			self.update_tile_data()
+			self.update_subplots()
+			lgm().log( f" ---> selected_tile = {selected_tile}")
 
 	@property
 	def upscale_plot_label(self) -> str:
@@ -109,7 +123,9 @@ class SRPlot(object):
 
 	@exception_handled
 	def time_update(self, sindex: int):
-		self.update_subplots(sindex)
+		self.time_index = sindex
+		self.update_tile_data()
+		self.update_subplots()
 
 	def plot( self ):
 		self.tile_grid.overlay_grid( self.axs[1,0] )
@@ -149,6 +165,6 @@ class SRPlot(object):
 		if 'channel' in image.dims:
 			image = image.isel(channel=self.channel)
 		if 'time' in image.dims:
-			image = image.isel(time=self.tslider.value).squeeze(drop=True)
+			image = image.isel(time=self.time_index).squeeze(drop=True)
 		return image
 
