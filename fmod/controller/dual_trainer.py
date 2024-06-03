@@ -374,7 +374,7 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
-		return dict( predictions=epoch_loss, **eval_losses )
+		return dict( prediction=epoch_loss, **eval_losses )
 
 	@exception_handled
 	def evaluate(self, context: LearningContext, **kwargs):

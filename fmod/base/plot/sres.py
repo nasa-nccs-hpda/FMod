@@ -89,7 +89,7 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self):
-		return "upsampled" if (self.context == LearningContext.Validation) else "domain"
+		return "validation" if (self.context == LearningContext.Validation) else "upsampled"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
