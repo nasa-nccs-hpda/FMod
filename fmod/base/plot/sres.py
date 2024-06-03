@@ -97,7 +97,6 @@ class SRPlot(object):
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
-		print( f" image[ic:{ic},ir:{ir}]-> {itype}")
 		image = self.images_data[itype]
 		image.attrs['itype'] = itype
 		return image
@@ -137,7 +136,6 @@ class SRPlot(object):
 			if label in self.losses:
 				rmserror = f"{self.losses[label]:.3f}" if (label in self.losses) else ""
 		title = f"{label} {rmserror}"
-		print( f"get_subplot_title: {title}")
 		return title
 
 	def get_subplot_image(self, irow: int, icol: int) -> xa.DataArray:

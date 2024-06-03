@@ -39,7 +39,7 @@ class TileSelectionGrid(object):
 			[w,h] =  [ self.tile_grid.tile_size['x'], self.tile_grid.tile_size['y'] ]
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, w, h, fill=False, lw=kwargs.get('lw',1), ec=kwargs.get('color','b') )
+				r = Rectangle( xy, w, h, fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.5 )
 				r.set_picker(True)
 				self.tiles.append( r )
 
@@ -52,7 +52,7 @@ class TileSelectionGrid(object):
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
-		print( f" %%%%  TileSelectionGrid({self._selection_callback}):  overlay grid with {len(self.tiles)} tiles %%%% ")
+		print( f" %%%%  TileSelectionGrid:  overlay grid with {len(self.tiles)} tiles %%%% ")
 		print( f" ---> Tiles: {[r2str(t) for t in self.tiles]}")
 		p = PatchCollection( self.tiles, alpha=kwargs.get('aplha',0.4) )
 		ax.add_collection(p)
