@@ -35,13 +35,14 @@ class TileSelectionGrid(object):
 		refresh = kwargs.get('refresh', False)
 		randomized = kwargs.get('randomized', False)
 		downscaled = kwargs.get('downscaled', True)
+		alpha = kwargs.get('aplha', 0.4),
 		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
 			self.tiles = []
 			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations(randomized,downscaled)
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.0 )
+				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=alpha )
 				r.set_picker(True)
 				self.tiles.append( r )
 
@@ -59,6 +60,6 @@ class TileSelectionGrid(object):
 		self.create_tile_recs(**kwargs)
 		print( f" %%%%  TileSelectionGrid:  overlay grid with {len(self.tiles)} tiles %%%% ")
 		print( f" ---> Tiles: {[r2str(t) for t in self.tiles]}")
-		p = PatchCollection( self.tiles, alpha=kwargs.get('aplha',0.4) )
+		p = PatchCollection( self.tiles, match_original=True )
 		ax.add_collection(p)
 		ax.figure.canvas.mpl_connect('pick_event', self.onpick )
