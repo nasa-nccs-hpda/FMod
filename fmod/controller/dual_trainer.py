@@ -58,8 +58,10 @@ def shuffle( data: Tensor ) -> Tensor:
 
 def tas( ta: Any ) -> str:
 	return list(ta) if (type(ta) is torch.Size) else ta
-def ts( t: Tensor ) -> str:
-	return tas(t.shape)
+
+def ts( ts: TensorOrTensors ) -> str:
+	if type(ts) == torch.Tensor: return tas(ts.shape)
+	else:                        return str( [ tas(t.shape) for t in ts ] )
 
 def unsqueeze( tensor: Tensor ) -> Tensor:
 	if tensor.ndim == 2:
