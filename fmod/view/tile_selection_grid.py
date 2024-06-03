@@ -44,7 +44,7 @@ class TileSelectionGrid(object):
 		downscaled = kwargs.get('downscaled', True)
 		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
-			self.tiles = []
+			self.tiles = {}
 			tile_locs: Dict[Tuple[int, int], Dict[str, int]] = self.tile_grid.get_tile_locations(randomized, downscaled)
 			for xyi, tloc in tile_locs.items():
 				xy = (tloc['x'], tloc['y'])

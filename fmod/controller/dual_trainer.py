@@ -352,7 +352,6 @@ class ModelTrainer(object):
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
-						print( f" ******* get_srbatch: tIdx={tIdx}, tile_loc={tile_loc}")
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
