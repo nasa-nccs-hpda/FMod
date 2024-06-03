@@ -302,7 +302,6 @@ class ModelTrainer(object):
 		if context not in self.product: self.evaluate(context)
 		return npa(self.product[context])
 
-	@exception_handled
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
 		seed = kwargs.get('seed',333)
@@ -376,7 +375,6 @@ class ModelTrainer(object):
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 		return dict( prediction=epoch_loss, **eval_losses )
 
-	@exception_handled
 	def evaluate(self, context: LearningContext, **kwargs):
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)

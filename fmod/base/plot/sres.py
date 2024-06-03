@@ -74,8 +74,8 @@ class SRPlot(object):
 			data: np.ndarray = trainer.get_ml_upsampled(self.context)
 			self.upsampled = xa.DataArray( data, dims=['time', 'channel', 'y', 'x'], coords=coords )
 
-		self.images_data: Dict[str,xa.DataArray] = dict( upsampled = self.upsampled, input = self.input, target = self.target, prediction = self.prediction, domain = self.domain )
-
+		self.images_data: Dict[str,xa.DataArray] = dict( upsampled = self.upsampled, input = self.input, target = self.target, domain = self.domain )
+		self.images_data[ self.result_plot_label ] = self.prediction
 		self.losses: Dict[str,float] = kwargs.get( 'losses', {} )
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
@@ -88,8 +88,12 @@ class SRPlot(object):
 		print( f"SRPlot: losses{list(self.losses.keys())} {list(self.losses.values())}" )
 
 	@property
-	def upscale_plot_label(self):
-		return "validation" if (self.context == LearningContext.Validation) else "upsampled"
+	def upscale_plot_label(self) -> str:
+		return "upsampled" if (self.context == LearningContext.Validation) else "domain"
+
+	@property
+	def result_plot_label(self) -> str:
+		return "validation" if (self.context == LearningContext.Validation) else "prediction"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
