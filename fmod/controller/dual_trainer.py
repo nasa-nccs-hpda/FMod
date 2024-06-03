@@ -155,8 +155,8 @@ class ModelTrainer(object):
 		self.tile_index: Optional[Tuple[int,int]] = None
 
 	@property
-	def current_date(self) -> datetime:
-		return self.train_dates[self.time_index]
+	def current_date(self) -> Optional[datetime]:
+		return None if (self.time_index is None) else self.train_dates[self.time_index]
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
