@@ -33,13 +33,15 @@ class TileSelectionGrid(object):
 
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
+		randomized = kwargs.get('randomized', False)
+		downscaled = kwargs.get('downscaled', True)
+		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
 			self.tiles = []
-			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations()
-			[w,h] =  [ self.tile_grid.tile_size['x'], self.tile_grid.tile_size['y'] ]
+			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations(randomized,downscaled)
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, w, h, fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.5 )
+				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.5 )
 				r.set_picker(True)
 				self.tiles.append( r )
 
