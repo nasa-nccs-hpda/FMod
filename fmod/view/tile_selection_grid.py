@@ -41,7 +41,7 @@ class TileSelectionGrid(object):
 			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations(randomized,downscaled)
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.5 )
+				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=0.0 )
 				r.set_picker(True)
 				self.tiles.append( r )
 
@@ -49,8 +49,11 @@ class TileSelectionGrid(object):
 		self._selection_callback = selection_callabck
 
 	def onpick(self,event):
+		print( f" **** Tile selection: {event} ****")
 		rect: Rectangle = event.artist
-		self._selection_callback( dict(x=rect.get_x(), y=rect.get_y()) )
+		coords = dict(x=rect.get_x(), y=rect.get_y())
+		print(f" ----> Coords: {coords}")
+		self._selection_callback( coords )
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
