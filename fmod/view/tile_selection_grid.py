@@ -24,6 +24,9 @@ def default_selection_callabck( tilerec: Dict[str,float]):
 def r2str( r: Rectangle ) -> str:
 	return f"({r.get_x()},{r.get_y()})x({r.get_width()},{r.get_height()})"
 
+def onpick_test(event):
+	lgm().log( f" **** Tile selection: {event} ****", display=True)
+
 class TileSelectionGrid(object):
 
 	def __init__(self, lcontext: LearningContext):
@@ -35,31 +38,27 @@ class TileSelectionGrid(object):
 		refresh = kwargs.get('refresh', False)
 		randomized = kwargs.get('randomized', False)
 		downscaled = kwargs.get('downscaled', True)
-		alpha = kwargs.get('aplha', 0.4)
 		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
 			self.tiles = []
 			tile_locs: List[Dict[str, int]] = self.tile_grid.get_tile_locations(randomized,downscaled)
 			for tloc in tile_locs:
 				xy = (tloc['x'], tloc['y'])
-				r = Rectangle( xy, ts['x'], ts['y'], fill=False, linewidth=kwargs.get('lw',2), edgecolor=kwargs.get('color','b'), alpha=alpha )
-				r.set_picker(True)
+				r = Rectangle( xy, ts['x'], ts['y'], fill=False, picker=True, linewidth=kwargs.get('lw',1), edgecolor=kwargs.get('color','white') )
 				self.tiles.append( r )
 
 	def set_selection_callabck(self, selection_callabck: Callable):
 		self._selection_callback = selection_callabck
 
 	def onpick(self,event):
-		print( f" **** Tile selection: {event} ****")
+		lgm().log( f" **** Tile selection: {event} ****", display=True)
 		rect: Rectangle = event.artist
 		coords = dict(x=rect.get_x(), y=rect.get_y())
-		print(f" ----> Coords: {coords}")
+		lgm().log(f" ----> Coords: {coords}", display=True)
 		self._selection_callback( coords )
 
 	def overlay_grid(self, ax: plt.Axes, **kwargs):
 		self.create_tile_recs(**kwargs)
-		print( f" %%%%  TileSelectionGrid:  overlay grid with {len(self.tiles)} tiles %%%% ")
-		print( f" ---> Tiles: {[r2str(t) for t in self.tiles]}")
 		p = PatchCollection( self.tiles, match_original=True )
 		ax.add_collection(p)
-		ax.figure.canvas.mpl_connect('pick_event', self.onpick )
+		ax.figure.canvas.mpl_connect('pick_event', onpick_test )
