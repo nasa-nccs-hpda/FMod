@@ -50,6 +50,9 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
+def onclick(event):
+	print('Mouse click: button=%d, dbl=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (event.button, event.dblclick, event.x, event.y, event.xdata, event.ydata))
+
 class SRPlot(object):
 	def __init__(self, trainer: ModelTrainer, context: LearningContext, **kwargs):
 		self.trainer: ModelTrainer = trainer
@@ -83,6 +86,7 @@ class SRPlot(object):
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
+			self.fig.canvas.mpl_connect('button_press_event', onclick)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
 		print( f"SRPlot[{self.context.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}" )

@@ -54,14 +54,14 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ):
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
-		if idx == 0: lgm().log( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}")
+		if idx == 0: lgm().debug( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}")
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
 	def cut_domain( self, timeslice_data: np.ndarray ):
 		origin: Dict[str,int] = cfg().task.origin
 		tile_grid: Dict[str,int] = cfg().task.tile_grid
 		tile_bnds = { c:  [origin[c], origin[c]+self.tile_size[c]*tile_grid[c]] for c in ['x','y'] }
-		lgm().log( f"     ------------------>> cut_domain: origin={origin}, tile_bnds = {tile_bnds}")
+		lgm().debug( f"     ------------------>> cut_domain: origin={origin}, tile_bnds = {tile_bnds}")
 		return timeslice_data[ tile_bnds['y'][0]:tile_bnds['y'][1], tile_bnds['x'][0]:tile_bnds['x'][1] ]
 
 	# def cut_xy_coords(self, oindx: Dict[str,int] )-> Dict[str,xa.DataArray]:
@@ -91,7 +91,7 @@ class S3ExportDataLoader(SRDataLoader):
 		raw_data: np.memmap = self.open_timeslice(vid[0], date)
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, origin )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
-		if idx == 0: lgm().log( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
+		if idx == 0: lgm().debug( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
 		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 

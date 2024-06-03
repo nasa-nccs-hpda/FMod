@@ -1,9 +1,7 @@
 import torch
-import xarray as xa, numpy as np
-import hydra, os
-from datetime import datetime
-from typing import Dict, List
-from fmod.view.sres import mplplot, create_plot_data
+import xarray as xa
+import hydra
+from typing import Dict
 from fmod.base.util.config import fmconfig, cfg
 from fmod.controller.dual_trainer import ModelTrainer
 from fmod.controller.dual_trainer import LearningContext

@@ -248,7 +248,7 @@ class SRBatch:
 	def load_batch(self, origin: Dict[str,int], start: datetime) -> xa.DataArray:
 		dates: Tuple[datetime,datetime] = date_bounds(start, self.days_per_batch)
 		darray: xa.DataArray = self.data_loader.load_batch( origin, dates )
-		lgm().log( f"load_batch[{start.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
+		lgm().debug( f"load_batch[{start.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
 		if self.channels is None:
 			self.channels = darray.coords["channel"].values.tolist()
 		return  darray
@@ -259,7 +259,7 @@ class SRBatch:
 		self.current_batch: xa.DataArray = self.load_batch(origin,start)
 		self.current_date = start
 		self.current_origin = origin
-		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{start}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec" )
+		lgm().debug( f" -----> load {self.vres}-res batch[{origin}][{start}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec" )
 		return self.current_batch
 
 
