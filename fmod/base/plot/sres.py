@@ -85,6 +85,7 @@ class SRPlot(object):
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
+		print( f"SRPlot: losses{list(self.losses.keys())} {list(self.losses.values())}" )
 
 	@property
 	def upscale_plot_label(self):
@@ -119,10 +120,10 @@ class SRPlot(object):
 		ax: Axes = self.axs[irow, icol]
 		ax.set_aspect(0.5)
 		image = self.get_subplot_image(irow,icol)
-		ax.set_title( self.get_subplot_title(irow,image) )
 		vrange = cscale(image, 2.0)
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
+		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims.setdefault( (irow, icol), iplot )
 
 	def get_subplot_title(self,irow,image) -> str:
@@ -131,7 +132,9 @@ class SRPlot(object):
 		if irow == 1:
 			if label in self.losses:
 				rmserror = f"{self.losses[label]:.3f}" if (label in self.losses) else ""
-		return f"{label} {rmserror}"
+		title = f"{label} {rmserror}"
+		print( f"get_subplot_title: {title}")
+		return title
 
 	def get_subplot_image(self, irow: int, icol: int) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
