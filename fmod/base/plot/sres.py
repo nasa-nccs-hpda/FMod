@@ -55,7 +55,7 @@ class SRPlot(object):
 		self.trainer: ModelTrainer = trainer
 		self.context: LearningContext = context
 		self.channel = kwargs.get('channel', 0)
-		self.splabels = [['input', self.upscale_plot_label], ['target', 'prediction']]
+		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.sample_input: xa.DataArray  = trainer.get_sample_input()
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
 		self.input: xa.DataArray = to_xa( self.sample_input, trainer.get_ml_input(context) )
