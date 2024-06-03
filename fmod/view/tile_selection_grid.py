@@ -35,7 +35,7 @@ class TileSelectionGrid(object):
 		refresh = kwargs.get('refresh', False)
 		randomized = kwargs.get('randomized', False)
 		downscaled = kwargs.get('downscaled', True)
-		alpha = kwargs.get('aplha', 0.4),
+		alpha = kwargs.get('aplha', 0.4)
 		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
 		if (self.tiles is None) or refresh:
 			self.tiles = []
