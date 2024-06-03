@@ -91,7 +91,8 @@ class SRPlot(object):
 		return "upsampled" if (self.context == LearningContext.Validation) else "domain"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
-		itype = self.splabels[ir][ic]
+		itype = self.splabels[ic][ir]
+		print( f" image[ic:{ic},ir:{ir}]-> {itype}")
 		image = self.images_data[itype]
 		image.attrs['itype'] = itype
 		return image
@@ -115,12 +116,14 @@ class SRPlot(object):
 		self.fig.canvas.draw_idle()
 
 	def generate_subplot(self, irow: int, icol: int):
-		ax = self.axs[irow, icol]
+		ax: Axes = self.axs[irow, icol]
 		ax.set_aspect(0.5)
 		image = self.get_subplot_image(irow,icol)
 		ax.set_title( self.get_subplot_title(irow,image) )
 		vrange = cscale(image, 2.0)
-		self.ims.setdefault( (irow, icol),  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]) )
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
+		iplot.colorbar.remove()
+		self.ims.setdefault( (irow, icol), iplot )
 
 	def get_subplot_title(self,irow,image) -> str:
 		label = image.attrs['itype']
