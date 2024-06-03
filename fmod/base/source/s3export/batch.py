@@ -53,6 +53,7 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
 	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ):
+		print( f" ###### cut_tile: origin={origin}, tile_size={self.tile_size}, ")
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
 		if idx == 0: lgm().debug( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}")
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
