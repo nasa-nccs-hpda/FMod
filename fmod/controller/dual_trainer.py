@@ -45,8 +45,9 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
 	return xarray.concat( members, dim="batch" )
 
-def npa( tensor: Tensor ) -> np.ndarray:
-	return tensor.detach().cpu().numpy()
+def npa( ts: TensorOrTensors ) -> np.ndarray:
+	t = ts if type(ts) == Tensor else ts[-1]
+	return t.detach().cpu().numpy()
 
 def fmtfl( flist: List[float] ) -> str:
 	svals = ','.join( [ f"{fv:.4f}" for fv in flist ] )
