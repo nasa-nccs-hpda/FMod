@@ -1,6 +1,6 @@
 import torch, math
 import xarray, traceback, random
-from datetime import datetime
+from datetime import datetime, timedelta
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
@@ -317,6 +317,11 @@ class ModelTrainer(object):
 	def get_ml_product(self, context: LearningContext) -> np.ndarray:
 		if context not in self.product: self.evaluate(context)
 		return npa(self.product[context])
+	def in_batch(self, time_coord: datetime, batch_date: datetime)-> bool:
+		if time_coord < batch_date: return False
+		dt: timedelta = time_coord - batch_date
+		hours: int = dt.seconds // 3600
+		return hours < self.input_dataset.hours_per_batch
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
@@ -410,7 +415,7 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
-			if (time_coord is None) or (time_coord==batch_date):
+			if (time_coord is None) or self.in_batch(time_coord,batch_date):
 				for xyi, tile_loc in tile_locs.items():
 					if (self.tile_index is None) or (xyi == self.tile_index):
 						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)

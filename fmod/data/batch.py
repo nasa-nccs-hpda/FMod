@@ -86,6 +86,7 @@ class BatchDataset(BaseDataset):
         self.ntbatches = task_config.nbatches
         self.ntsteps = self.srbatch.batch_steps * self.ntbatches
         self.hours_per_step = task_config.hours_per_step
+        self.hours_per_batch = self.days_per_batch * 24
         self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
 
