@@ -56,8 +56,8 @@ class SRPlot(object):
 		self.trainer: ModelTrainer = trainer
 		self.context: LearningContext = context
 		self.channel = kwargs.get('channel', 0)
-		self.time_index = kwargs.get('time_index', 0)
-		self.tile_index = kwargs.get('tile_index', (0,0))
+		self.time_index = kwargs.get('time_index', -1)
+		self.tile_index = kwargs.get('tile_index', None)
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.sample_input: xa.DataArray = trainer.get_sample_input()
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
