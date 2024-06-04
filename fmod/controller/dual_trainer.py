@@ -151,12 +151,8 @@ class ModelTrainer(object):
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
 		self.current_losses: Dict[str,float] = None
-		self.time_index: Optional[int] = None
+		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
-
-	@property
-	def current_date(self) -> Optional[datetime]:
-		return None if (self.time_index is None) else self.train_dates[self.time_index]
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
@@ -408,13 +404,11 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] = TileGrid(context).get_tile_locations()
-		batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
+		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( index=self.time_index )
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		print(f" * current_date = {self.current_date}")
 		print(f" * tile_index = {self.tile_index}")
 		for batch_date in batch_dates:
-			if (self.current_date is None) or (batch_date==self.current_date):
 				print( f" >> Processing batch date {batch_date}")
 				for xyi, tile_loc in tile_locs.items():
 					if (self.tile_index is None) or (xyi == self.tile_index):
