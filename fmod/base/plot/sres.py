@@ -1,5 +1,6 @@
 import math, torch, numpy as np
 import xarray as xa
+from datetime import datetime
 from typing  import List, Tuple, Union, Optional, Dict
 from fmod.base.util.ops import xaformat_timedeltas, print_data_column
 import matplotlib.ticker as ticker
@@ -62,11 +63,10 @@ class SRPlot(object):
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
 		self.tcoords: DataArrayCoordinates = self.sample_target.coords
 		self.icoords: DataArrayCoordinates = self.sample_input.coords
-		self.time_coords: xa.DataArray = xaformat_timedeltas(self.sample_input.coords['time'])
-		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'])
+		self.time_coords: List[datetime] = trainer.input_dataset.get_time_coord()
+		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords) )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.losses: Dict[str,float] = trainer.current_losses
-		print( f"Loaded sample input, shape = {self.sample_input.shape}, #time_coords = {self.time_coords.size} ")
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
 		self.tile_grid = TileSelectionGrid(self.context)
@@ -133,8 +133,13 @@ class SRPlot(object):
 		self.update_subplots()
 		return ipw.VBox(self.panels)
 
-	def update_subplots(self, time_index: int = 0):
-		self.fig.suptitle(f'Timestep: {time_index}', fontsize=10, va="top", y=1.0)
+	@property
+	def display_time(self) -> str:
+		ctime: datetime = self.time_coords[self.time_index]
+		return ctime.strftime("%m/%d/%Y:%H")
+
+	def update_subplots(self):
+		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
 
 		for irow in [0, 1]:
 			for icol in [0, 1]:

@@ -83,6 +83,9 @@ class BatchDataset(BaseDataset):
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
+        self.ntbatches = task_config.nbatches
+        self.ntsteps = self.srbatch.batch_steps * self.ntbatches
+        self.hours_per_step = task_config.hours_per_step
 
     def load_global_timeslice(self, date_index: int = 0, **kwargs ) -> xa.DataArray:
         vid: str = kwargs.get( 'vid', self.task_config.target_variables[0] )
@@ -105,14 +108,23 @@ class BatchDataset(BaseDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def get_batch_dates(self, randomize: bool = True, time_index: int = -1 ) -> List[datetime]:
+    def get_batch_dates(self, randomize: bool = True, offset: bool = True, batch_index: int = -1 ) -> List[datetime]:
         start_dates, ndates = [], len( self.train_dates )
-        offset: int = randint(0, self.days_per_batch-1)
+        offset: int = randint(0, self.days_per_batch-1) if offset else 0
         for dindex in range( 0, ndates, self.days_per_batch):
             start_dates.append( self.train_dates[ dindex ] +  timedelta( days=offset ) )
-        if time_index >= 0:    start_dates = [ start_dates[time_index] ]
+        if batch_index >= 0:    start_dates = [ start_dates[batch_index] ]
         elif randomize:   random.shuffle(start_dates)
         return start_dates
+
+    def get_time_coord(self) -> List[datetime]:
+        bdates: List[datetime] = self.get_batch_dates(randomize=False, offset=False )
+        time: List[datetime] = []
+        for bdate in bdates:
+            for bstep in range(self.srbatch.batch_steps):
+                hours = bstep * self.hours_per_step
+                time.append( bdate + timedelta(hours=hours) )
+        return time
 
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
