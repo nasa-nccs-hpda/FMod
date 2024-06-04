@@ -408,13 +408,9 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( time_index=self.time_index )
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		print(f" * tile_index = {self.tile_index}")
 		for batch_date in batch_dates:
-				print( f" >> Processing batch date {batch_date}")
 				for xyi, tile_loc in tile_locs.items():
-					print(f" >> Checking batch tile {xyi}: {tile_loc}")
 					if (self.tile_index is None) or (xyi == self.tile_index):
-						print(f" >> Processing batch tile {xyi}")
 						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 						inp = train_data['input']
 						ups: Tensor = self.get_target_channels(self.upsample(inp))

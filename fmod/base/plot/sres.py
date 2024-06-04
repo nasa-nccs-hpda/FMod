@@ -66,6 +66,7 @@ class SRPlot(object):
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'])
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.losses: Dict[str,float] = trainer.current_losses
+		print( f"Loaded sample input, shape = {self.sample_input.shape}, #time_coords = {self.time_coords.size} ")
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
 		self.tile_grid = TileSelectionGrid(self.context)
