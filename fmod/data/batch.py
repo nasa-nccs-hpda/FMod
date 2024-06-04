@@ -92,7 +92,7 @@ class BatchDataset(BaseDataset):
 
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
-        if (origin != self.current_origin) or (batch_date != self.current_date):
+        if (self.current_batch_data is None) or (origin != self.current_origin) or (batch_date != self.current_date):
             batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
             self.current_origin = origin
             self.current_date = batch_date
