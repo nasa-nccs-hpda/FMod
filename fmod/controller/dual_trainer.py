@@ -412,6 +412,7 @@ class ModelTrainer(object):
 		for batch_date in batch_dates:
 				print( f" >> Processing batch date {batch_date}")
 				for xyi, tile_loc in tile_locs.items():
+					print(f" >> Checking batch tile {xyi}: {tile_loc}")
 					if (self.tile_index is None) or (xyi == self.tile_index):
 						print(f" >> Processing batch tile {xyi}")
 						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
