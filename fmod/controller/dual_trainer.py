@@ -411,10 +411,14 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
+		print(f" * current_date = {self.current_date}")
+		print(f" * tile_index = {self.tile_index}")
 		for batch_date in batch_dates:
 			if (self.current_date is None) or (batch_date==self.current_date):
+				print( f" >> Processing batch date {batch_date}")
 				for xyi, tile_loc in tile_locs.items():
 					if (self.tile_index is None) or (xyi == self.tile_index):
+						print(f" >> Processing batch tile {xyi}")
 						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 						inp = train_data['input']
 						ups: Tensor = self.get_target_channels(self.upsample(inp))
@@ -422,6 +426,7 @@ class ModelTrainer(object):
 						prd, targ = self.apply_network(inp, target)
 						batch_model_losses.append( self.loss(prd, targ).item() )
 						batch_interp_losses.append( self.loss(ups, targ).item() )
+		if inp is None: print( " ---------->> No tiles processed!")
 		self.input[context] = inp
 		self.target[context] = targ
 		self.product[context] = prd
