@@ -406,7 +406,7 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(context).get_tile_locations(selected_tile=self.tile_index)
-		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False)
+		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		lgm().log(f"EVAL: time_coord={time_coord} tile_index={self.tile_index}, batch_dates={batch_dates}", display=True)
