@@ -63,7 +63,7 @@ class SRPlot(object):
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
 		self.tcoords: DataArrayCoordinates = self.sample_target.coords
 		self.icoords: DataArrayCoordinates = self.sample_input.coords
-		self.time_coords: List[datetime] = trainer.input_dataset.get_time_coord()
+		self.time_coords: List[datetime] = trainer.input_dataset.tcoords
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords) )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.losses: Dict[str,float] = trainer.current_losses
