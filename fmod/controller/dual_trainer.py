@@ -109,7 +109,6 @@ class TileGrid(object):
 				for iy in range(self.tile_grid['y']):
 					self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
 		if randomize: rshuffle(self.tlocs)
-		print( f" tlocs = {self.tlocs}" )
 		return self.tlocs
 
 	@classmethod
