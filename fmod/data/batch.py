@@ -105,12 +105,12 @@ class BatchDataset(BaseDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def get_batch_dates(self, randomize: bool = True, dindx: int = -1 ) -> List[datetime]:
+    def get_batch_dates(self, randomize: bool = True, time_index: int = -1 ) -> List[datetime]:
         start_dates, ndates = [], len( self.train_dates )
         offset: int = randint(0, self.days_per_batch-1)
         for dindex in range( 0, ndates, self.days_per_batch):
             start_dates.append( self.train_dates[ dindex ] +  timedelta( days=offset ) )
-        if dindx >= 0:    start_dates = [ start_dates[dindx] ]
+        if time_index >= 0:    start_dates = [ start_dates[time_index] ]
         elif randomize:   random.shuffle(start_dates)
         return start_dates
 
