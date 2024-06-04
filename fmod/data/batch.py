@@ -90,6 +90,12 @@ class BatchDataset(BaseDataset):
         self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
 
+    def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
+        if time_coord < batch_date: return False
+        dt: timedelta = time_coord - batch_date
+        hours: int = dt.seconds // 3600
+        return hours < self.hours_per_batch
+
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
         if (self.current_batch_data is None) or (origin != self.current_origin) or (batch_date != self.current_date):
@@ -124,13 +130,14 @@ class BatchDataset(BaseDataset):
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
         return dsnorm( vdata, self.sd, self.mu )
 
-    def get_batch_dates(self, randomize: bool = True, offset: bool = True, batch_index: int = -1 ) -> List[datetime]:
+    def get_batch_dates(self, randomize: bool = True, offset: bool = True, target_date: datetime = None ) -> List[datetime]:
         start_dates, ndates = [], len( self.train_dates )
         offset: int = randint(0, self.days_per_batch-1) if offset else 0
         for dindex in range( 0, ndates, self.days_per_batch):
-            start_dates.append( self.train_dates[ dindex ] +  timedelta( days=offset ) )
-        if batch_index >= 0:    start_dates = [ start_dates[batch_index] ]
-        elif randomize:   random.shuffle(start_dates)
+            batch_date = self.train_dates[ dindex ] +  timedelta( days=offset )
+            if (target_date is None) or self.in_batch( target_date, batch_date ):
+                start_dates.append( batch_date )
+        if randomize:   random.shuffle(start_dates)
         return start_dates
 
     def get_time_coord(self, tindex: int ) -> datetime:

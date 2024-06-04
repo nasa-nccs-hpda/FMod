@@ -103,11 +103,12 @@ class TileGrid(object):
 		sf = self.downscale_factor if downscaled else 1
 		return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
 
-	def get_tile_locations(self, randomize=False, downscaled: bool = False ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
+	def get_tile_locations(self, randomize=False, downscaled: bool = False, selected_tile: Tuple[int,int] = None ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
 		if len(self.tlocs) == 0:
 			for ix in range(self.tile_grid['x']):
 				for iy in range(self.tile_grid['y']):
-					self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
+					if (selected_tile is None) or ((ix,iy) == selected_tile):
+						self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
 		if randomize: rshuffle(self.tlocs)
 		return self.tlocs
 
@@ -317,11 +318,6 @@ class ModelTrainer(object):
 	def get_ml_product(self, context: LearningContext) -> np.ndarray:
 		if context not in self.product: self.evaluate(context)
 		return npa(self.product[context])
-	def in_batch(self, time_coord: datetime, batch_date: datetime)-> bool:
-		if time_coord < batch_date: return False
-		dt: timedelta = time_coord - batch_date
-		hours: int = dt.seconds // 3600
-		return hours < self.input_dataset.hours_per_batch
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
@@ -406,26 +402,23 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		batch_index: int = 0 if (self.time_index < 0) else self.time_index//self.input_dataset.srbatch.batch_steps
 		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
-		tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] = TileGrid(context).get_tile_locations()
-		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( batch_index=batch_index )
+		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(context).get_tile_locations(selected_tile=self.tile_index)
+		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False)
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log( f"EVAL: time_coord={time_coord} batch_index={batch_index} tile_index={self.tile_index}, batch_dates={batch_dates}", display=True)
+		lgm().log(f"EVAL: time_coord={time_coord} tile_index={self.tile_index}, batch_dates={batch_dates}", display=True)
 		for batch_date in batch_dates:
-			if (time_coord is None) or self.in_batch(time_coord,batch_date):
-				for xyi, tile_loc in tile_locs.items():
-					if (self.tile_index is None) or (xyi == self.tile_index):
-						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
-						inp = train_data['input']
-						ups: Tensor = self.get_target_channels(self.upsample(inp))
-						target: Tensor = train_data['target']
-						prd, targ = self.apply_network(inp, target)
-						batch_model_losses.append( self.loss(prd, targ).item() )
-						batch_interp_losses.append( self.loss(ups, targ).item() )
+			for xyi, tile_loc in tile_locs.items():
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
+				inp = train_data['input']
+				ups: Tensor = self.get_target_channels(self.upsample(inp))
+				target: Tensor = train_data['target']
+				prd, targ = self.apply_network(inp, target)
+				batch_model_losses.append( self.loss(prd, targ).item() )
+				batch_interp_losses.append( self.loss(ups, targ).item() )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[context] = inp
 		self.target[context] = targ
