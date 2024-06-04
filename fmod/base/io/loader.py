@@ -42,7 +42,7 @@ class BaseDataset(object):
 		self.downscale_factors: List[int] = cfg().model.downscale_factors
 		self.scalefactor = math.prod(self.downscale_factors)
 		self.current_date: date = None
-		self.current_origin: Dict[str, int] = None
+		self.current_origin: Dict[str, int] = task_config.origin
 
 	def get_tile_locations(self) -> List[Dict[str,int]]:
 		raise NotImplementedError()
