@@ -91,13 +91,10 @@ class BatchDataset(BaseDataset):
         self.current_batch_data = None
 
     def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
+        if time_coord < batch_date: return False
         dt: timedelta = time_coord - batch_date
         hours: int = dt.seconds // 3600
-        rv = hours < self.hours_per_batch
-        if time_coord < batch_date:
-            rv = None
-        lgm().log( f"in_batch: time_coord={time_coord}, batch_date={batch_date}, hours={hours}, result={rv}")
-        return False if (rv is None) else rv
+        return hours < self.hours_per_batch
 
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
