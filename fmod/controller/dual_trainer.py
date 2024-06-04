@@ -401,13 +401,16 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
+		batch_index: int = 0 if (self.time_index < 0) else self.time_index//self.input_dataset.srbatch.batch_steps
+		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] = TileGrid(context).get_tile_locations()
-		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( time_index=self.time_index )
+		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( batch_index=batch_index )
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
+			if (time_coord is None) or (time_coord==batch_date):
 				for xyi, tile_loc in tile_locs.items():
 					if (self.tile_index is None) or (xyi == self.tile_index):
 						train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
