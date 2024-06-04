@@ -414,6 +414,7 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates( batch_index=batch_index )
 		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
+		print( f"EVAL: time_coord={time_coord} batch_index={batch_index} tile_index={self.tile_index}, batch_dates={batch_dates}")
 		for batch_date in batch_dates:
 			if (time_coord is None) or self.in_batch(time_coord,batch_date):
 				for xyi, tile_loc in tile_locs.items():
