@@ -24,10 +24,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
 	torch.cuda.set_device(device.index)
 
-input_dataset: BatchDataset = BatchDataset(cfg().task, vres=srRes.Low, tset=TSet.Train)
-target_dataset: BatchDataset = BatchDataset(cfg().task, vres=srRes.High, tset=TSet.Train)
-
-model_manager: SRModels = SRModels(input_dataset, target_dataset, device)
+model_manager: SRModels = SRModels( device )
 trainer: ModelTrainer = ModelTrainer(model_manager)
 sample_input: xa.DataArray = model_manager.get_sample_input()
 sample_target: xa.DataArray = model_manager.get_sample_target()

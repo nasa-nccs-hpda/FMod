@@ -17,9 +17,9 @@ batch_iter: 1
 nepochs: 1
 lr: 1e-3
 
-origin: { x: 0, y: 0 }
+origin: { 'train': { x: 0, y: 0 }, 'validation': { x: 0, y: 0 }, 'test': { x: 0, y: 0 } }
+tile_grid: { 'train': { x: 3, y: 3 }, 'validation': { x: 3, y: 3 }, 'test': { x: 3, y: 3 } }
 tile_size: { x: 16, y: 16 }
-tile_grid: { x: 3, y: 3 }
 conform_to_grid: false
 
 coords: { 'x': 'XC', 'y': 'YC', z: '' }

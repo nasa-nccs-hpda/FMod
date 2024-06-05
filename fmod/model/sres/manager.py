@@ -8,8 +8,17 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapp
 from omegaconf import DictConfig
 import importlib, pandas as pd
 from datetime import datetime
+from fmod.base.io.loader import TSet
+from fmod.base.source.loader import srRes
 from fmod.data.batch import BatchDataset
 
+
+def get_datasets() -> Dict[Tuple[srRes, TSet], BatchDataset]:
+	datasets = {}
+	for sres in [srRes.Low, srRes.Low]:
+		for tset in [TSet.Train, TSet.Validation, TSet.Test]:
+			datasets[(sres, tset)] = BatchDataset(cfg().task, vres=sres, tset=tset)
+	return datasets
 def get_temporal_features( time: np.ndarray ) -> np.ndarray:
 	sday, syear, t0, pi2 = [], [], time[0], 2 * np.pi
 	for idx, t in enumerate(time):
@@ -22,22 +31,30 @@ def get_temporal_features( time: np.ndarray ) -> np.ndarray:
 	return tfeats.reshape(list(tfeats.shape) + [1, 1])
 class SRModels:
 
-	def __init__(self, input_dataset: BatchDataset, target_dataset: BatchDataset, device: torch.device):
+	def __init__(self,  device: torch.device):
 		self.model_config = dict( cfg().model.items() )
 		self.model_name = cfg().model.name
 		self.device = device
 		self.target_variables = cfg().task.target_variables
-		self.datasets: Dict[str,BatchDataset] = dict( input = input_dataset, target = target_dataset )
-		self.sample_input:  xa.DataArray = input_dataset.get_current_batch_array()
-		self.sample_target: xa.DataArray = target_dataset.get_current_batch_array()
-		self.time: np.ndarray = self.sample_input.coords['time'].values
+		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = get_datasets()
+		self.time: np.ndarray = self.sample_input().coords['time'].values
 		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
-		lgm().log(f"sample_input: shape={self.sample_input.shape}")
-		lgm().log(f"sample_target: shape={self.sample_target.shape}")
-		self.model_config['nchannels'] = self.sample_input.sizes['channel']
+		self.model_config['nchannels'] = self.sample_input().sizes['channel']
 		if self.model_config.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features(self.time)
 		self.model_config['device'] = device
+
+	def sample_input(self, tset: TSet = TSet.Train) -> xa.DataArray:
+		return self.get_batch_array( srRes.Low, tset )
+
+	def sample_target(self, tset: TSet = TSet.Train) -> xa.DataArray:
+		return self.get_batch_array( srRes.High, tset )
+
+	def get_batch_array(self, sres: srRes, tset: TSet) -> xa.DataArray:
+		return self.datasets[(sres, tset)].get_current_batch_array()
+
+	def get_dataset(self, sres: srRes, tset: TSet) -> BatchDataset:
+		return self.datasets[(sres, tset)]
 
 	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
 		return self.datasets[dstype].get_channel_idxs(channels)

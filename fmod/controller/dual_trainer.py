@@ -81,13 +81,11 @@ def normalize( tensor: Tensor ) -> Tensor:
 
 class TileGrid(object):
 
-	def __init__(self, context: TSet = TSet.Train):
-		self.context = context
-		cfg_origin = "origin" if context == TSet.Train else "val_origin"
-		cfg_tgrid  = "tile_grid" if context == TSet.Train else "val_tile_grid"
-		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
+	def __init__(self, tset: TSet = TSet.Train):
+		self.tset: TSet = tset
+		self.origin: Dict[str,int] = cfg().task.origin[self.tset.value]
+		self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
-		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
 		self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
 		downscale_factors: List[int] = cfg().model.downscale_factors
 		self.downscale_factor = math.prod(downscale_factors)
@@ -370,6 +368,7 @@ class ModelTrainer(object):
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
+					if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
@@ -380,8 +379,7 @@ class ModelTrainer(object):
 
 			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
-			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
-			eval_losses = self.evaluate( TSet.Validation)
+			eval_losses = self.evaluate( TSet.Validation )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f} eval-loss: {eval_losses["validation"]:.4f}', display=True)
 
 		train_time = time.time() - train_start
@@ -390,7 +388,7 @@ class ModelTrainer(object):
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def evaluate(self, context: TSet, **kwargs):
+	def evaluate(self, tset: TSet, **kwargs):
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -402,7 +400,7 @@ class ModelTrainer(object):
 		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
-		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(context).get_tile_locations(selected_tile=self.tile_index)
+		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
