@@ -1,46 +1,41 @@
 import torch
 import xarray as xa
-import hydra
-from typing import Dict
+import hydra, os
 from fmod.base.util.config import fmconfig, cfg
-from fmod.controller.dual_trainer import ModelTrainer
-from base.io.loader import TSet
+from controller.dual_trainer import ModelTrainer
+from fmod.base.io.loader import TSet
 from fmod.model.sres.manager import SRModels
+from fmod.base.plot.sres import SRPlot
 from fmod.data.batch import BatchDataset
+from fmod.base.source.loader import srRes
 hydra.initialize(version_base=None, config_path="../config")
 
 task = "sres"
-model = "unet"
-dataset = "LLC4320"
-scenario = "s1"
+model = "srdn"
+dataset = "LLC4320-v1"
+scenario = "s4.1"
 fmconfig(task, model, dataset, scenario)
 # lgm().set_level( logging.DEBUG )
 
 load_state = "current"
 save_state = True
-cfg().task['nepochs'] = 1
-eval_tileset = TSet.Validation
+cfg().task.nepochs = 1
+cfg().task.nbatches = 2
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
 	torch.cuda.set_device(device.index)
 
-input_dataset: BatchDataset = BatchDataset(cfg().task, vres="low", )
-target_dataset: BatchDataset = BatchDataset(cfg().task, vres="high")
+input_dataset: BatchDataset = BatchDataset(cfg().task, vres=srRes.Low, tset=TSet.Train)
+target_dataset: BatchDataset = BatchDataset(cfg().task, vres=srRes.High, tset=TSet.Train)
 
 model_manager: SRModels = SRModels(input_dataset, target_dataset, device)
 trainer: ModelTrainer = ModelTrainer(model_manager)
 sample_input: xa.DataArray = model_manager.get_sample_input()
 sample_target: xa.DataArray = model_manager.get_sample_target()
 
-# Training the model
+trainer.train(load_state=load_state, save_state=save_state)
 
-train_losses: Dict[str, float] = trainer.train(load_state=load_state, save_state=save_state)
-print( f"Completed Training, loss = {train_losses['predictions']:.3f}")
 
-print( f"Completed Validation:")
-print( f" * training loss = {train_losses['predictions']:.3f}")
-print( f" * validation  loss = {train_losses['validation']:.3f}")
-print( f" * upsampled  loss = {train_losses['upsampled']:.3f}")
 
 
