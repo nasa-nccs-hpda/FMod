@@ -13,7 +13,6 @@ from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import TSet
 from fmod.base.util.dates import batches_range
 from fmod.base.source.loader import srRes
-from fmod.controller.dual_trainer import TileGrid
 from fmod.base.util.config import cfg
 from random import randint
 import pandas as pd
@@ -57,6 +56,11 @@ def norm( batch_data: xa.DataArray, batch=False):
     std = batch_data.std(dim=dims)
     return (batch_data-mean)/std
 
+def rshuffle(a: Dict[Tuple[int,int],Any] ) -> Dict[Tuple[int,int],Any]:
+    a1: List[ Tuple[ Tuple[int,int],Any ] ] = list(a.items())
+    random.shuffle(a1)
+    return dict( a1 )
+
 @dataclass
 class MetaData(DatapipeMetaData):
     name: str = "MERRA2NC"
@@ -65,6 +69,40 @@ class MetaData(DatapipeMetaData):
     cuda_graphs: bool = True
     # Parallel
     ddp_sharding: bool = True
+
+class TileGrid(object):
+
+    def __init__(self, tset: TSet = TSet.Train):
+        self.tset: TSet = tset
+        self.origin: Dict[str,int] = cfg().task.origin[self.tset.value]
+        self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
+        self.tile_size: Dict[str,int] = cfg().task.tile_size
+        self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
+        downscale_factors: List[int] = cfg().model.downscale_factors
+        self.downscale_factor = math.prod(downscale_factors)
+
+    def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
+        sf = self.downscale_factor if downscaled else 1
+        return { d: self.tile_size[d] * sf for d in ['x', 'y'] }
+
+    def get_tile_origin( self, ix: int, iy: int, downscaled: bool = False ) -> Dict[str, int]:
+        sf = self.downscale_factor if downscaled else 1
+        return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
+
+    def get_tile_locations(self, randomize=False, downscaled: bool = False, selected_tile: Tuple[int,int] = None ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
+        if len(self.tlocs) == 0:
+            for ix in range(self.tile_grid['x']):
+                for iy in range(self.tile_grid['y']):
+                    if (selected_tile is None) or ((ix,iy) == selected_tile):
+                        self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
+        if randomize: rshuffle(self.tlocs)
+        return self.tlocs
+
+    @classmethod
+    def cdim(cls, ix: int, iy: int, dim: str) -> int:
+        if dim == 'x': return ix
+        if dim == 'y': return iy
+
 
 class BatchDataset(object):
 
@@ -220,7 +258,7 @@ class BatchDataset(object):
         return target_lead_times, target_duration
 
     def extract_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-                                      levels: Tuple[int, ...], **kwargs) -> Dict[str,xa.DataArray]:
+        levels: Tuple[int, ...], **kwargs) -> Dict[str,xa.DataArray]:
         idataset = idataset.sel(level=list(levels))
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
@@ -244,7 +282,7 @@ class BatchDataset(object):
             input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
             channels = input_array.attrs.get('channels', [])
             lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
-        #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
+            #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
             results['input'] = input_array
 
         if self.load_base:
@@ -317,7 +355,7 @@ class BatchDataset(object):
                     sizes[cname] = coord.size
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         darray.attrs['channels'] = channels
-    #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
+        #    print( f"ds2array{darray.dims}: shape = {darray.shape}" )
         return darray.transpose( "channels", coords['y'], coords['x'])
 
     def batch2array(self, dset: xa.Dataset, **kwargs) -> xa.DataArray:

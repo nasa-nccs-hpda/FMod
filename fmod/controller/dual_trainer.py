@@ -9,7 +9,7 @@ from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
-from fmod.data.batch import BatchDataset
+from fmod.data.batch import BatchDataset, TileGrid
 from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant
@@ -22,11 +22,6 @@ import time
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ TSet, torch.Tensor]
-
-def rshuffle(a: Dict[Tuple[int,int],Any] ) -> Dict[Tuple[int,int],Any]:
-	a1: List[ Tuple[ Tuple[int,int],Any ] ] = list(a.items())
-	random.shuffle(a1)
-	return dict( a1 )
 
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
@@ -78,39 +73,6 @@ def normalize( tensor: Tensor ) -> Tensor:
 	tensor = unsqueeze( tensor )
 	tensor = tensor - tensor.mean(dim=[2,3], keepdim=True)
 	return tensor / tensor.std(dim=[2,3], keepdim=True)
-
-class TileGrid(object):
-
-	def __init__(self, tset: TSet = TSet.Train):
-		self.tset: TSet = tset
-		self.origin: Dict[str,int] = cfg().task.origin[self.tset.value]
-		self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
-		self.tile_size: Dict[str,int] = cfg().task.tile_size
-		self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
-		downscale_factors: List[int] = cfg().model.downscale_factors
-		self.downscale_factor = math.prod(downscale_factors)
-
-	def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
-		sf = self.downscale_factor if downscaled else 1
-		return { d: self.tile_size[d] * sf for d in ['x', 'y'] }
-
-	def get_tile_origin( self, ix: int, iy: int, downscaled: bool = False ) -> Dict[str, int]:
-		sf = self.downscale_factor if downscaled else 1
-		return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
-
-	def get_tile_locations(self, randomize=False, downscaled: bool = False, selected_tile: Tuple[int,int] = None ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
-		if len(self.tlocs) == 0:
-			for ix in range(self.tile_grid['x']):
-				for iy in range(self.tile_grid['y']):
-					if (selected_tile is None) or ((ix,iy) == selected_tile):
-						self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
-		if randomize: rshuffle(self.tlocs)
-		return self.tlocs
-
-	@classmethod
-	def cdim(cls, ix: int, iy: int, dim: str) -> int:
-		if dim == 'x': return ix
-		if dim == 'y': return iy
 
 def downscale(self, origin: Dict[str,int] ):
 	return { d: v*self.downscale_factor for d,v in origin.items() }
