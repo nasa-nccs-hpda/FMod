@@ -2,10 +2,9 @@ import torch
 import xarray as xa
 import hydra, os
 from fmod.base.util.config import fmconfig, cfg
-from controller.dual_trainer import ModelTrainer
+from fmod.controller.dual_trainer import ModelTrainer
 from fmod.base.io.loader import TSet
 from fmod.model.sres.manager import SRModels
-from fmod.base.plot.sres import SRPlot
 from fmod.data.batch import BatchDataset
 from fmod.base.source.loader import srRes
 hydra.initialize(version_base=None, config_path="../config")
