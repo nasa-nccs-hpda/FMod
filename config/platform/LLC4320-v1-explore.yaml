@@ -5,7 +5,7 @@ processed: '{root}/processed'
 
 dataset_root:  "/explore/nobackup/people/jli30/share/data/"
 dataset_files: { lr: "{varname}_192x192/{mode}/{res}_{varname}/X{usf}/{res}_{varname}_{index}.npy",
-                 hr: "{varname}_192x192/{mode}/{res}_{varname}/{res}_{varname}_{index}.npy" }
+                 hr: "{varname}_192x192/{mode}/{res}_{varname}/{res}_{varname}_{index:04}.npy" }
 
 
 
