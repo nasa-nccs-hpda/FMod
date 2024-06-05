@@ -19,7 +19,6 @@ fmconfig(task, model, dataset, scenario)
 load_state = "current"
 save_state = True
 cfg().task.nepochs = 1
-cfg().task.nbatches = 2
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
