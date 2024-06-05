@@ -63,7 +63,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def dateindex(self, d: datetime) -> int:
 		dt: timedelta = d-self.start_date
 		hours: int = dt.seconds // 3600
-		return hours
+		return hours + 1
 
 	def data_filepath(self, varname: str, date: datetime) -> str:
 		root: str = cfg().platform.dataset_root
