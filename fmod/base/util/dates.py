@@ -42,6 +42,7 @@ def cfg_date_range( task_config )-> List[datetime]:
 	start = date( str(task_config['start_date']) )
 	end = date( str(task_config['end_date']) )
 	return date_range( start, end )
+
 def date_range( start: datetime, end: datetime )-> List[datetime]:
 	d0: datetime = start
 	dates: List[datetime] = []

@@ -12,13 +12,6 @@ from fmod.base.io.loader import TSet
 from fmod.base.source.loader import srRes
 from fmod.data.batch import BatchDataset
 
-
-def get_datasets() -> Dict[Tuple[srRes, TSet], BatchDataset]:
-	datasets = {}
-	for sres in [srRes.Low, srRes.Low]:
-		for tset in [TSet.Train, TSet.Validation, TSet.Test]:
-			datasets[(sres, tset)] = BatchDataset(cfg().task, vres=sres, tset=tset)
-	return datasets
 def get_temporal_features( time: np.ndarray ) -> np.ndarray:
 	sday, syear, t0, pi2 = [], [], time[0], 2 * np.pi
 	for idx, t in enumerate(time):
@@ -36,9 +29,9 @@ class SRModels:
 		self.model_name = cfg().model.name
 		self.device = device
 		self.target_variables = cfg().task.target_variables
-		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = get_datasets()
+		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
 		self.time: np.ndarray = self.sample_input().coords['time'].values
-		self.cids: List[int] = self.get_channel_idxs(self.target_variables,"target")
+		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High )
 		self.model_config['nchannels'] = self.sample_input().sizes['channel']
 		if self.model_config.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features(self.time)
@@ -54,21 +47,21 @@ class SRModels:
 		return self.datasets[(sres, tset)].get_current_batch_array()
 
 	def get_dataset(self, sres: srRes, tset: TSet) -> BatchDataset:
-		return self.datasets[(sres, tset)]
+		return self.datasets.setdefault( (sres, tset), BatchDataset(cfg().task, vres=sres, tset=tset) )
 
-	def get_channel_idxs(self, channels: List[str], dstype: str = "input") -> List[int]:
-		return self.datasets[dstype].get_channel_idxs(channels)
+	def get_channel_idxs(self, channels: List[str], sres: srRes, tset: TSet = TSet.Train) -> List[int]:
+		return self.datasets[(sres,tset)].get_channel_idxs(channels)
 
 	def get_sample_target(self) -> xa.DataArray:
-		result =  self.sample_target.isel(channel=self.cids) if (len(self.cids) < self.sample_target.sizes['channel']) else self.sample_target
-		lgm().log(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target.dims}{self.sample_target.shape}, result{result.shape}")
+		result =  self.sample_target().isel(channel=self.cids) if (len(self.cids) < self.sample_target().sizes['channel']) else self.sample_target
+		lgm().log(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target().dims}{self.sample_target().shape}, result{result.shape}")
 		return result
 
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		result = self.sample_input
-		if targets_only and (len(self.cids) < self.sample_input.sizes['channel']):
-			result =  self.sample_input.isel(channel=self.cids)
-		lgm().log(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input.dims}{self.sample_input.shape}, result{result.shape}")
+		if targets_only and (len(self.cids) < self.sample_input().sizes['channel']):
+			result =  self.sample_input().isel(channel=self.cids)
+		lgm().log(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input().dims}{self.sample_input().shape}, result{result.shape}")
 		return result
 
 	def filter_targets(self, data_array: np.ndarray ) -> np.ndarray:

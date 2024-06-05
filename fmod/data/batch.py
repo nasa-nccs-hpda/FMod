@@ -10,8 +10,10 @@ from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import BaseDataset, TSet
+from fmod.base.io.loader import TSet
+from fmod.base.util.dates import batches_range
 from fmod.base.source.loader import srRes
+from fmod.controller.dual_trainer import TileGrid
 from fmod.base.util.config import cfg
 from random import randint
 import pandas as pd
@@ -64,21 +66,31 @@ class MetaData(DatapipeMetaData):
     # Parallel
     ddp_sharding: bool = True
 
-class BatchDataset(BaseDataset):
+class BatchDataset(object):
 
     def __init__(self, task_config: DictConfig, vres: srRes, tset: TSet, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
         self.vres: srRes = vres
         self.srtype = 'input' if self.vres == srRes.High else 'target'
         self.task_config: DictConfig = task_config
+        self.tile_grid = TileGrid(tset)
         self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
         self.load_base: bool = kwargs.pop('load_base', False)
         self.day_index: int = 0
+        self.train_dates: List[datetime] = batches_range(task_config)
+        self.days_per_batch: int = task_config.days_per_batch
+        self.hours_per_step: int = task_config.hours_per_step
+        self.steps_per_day = 24 // self.hours_per_step
+        self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
+        self.downscale_factors: List[int] = cfg().model.downscale_factors
+        self.scalefactor = math.prod(self.downscale_factors)
+        self.current_date: datetime = self.train_dates[0]
+        self.current_origin: Dict[str, int] = self.tile_grid.origin
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
-        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, self.vres, tset, **kwargs )
+        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, vres, tset, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
@@ -90,11 +102,8 @@ class BatchDataset(BaseDataset):
         self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
 
-    def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
-        if time_coord < batch_date: return False
-        dt: timedelta = time_coord - batch_date
-        hours: int = dt.seconds // 3600
-        return hours < self.hours_per_batch
+    def __len__(self):
+        return self.steps_per_batch
 
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
         origin = self.scale_coords(oindx)
@@ -104,6 +113,15 @@ class BatchDataset(BaseDataset):
             self.current_date = batch_date
             self.current_batch_data = norm(batch_data)
         return self.current_batch_data
+
+    def get_current_batch_array(self) -> xa.DataArray:
+        return self.get_batch_array(self.current_origin, self.current_date)
+
+    def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
+        if time_coord < batch_date: return False
+        dt: timedelta = time_coord - batch_date
+        hours: int = dt.seconds // 3600
+        return hours < self.hours_per_batch
 
     def tile_index(self, origin: Dict[str,int] ):
         sgx = self.task_config.tile_grid['x']
