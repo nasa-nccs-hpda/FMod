@@ -10,7 +10,7 @@ from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from base.io.loader import TSet
+from fmod.base.io.loader import TSet
 from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing

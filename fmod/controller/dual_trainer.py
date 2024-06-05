@@ -4,7 +4,7 @@ from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
 
-from base.io.loader import TSet
+from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor

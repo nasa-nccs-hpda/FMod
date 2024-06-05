@@ -11,7 +11,7 @@ from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.ops import remove_filepath
-from base.io.loader import TSet
+from fmod.base.io.loader import TSet
 
 class srRes(Enum):
 	Low = 'lr'
