@@ -86,7 +86,7 @@ def mplplot( images: Dict[str,xa.DataArray], context: TSet, **kwargs):
 					ax = axs[ irow, icol ]
 					rmserror  =  ""
 					if icol == ncols-1:
-						lc_label = 'predictions' if context == TSet.Training else 'validation'
+						lc_label = 'predictions' if context == TSet.Train else 'validation'
 						labels[(irow,icol)] = ['targets',lc_label][irow]
 						image = images[ labels[(irow,icol)] ]
 					else:

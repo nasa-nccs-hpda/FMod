@@ -81,10 +81,10 @@ def normalize( tensor: Tensor ) -> Tensor:
 
 class TileGrid(object):
 
-	def __init__(self, context: TSet = TSet.Training):
+	def __init__(self, context: TSet = TSet.Train):
 		self.context = context
-		cfg_origin = "origin" if context == TSet.Training else "val_origin"
-		cfg_tgrid  = "tile_grid" if context == TSet.Training else "val_tile_grid"
+		cfg_origin = "origin" if context == TSet.Train else "val_origin"
+		cfg_tgrid  = "tile_grid" if context == TSet.Train else "val_tile_grid"
 		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
 		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
@@ -327,7 +327,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Training
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -345,7 +345,7 @@ class ModelTrainer(object):
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
-			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Training).get_tile_locations()
+			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
 			batch_losses = []
 			for batch_date in batch_dates:
 				try:

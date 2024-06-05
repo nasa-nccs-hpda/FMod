@@ -10,7 +10,7 @@ from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import BaseDataset
+from fmod.base.io.loader import BaseDataset, TSet
 from fmod.base.source.loader import srRes
 from fmod.base.util.config import cfg
 from random import randint
@@ -66,9 +66,9 @@ class MetaData(DatapipeMetaData):
 
 class BatchDataset(BaseDataset):
 
-    def __init__(self, task_config: DictConfig, vres: str, **kwargs):
+    def __init__(self, task_config: DictConfig, vres: srRes, tset: TSet, **kwargs):
         super(BatchDataset, self).__init__(task_config, **kwargs)
-        self.vres: srRes = srRes.from_config(vres)
+        self.vres: srRes = vres
         self.srtype = 'input' if self.vres == srRes.High else 'target'
         self.task_config: DictConfig = task_config
         self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
@@ -78,7 +78,7 @@ class BatchDataset(BaseDataset):
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
-        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, self.vres, **kwargs )
+        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, self.vres, tset, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')

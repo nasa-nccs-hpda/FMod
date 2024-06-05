@@ -11,6 +11,7 @@ from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.ops import remove_filepath
+from base.io.loader import TSet
 
 class srRes(Enum):
 	Low = 'lr'
@@ -44,11 +45,11 @@ class SRDataLoader(object):
 		return '[' + ','.join([f"{k}:{c[k].size}" for k in c.keys()]) + ']'
 
 	@classmethod
-	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs) -> 'SRDataLoader':
+	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet, **kwargs) -> 'SRDataLoader':
 		dset: str = task_config.dataset
 		if dset.startswith("LLC4320"):
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
-			return S3ExportDataLoader( task_config, tile_size, vres, **kwargs )
+			return S3ExportDataLoader( task_config, tile_size, vres, tset, **kwargs )
 		elif dset.startswith("merra2"):
 			return None
 

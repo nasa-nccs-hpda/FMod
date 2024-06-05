@@ -11,7 +11,7 @@ from fmod.base.util.dates import date_list, date_bounds
 from datetime import datetime, date
 from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
-from fmod.base.io.loader import ncFormat
+from fmod.base.io.loader import ncFormat, TSet
 from fmod.base.util.ops import remove_filepath
 from fmod.base.source.loader import srRes
 
@@ -218,11 +218,11 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet, **kwargs):
 		self.vres = vres
 		self.name = "input" if self.vres == "low" else "target"
 		self.tile_size: Dict[str, int] = tile_size
-		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, vres, **kwargs )
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, vres, tset, **kwargs )
 		self.current_batch: xa.Dataset = None
 		self.current_date = None
 		self.current_origin = None
