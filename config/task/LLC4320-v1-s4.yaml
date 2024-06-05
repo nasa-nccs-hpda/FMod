@@ -12,7 +12,7 @@ start_date:  "9/13/2011"
 days_per_batch: 4
 hours_per_step: 1
 
-nbatches: 2   # 166
+nbatches: 166
 batch_iter: 1
 nepochs: 1
 lr: 1e-3
