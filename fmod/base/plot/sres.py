@@ -102,6 +102,7 @@ class SRPlot(object):
 		self.select_tile( selected_tile )
 
 	def select_tile(self, selected_tile: Tuple[int,int]):
+		print(f" ---> selected_tile: {selected_tile}")
 		if selected_tile is not None:
 			self.tile_index = selected_tile
 			self.update_tile_data()
@@ -125,6 +126,7 @@ class SRPlot(object):
 	@exception_handled
 	def time_update(self, sindex: int):
 		self.time_index = sindex
+		lgm().log( f" time_update ---> sindex = {sindex}")
 		self.update_tile_data()
 		self.update_subplots()
 

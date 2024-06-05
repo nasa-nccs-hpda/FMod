@@ -19,13 +19,13 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import  Rectangle, Patch
 
 def default_selection_callabck( tilerec: Dict[str,float]):
-	print( f" **** Tile selection: {tilerec} ****")
+	print( f" **** Actor-based Tile selection: {tilerec} ****")
 
 def r2str( r: Rectangle ) -> str:
 	return f"({r.get_x()},{r.get_y()})x({r.get_width()},{r.get_height()})"
 
 def onpick_test(event):
-	lgm().log( f" **** Tile selection: {event} ****", display=True)
+	lgm().log( f" **** Actor-based Tile selection: {event} ****", display=True)
 
 class TileSelectionGrid(object):
 
@@ -55,7 +55,7 @@ class TileSelectionGrid(object):
 		self._selection_callback = selection_callabck
 
 	def onpick(self,event):
-		lgm().log( f" **** Tile selection: {event} ****", display=True)
+		lgm().log( f" **** Tile selection: {event} ****")
 		rect: Rectangle = event.artist
 		coords = dict(x=rect.get_x(), y=rect.get_y())
 		lgm().log(f" ----> Coords: {coords}", display=True)
@@ -65,4 +65,4 @@ class TileSelectionGrid(object):
 		self.create_tile_recs(**kwargs)
 		p = PatchCollection( self.tiles.values(), match_original=True )
 		ax.add_collection(p)
-		ax.figure.canvas.mpl_connect('pick_event', onpick_test )
+		ax.figure.canvas.mpl_connect('pick_event', self.onpick )
