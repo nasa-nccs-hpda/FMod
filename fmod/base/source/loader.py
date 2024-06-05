@@ -44,12 +44,13 @@ class SRDataLoader(object):
 		return '[' + ','.join([f"{k}:{c[k].size}" for k in c.keys()]) + ']'
 
 	@classmethod
-	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, ** kwargs ) -> 'SRDataLoader':
-		if task_config.dataset == "LLC4320":
+	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs) -> 'SRDataLoader':
+		dset: str = task_config.dataset
+		if dset.startswith("LLC4320"):
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
 			return S3ExportDataLoader( task_config, tile_size, vres, **kwargs )
-		elif task_config.dataset == "merra2":
-			return
+		elif dset.startswith("merra2"):
+			return None
 
 class FMDataLoader(object):
 

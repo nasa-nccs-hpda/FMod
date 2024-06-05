@@ -4,7 +4,7 @@ import hydra
 from typing import Dict
 from fmod.base.util.config import fmconfig, cfg
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.controller.dual_trainer import LearningContext
+from base.io.loader import TSet
 from fmod.model.sres.manager import SRModels
 from fmod.data.batch import BatchDataset
 hydra.initialize(version_base=None, config_path="../config")
@@ -19,7 +19,7 @@ fmconfig(task, model, dataset, scenario)
 load_state = "current"
 save_state = True
 cfg().task['nepochs'] = 1
-eval_tileset = LearningContext.Validation
+eval_tileset = TSet.Validation
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():

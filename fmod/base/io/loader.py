@@ -6,6 +6,10 @@ from datetime import date, datetime
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.dates import date_list, year_range, batches_range
 
+class TSet(Enum):
+	Train = 'train'
+	Validation = 'val'
+	Test = 'test'
 class ncFormat(Enum):
 	Standard = 'standard'
 	DALI = 'dali'
@@ -64,3 +68,5 @@ class BaseDataset(object):
 
 	def get_current_batch_array(self) -> xa.DataArray:
 		return self.get_batch_array(self.current_origin, self.current_date)
+
+

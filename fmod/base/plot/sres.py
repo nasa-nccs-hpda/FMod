@@ -13,7 +13,7 @@ from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.controller.dual_trainer import LearningContext
+from base.io.loader import TSet
 from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -52,9 +52,9 @@ def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
 class SRPlot(object):
-	def __init__(self, trainer: ModelTrainer, context: LearningContext, **kwargs):
+	def __init__(self, trainer: ModelTrainer, context: TSet, **kwargs):
 		self.trainer: ModelTrainer = trainer
-		self.context: LearningContext = context
+		self.context: TSet = context
 		self.channel = kwargs.get('channel', 0)
 		self.time_index = kwargs.get('time_index', 0 )
 		self.tile_index = kwargs.get('tile_index', (0,0) )
@@ -111,11 +111,11 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsampled" if (self.context == LearningContext.Validation) else "domain"
+		return "upsampled" if (self.context == TSet.Validation) else "domain"
 
 	@property
 	def result_plot_label(self) -> str:
-		return "validation" if (self.context == LearningContext.Validation) else "prediction"
+		return "validation" if (self.context == TSet.Validation) else "prediction"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]

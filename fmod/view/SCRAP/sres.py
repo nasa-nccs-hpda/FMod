@@ -10,7 +10,7 @@ from fmod.base.util.config import cfg
 from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from fmod.controller.dual_trainer import LearningContext
+from base.io.loader import TSet
 from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled, log_timing
@@ -62,7 +62,7 @@ def create_plot_data( inputs: np.ndarray, targets: np.ndarray, predictions: np.n
 					predictions= sample_target.copy( data=predictions.reshape(sample_target.shape) ),
 					upsampled=   x_upsampled )
 
-def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs ):
+def mplplot( images: Dict[str,xa.DataArray], context: TSet, **kwargs):
 	ims, labels = {}, {}
 	losses: Dict[str,float] = kwargs.get( 'losses', {} )
 	sample: xa.DataArray = images.get('input', None)
@@ -86,7 +86,7 @@ def mplplot( images: Dict[str,xa.DataArray], context: LearningContext, **kwargs 
 					ax = axs[ irow, icol ]
 					rmserror  =  ""
 					if icol == ncols-1:
-						lc_label = 'predictions' if context == LearningContext.Training else 'validation'
+						lc_label = 'predictions' if context == TSet.Training else 'validation'
 						labels[(irow,icol)] = ['targets',lc_label][irow]
 						image = images[ labels[(irow,icol)] ]
 					else:

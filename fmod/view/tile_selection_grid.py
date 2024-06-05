@@ -14,7 +14,7 @@ from enum import Enum
 import numpy as np, xarray as xa
 import torch.nn as nn
 import time
-from fmod.controller.dual_trainer import LearningContext
+from base.io.loader import TSet
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import  Rectangle, Patch
 
@@ -29,7 +29,7 @@ def onpick_test(event):
 
 class TileSelectionGrid(object):
 
-	def __init__(self, lcontext: LearningContext):
+	def __init__(self, lcontext: TSet):
 		self.tile_grid: TileGrid = TileGrid(lcontext)
 		self.tiles: Dict[Tuple[int, int], Rectangle] = None
 		self._selection_callback = default_selection_callabck

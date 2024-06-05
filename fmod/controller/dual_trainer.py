@@ -1,30 +1,27 @@
 import torch, math
 import xarray, traceback, random
-from datetime import datetime, timedelta
+from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
+
+from base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
 from fmod.data.batch import BatchDataset
 from fmod.model.sres.manager import SRModels
-from fmod.base.util.logging import lgm, exception_handled
+from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
-from enum import Enum
 import numpy as np, xarray as xa
 from fmod.controller.stats import l2loss
 import torch.nn as nn
 import time
 
-class LearningContext(Enum):
-	Training = 'train'
-	Validation = 'val'
-
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
-MLTensors = Dict[ LearningContext, torch.Tensor]
+MLTensors = Dict[ TSet, torch.Tensor]
 
 def rshuffle(a: Dict[Tuple[int,int],Any] ) -> Dict[Tuple[int,int],Any]:
 	a1: List[ Tuple[ Tuple[int,int],Any ] ] = list(a.items())
@@ -84,10 +81,10 @@ def normalize( tensor: Tensor ) -> Tensor:
 
 class TileGrid(object):
 
-	def __init__(self, context: LearningContext = LearningContext.Training):
+	def __init__(self, context: TSet = TSet.Training):
 		self.context = context
-		cfg_origin = "origin" if context == LearningContext.Training else "val_origin"
-		cfg_tgrid  = "tile_grid" if context == LearningContext.Training else "val_tile_grid"
+		cfg_origin = "origin" if context == TSet.Training else "val_origin"
+		cfg_tgrid  = "tile_grid" if context == TSet.Training else "val_tile_grid"
 		self.origin: Dict[str,int] = cfg().task.get( cfg_origin, dict(x=0,y=0) )
 		self.tile_size: Dict[str,int] = cfg().task.tile_size
 		self.tile_grid: Dict[str, int] = cfg().task.get( cfg_tgrid, dict(x=1,y=1) )
@@ -301,21 +298,21 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
-	def get_ml_input(self, context: LearningContext, targets_only: bool = True ) -> np.ndarray:
+	def get_ml_input(self, context: TSet, targets_only: bool = True) -> np.ndarray:
 		if context not in self.input: self.evaluate(context)
 		ml_input: Tensor = self.get_target_channels(self.input[context]) if targets_only else self.input[context]
 		return npa( ml_input ).astype(np.float32)
 
-	def get_ml_upsampled(self, context: LearningContext) -> np.ndarray:
+	def get_ml_upsampled(self, context: TSet) -> np.ndarray:
 		inp: np.ndarray = self.get_ml_input(context)
 		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
 		return ups.numpy()
 
-	def get_ml_target(self, context: LearningContext) -> np.ndarray:
+	def get_ml_target(self, context: TSet) -> np.ndarray:
 		if context not in self.target: self.evaluate(context)
 		return npa( self.target[context] )
 
-	def get_ml_product(self, context: LearningContext) -> np.ndarray:
+	def get_ml_product(self, context: TSet) -> np.ndarray:
 		if context not in self.product: self.evaluate(context)
 		return npa(self.product[context])
 
@@ -330,7 +327,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, LearningContext.Training
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Training
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -348,7 +345,7 @@ class ModelTrainer(object):
 			self.model.train()
 			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
-			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( LearningContext.Training ).get_tile_locations()
+			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Training).get_tile_locations()
 			batch_losses = []
 			for batch_date in batch_dates:
 				try:
@@ -384,7 +381,7 @@ class ModelTrainer(object):
 			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
 			if save_state: self.checkpoint_manager.save_checkpoint( epoch, loss_history + batch_losses )
-			eval_losses = self.evaluate( LearningContext.Validation )
+			eval_losses = self.evaluate( TSet.Validation)
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f} eval-loss: {eval_losses["validation"]:.4f}', display=True)
 
 		train_time = time.time() - train_start
@@ -393,7 +390,7 @@ class ModelTrainer(object):
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def evaluate(self, context: LearningContext, **kwargs):
+	def evaluate(self, context: TSet, **kwargs):
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -407,7 +404,7 @@ class ModelTrainer(object):
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(context).get_tile_locations(selected_tile=self.tile_index)
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
-		batch_model_losses, batch_interp_losses, context = [], [], LearningContext.Validation
+		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		lgm().log(f"EVAL: time_coord={time_coord} tile_index={self.tile_index}, batch_dates={batch_dates}", display=True)
 		for batch_date in batch_dates:

@@ -6,12 +6,12 @@ from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
 from enum import Enum
+from base.io.loader import TSet
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.source.loader import srRes
-from fmod.base.source.loader import SRDataLoader
+from fmod.base.source.loader import srRes, SRDataLoader, T
 import numpy as np
 
 S = 'x'
@@ -25,13 +25,6 @@ def cTup2Dict( c: CoordIdx ) -> Dict[str,int]:
 def dstr(date: datetime) -> str:
 	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
 
-def data_filepath( varname: str, date: datetime, vres: srRes ) -> str:
-	root: str = cfg().platform.dataset_root
-	usf: int = math.prod( cfg().model.downscale_factors )
-	subpath: str = cfg().platform.dataset_files[vres.value].format( res=vres.value, varname=varname, date=dstr(date), usf=usf )
-	fpath = f"{root}/{subpath}"
-	return fpath
-
 def coords_filepath() -> str:
 	return f"{cfg().platform.dataset_root}/xy_coords.nc"
 
@@ -39,20 +32,49 @@ def i2x( c: str ) -> str:
 	if c == "i": return "x"
 	if c == "j": return "y"
 
+def get_version(task_config: DictConfig) -> int:
+	toks = task_config.dataset.split('-')
+	tstr = "v0" if (len(toks) == 1) else toks[-1]
+	assert tstr[0] == "0", "Version str must start with 'v'"
+	return int(tstr[1:])
+
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 	return pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h" )
 
 class S3ExportDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, **kwargs):
-		SRDataLoader.__init__(self, task_config, vres )
-		self.coords_dataset: xa.Dataset = xa.open_dataset( coords_filepath(), **kwargs)
-#		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
-#		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
-		self.tile_size: Dict[str,int] = tile_size
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet,  **kwargs):
+		SRDataLoader.__init__(self, task_config, vres)
+		self.version = get_version( task_config )
+		self.tset: TSet = tset
+		self.coords_dataset: xa.Dataset = xa.open_dataset(coords_filepath(), **kwargs)
+		#		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
+		#		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
+		self.tile_size: Dict[str, int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 		self.use_memmap = task_config.get('use_memmap', False)
 		self.shape = None
+
+	@property
+	def start_date(self) -> datetime:
+		toks = [int(tok) for tok in self.task.start_date.split("/")]
+		return datetime(month=toks[0], day=toks[1], year=toks[2])
+
+	def dateindex(self, d: datetime) -> int:
+		dt: timedelta = d-self.start_date
+		hours: int = dt.seconds // 3600
+		return hours
+
+	def data_filepath(self, varname: str, date: datetime) -> str:
+		root: str = cfg().platform.dataset_root
+		usf: int = math.prod(cfg().model.downscale_factors)
+		if self.version == 0:
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date=dstr(date), usf=usf)
+		elif self.version == 1:
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=self.dateindex(date), mode=self.tset.value, usf=usf)
+		else: raise ValueError(f'version {self.version} not supported')
+		fpath = f"{root}/{subpath}"
+		return fpath
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
 	# 	cdata: np.ndarray = self.ijc[c]
@@ -79,7 +101,7 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	return dict(x=xc, y=yc) #, **tcoords)
 
 	def open_timeslice(self, vid: str, date: datetime) -> np.memmap:
-		fpath = data_filepath(vid, date, self.vres)
+		fpath = self.data_filepath( vid, date )
 		mmap_mode = 'r' if self.use_memmap else None
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		if self.shape is None:
@@ -88,7 +110,7 @@ class S3ExportDataLoader(SRDataLoader):
 		return raw_data
 
 	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
-		fpath = data_filepath(vid, date, self.vres)
+		fpath = self.data_filepath( vid, date )
 		mmap_mode = 'r' if self.use_memmap else None
 		timeslice: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		return self.cut_domain(timeslice)
