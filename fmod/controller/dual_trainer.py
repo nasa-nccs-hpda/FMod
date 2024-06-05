@@ -345,7 +345,7 @@ class ModelTrainer(object):
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
 			batch_losses = []
-			for batch_date in batch_dates:
+			for date_index, batch_date in enumerate(batch_dates):
 				try:
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
@@ -367,7 +367,7 @@ class ModelTrainer(object):
 					self.product[context] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
-					lgm().log(f" ** BATCH start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
+					lgm().log(f" ** BATCH[{date_index}] start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
 					if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 
 				except Exception as e:
@@ -404,7 +404,6 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log(f"EVAL: time_coord={time_coord} tile_index={self.tile_index}, batch_dates={batch_dates}", display=True)
 		for batch_date in batch_dates:
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
