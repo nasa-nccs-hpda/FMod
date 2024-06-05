@@ -35,7 +35,7 @@ def i2x( c: str ) -> str:
 def get_version(task_config: DictConfig) -> int:
 	toks = task_config.dataset.split('-')
 	tstr = "v0" if (len(toks) == 1) else toks[-1]
-	assert tstr[0] == "0", "Version str must start with 'v'"
+	assert tstr[0] == "v", f"Version str must start with 'v': '{tstr}'"
 	return int(tstr[1:])
 
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
