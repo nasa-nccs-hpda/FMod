@@ -107,7 +107,6 @@ class TileGrid(object):
 class BatchDataset(object):
 
     def __init__(self, task_config: DictConfig, vres: srRes, tset: TSet, **kwargs):
-        super(BatchDataset, self).__init__(task_config, **kwargs)
         self.vres: srRes = vres
         self.srtype = 'input' if self.vres == srRes.High else 'target'
         self.task_config: DictConfig = task_config
