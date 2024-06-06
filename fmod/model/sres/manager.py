@@ -44,13 +44,13 @@ class SRModels:
 		return self.get_batch_array( srRes.High, tset )
 
 	def get_batch_array(self, sres: srRes, tset: TSet) -> xa.DataArray:
-		return self.datasets[(sres, tset)].get_current_batch_array()
+		return self.get_dataset(sres, tset).get_current_batch_array()
 
 	def get_dataset(self, sres: srRes, tset: TSet) -> BatchDataset:
 		return self.datasets.setdefault( (sres, tset), BatchDataset(cfg().task, vres=sres, tset=tset) )
 
 	def get_channel_idxs(self, channels: List[str], sres: srRes, tset: TSet = TSet.Train) -> List[int]:
-		return self.datasets[(sres,tset)].get_channel_idxs(channels)
+		return self.get_dataset(sres, tset).get_channel_idxs(channels)
 
 	def get_sample_target(self) -> xa.DataArray:
 		result =  self.sample_target().isel(channel=self.cids) if (len(self.cids) < self.sample_target().sizes['channel']) else self.sample_target
