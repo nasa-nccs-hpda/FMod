@@ -53,13 +53,13 @@ class ConfigContext:
         self.name: str = None
 
     def __enter__(self):
-       print('Entering cfg-context: ', cid())
        self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
        self.name = Configuration.instance().config_name
+       print( 'Entering cfg-context: ', self.name )
        return self
 
     def __exit__(self, exc_type, exc_value, tb):
-       print( 'Exiting cfg-context: ', cid() )
+       print( 'Exiting cfg-context: ', self.name )
        Configuration.clear()
        self.cfg = None
        self.name = None
