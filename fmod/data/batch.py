@@ -10,8 +10,7 @@ from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import TSet
-from fmod.base.util.dates import batches_range
+from fmod.base.io.loader import TSet, batches_range
 from fmod.base.source.loader import srRes
 from fmod.base.util.config import cfg
 from random import randint

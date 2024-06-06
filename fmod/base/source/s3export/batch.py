@@ -22,7 +22,6 @@ def cTup2Dict( c: CoordIdx ) -> Dict[str,int]:
 	if type(c) is tuple: c = dict(x=c[0], y=c[1])
 	return c
 
-
 def dstr(date: datetime) -> str:
 	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
 
