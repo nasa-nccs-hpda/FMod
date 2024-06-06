@@ -178,8 +178,8 @@ class BatchDataset(object):
         else:                       return {k: v * self.scalefactor for k, v in c.items()}
 
     def get_channel_idxs(self, channels: List[str] ) -> List[int]:
-        cidxs = [ self.srbatch.channels.index(cid) for cid in channels ]
-        lgm().log(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
+        cidxs = None # [ self.srbatch.channels.index(cid) for cid in channels ]
+        # lgm().log(f"get_channel_idxs: srtype={self.srtype}, channels={channels}, cidxs={cidxs}")
         return cidxs
 
     def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
