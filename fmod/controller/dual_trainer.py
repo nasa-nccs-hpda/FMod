@@ -309,13 +309,15 @@ class ModelTrainer(object):
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date,TSet.Train)
-						inp = train_data['input']
+						inp, dindxs = train_data['input'], train_data['didxs']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
 							loss: torch.Tensor = self.loss( prd, targ )
 							losses += loss
 							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
+							lgm().log(f"\n ** BATCH[{date_index}][{tIdx}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}: Loss= {loss.item():.4f}", display=True, end="")
+							if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
 							self.optimizer.step()
@@ -325,8 +327,7 @@ class ModelTrainer(object):
 					self.product[tset.value] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
-					lgm().log(f"\n ** BATCH[{date_index}] start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True, end="" )
-					if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
+
 
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
