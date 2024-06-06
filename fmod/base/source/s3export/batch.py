@@ -105,7 +105,7 @@ class S3ExportDataLoader(SRDataLoader):
 		mmap_mode = 'r' if self.use_memmap else None
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		if self.shape is None:
-			print( f"Loaded {vid}({date.strftime('%H:%d/%m/%Y')}): shape={raw_data.shape}")
+			lgm().log( f"Loaded {vid}({date.strftime('%H:%d/%m/%Y')}): shape={raw_data.shape}")
 			self.shape = list( raw_data.shape )
 		return raw_data
 
@@ -133,7 +133,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin,  date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}")
+		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}", display=True )
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
