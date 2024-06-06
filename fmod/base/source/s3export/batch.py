@@ -40,7 +40,7 @@ def get_version(task_config: DictConfig) -> int:
 
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 	dlist =  pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h", inclusive="left" )
-	print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates")
+	# print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates")
 	return dlist
 
 class S3ExportDataLoader(SRDataLoader):
@@ -130,7 +130,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}", display=True )
+		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
