@@ -249,7 +249,7 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
-	def get_ml_input(self, context: TSet, targets_only: bool = True) -> np.ndarray:
+	def get_ml_input(self, context: TSet, targets_only: bool = False) -> np.ndarray:
 		if context not in self.input: self.evaluate(context)
 		ml_input: Tensor = self.get_target_channels(self.input[context]) if targets_only else self.input[context]
 		return npa( ml_input ).astype(np.float32)
@@ -361,7 +361,8 @@ class ModelTrainer(object):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
 				inp = train_data['input']
-				ups: Tensor = self.get_target_channels(self.upsample(inp))
+				# ups: Tensor = self.get_target_channels(self.upsample(inp))
+				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ).item() )
