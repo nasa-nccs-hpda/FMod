@@ -341,7 +341,7 @@ class ModelTrainer(object):
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def evaluate(self, tset: TSet, **kwargs):
+	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -376,7 +376,7 @@ class ModelTrainer(object):
 		model_loss = np.array(batch_model_losses).mean()
 		interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		lgm().log(f' -------> Exec {context.name} model with {ntotal_params} took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
+		lgm().log(f' -------> Exec {context.name} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
 		return dict(validation=model_loss, upsampled=interp_loss)
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
