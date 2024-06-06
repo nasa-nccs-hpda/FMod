@@ -23,7 +23,7 @@ class CheckpointManager(object):
 
 	def save_checkpoint(self, epoch: int, losses: List[float] ):
 		cpath = self._save_state( epoch, losses )
-		lgm().log(f" -- Checkpoint saved --", display=True, end="" )
+		lgm().log(f"    -- Checkpoint saved --", display=True, end="" )
 
 	def _load_state(self, version: str = "current" ) -> Dict[str,Any]:
 		cpath = self.checkpoint_path(version)
