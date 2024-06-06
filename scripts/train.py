@@ -25,7 +25,6 @@ for model in models:
 
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer(model_manager)
-
 		trainer.train(load_state=load_state, save_state=save_state)
 
 
