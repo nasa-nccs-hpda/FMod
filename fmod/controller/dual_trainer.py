@@ -3,7 +3,8 @@ import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
-
+from fmod.base.io.loader import ncFormat, TSet
+from fmod.base.source.loader import srRes
 from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.grid import GridOps
@@ -83,8 +84,6 @@ class ModelTrainer(object):
 
 	def __init__(self, model_manager: SRModels ):
 		super(ModelTrainer, self).__init__()
-		self.input_dataset: BatchDataset = model_manager.datasets['input']
-		self.target_dataset: BatchDataset = model_manager.datasets['target']
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
 		self.min_loss = float('inf')
@@ -99,7 +98,7 @@ class ModelTrainer(object):
 		self.layer_losses = []
 		self.channel_idxs: torch.LongTensor = None
 		self.target_variables = cfg().task.target_variables
-		self.train_dates: List[datetime] = self.input_dataset.train_dates
+		self.train_dates: List[datetime] = self.input_dataset(TSet.Train).train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
 		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
@@ -112,6 +111,12 @@ class ModelTrainer(object):
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
 
+	def input_dataset(self, tset: TSet)-> BatchDataset:
+		return self.model_manager.get_dataset( srRes.Low, tset )
+
+	def target_dataset(self, tset: TSet)-> BatchDataset:
+		return self.model_manager.get_dataset(srRes.High, tset )
+
 	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( targets_only )
 
@@ -122,8 +127,8 @@ class ModelTrainer(object):
 		upsampled = self.upsampler( unsqueeze( tensor ) )
 		return normalize( upsampled ) if renorm else upsampled
 
-	def configure_grid(self):
-		tar: xarray.DataArray = self.target_dataset.get_current_batch_array()
+	def configure_grid(self, tset: TSet ):
+		tar: xarray.DataArray = self.target_dataset(tset).get_current_batch_array()
 		grid_shape = tar.shape[-2:]
 		gridops = GridOps(*grid_shape,self.device)
 		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}")
@@ -132,7 +137,7 @@ class ModelTrainer(object):
 
 	def conform_to_data_grid(self, **kwargs):
 		if cfg().task.conform_to_grid:
-			data: xarray.DataArray = self.input_dataset.get_current_batch()['input']
+			data: xarray.DataArray = self.input_dataset(TSet.Train).get_current_batch_array()
 			data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
 			dc = cdelta(data)
 			lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
@@ -232,23 +237,9 @@ class ModelTrainer(object):
 		#	print( f" --------- Layer losses: {layer_losses} --------- ")
 		return loss
 
-	def get_batch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		input_batch: Dict[str, xarray.DataArray]  = self.input_dataset.get_batch(origin,batch_date)
-		target_batch: Dict[str, xarray.DataArray] = self.target_dataset.get_batch(origin,batch_date)
-		binput: xarray.DataArray = input_batch['input']
-		btarget: xarray.DataArray = target_batch['target']
-		if shuffle:
-			batch_perm: Tensor = torch.randperm(binput.shape[0])
-			binput: xarray.DataArray = binput[ batch_perm, ... ]
-			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-		lgm().log(f" *** input{binput.dims}{binput.shape}, pct-nan= {pctnan(binput.values)}")
-		lgm().log(f" *** target{btarget.dims}{btarget.shape}, pct-nan= {pctnan(btarget.values)}")
-		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
-		else:          return dict( input=binput,               target=btarget )
-
-	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		binput:  xarray.DataArray  = self.input_dataset.get_batch_array(origin,batch_date)
-		btarget:  xarray.DataArray = self.target_dataset.get_batch_array(origin,batch_date)
+	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, tset: TSet, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,batch_date)
+		btarget:  xarray.DataArray = self.target_dataset(tset).get_batch_array(origin,batch_date)
 		if shuffle:
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
 			binput: xarray.DataArray = binput[ batch_perm, ... ]
@@ -303,7 +294,7 @@ class ModelTrainer(object):
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			self.model.train()
-			batch_dates: List[datetime] = self.input_dataset.get_batch_dates()
+			batch_dates: List[datetime] = self.input_dataset(TSet.Train).get_batch_dates()
 			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
 			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
 			batch_losses = []
@@ -312,7 +303,7 @@ class ModelTrainer(object):
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
-						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
+						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date,TSet.Train)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
@@ -359,16 +350,16 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset.get_time_coord(self.time_index)
+		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset(tset).get_time_coord(self.time_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
-		batch_dates: List[datetime] = self.input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
+		batch_dates: List[datetime] = self.input_dataset(tset).get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
 			for xyi, tile_loc in tile_locs.items():
-				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
 				inp = train_data['input']
 				ups: Tensor = self.get_target_channels(self.upsample(inp))
 				target: Tensor = train_data['target']
@@ -400,9 +391,9 @@ class ModelTrainer(object):
 		net_target = self.get_target_channels( target )
 		return result, net_target
 
-	def get_target_channels(self, batch_data: Tensor) -> Tensor:
+	def get_target_channels(self, batch_data: Tensor, tset: TSet) -> Tensor:
 		if self.channel_idxs is None:
-			cidxs: List[int] = self.input_dataset.get_channel_idxs(self.target_variables)
+			cidxs: List[int] = self.input_dataset(tset).get_channel_idxs(self.target_variables)
 			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
 		channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
 		result =  channels[0] if (len(channels) == 1) else torch.cat( channels, dim = 1 )
@@ -444,12 +435,12 @@ class ModelTrainer(object):
 		# 		lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
 		# 		return npa(inp), npa(tar), npa(product)
 
-	def apply(self, tile_loc: Dict[str, int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+	def apply(self, tile_loc: Dict[str, int], batch_date: datetime, tset: TSet, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
 		seed = kwargs.get('seed', 0)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		with torch.inference_mode():
-			train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
+			train_data: Dict[str, Tensor] = self.get_srbatch( tile_loc, batch_date, tset )
 			inp: Tensor = train_data['input'].squeeze()
 			target: Tensor = train_data['target'].squeeze()
 			prd,targ = self.apply_network(inp,target)

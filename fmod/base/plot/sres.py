@@ -52,9 +52,9 @@ def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
 class SRPlot(object):
-	def __init__(self, trainer: ModelTrainer, context: TSet, **kwargs):
+	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
 		self.trainer: ModelTrainer = trainer
-		self.context: TSet = context
+		self.tset: TSet = tset
 		self.channel = kwargs.get('channel', 0)
 		self.time_index = kwargs.get('time_index', 0 )
 		self.tile_index = kwargs.get('tile_index', (0,0) )
@@ -63,33 +63,33 @@ class SRPlot(object):
 		self.sample_target: xa.DataArray = trainer.get_sample_target()
 		self.tcoords: DataArrayCoordinates = self.sample_target.coords
 		self.icoords: DataArrayCoordinates = self.sample_input.coords
-		self.time_coords: List[datetime] = trainer.input_dataset.tcoords
+		self.time_coords: List[datetime] = trainer.input_dataset(self.tset).tcoords
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords) )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
-		self.tile_grid = TileSelectionGrid(self.context)
+		self.tile_grid = TileSelectionGrid(self.tset)
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
-		print( f"SRPlot[{self.context.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}" )
+		print( f"SRPlot[{self.tset.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}")
 
-	def update_tile_data(self) -> Dict[str, xa.DataArray]:
-		self.trainer.evaluate( self.context, tile_index=self.tile_index, time_index=self.time_index )
-		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.context))
-		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.context))
-		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.context))
-		domain: xa.DataArray = self.trainer.target_dataset.load_global_timeslice()
+	def update_tile_data(self, tset: TSet) -> Dict[str, xa.DataArray]:
+		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index)
+		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
+		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
+		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
+		domain: xa.DataArray = self.trainer.target_dataset(tset).load_global_timeslice()
 
 		if prediction.ndim == 3:
-			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.context))
+			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
 		else:
 			coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			data: np.ndarray = self.trainer.get_ml_upsampled(self.context)
+			data: np.ndarray = self.trainer.get_ml_upsampled(self.tset)
 			upsampled = xa.DataArray(data, dims=['time', 'channel', 'y', 'x'], coords=coords)
 
 		images_data: Dict[str, xa.DataArray] = dict(upsampled=upsampled, input=model_input, target=target, domain=domain)
@@ -111,11 +111,11 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsampled" if (self.context == TSet.Validation) else "domain"
+		return "upsampled" if (self.tset == TSet.Validation) else "domain"
 
 	@property
 	def result_plot_label(self) -> str:
-		return "validation" if (self.context == TSet.Validation) else "prediction"
+		return "validation" if (self.tset == TSet.Validation) else "prediction"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
@@ -173,7 +173,7 @@ class SRPlot(object):
 		if 'channel' in image.dims:
 			image = image.isel(channel=self.channel)
 		if 'time' in image.dims:
-			batch_time_index = self.time_index % self.trainer.input_dataset.steps_per_batch
+			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).steps_per_batch
 			lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}",display=True)
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
 		return image
