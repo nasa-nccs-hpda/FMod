@@ -57,7 +57,7 @@ class ConfigContext:
        print('Exiting context: ', cid(), exc_type, exc_value, traceback)
        Configuration.clear()
        if tb is not None:
-           traceback.print_exception(exc=exc_type, value=exc_value, tb=tb)
+           traceback.print_exception( exc_type, value=exc_value, tb=tb)
        return True
 
 class ConfigBase(ABC):
