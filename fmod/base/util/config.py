@@ -23,7 +23,7 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN, warning_filters=[]):
+def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN, warning_filters=[]) -> DictConfig:
     config_name = f"{task}-{model}-{dataset}-{scenario}"
     Configuration.init( config_name )
     cfg().task.name = task
@@ -34,6 +34,7 @@ def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logg
     lgm().set_level( log_level )
     for wfilter in warning_filters:
         warnings.filterwarnings(wfilter)      # "error"
+    return Configuration.instance().cfg
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"
@@ -48,15 +49,21 @@ class ConfigContext:
         self.dataset: str = dataset
         self.scenario: str = scenario
         self.log_level: int = log_level
+        self.cfg: DictConfig = None
+        self.name: str = None
 
     def __enter__(self):
-       fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
+       print('Entering cfg-context: ', cid())
+       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
+       self.name = Configuration.instance().config_name
        return self
 
     def __exit__(self, exc_type, exc_value, tb):
-       print('Exiting context: ', cid(), exc_type, exc_value, traceback)
+       print( 'Exiting cfg-context: ', cid() )
        Configuration.clear()
-       if tb is not None:
+       self.cfg = None
+       self.name = None
+       if exc_type is not None:
            traceback.print_exception( exc_type, value=exc_value, tb=tb)
        return True
 
