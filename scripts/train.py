@@ -13,7 +13,7 @@ task = "sres"
 models = ['edsr'] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
-load_state = ""
+load_state = "current"
 save_state = True
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
