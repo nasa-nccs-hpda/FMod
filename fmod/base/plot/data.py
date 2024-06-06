@@ -11,10 +11,8 @@ from fmod.base.plot.widgets import StepSlider
 from fmod.base.util.config import cfg
 from fmod.controller.dual_trainer import TileGrid
 from fmod.data.batch import BatchDataset
+from fmod.base.util.config import start_date
 
-def start_date( task_config )-> datetime:
-	toks = [ int(tok) for tok in task_config.start_date.split("/") ]
-	return  datetime( month=toks[0], day=toks[1], year=toks[2] )
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
 	meanv, stdv, minv = pvar.values.mean(), pvar.values.std(), pvar.values.min()
 	vmin = max( minv, meanv - stretch*stdv )

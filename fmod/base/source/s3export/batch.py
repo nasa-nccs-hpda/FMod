@@ -12,6 +12,7 @@ from fmod.base.util.ops import format_timedeltas, fmbdir
 from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.source.loader import srRes, SRDataLoader, TSet
+from fmod.base.util.config import start_date
 import numpy as np
 
 S = 'x'
@@ -55,13 +56,8 @@ class S3ExportDataLoader(SRDataLoader):
 		self.use_memmap = task_config.get('use_memmap', False)
 		self.shape = None
 
-	@property
-	def start_date(self) -> datetime:
-		toks = [int(tok) for tok in self.task.start_date.split("/")]
-		return datetime(month=toks[0], day=toks[1], year=toks[2])
-
 	def dateindex(self, d: datetime) -> int:
-		dt: timedelta = d-self.start_date
+		dt: timedelta = d - start_date(self.task)
 		hours: int = dt.seconds // 3600
 		return hours + 1
 

@@ -4,7 +4,8 @@ from fmod.base.util.config import cfg
 from enum import Enum
 from datetime import date, datetime
 from omegaconf import DictConfig, OmegaConf
-from fmod.base.util.dates import date_list, year_range, batches_range
+from fmod.base.util.config import start_date
+from fmod.base.util.dates import date_list
 
 class TSet(Enum):
 	Train = 'train'
@@ -14,6 +15,13 @@ class ncFormat(Enum):
 	Standard = 'standard'
 	DALI = 'dali'
 	SRES = "sres"
+
+def nbatches( task_config, tset: TSet ) -> int:
+	nbs: Dict[str,int] = task_config['nbatches']
+	return nbs[tset.value]
+
+def batches_range( task_config, tset: TSet )-> List[datetime]:
+	return date_list( start_date( task_config ), task_config['days_per_batch'] * nbatches( task_config, tset ) )
 
 def path_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
