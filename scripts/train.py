@@ -10,7 +10,7 @@ from fmod.base.source.loader import srRes
 hydra.initialize(version_base=None, config_path="../config")
 
 task = "sres"
-models = ['vdsr'] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
+models = ['edsr'] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
 load_state = "current"
