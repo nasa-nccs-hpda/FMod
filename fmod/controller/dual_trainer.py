@@ -320,7 +320,7 @@ class ModelTrainer(object):
 					self.product[context] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
-					lgm().log(f" ** BATCH[{date_index}] start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True )
+					lgm().log(f"\n ** BATCH[{date_index}] start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True, end="" )
 					if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 
 				except Exception as e:
