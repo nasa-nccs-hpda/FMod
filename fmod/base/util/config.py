@@ -60,6 +60,10 @@ class ConfigBase(ABC):
             cls._instantiated = cls
             print(f' *** Configuration {config_name} initialized *** ')
 
+    @classmethod
+    def clear(cls):
+        cls._instance = None
+
 
     @classmethod
     def instance(cls) -> "Configuration":

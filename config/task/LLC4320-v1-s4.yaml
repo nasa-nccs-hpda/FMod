@@ -14,7 +14,7 @@ hours_per_step: 1
 
 nbatches: 166
 batch_iter: 1
-nepochs: 5
+nepochs: 4
 lr: 1e-3
 
 origin: { 'train': { x: 0, y: 0 }, 'valid': { x: 0, y: 0 }, 'test': { x: 0, y: 0 } }

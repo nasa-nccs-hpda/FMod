@@ -1,0 +1,6 @@
+defaults:
+  - platform: LLC4320-v1-explore
+  - task: LLC4320-v1-s4
+  - model: edsr-s4
+  - pipeline: sres
+  - _self_
