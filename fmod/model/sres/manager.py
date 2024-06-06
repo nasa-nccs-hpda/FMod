@@ -52,20 +52,20 @@ class SRModels:
 	def get_channel_idxs(self, channels: List[str], sres: srRes, tset: TSet = TSet.Train) -> List[int]:
 		return self.get_dataset(sres, tset).get_channel_idxs(channels)
 
-	def get_sample_target(self) -> xa.DataArray:
-		result =  self.sample_target().isel(channel=self.cids) if (len(self.cids) < self.sample_target().sizes['channel']) else self.sample_target
-		lgm().log(f" !!! Get Sample target !!! cids={self.cids}: sample_target{self.sample_target().dims}{self.sample_target().shape}, result{result.shape}")
+	def get_sample_target(self, tset: TSet = TSet.Train) -> xa.DataArray:
+		result = self.sample_target(tset)
+	#	result = ( result.isel(channel=self.cids)) if (len(self.cids) < self.sample_target().sizes['channel']) else self.sample_target
 		return result
 
-	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
-		result = self.sample_input
-		if targets_only and (len(self.cids) < self.sample_input().sizes['channel']):
-			result =  self.sample_input().isel(channel=self.cids)
-		lgm().log(f" !!! Get Sample input !!! cids={self.cids}: sample_input{self.sample_input().dims}{self.sample_input().shape}, result{result.shape}")
+	def get_sample_input(self, tset: TSet = TSet.Train, targets_only: bool = True) -> xa.DataArray:
+		result = self.sample_input(tset)
+		# if targets_only and (len(self.cids) < self.sample_input().sizes['channel']):
+		#	result =  self.sample_input().isel(channel=self.cids)
 		return result
 
 	def filter_targets(self, data_array: np.ndarray ) -> np.ndarray:
-		return np.take( data_array, self.cids, axis=1 )
+		# return np.take( data_array, self.cids, axis=1 )
+		return data_array
 
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
