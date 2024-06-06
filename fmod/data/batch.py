@@ -74,7 +74,8 @@ class TileGrid(object):
 
     def __init__(self, tset: TSet = TSet.Train):
         self.tset: TSet = tset
-        self.origin: Dict[str,int] = cfg().task.origin[self.tset.value]
+        origins: Dict[str,Dict[str,int]] = cfg().task.origin
+        self.origin: Dict[str,int] = origins[self.tset.value]
         self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
         self.tile_size: Dict[str,int] = cfg().task.tile_size
         self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
