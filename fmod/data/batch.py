@@ -75,6 +75,7 @@ class TileGrid(object):
     def __init__(self, tset: TSet = TSet.Train):
         self.tset: TSet = tset
         origins: Dict[str,Dict[str,int]] = cfg().task.get('origin',{})
+        print( f"TileGrid: origins={list(origins.keys())}, tset='{self.tset.value}'")
         self.origin: Dict[str,int] = origins[self.tset.value]
         self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
         self.tile_size: Dict[str,int] = cfg().task.tile_size
