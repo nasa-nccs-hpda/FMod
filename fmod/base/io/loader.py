@@ -8,7 +8,7 @@ from fmod.base.util.dates import date_list, year_range, batches_range
 
 class TSet(Enum):
 	Train = 'train'
-	Validation = 'validation'
+	Validation = 'valid'
 	Test = 'test'
 class ncFormat(Enum):
 	Standard = 'standard'

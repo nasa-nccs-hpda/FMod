@@ -71,7 +71,7 @@ class S3ExportDataLoader(SRDataLoader):
 		if self.version == 0:
 			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date=dstr(date), usf=usf)
 		elif self.version == 1:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=self.dateindex(date), mode=self.tset.value, usf=usf)
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=self.dateindex(date), tset=self.tset.value, usf=usf)
 		else: raise ValueError(f'version {self.version} not supported')
 		fpath = f"{root}/{subpath}"
 		return fpath
