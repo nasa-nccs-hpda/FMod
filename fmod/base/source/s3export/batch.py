@@ -39,7 +39,9 @@ def get_version(task_config: DictConfig) -> int:
 	return int(tstr[1:])
 
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
-	return pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h" )
+	dlist =  pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h", inclusive="left" )
+	print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates")
+	return dlist
 
 class S3ExportDataLoader(SRDataLoader):
 
