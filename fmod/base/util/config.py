@@ -143,8 +143,10 @@ def start_date( task: DictConfig )-> datetime:
     return  datetime( month=toks[0], day=toks[1], year=toks[2] )
 
 def dateindex(d: datetime, task: DictConfig) -> int:
-    dt: timedelta = d - start_date(task)
+    sd: date = start_date(task)
+    dt: timedelta = d - sd
     hours: int = dt.seconds // 3600
+    print( f"dateindex: d[{d.strftime('%H:%d/%m/%Y')}], sd[{sd.strftime('%H:%d/%m/%Y')}], dts={dt.seconds}, hours={hours}")
     return hours + 1
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
