@@ -7,9 +7,9 @@ from fmod.base.io.loader import ncFormat, TSet
 from fmod.base.source.loader import srRes
 from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
-#from fmod.base.util.grid import GridOps
+from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
-#import torch_harmonics as harmonics
+import torch_harmonics as harmonics
 from fmod.data.batch import BatchDataset, TileGrid
 from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm
@@ -103,7 +103,7 @@ class ModelTrainer(object):
 		self.scale_factor = math.prod(self.downscale_factors)
 		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
 		self.conform_to_data_grid()
-	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
+		self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.input: MLTensors = {}
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
@@ -127,13 +127,13 @@ class ModelTrainer(object):
 		upsampled = self.upsampler( unsqueeze( tensor ) )
 		return normalize( upsampled ) if renorm else upsampled
 
-	# def configure_grid(self, tset: TSet ):
-	# 	tar: xarray.DataArray = self.target_dataset(tset).get_current_batch_array()
-	# 	grid_shape = tar.shape[-2:]
-	# 	gridops = GridOps(*grid_shape,self.device)
-	# 	lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}")
-	# 	lmax = tar.shape[-2]
-	# 	return grid_shape, gridops, lmax
+	def configure_grid(self, tset: TSet ):
+		tar: xarray.DataArray = self.target_dataset(tset).get_current_batch_array()
+		grid_shape = tar.shape[-2:]
+		gridops = GridOps(*grid_shape,self.device)
+		lgm().log(f"SHAPES: target{list(tar.shape)}, (nlat, nlon)={grid_shape}")
+		lmax = tar.shape[-2]
+		return grid_shape, gridops, lmax
 
 	def conform_to_data_grid(self, **kwargs):
 		if cfg().task.conform_to_grid:
@@ -145,17 +145,17 @@ class ModelTrainer(object):
 			cfg().task['extent'] = {dim: float(cval(data, dim, -1) + dc[cfg().task.coords[dim]]) for dim in data_origin.keys()}
 			print(f" *** conform_to_data_grid: origin={cfg().task['origin']} extent={cfg().task['extent']} *** ")
 
-	# @property
-	# def sht(self):
-	# 	if self._sht is None:
-	# 		self._sht = harmonics.RealSHT(*self.grid_shape, lmax=self.lmax, mmax=self.lmax, grid='equiangular', csphase=False)
-	# 	return self._sht
-	#
-	# @property
-	# def isht(self):
-	# 	if self._isht is None:
-	# 		self._isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=self.lmax, mmax=self.lmax, grid='equiangular', csphase=False)
-	# 	return self._isht
+	@property
+	def sht(self):
+		if self._sht is None:
+			self._sht = harmonics.RealSHT(*self.grid_shape, lmax=self.lmax, mmax=self.lmax, grid='equiangular', csphase=False)
+		return self._sht
+
+	@property
+	def isht(self):
+		if self._isht is None:
+			self._isht = harmonics.InverseRealSHT( *self.grid_shape, lmax=self.lmax, mmax=self.lmax, grid='equiangular', csphase=False)
+		return self._isht
 
 	def tensor(self, data: xarray.DataArray) -> torch.Tensor:
 		return Tensor(data.values).to(self.device)
@@ -164,35 +164,35 @@ class ModelTrainer(object):
 	def loader_args(self) -> Dict[str, Any]:
 		return { k: cfg().model.get(k) for k in self.model_cfg }
 
-	# def l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
-	# 	loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
-	# 	if relative:
-	# 		loss = loss / self.gridops.integrate_grid(tar ** 2, dimensionless=True).sum(dim=-1)
-	#
-	# 	if not squared:
-	# 		loss = torch.sqrt(loss)
-	# 	loss = loss.mean()
-	#
-	# 	return loss
+	def l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
+		loss = self.gridops.integrate_grid((prd - tar) ** 2, dimensionless=True).sum(dim=-1)
+		if relative:
+			loss = loss / self.gridops.integrate_grid(tar ** 2, dimensionless=True).sum(dim=-1)
 
-	# def spectral_l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
-	# 	# compute coefficients
-	# 	coeffs = torch.view_as_real(self.sht(prd - tar))
-	# 	coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
-	# 	norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
-	# 	loss = torch.sum(norm2, dim=(-1, -2))
-	#
-	# 	if relative:
-	# 		tar_coeffs = torch.view_as_real(self.sht(tar))
-	# 		tar_coeffs = tar_coeffs[..., 0] ** 2 + tar_coeffs[..., 1] ** 2
-	# 		tar_norm2 = tar_coeffs[..., :, 0] + 2 * torch.sum(tar_coeffs[..., :, 1:], dim=-1)
-	# 		tar_norm2 = torch.sum(tar_norm2, dim=(-1, -2))
-	# 		loss = loss / tar_norm2
-	#
-	# 	if not squared:
-	# 		loss = torch.sqrt(loss)
-	# 	loss = loss.mean()
-	# 	return loss
+		if not squared:
+			loss = torch.sqrt(loss)
+		loss = loss.mean()
+
+		return loss
+
+	def spectral_l2loss_sphere(self, prd: torch.Tensor, tar: torch.Tensor, relative=False, squared=True) -> torch.Tensor:
+		# compute coefficients
+		coeffs = torch.view_as_real(self.sht(prd - tar))
+		coeffs = coeffs[..., 0] ** 2 + coeffs[..., 1] ** 2
+		norm2 = coeffs[..., :, 0] + 2 * torch.sum(coeffs[..., :, 1:], dim=-1)
+		loss = torch.sum(norm2, dim=(-1, -2))
+
+		if relative:
+			tar_coeffs = torch.view_as_real(self.sht(tar))
+			tar_coeffs = tar_coeffs[..., 0] ** 2 + tar_coeffs[..., 1] ** 2
+			tar_norm2 = tar_coeffs[..., :, 0] + 2 * torch.sum(tar_coeffs[..., :, 1:], dim=-1)
+			tar_norm2 = torch.sum(tar_norm2, dim=(-1, -2))
+			loss = loss / tar_norm2
+
+		if not squared:
+			loss = torch.sqrt(loss)
+		loss = loss.mean()
+		return loss
 
 	def charbonnier(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		error = torch.sqrt( ((prd - tar) ** 2) + self.eps )
@@ -202,10 +202,10 @@ class ModelTrainer(object):
 		#	print( f" ----->> single_product_loss: prd{prd.shape} -- tar{tar.shape}")
 		if cfg().model.loss_fn == 'l2':
 			loss = l2loss(prd, tar)
-		# elif cfg().model.loss_fn == 'l2s':
-		# 	loss = self.l2loss_sphere(prd, tar)
-		# elif cfg().model.loss_fn == "spectral-l2s":
-		# 	loss = self.spectral_l2loss_sphere(prd, tar)
+		elif cfg().model.loss_fn == 'l2s':
+			loss = self.l2loss_sphere(prd, tar)
+		elif cfg().model.loss_fn == "spectral-l2s":
+			loss = self.spectral_l2loss_sphere(prd, tar)
 		elif cfg().model.loss_fn == "charbonnier":
 			loss = self.charbonnier(prd, tar)
 		else:
@@ -303,7 +303,7 @@ class ModelTrainer(object):
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
-						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date,TSet.Train)
+						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
@@ -359,7 +359,7 @@ class ModelTrainer(object):
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for batch_date in batch_dates:
 			for xyi, tile_loc in tile_locs.items():
-				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date)
 				inp = train_data['input']
 				ups: Tensor = self.get_target_channels(self.upsample(inp))
 				target: Tensor = train_data['target']
