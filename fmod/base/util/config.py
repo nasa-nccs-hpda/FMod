@@ -33,12 +33,31 @@ def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logg
     cfg().model.name = model
     lgm().set_level( log_level )
     for wfilter in warning_filters:
-       warnings.filterwarnings(wfilter)      # "error"
+        warnings.filterwarnings(wfilter)      # "error"
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"
     print( f'cdir = {cdir}')
     return str(cdir)
+
+class ConfigContext:
+
+    def __init__(self, task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN):
+        self.task: str = task
+        self.model: str = model
+        self.dataset: str = dataset
+        self.scenario: str = scenario
+        self.log_level: int = log_level
+
+    def __enter__(self):
+       fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
+       return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+       print('Exiting context: ', cid(), exc_type, exc_value, traceback)
+       Configuration.clear()
+       # suppress errors
+       return True
 
 class ConfigBase(ABC):
     _instance = None
@@ -148,10 +167,12 @@ def get_data_coords( data: xarray.DataArray, target_coords: Dict[str,float] ) ->
     return { dim: closest_value( data.coords[ dim ].values, cval ) for dim, cval in target_coords.items() }
 
 def cdelta(dset: xarray.DataArray):
-	return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() if dset.coords[k].size > 1 }
+    return { k: float(dset.coords[k][1]-dset.coords[k][0]) for k in dset.coords.keys() if dset.coords[k].size > 1 }
+
 def cval( data: xarray.DataArray, dim: str, cindex ) -> float:
     coord : np.ndarray = data.coords[ cfg().task.coords[dim] ].values
     return float( coord[cindex] )
+
 def get_data_indices( data: Union[xarray.DataArray,xarray.Dataset], target_coords: Dict[str,float] ) -> Dict[str,int]:
     return { dim: index_of_value( data.coords[ dim ].values, coord_value ) for dim, coord_value in target_coords.items() }
 
