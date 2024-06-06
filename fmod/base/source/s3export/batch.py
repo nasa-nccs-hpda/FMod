@@ -137,7 +137,6 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_batch(self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		self.dindxs = []
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
-		print( f" ***-------> Loaded dindxs: {self.dindxs}")
 		return darray
 
 	def load_const_dataset(self, origin: CoordIdx )-> Optional[xa.DataArray]:
