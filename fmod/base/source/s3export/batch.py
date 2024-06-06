@@ -55,15 +55,18 @@ class S3ExportDataLoader(SRDataLoader):
 		self.tile_size: Dict[str, int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 		self.use_memmap = task_config.get('use_memmap', False)
+		self.dindxs = []
 		self.shape = None
 
 	def data_filepath(self, varname: str, date: datetime) -> str:
 		root: str = cfg().platform.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
+		dindx = dateindex(date,self.task)
+		self.dindxs.append(dindx)
 		if self.version == 0:
 			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date=dstr(date), usf=usf)
 		elif self.version == 1:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=dateindex(date,self.task), tset=self.tset.value, usf=usf)
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=dindx, tset=self.tset.value, usf=usf)
 		else: raise ValueError(f'version {self.version} not supported')
 		fpath = f"{root}/{subpath}"
 		return fpath
@@ -107,7 +110,7 @@ class S3ExportDataLoader(SRDataLoader):
 		timeslice: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		return self.cut_domain(timeslice)
 
-	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], date: datetime ) -> xa.DataArray:
+	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], date: datetime, dindxs: List[int] ) -> xa.DataArray:
 		raw_data: np.memmap = self.open_timeslice(vid[0], date)
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
 	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
@@ -116,7 +119,8 @@ class S3ExportDataLoader(SRDataLoader):
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
 	def load_timeslice( self, idx: int, origin: CoordIdx, date: datetime ) -> xa.DataArray:
-		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, date ) for vid in self.varnames.items() ]
+		dindxs = []
+		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, date, dindxs ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channel" )
 		# time = np.array(np.datetime64(date), dtype='datetime64[ns]')
 		result = result.expand_dims(axis=0, dim=dict(time=[np.datetime64(date)]))
@@ -132,7 +136,9 @@ class S3ExportDataLoader(SRDataLoader):
 		return {}
 
 	def load_batch(self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
+		self.dindxs = []
 		darray: xa.DataArray = self.load_temporal_batch( origin, date_range )
+		print( f" ***-------> Loaded dindxs: {self.dindxs}")
 		return darray
 
 	def load_const_dataset(self, origin: CoordIdx )-> Optional[xa.DataArray]:
