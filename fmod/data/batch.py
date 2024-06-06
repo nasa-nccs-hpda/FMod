@@ -129,6 +129,7 @@ class BatchDataset(object):
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
+
         self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, vres, tset, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
@@ -139,6 +140,10 @@ class BatchDataset(object):
         self.hours_per_batch = self.days_per_batch * 24
         self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
+
+    def data_index_range(self) -> Tuple[int,int]:
+        dindxs = self.srbatch.data_loader.dindxs
+        return dindxs[0], dindxs[-1]
 
     @property
     def ntbatches(self):
@@ -154,6 +159,7 @@ class BatchDataset(object):
             self.current_origin = origin
             self.current_date = batch_date
             self.current_batch_data = norm(batch_data)
+            self.current_batch_data.attrs['didx-range'] = self.data_index_range()
         return self.current_batch_data
 
     def get_current_batch_array(self) -> xa.DataArray:

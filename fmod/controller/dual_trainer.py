@@ -250,8 +250,9 @@ class ModelTrainer(object):
 			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
 		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}")
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
-		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
-		else:          return dict( input=binput,               target=btarget )
+		didxs = dict(input=binput.attrs['didx-range'], target=btarget.attrs['didx-range'])
+		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget), didxs=didxs )
+		else:          return dict( input=binput,               target=btarget, didxs=didxs )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
 		if tset not in self.input: self.evaluate(tset)
@@ -366,14 +367,14 @@ class ModelTrainer(object):
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
-				inp, dindx = train_data['input'], dateindex(batch_date,cfg().task)
+				inp, dindxs = train_data['input'], train_data['didxs']
 				# ups: Tensor = self.get_target_channels(self.upsample(inp))
 				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ).item() )
 				batch_interp_losses.append( self.loss(ups, targ).item() )
-				lgm().log(f" ** {tset.name} BATCH[{date_index}:{dindx}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" ** {tset.name} BATCH[{date_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ

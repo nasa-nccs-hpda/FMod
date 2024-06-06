@@ -26,6 +26,7 @@ class SRDataLoader(object):
 	def __init__(self, task_config: DictConfig, vres: srRes ):
 		self.vres: srRes = vres
 		self.task = task_config
+		self.dindxs = []
 
 	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
 		raise NotImplementedError("SRDataLoader:load_global_timeslice")

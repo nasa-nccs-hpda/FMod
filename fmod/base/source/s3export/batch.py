@@ -55,7 +55,6 @@ class S3ExportDataLoader(SRDataLoader):
 		self.tile_size: Dict[str, int] = tile_size
 		self.varnames: Dict[str, str] = self.task.input_variables
 		self.use_memmap = task_config.get('use_memmap', False)
-		self.dindxs = []
 		self.shape = None
 
 	def data_filepath(self, varname: str, date: datetime) -> str:
