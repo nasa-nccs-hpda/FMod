@@ -357,7 +357,7 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = self.input_dataset(tset).get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		for batch_date in batch_dates:
+		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
 				inp = train_data['input']
@@ -367,6 +367,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ).item() )
 				batch_interp_losses.append( self.loss(ups, targ).item() )
+				lgm().log(f" ** {tset.name} BATCH[{date_index}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[context] = inp
 		self.target[context] = targ
