@@ -10,7 +10,7 @@ from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import TSet, batches_range
+from fmod.base.io.loader import TSet, batches_range, nbatches
 from fmod.base.source.loader import srRes
 from fmod.base.util.config import cfg
 from random import randint
@@ -109,6 +109,7 @@ class BatchDataset(object):
 
     def __init__(self, task_config: DictConfig, vres: srRes, tset: TSet, **kwargs):
         self.vres: srRes = vres
+        self.tset: TSet = tset
         self.srtype = 'input' if self.vres == srRes.High else 'target'
         self.task_config: DictConfig = task_config
         self.tile_grid = TileGrid(tset)
@@ -133,12 +134,15 @@ class BatchDataset(object):
         self.mu: xa.Dataset  = self.norms.get('mean_by_level')
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
-        self.ntbatches = task_config.nbatches
         self.ntsteps = self.srbatch.batch_steps * self.ntbatches
         self.hours_per_step = task_config.hours_per_step
         self.hours_per_batch = self.days_per_batch * 24
         self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
+
+    @property
+    def ntbatches(self):
+        return  nbatches( self.task_config, self.tset )
 
     def __len__(self):
         return self.steps_per_batch
