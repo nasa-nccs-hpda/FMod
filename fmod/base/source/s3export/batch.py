@@ -1,5 +1,5 @@
 import xarray as xa, math, os
-from fmod.base.util.config import cfg
+from fmod.base.util.config import cfg, dateindex
 import pandas as pd
 from datetime import  datetime, timedelta
 from omegaconf import DictConfig, OmegaConf
@@ -57,18 +57,13 @@ class S3ExportDataLoader(SRDataLoader):
 		self.use_memmap = task_config.get('use_memmap', False)
 		self.shape = None
 
-	def dateindex(self, d: datetime) -> int:
-		dt: timedelta = d - start_date(self.task)
-		hours: int = dt.seconds // 3600
-		return hours + 1
-
 	def data_filepath(self, varname: str, date: datetime) -> str:
 		root: str = cfg().platform.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
 		if self.version == 0:
 			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date=dstr(date), usf=usf)
 		elif self.version == 1:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=self.dateindex(date), tset=self.tset.value, usf=usf)
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=dateindex(date), tset=self.tset.value, usf=usf)
 		else: raise ValueError(f'version {self.version} not supported')
 		fpath = f"{root}/{subpath}"
 		return fpath

@@ -26,7 +26,7 @@ for model in models:
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer(model_manager)
 
-		for tset in [ TSet.Validation, TSet.Test]:
+		for tset in [ TSet.Train, TSet.Validation, TSet.Test ]:
 			trainer.evaluate( tset )
 
 

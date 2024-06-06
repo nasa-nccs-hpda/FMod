@@ -138,9 +138,14 @@ def cfg_date( csection: str ) -> date:
     dcfg = cfg().get(csection)
     return date( dcfg.year, dcfg.month, dcfg.day )
 
-def start_date( task_config )-> datetime:
-    toks = [ int(tok) for tok in task_config.start_date.split("/") ]
+def start_date( task: DictConfig )-> datetime:
+    toks = [ int(tok) for tok in task.start_date.split("/") ]
     return  datetime( month=toks[0], day=toks[1], year=toks[2] )
+
+def dateindex(d: datetime, task: DictConfig) -> int:
+    dt: timedelta = d - start_date(task)
+    hours: int = dt.seconds // 3600
+    return hours + 1
 
 def index_of_value( array: np.ndarray, target_value: float ) -> int:
     differences = np.abs(array - target_value)

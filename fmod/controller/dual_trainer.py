@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
 from fmod.base.io.loader import ncFormat, TSet
 from fmod.base.source.loader import srRes
 from fmod.base.io.loader import TSet
-from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
+from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 #from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 #import torch_harmonics as harmonics
@@ -366,14 +366,14 @@ class ModelTrainer(object):
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
-				inp = train_data['input']
+				inp, dindx = train_data['input'], dateindex(batch_date,cfg().task)
 				# ups: Tensor = self.get_target_channels(self.upsample(inp))
 				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ).item() )
 				batch_interp_losses.append( self.loss(ups, targ).item() )
-				lgm().log(f" ** {tset.name} BATCH[{date_index}:{batch_date.strftime('%H:%d/%m/%Y')}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" ** {tset.name} BATCH[{date_index}:{dindx}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ
