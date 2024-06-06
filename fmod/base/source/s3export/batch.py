@@ -131,7 +131,7 @@ class S3ExportDataLoader(SRDataLoader):
 		return result
 
 	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		timeslices = [ self.load_timeslice( idx, origin,  date ) for idx, date in enumerate( datelist( date_range ) ) ]
+		timeslices = [ self.load_timeslice( idx, origin, date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
 		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}", display=True )
 		return result

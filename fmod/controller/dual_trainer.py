@@ -111,17 +111,21 @@ class ModelTrainer(object):
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
 
+	@property
+	def model_name(self):
+		return self.model_manager.model_name
+
 	def input_dataset(self, tset: TSet)-> BatchDataset:
 		return self.model_manager.get_dataset( srRes.Low, tset )
 
 	def target_dataset(self, tset: TSet)-> BatchDataset:
 		return self.model_manager.get_dataset(srRes.High, tset )
 
-	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
-		return self.model_manager.get_sample_input( targets_only )
+	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
+		return self.model_manager.get_sample_input( tset, targets_only )
 
-	def get_sample_target(self) -> xa.DataArray:
-		return self.model_manager.get_sample_target()
+	def get_sample_target(self, tset: TSet) -> xa.DataArray:
+		return self.model_manager.get_sample_target(tset)
 
 	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
@@ -350,13 +354,15 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset(tset).get_time_coord(self.time_index)
+		input_dataset: BatchDataset = self.input_dataset(tset)
+		time_coord: datetime = None if (self.time_index < 0) else input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
-		batch_dates: List[datetime] = self.input_dataset(tset).get_batch_dates(target_date=time_coord, randomize=False, offset=False)
+		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
+		print( f"Evaluating ")
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)

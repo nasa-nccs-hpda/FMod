@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from datetime import date, datetime, timedelta
 from fmod.base.util.config import start_date
+from fmod.base.io.loader import ncFormat, TSet
 import random
 
 def kw(d: datetime) -> Dict[str,int]:
@@ -57,7 +58,11 @@ def year_range( y0: int, y1: int, **kwargs )-> List[datetime]:
 	if randomize: random.shuffle(rlist)
 	return rlist
 
-def batches_range( task_config )-> List[datetime]:
-	return date_list( start_date( task_config ), task_config['days_per_batch'] * task_config['nbatches'])
+def nbatches( task_config, tset: TSet ) -> int:
+	nbs: Dict[str,int] = task_config['nbatches']
+	return nbs[tset.value]
+
+def batches_range( task_config, tset: TSet )-> List[datetime]:
+	return date_list( start_date( task_config ), task_config['days_per_batch'] * nbatches( task_config, tset ) )
 
 

@@ -117,7 +117,7 @@ class BatchDataset(object):
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
         self.load_base: bool = kwargs.pop('load_base', False)
         self.day_index: int = 0
-        self.train_dates: List[datetime] = batches_range(task_config)
+        self.train_dates: List[datetime] = batches_range(task_config,tset)
         self.days_per_batch: int = task_config.days_per_batch
         self.hours_per_step: int = task_config.hours_per_step
         self.steps_per_day = 24 // self.hours_per_step

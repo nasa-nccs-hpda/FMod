@@ -12,7 +12,10 @@ start_date:  "9/13/2011"
 days_per_batch: 4
 hours_per_step: 1
 
-nbatches: { 'train': 166, 'valid': 166, 'test': 166 }
+index_by_date: False
+batch_size: 40
+
+nbatches: { 'train': 83, 'valid': 20, 'test': 3 }
 batch_iter: 1
 nepochs: 4
 lr: 1e-3
