@@ -53,10 +53,11 @@ class ConfigContext:
        fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
        return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tb):
        print('Exiting context: ', cid(), exc_type, exc_value, traceback)
        Configuration.clear()
-       # suppress errors
+       if tb is not None:
+           traceback.print_exception(exc=exc_type, value=exc_value, tb=tb)
        return True
 
 class ConfigBase(ABC):
