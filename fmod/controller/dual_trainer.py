@@ -249,23 +249,23 @@ class ModelTrainer(object):
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
 		else:          return dict( input=binput,               target=btarget )
 
-	def get_ml_input(self, context: TSet, targets_only: bool = False) -> np.ndarray:
-		if context not in self.input: self.evaluate(context)
-		ml_input: Tensor = self.get_target_channels(self.input[context]) if targets_only else self.input[context]
+	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
+		if tset not in self.input: self.evaluate(tset)
+		ml_input: Tensor = self.get_target_channels(self.input[tset.value]) if targets_only else self.input[tset.value]
 		return npa( ml_input ).astype(np.float32)
 
-	def get_ml_upsampled(self, context: TSet) -> np.ndarray:
-		inp: np.ndarray = self.get_ml_input(context)
+	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
+		inp: np.ndarray = self.get_ml_input(tset.value)
 		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
 		return ups.numpy()
 
-	def get_ml_target(self, context: TSet) -> np.ndarray:
-		if context not in self.target: self.evaluate(context)
-		return npa( self.target[context] )
+	def get_ml_target(self, tset: TSet) -> np.ndarray:
+		if tset.value not in self.target: self.evaluate(tset)
+		return npa( self.target[tset.value] )
 
-	def get_ml_product(self, context: TSet) -> np.ndarray:
-		if context not in self.product: self.evaluate(context)
-		return npa(self.product[context])
+	def get_ml_product(self, tset: TSet) -> np.ndarray:
+		if tset.value not in self.product: self.evaluate(tset)
+		return npa(self.product[tset.value])
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
@@ -278,7 +278,7 @@ class ModelTrainer(object):
 		self.scheduler = kwargs.get( 'scheduler', None )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
+		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint(load_state)
@@ -315,9 +315,9 @@ class ModelTrainer(object):
 							loss.backward()
 							self.optimizer.step()
 
-					self.input[context] = inp
-					self.target[context] = targ
-					self.product[context] = prd
+					self.input[tset.value] = inp
+					self.target[tset.value] = targ
+					self.product[tset.value] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 					lgm().log(f"\n ** BATCH[{date_index}] start({batch_date.strftime('%m/%d/%Y')}): Loss= {ave_loss:.4f}", display=True, end="" )
@@ -355,7 +355,7 @@ class ModelTrainer(object):
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		batch_dates: List[datetime] = self.input_dataset(tset).get_batch_dates(target_date=time_coord, randomize=False, offset=False)
-		batch_model_losses, batch_interp_losses, context = [], [], TSet.Validation
+		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
@@ -369,15 +369,15 @@ class ModelTrainer(object):
 				batch_interp_losses.append( self.loss(ups, targ).item() )
 				lgm().log(f" ** {tset.name} BATCH[{date_index}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
-		self.input[context] = inp
-		self.target[context] = targ
-		self.product[context] = prd
+		self.input[tset.value] = inp
+		self.target[tset.value] = targ
+		self.product[tset.value] = prd
 
 		proc_time = time.time() - proc_start
 		model_loss = np.array(batch_model_losses).mean()
 		interp_loss = np.array(batch_interp_losses).mean()
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		lgm().log(f' -------> Exec {context.name} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
+		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
 		return dict(validation=model_loss, upsampled=interp_loss)
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
