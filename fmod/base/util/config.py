@@ -145,7 +145,7 @@ def start_date( task: DictConfig )-> datetime:
 def dateindex(d: datetime, task: DictConfig) -> int:
     sd: date = start_date(task)
     dt: timedelta = d - sd
-    hours: int = dt.seconds // 3600
+    hours: int = (dt.seconds // 3600) + (dt.days * 24)
     print( f"dateindex: d[{d.strftime('%H:%d/%m/%Y')}], sd[{sd.strftime('%H:%d/%m/%Y')}], dts={dt.seconds}, hours={hours}")
     return hours + 1
 
