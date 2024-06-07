@@ -80,8 +80,8 @@ class S3ExportDataLoader(SRDataLoader):
 		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
 
 	def cut_domain( self, timeslice_data: np.ndarray ):
-		origin: Dict[str,int] = cfg().task.origin
-		tile_grid: Dict[str,int] = cfg().task.tile_grid
+		origin: Dict[str,int] = cfg().task.origin[self.tset.value]
+		tile_grid: Dict[str,int] = cfg().task.tile_grid[self.tset.value]
 		tile_bnds = { c:  [origin[c], origin[c]+self.tile_size[c]*tile_grid[c]] for c in ['x','y'] }
 		lgm().debug( f"     ------------------>> cut_domain: origin={origin}, tile_bnds = {tile_bnds}")
 		return timeslice_data[ tile_bnds['y'][0]:tile_bnds['y'][1], tile_bnds['x'][0]:tile_bnds['x'][1] ]

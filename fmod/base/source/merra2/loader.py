@@ -4,6 +4,7 @@ from datetime import date
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
 from enum import Enum
+from fmod.base.io.loader import TSet
 from fmod.base.util.config import get_data_indices, get_roi, get_dims
 from fmod.controller.stats import StatsAccumulator, StatsEntry
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional
@@ -112,7 +113,7 @@ class Merra2DataLoader(object):
 		if (levels is not None) and ('z' in dataset.coords):
 			dataset = dataset.sel(z=levels, method="nearest")
 		lgm().log(f"LOAD[{vres}]-> dims: {self.rcoords(dataset)}")
-		iorigin: Dict[str, int] = get_data_indices(dataset, cfg().task.origin)
+		iorigin: Dict[str, int] = get_data_indices(dataset, cfg().task.origin[ TSet.Train.value ] )
 		tile_size: Dict[str, int] = cfg().task.tile_size
 
 		if vres == "high":
