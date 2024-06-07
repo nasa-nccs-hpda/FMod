@@ -316,7 +316,7 @@ class ModelTrainer(object):
 							loss: torch.Tensor = self.loss( prd, targ )
 							losses += loss
 							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-							lgm().log(f"\n ** BATCH[{date_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {loss.item():.4f}", display=True, end="")
+							lgm().log(f"\n ** <{self.model_manager.model_name}> BATCH[{date_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {loss.item():.4f}", display=True, end="")
 							if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
 							loss.backward()
@@ -375,7 +375,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ).item() )
 				batch_interp_losses.append( self.loss(ups, targ).item() )
-				lgm().log(f" ** {tset.name} BATCH[{date_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{date_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ
