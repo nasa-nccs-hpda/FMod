@@ -46,7 +46,6 @@ def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 def scale( varname: str, batch_data: np.ndarray ) -> np.ndarray:
 	ranges: Dict[str,Dict[str,float]] = cfg().task.variable_ranges
 	vrange: Dict[str,float] = ranges[varname]
-	print( f"SCALE: ranges={ranges}, vrange={vrange}")
 	return (batch_data - vrange['min']) / (vrange['max'] - vrange['min'])
 
 class S3ExportDataLoader(SRDataLoader):
