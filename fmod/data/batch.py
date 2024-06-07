@@ -152,8 +152,9 @@ class BatchDataset(object):
     def __len__(self):
         return self.steps_per_batch
 
-    def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
-        print( f" \n get_batch_array({self.vres.value}) -> origin= {origin}")
+    def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
+        origin = self.scale_coords(oindx)
+        print(f" \n get_batch_array({self.vres.value}) origin: {oindx} -> {origin}")
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         self.current_origin = origin
         self.current_date = batch_date
