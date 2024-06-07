@@ -76,7 +76,6 @@ class SRPlot(object):
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
-		print( f"SRPlot[{self.tset.name}] image types: {list(self.images_data.keys())}, losses{list(self.losses.keys())} {list(self.losses.values())}")
 
 	def update_tile_data(self, tset: TSet) -> Dict[str, xa.DataArray]:
 		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index)

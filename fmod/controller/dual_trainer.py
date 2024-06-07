@@ -107,7 +107,7 @@ class ModelTrainer(object):
 		self.input: MLTensors = {}
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
-		self.current_losses: Dict[str,float] = None
+		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
 
