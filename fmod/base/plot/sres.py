@@ -59,6 +59,8 @@ class SRPlot(object):
 		self.time_index = kwargs.get('time_index', 0)
 		self.tile_index = kwargs.get('tile_index', (0, 0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
+
+		self.trainer.evaluate( tset, **kwargs )
 		self.sample_input: xa.DataArray = trainer.get_sample_input(tset)
 		self.sample_target: xa.DataArray = trainer.get_sample_target(tset)
 		self.tcoords: DataArrayCoordinates = self.sample_target.coords
