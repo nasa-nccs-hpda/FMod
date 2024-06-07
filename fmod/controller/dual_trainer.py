@@ -260,7 +260,7 @@ class ModelTrainer(object):
 		return npa( ml_input ).astype(np.float32)
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
-		inp: np.ndarray = self.get_ml_input(tset.value)
+		inp: np.ndarray = self.get_ml_input(tset)
 		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
 		return ups.numpy()
 
