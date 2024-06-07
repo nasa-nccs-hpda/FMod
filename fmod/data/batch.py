@@ -155,11 +155,12 @@ class BatchDataset(object):
     def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime, **kwargs ) -> xa.DataArray:
         rescale = kwargs.get( 'rescale', True )
         origin = self.scale_coords(oindx) if rescale else oindx
-        batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
-        self.current_origin = origin
-        self.current_date = batch_date
-        self.current_batch_data = norm(batch_data)
-        self.current_batch_data.attrs['didx-range'] = self.data_index_range()
+        if (self.current_batch_data is None) or (origin != self.current_origin) or (batch_date != self.current_date):
+            batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
+            self.current_origin = origin
+            self.current_date = batch_date
+            self.current_batch_data = norm(batch_data)
+            self.current_batch_data.attrs['didx-range'] = self.data_index_range()
         return self.current_batch_data
 
     def get_current_batch_array(self) -> xa.DataArray:
