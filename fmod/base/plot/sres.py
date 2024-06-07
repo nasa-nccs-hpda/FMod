@@ -60,7 +60,6 @@ class SRPlot(object):
 		self.tile_index = kwargs.get('tile_index', (0, 0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 
-		self.trainer.evaluate( tset, **kwargs )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords))
 		self.losses: Dict[str,float] = trainer.current_losses
