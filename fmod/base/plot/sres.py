@@ -110,7 +110,7 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsampled" if (self.tset == TSet.Validation) else "domain"
+		return "upsampled" # if (self.tset == TSet.Validation) else "domain"
 
 	@property
 	def result_plot_label(self) -> str:
