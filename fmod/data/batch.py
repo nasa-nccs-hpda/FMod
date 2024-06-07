@@ -19,6 +19,7 @@ import pandas as pd
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
 ArrayOrDataset = Union[xa.DataArray,xa.Dataset]
+ArrayOrTensor = Union[xa.DataArray,torch.Tensor]
 
 class TensorRole:
     INPUT = "input"
@@ -159,7 +160,7 @@ class BatchDataset(object):
             batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
             self.current_origin = origin
             self.current_date = batch_date
-            self.current_batch_data = norm(batch_data)
+            self.current_batch_data = batch_data
             self.current_batch_data.attrs['didx-range'] = self.data_index_range()
         return self.current_batch_data
 

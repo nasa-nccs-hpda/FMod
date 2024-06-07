@@ -101,7 +101,7 @@ class ModelTrainer(object):
 		self.train_dates: List[datetime] = self.input_dataset(TSet.Train).train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
-		self.upsampler = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
+		self.upsampler: nn.Upsample = nn.Upsample( scale_factor=self.scale_factor, mode=cfg().task.upsample_mode )
 		self.conform_to_data_grid()
 	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.input: MLTensors = {}
@@ -127,9 +127,9 @@ class ModelTrainer(object):
 	def get_sample_target(self, tset: TSet) -> xa.DataArray:
 		return self.model_manager.get_sample_target(tset)
 
-	def upsample(self, tensor: Tensor, renorm: bool = True ) -> Tensor:
+	def upsample(self, tensor: Tensor ) -> Tensor:
 		upsampled = self.upsampler( unsqueeze( tensor ) )
-		return normalize( upsampled ) if renorm else upsampled
+		return upsampled
 
 	# def configure_grid(self, tset: TSet ):
 	# 	tar: xarray.DataArray = self.target_dataset(tset).get_current_batch_array()
@@ -248,8 +248,8 @@ class ModelTrainer(object):
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
 			binput: xarray.DataArray = binput[ batch_perm, ... ]
 			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}")
-		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
+		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}, range=({btarget.values.min():.3f},{btarget.values.max():.3f})")
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}, range=({btarget.values.min():.3f},{btarget.values.max():.3f})")
 		didxs = dict(input=binput.attrs['didx-range'], target=btarget.attrs['didx-range'])
 		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget), didxs=didxs )
 		else:          return dict( input=binput,               target=btarget, didxs=didxs )
@@ -364,7 +364,7 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log( f"\nEvaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord.strftime('%H:%d/%m/%Y')}, nbatch_dates={len(batch_dates)}\n", display=True)
+		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord.strftime('%H:%d/%m/%Y')}, nbatch_dates={len(batch_dates)}", display=True)
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)

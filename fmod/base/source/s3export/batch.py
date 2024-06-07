@@ -43,6 +43,11 @@ def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 	# print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates")
 	return dlist
 
+def scale( varname: str, batch_data: np.ndarray ) -> np.ndarray:
+	ranges: Dict[str,Tuple[float,float]] = cfg().task.variable_ranges
+	vrange: Tuple[float,float] = ranges[varname]
+	return (batch_data - vrange[0]) / (vrange[1] - vrange[0])
+
 class S3ExportDataLoader(SRDataLoader):
 
 	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet,  **kwargs):
@@ -112,7 +117,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], date: datetime, dindxs: List[int] ) -> xa.DataArray:
 		raw_data: np.memmap = self.open_timeslice(vid[0], date)
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
-	#	tc: Dict[str,xa.DataArray] = self.cut_xy_coords(origin)
+		tile_data = scale( vid[1], tile_data )
 		if idx == 0: lgm().debug( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}")
 		result = xa.DataArray( tile_data, dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )

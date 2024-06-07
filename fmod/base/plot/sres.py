@@ -191,7 +191,7 @@ class SRPlot(object):
 			image = image.isel(channel=self.channel)
 		if 'time' in image.dims:
 			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).steps_per_batch
-			lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}",display=True)
+			lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
 		return image
 
