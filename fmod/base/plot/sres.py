@@ -77,12 +77,12 @@ class SRPlot(object):
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
 
-	def update_tile_data(self, tset: TSet) -> Dict[str, xa.DataArray]:
+	def update_tile_data(self) -> Dict[str, xa.DataArray]:
 		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index)
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
-		domain: xa.DataArray = self.trainer.target_dataset(tset).load_global_timeslice()
+		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice()
 
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
