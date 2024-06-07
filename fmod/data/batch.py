@@ -152,8 +152,9 @@ class BatchDataset(object):
     def __len__(self):
         return self.steps_per_batch
 
-    def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
-        origin = self.scale_coords(oindx)
+    def get_batch_array(self, oindx: Dict[str,int], batch_date: datetime, **kwargs ) -> xa.DataArray:
+        rescale = kwargs.get( 'rescale', True )
+        origin = self.scale_coords(oindx) if rescale else oindx
         print(f" \n get_batch_array({self.vres.value}) origin: {oindx} -> {origin}")
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         self.current_origin = origin
@@ -164,7 +165,7 @@ class BatchDataset(object):
         return self.current_batch_data
 
     def get_current_batch_array(self) -> xa.DataArray:
-        return self.get_batch_array(self.current_origin, self.current_date)
+        return self.get_batch_array(self.current_origin, self.current_date, rescale=False )
 
     def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
         if time_coord < batch_date: return False
