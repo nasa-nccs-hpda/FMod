@@ -61,13 +61,8 @@ class SRPlot(object):
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 
 		self.trainer.evaluate( tset, **kwargs )
-		self.sample_input: xa.DataArray = trainer.get_sample_input(tset)
-		self.sample_target: xa.DataArray = trainer.get_sample_target(tset)
-		self.tcoords: DataArrayCoordinates = self.sample_target.coords
-		self.icoords: DataArrayCoordinates = self.sample_input.coords
-		self.time_coords: List[datetime] = trainer.input_dataset(self.tset).tcoords
-		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords))
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
+		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords))
 		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
@@ -78,6 +73,26 @@ class SRPlot(object):
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
+
+	@property
+	def sample_target(self) -> xa.DataArray:
+		return self.trainer.get_sample_target(self.tset)
+
+	@property
+	def tcoords(self) -> DataArrayCoordinates:
+		return self.sample_target.coords
+
+	@property
+	def sample_input(self) -> xa.DataArray:
+		return self.trainer.get_sample_input(self.tset)
+
+	@property
+	def icoords(self) -> DataArrayCoordinates:
+		return self.sample_input.coords
+
+	@property
+	def time_coords(self) -> List[datetime]:
+		return self.trainer.input_dataset(self.tset).tcoords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
 		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index)
