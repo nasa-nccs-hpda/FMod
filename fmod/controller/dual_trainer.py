@@ -364,7 +364,7 @@ class ModelTrainer(object):
 		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord.strftime('%H:%d/%m/%Y')}, nbatch_dates={len(batch_dates)}", display=True)
+		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord}, nbatch_dates={len(batch_dates)}", display=True)
 		for date_index, batch_date in enumerate(batch_dates):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)

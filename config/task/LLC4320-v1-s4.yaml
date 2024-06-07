@@ -6,7 +6,7 @@ training_version: ???
 tensor_type: "torch"
 device: "gpu"
 num_workers: 4
-downscale_method: 'interp:linear'
+downscale_method: 'interp:bicubic'
 
 start_date:  "9/13/2011"
 days_per_batch: 4
@@ -24,7 +24,7 @@ origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }
 tile_grid: { train: { x: 3, y: 3 }, valid: { x: 3, y: 3 }, test: { x: 3, y: 3 } }
 tile_size: { x: 16, y: 16 }
 conform_to_grid: false
-upsample_mode: bilinear
+upsample_mode: bicubic
 
 coords: { x: XC, y: YC, z: '' }
 input_variables: { sst: sea_surface_temperature }  # , 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
