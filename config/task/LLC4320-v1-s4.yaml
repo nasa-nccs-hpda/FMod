@@ -28,7 +28,7 @@ upsample_mode: bilinear
 
 coords: { x: XC, y: YC, z: '' }
 input_variables: { sst: sea_surface_temperature }  # , 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
-variable_ranges: { sst: (2.9963, 23.4310) }
+variable_ranges: { sst: { min: 2.9963, max: 23.4310 } }
 target_variables: [ sst ]
 forcing_variables: []
 
