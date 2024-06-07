@@ -153,6 +153,7 @@ class BatchDataset(object):
         return self.steps_per_batch
 
     def get_batch_array(self, origin: Dict[str,int], batch_date: datetime ) -> xa.DataArray:
+        print( f" \n get_batch_array({self.vres.value}) -> origin= {origin}")
         batch_data: xa.DataArray = self.srbatch.load( origin, batch_date)
         self.current_origin = origin
         self.current_date = batch_date
