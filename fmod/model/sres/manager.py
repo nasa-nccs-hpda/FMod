@@ -41,7 +41,9 @@ class SRModels:
 		return self.get_batch_array( srRes.Low, tset )
 
 	def sample_target( self, tset: TSet ) -> xa.DataArray:
-		return self.get_batch_array( srRes.High, tset )
+		rv = self.get_batch_array( srRes.High, tset )
+		print( f" sample_target--> {rv.dims}--{list(rv.shape)}")
+		return rv
 
 	def get_batch_array(self, sres: srRes, tset: TSet) -> xa.DataArray:
 		return self.get_dataset(sres, tset).get_current_batch_array()
