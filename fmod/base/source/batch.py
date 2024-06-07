@@ -259,7 +259,7 @@ class SRBatch:
 		self.current_batch: xa.DataArray = self.load_batch(origin,start)
 		self.current_date = start
 		self.current_origin = origin
-		lgm().debug( f" -----> load {self.vres}-res batch[{origin}][{start}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec" )
+		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{start}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec", display=True )
 		return self.current_batch
 
 
