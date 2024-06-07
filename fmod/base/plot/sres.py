@@ -125,8 +125,8 @@ class SRPlot(object):
 
 	@exception_handled
 	def time_update(self, sindex: int):
+		lgm().log(f"\n time_update ---> sindex = {sindex}")
 		self.time_index = sindex
-		lgm().log( f"\n time_update ---> sindex = {sindex}")
 		self.update_tile_data()
 		self.update_subplots()
 
