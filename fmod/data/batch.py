@@ -168,7 +168,7 @@ class BatchDataset(object):
     def in_batch(self, time_coord: datetime, batch_date: datetime) -> bool:
         if time_coord < batch_date: return False
         dt: timedelta = time_coord - batch_date
-        hours: int = dt.seconds // 3600
+        hours: int = (dt.seconds // 3600) + (dt.days * 24)
         return hours < self.hours_per_batch
 
     def tile_index(self, origin: Dict[str,int] ):
