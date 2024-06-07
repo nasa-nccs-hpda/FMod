@@ -93,6 +93,7 @@ class SRPlot(object):
 
 		images_data: Dict[str, xa.DataArray] = dict(upsampled=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
+		lgm().log(f"\n update_tile_data ---> images = {list(images_data.keys())}")
 		return images_data
 
 	def select_point(self,event):
@@ -125,7 +126,7 @@ class SRPlot(object):
 	@exception_handled
 	def time_update(self, sindex: int):
 		self.time_index = sindex
-		lgm().log( f" time_update ---> sindex = {sindex}")
+		lgm().log( f"\n time_update ---> sindex = {sindex}")
 		self.update_tile_data()
 		self.update_subplots()
 
@@ -157,6 +158,7 @@ class SRPlot(object):
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims.setdefault( (irow, icol), iplot )
+		print( f"\n generate_subplot({irow},{icol}): shape={iplot.get_shape()}")
 
 	def get_subplot_title(self,irow,image) -> str:
 		label = image.attrs['itype']
