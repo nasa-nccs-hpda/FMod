@@ -40,7 +40,7 @@ def get_version(task_config: DictConfig) -> int:
 
 def datelist( date_range: Tuple[datetime, datetime] ) -> pd.DatetimeIndex:
 	dlist =  pd.date_range( date_range[0], date_range[1], freq=f"{cfg().task.hours_per_step}h", inclusive="left" )
-	# print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates")
+	print( f" ^^^^^^ datelist[ {date_range[0]} -> {date_range[1]} ]: {dlist.size} dates, origin = {cfg().task.origin}" )
 	return dlist
 
 def scale( varname: str, batch_data: np.ndarray ) -> np.ndarray:
