@@ -223,23 +223,20 @@ class ModelTrainer(object):
 		targets.reverse()
 		return targets
 
-	def loss(self, products: TensorOrTensors, target: Tensor ) -> torch.Tensor:
-		loss, ptype, self.layer_losses = None, type(products), []
+	def loss(self, products: TensorOrTensors, target: Tensor ) -> Tuple[torch.Tensor,torch.Tensor]:
+		sloss, mloss, ptype, self.layer_losses = None, None, type(products), []
 		if ptype == torch.Tensor:
-			loss = self.single_product_loss( products, target)
-		elif not cfg().model.get('multiscale_loss',False):
-			loss = self.single_product_loss(products[-1], target)
+			sloss = self.single_product_loss( products, target)
+			mloss = sloss
 		else:
+			sloss = self.single_product_loss(products[-1], target)
 			targets: List[Tensor] = self.get_multiscale_targets(target)
-			#	print(f"  Output Shapes: { ','.join([str(list(out.shape)) for out in products]) }")
-			#	print(f"  Target Shapes: { ','.join([str(list(tar.shape)) for tar in targets]) }")
 			for iL, (layer_output, layer_target) in enumerate( zip(products,targets)):
 				layer_loss = self.single_product_loss(layer_output, layer_target)
 				#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
-				loss = layer_loss if (loss is None) else (loss + layer_loss)
+				mloss = layer_loss if (mloss is None) else (mloss + layer_loss)
 				self.layer_losses.append( layer_loss.item() )
-		#	print( f" --------- Layer losses: {layer_losses} --------- ")
-		return loss
+		return sloss, mloss
 
 	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, tset: TSet, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,batch_date)
@@ -313,13 +310,13 @@ class ModelTrainer(object):
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
-							loss: torch.Tensor = self.loss( prd, targ )
-							losses += loss
+							[sloss,mloss] = self.loss( prd, targ )
+							losses += sloss
 							lgm().log(f" ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{date_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {loss.item():.4f}", display=True, end="")
+							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{date_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {sloss.item():.4f}", display=True, end="")
 							if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
-							loss.backward()
+							mloss.backward()
 							self.optimizer.step()
 
 					self.input[tset.value] = inp
@@ -373,8 +370,8 @@ class ModelTrainer(object):
 				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
-				batch_model_losses.append( self.loss(prd, targ).item() )
-				batch_interp_losses.append( self.loss(ups, targ).item() )
+				batch_model_losses.append( self.loss(prd, targ)[0].item() )
+				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{date_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
