@@ -1,6 +1,6 @@
 import logging
 
-import xarray, warnings
+import xarray, warnings, torch
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
 from abc import ABC, abstractmethod
@@ -66,6 +66,13 @@ class ConfigContext:
        if exc_type is not None:
            traceback.print_exception( exc_type, value=exc_value, tb=tb)
        return True
+
+    @classmethod
+    def set_device(cls):
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            torch.cuda.set_device(device.index)
+        return device
 
 class ConfigBase(ABC):
     _instance = None
