@@ -3,8 +3,8 @@ name: ???
 nfeatures: 64
 downscale_factors: [2,2]
 loss_fn: l2
-multiscale_loss: True
-unet_depth: 4
+multiscale_loss: False
+unet_depth: 0
 
 
 
