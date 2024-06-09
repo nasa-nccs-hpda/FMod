@@ -2,7 +2,7 @@ import logging, torch, math
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import xarray as xa
-import os, time, numpy as np
+import os, time, yaml, numpy as np
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig
@@ -73,8 +73,40 @@ class SRModels:
 		model_package = importlib.import_module(importpath)
 		return model_package.get_model( self.model_config ).to(self.device)
 
+class ResultRecord(object):
 
+	def __init__(self, model_loss: float, upsampled_loss: float ):
+		self.model_loss = model_loss
+		self.upsampled_loss = upsampled_loss
 
+	@classmethod
+	def key(cls, model: str, tset: TSet) -> str:
+		return f"{model}_{tset.value}"
 
+	def serialize(self) -> Tuple[float,float]:
+		return self.model_loss, self.upsampled_loss
+class ResultsAccumulator(object):
 
-	#
+	def __init__(self, task: str, dataset: str, scenario: str ):
+		self.results: Dict[ str, ResultRecord ] = {}
+		self.dataset: str = dataset
+		self.scenario: str = scenario
+		self.task = task
+
+	def record_losses(self, model: str, tset: TSet, model_loss: float, upsampled_loss: float ):
+		self.results[ ResultRecord.key( model, tset) ] = ResultRecord(model_loss, upsampled_loss)
+
+	def serialize(self)-> Dict[ str, Tuple[float,float] ]:
+		sr =  { k: rr.serialize() for k, rr in self.results.items() }
+		return sr
+
+	def save(self, save_dir: str, display: bool = True):
+		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
+		os.makedirs( results_save_dir, exist_ok=True )
+		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
+		results = self.serialize()
+		with open(file_path, "w") as fh:
+			yaml.dump(results, fh)
+		if display:
+			print(yaml.dump(results))
+
