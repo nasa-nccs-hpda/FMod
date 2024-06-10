@@ -382,9 +382,9 @@ class ModelTrainer(object):
 		self.product[tset.value] = prd
 
 		proc_time = time.time() - proc_start
-		model_loss = np.array(batch_model_losses).mean()
-		interp_loss = np.array(batch_interp_losses).mean()
-		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		model_loss: float = np.array(batch_model_losses).mean()
+		interp_loss: float = np.array(batch_interp_losses).mean()
+		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
 		return dict(validation=model_loss, upsampled=interp_loss)
 

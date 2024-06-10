@@ -81,10 +81,13 @@ class ResultRecord(object):
 
 	@classmethod
 	def key(cls, model: str, tset: TSet) -> str:
-		return f"{model}_{tset.value}"
+		return f"{model}-{tset.value}"
 
 	def serialize(self) -> Tuple[float,float]:
 		return self.model_loss, self.upsampled_loss
+
+	def __str__(self):
+		return f"({self.model_loss:.3f}, {self.upsampled_loss:.3f})"
 class ResultsAccumulator(object):
 
 	def __init__(self, task: str, dataset: str, scenario: str ):
@@ -100,13 +103,16 @@ class ResultsAccumulator(object):
 		sr =  { k: rr.serialize() for k, rr in self.results.items() }
 		return sr
 
-	def save(self, save_dir: str, display: bool = True):
+	def save(self, save_dir: str):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
 		os.makedirs( results_save_dir, exist_ok=True )
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
 		results = self.serialize()
 		with open(file_path, "w") as fh:
 			yaml.dump(results, fh)
-		if display:
-			print(yaml.dump(results))
+
+	def print(self):
+		for rid, result in self.results.items():
+			print(f"{rid}: {result}")
+
 
