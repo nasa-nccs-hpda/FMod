@@ -22,15 +22,10 @@ for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
 
 		model_manager: SRModels = SRModels( device )
-		trainer: ModelTrainer = ModelTrainer(model_manager)
+		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train()
 
-		for tset in [TSet.Validation, TSet.Test]:
-			losses: Dict[str,float] = trainer.evaluate( tset )
-			results.record_losses( model, tset, losses['validation'], losses['upsampled'] )
-
-		results.save( cc.cfg.platform.processed )
-
+results.save( cc.cfg.platform.processed )
 results.print()
 
 

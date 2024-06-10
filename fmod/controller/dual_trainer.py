@@ -11,7 +11,7 @@ from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 from fmod.base.util.array import array2tensor
 #import torch_harmonics as harmonics
 from fmod.data.batch import BatchDataset, TileGrid
-from fmod.model.sres.manager import SRModels
+from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
@@ -82,10 +82,11 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self, model_manager: SRModels ):
+	def __init__(self, model_manager: SRModels, results_accumulator: ResultsAccumulator = None ):
 		super(ModelTrainer, self).__init__()
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
+		self.results_accum = results_accumulator
 		self.min_loss = float('inf')
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
@@ -339,6 +340,8 @@ class ModelTrainer(object):
 
 			for tset in [TSet.Validation, TSet.Test]:
 				eval_losses = self.evaluate(tset)
+				if self.results_accum is not None:
+					self.results_accum.record_losses( self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch )
 				lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
 
 		train_time = time.time() - train_start
