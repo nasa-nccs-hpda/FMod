@@ -29,6 +29,7 @@ for model in models:
 			results.record_losses( model, tset, losses['validation'], losses['upsampled'] )
 
 		results.save( cc.cfg.platform.processed )
+		results.print()
 
 
 

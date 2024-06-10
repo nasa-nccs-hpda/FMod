@@ -87,7 +87,7 @@ class ResultRecord(object):
 		return self.model_loss, self.upsampled_loss
 
 	def __str__(self):
-		return f"({self.model_loss:.3f}, {self.upsampled_loss:.3f})"
+		return f" --- Model: {self.model_loss:.4f}, Upsample: {self.upsampled_loss:.4f}, Alpha: {self.model_loss/self.upsampled_loss:.3f}"
 class ResultsAccumulator(object):
 
 	def __init__(self, task: str, dataset: str, scenario: str ):
@@ -112,6 +112,9 @@ class ResultsAccumulator(object):
 			yaml.dump(results, fh)
 
 	def print(self):
+		print( f"---------------------------- {self.task} Results --------------------------------------")
+		print(f" * dataset: {self.dataset}")
+		print(f" * scenario: {self.scenario}")
 		for rid, result in self.results.items():
 			print(f"{rid}: {result}")
 
