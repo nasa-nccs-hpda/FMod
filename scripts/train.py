@@ -3,16 +3,14 @@ import xarray as xa
 import hydra, os
 from fmod.base.util.config import fmconfig, ConfigContext
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.base.io.loader import TSet
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
-from fmod.data.batch import BatchDataset
-from fmod.base.source.loader import srRes
+from fmod.base.util.ops import fmbdir, fmtp
 hydra.initialize(version_base=None, config_path="../config")
 device = ConfigContext.set_device()
 
 task = "sres"
-models = ['dbpn' ] # 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
+models = [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
 
@@ -25,7 +23,7 @@ for model in models:
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train()
 
-results.save( cc.cfg.platform.processed )
+results.save( fmbdir('processed') )
 results.print()
 
 

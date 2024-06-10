@@ -17,7 +17,7 @@ batch_size: 40
 
 nbatches: { train: 2, valid: 20, test: 3 }     # { train: 83, valid: 20, test: 3 }
 batch_iter: 1
-nepochs: 4
+nepochs: 5
 lr: 1e-3
 
 origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }

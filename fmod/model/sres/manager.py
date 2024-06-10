@@ -110,6 +110,7 @@ class ResultsAccumulator(object):
 		os.makedirs( results_save_dir, exist_ok=True )
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
 		results = self.serialize()
+		print(f"Saving results to file: '{file_path}'")
 		with open(file_path, "w") as fh:
 			yaml.dump(results, fh)
 
