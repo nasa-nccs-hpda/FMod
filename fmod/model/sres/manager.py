@@ -75,13 +75,14 @@ class SRModels:
 
 class ResultRecord(object):
 
-	def __init__(self, model_loss: float, upsampled_loss: float ):
+	def __init__(self, model_loss: float, upsampled_loss: float, **kwargs ):
 		self.model_loss = model_loss
 		self.upsampled_loss = upsampled_loss
+		self.epoch = kwargs.get('epoch', -1)
 
-	@classmethod
-	def key(cls, model: str, tset: TSet) -> str:
-		return f"{model}-{tset.value}"
+	def key(self, model: str, tset: TSet) -> str:
+		epstr = f"-{self.epoch}" if self.epoch >= 0 else ''
+		return f"{model}-{tset.value}{epstr}"
 
 	def serialize(self) -> Tuple[float,float]:
 		return self.model_loss, self.upsampled_loss
@@ -96,8 +97,9 @@ class ResultsAccumulator(object):
 		self.scenario: str = scenario
 		self.task = task
 
-	def record_losses(self, model: str, tset: TSet, model_loss: float, upsampled_loss: float ):
-		self.results[ ResultRecord.key( model, tset) ] = ResultRecord(model_loss, upsampled_loss)
+	def record_losses(self, model: str, tset: TSet, model_loss: float, upsampled_loss: float, **kwargs ):
+		rr: ResultRecord = ResultRecord(model_loss, upsampled_loss, **kwargs)
+		self.results[ rr.key( model, tset ) ] = rr
 
 	def serialize(self)-> Dict[ str, Tuple[float,float] ]:
 		sr =  { k: rr.serialize() for k, rr in self.results.items() }
@@ -112,7 +114,7 @@ class ResultsAccumulator(object):
 			yaml.dump(results, fh)
 
 	def print(self):
-		print( f"---------------------------- {self.task} Results --------------------------------------")
+		print( f"\n\n---------------------------- {self.task} Results --------------------------------------")
 		print(f" * dataset: {self.dataset}")
 		print(f" * scenario: {self.scenario}")
 		for rid, result in self.results.items():
