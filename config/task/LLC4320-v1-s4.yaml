@@ -15,7 +15,7 @@ hours_per_step: 1
 index_by_date: False
 batch_size: 40
 
-nbatches: { train: 83, valid: 20, test: 3 }     # { train: 83, valid: 20, test: 3 }
+nbatches: { train: 2, valid: 20, test: 3 }     # { train: 83, valid: 20, test: 3 }
 batch_iter: 1
 nepochs: 4
 lr: 1e-3
