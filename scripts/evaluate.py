@@ -24,7 +24,7 @@ for model in models:
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer(model_manager)
 
-		for tset in TSet:
+		for tset in [TSet.Test]:
 			losses: Dict[str,float] = trainer.evaluate( tset )
 			results.record_losses( model, tset, losses['validation'], losses['upsampled'] )
 
