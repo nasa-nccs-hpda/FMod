@@ -16,14 +16,12 @@ scenario = "s4.1"
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
-
 	with ConfigContext(task, model, dataset, scenario) as cc:
-
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train()
+		results.save( fmbdir('processed') )
 
-results.save( fmbdir('processed') )
 results.print()
 
 
