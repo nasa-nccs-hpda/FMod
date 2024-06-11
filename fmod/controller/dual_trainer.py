@@ -272,9 +272,9 @@ class ModelTrainer(object):
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
-		seed = kwargs.get('seed',333)
 		load_state = kwargs.get( 'load_state', 'current' )
 		save_state = kwargs.get('save_state', True)
+		seed = kwargs.get( 'seed', 4456 )
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)

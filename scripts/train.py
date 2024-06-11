@@ -10,16 +10,18 @@ hydra.initialize(version_base=None, config_path="../config")
 device = ConfigContext.set_device()
 
 task = "sres"
-models = [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
+models = [ 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
+load_state = ""
+seed = 4321
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
-		trainer.train()
+		trainer.train( load_state=load_state, seed=seed )
 		results.save( fmbdir('processed') )
 
 results.print()

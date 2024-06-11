@@ -14,8 +14,6 @@ task = "sres"
 models = [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
-load_state = "current"
-save_state = True
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
