@@ -130,17 +130,17 @@ class ResultsAccumulator(object):
 				results.append( dict(model=row[0], tset=row[1], epoch=int(row[2]), model_loss=float(row[3]), interp_loss=float(row[4]), alpha=float(row[5]) ))
 		return results
 
-	def get_plot_data(self, save_dir: str, models: List[str] ) -> Dict[str,Tuple[np.ndarray,np.ndarray]]:
+	def get_plot_data(self, save_dir: str, models: List[str] ) -> Dict[str,Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]]:
 		results = self.read(save_dir)
 		plot_data = {}
 		for model in models:
 			model_data = {}
 			for tset in [TSet.Validation, TSet.Test]:
 				for ltype in ['model_loss', 'interp_loss']:
-					plot_data = model_data.setdefault(pkey(model, tset, ltype), {})
+					result_data = model_data.setdefault(pkey(model, tset, ltype), {})
 					for result in results:
 						if result['model'].strip() == model and result['tset'].strip() == tset.value:
-							plot_data[result['epoch']] = result[ltype]
+							result_data[ result['epoch'] ] = result[ltype]
 
 			x, y = {}, {}
 			for tset in [TSet.Validation, TSet.Test]:
