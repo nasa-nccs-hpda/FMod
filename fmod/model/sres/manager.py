@@ -105,6 +105,7 @@ class ResultsAccumulator(object):
 		sr =  { k: rr.serialize() for k, rr in self.results.items() }
 		return sr
 
+	@exception_handled
 	def save(self, save_dir: str):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
 		os.makedirs( results_save_dir, exist_ok=True )
