@@ -125,7 +125,7 @@ class ResultsAccumulator(object):
 		with open(file_path, 'r', newline='') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for row in csvreader:
-				results.append( dict(model=row[0], tset=row[1], epoch=row[2], model_loss=row[3], interp_loss=row[4], alpha=row[5] ))
+				results.append( dict(model=row[0], tset=row[1], epoch=int(row[2]), model_loss=float(row[3]), interp_loss=float(row[4]), alpha=float(row[5]) ))
 		return results
 
 	def print(self):
