@@ -14,7 +14,7 @@ models = [ 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
 load_state = "current"
-seed = 4321
+seed = 48886
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
