@@ -38,10 +38,11 @@ class Crossscale(nn.Module):
         return self.conv(x)
 
 class MSCNN(nn.Module):
-    def __init__(self, n_channels: int, nfeatures: int, downscale_factors: List[int], unet_depth: int = 0 ):
+    def __init__(self, n_channels: int, nfeatures: int, downscale_factors: List[int], ups_mode: str, unet_depth: int = 0 ):
         super(MSCNN, self).__init__()
         self.n_channels: int = n_channels
         self.unet_depth: int = unet_depth
+        self.ups_mode = ups_mode
         self.downscale_factors = downscale_factors
         self.inc: nn.Module = DoubleConv( n_channels, nfeatures )
         self.downscale: nn.ModuleList = nn.ModuleList()
@@ -51,7 +52,7 @@ class MSCNN(nn.Module):
         for iL, usf in enumerate(downscale_factors):
             self.downscale.append(  ConvDownscale( nfeatures, nfeatures, usf))
             self.crossscale.append(  Crossscale( nfeatures, self.n_channels ) )
-            self.upsample.append( Upsample(usf) )
+            self.upsample.append( Upsample( usf, self.ups_mode ) )
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
         features, results = self.inc(x), [x]
@@ -69,7 +70,8 @@ def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
     nfeatures:          int     = mconfig['nfeatures']
     downscale_factors: List[int]  = mconfig['downscale_factors']
     unet_depth:         int     = mconfig['unet_depth']
-    return MSCNN( nchannels, nfeatures, downscale_factors, unet_depth )
+    ups_mode:           str     = mconfig['ups_mode']
+    return MSCNN( nchannels, nfeatures, downscale_factors, ups_mode, unet_depth )
 
 class Upsampler(nn.Module):
     def __init__(self, downscale_factors: List[int], mode: str ):

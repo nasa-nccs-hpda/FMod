@@ -5,6 +5,7 @@ downscale_factors: [2,2]
 loss_fn: l2
 multiscale_loss: True
 unet_depth: 4
+ups_mode: bicubic
 
 
 
