@@ -119,7 +119,7 @@ class ResultsAccumulator(object):
 
 	def read(self, save_dir: str):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
-		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
+		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
 		results: List[Dict[str,Any]] = []
 		print(f"Resding results from file: '{file_path}'")
 		with open(file_path, 'r', newline='') as csvfile:
