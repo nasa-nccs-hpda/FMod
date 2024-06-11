@@ -145,8 +145,8 @@ class ResultsAccumulator(object):
 			x, y = {}, {}
 			for tset in [TSet.Validation, TSet.Test]:
 				pdata = model_data[pkey(model, tset, 'model_loss')]
-				x[tset] = np.array(pdata.keys())
-				y[tset] = np.array(pdata.values())
+				x[tset] = np.array(list(pdata.keys()))
+				y[tset] = np.array(list(pdata.values()))
 			plot_data[model] = (x,y)
 
 		return plot_data
