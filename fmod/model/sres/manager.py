@@ -121,7 +121,7 @@ class ResultsAccumulator(object):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
 		results: List[Dict[str,Any]] = []
-		print(f"Resding results from file: '{file_path}'")
+		print(f"Reading results from file: '{file_path}'")
 		with open(file_path, 'r', newline='') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for row in csvreader:
