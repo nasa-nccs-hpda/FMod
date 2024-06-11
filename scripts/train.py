@@ -13,7 +13,7 @@ task = "sres"
 models = [ 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
-load_state = ""
+load_state = "current"
 seed = 4321
 
 results = ResultsAccumulator(task,dataset,scenario)

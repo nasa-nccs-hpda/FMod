@@ -9,7 +9,7 @@ from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 #from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
-#import torch_harmonics as harmonics
+from fmod.model.sres.mscnn.network import Upsampler
 from fmod.data.batch import BatchDataset, TileGrid
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.logging import lgm
@@ -102,7 +102,7 @@ class ModelTrainer(object):
 		self.train_dates: List[datetime] = self.input_dataset(TSet.Train).train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
-		self.upsampler: nn.Upsample = nn.Upsample( scale_factor=self.scale_factor, mode=cfg().task.upsample_mode )
+		self.upsampler: Upsampler = Upsampler( downscale_factors=cfg().model.downscale_factors, mode=cfg().task.upsample_mode )
 		self.conform_to_data_grid()
 	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.input: MLTensors = {}
