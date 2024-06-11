@@ -291,6 +291,7 @@ class ModelTrainer(object):
 		else:
 			print( " *** No checkpoint loaded: training from scratch *** ")
 
+		self.record_eval(epoch0-1)
 		for epoch in range(epoch0,nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -337,18 +338,20 @@ class ModelTrainer(object):
 			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
-
-			for tset in [TSet.Validation, TSet.Test]:
-				eval_losses = self.evaluate(tset)
-				if self.results_accum is not None:
-					self.results_accum.record_losses( self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch )
-				lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
+			self.record_eval(epoch)
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
+
+	def record_eval(self, epoch: int ):
+		for tset in [TSet.Validation, TSet.Test]:
+			eval_losses = self.evaluate(tset)
+			if self.results_accum is not None:
+				self.results_accum.record_losses(self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch)
+			lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
