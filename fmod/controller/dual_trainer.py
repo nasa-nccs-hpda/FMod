@@ -18,7 +18,7 @@ from fmod.controller.checkpoints import CheckpointManager
 import numpy as np, xarray as xa
 from fmod.controller.stats import l2loss
 import torch.nn as nn
-import time
+import time, csv
 
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]

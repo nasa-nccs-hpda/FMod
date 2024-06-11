@@ -1,4 +1,4 @@
-import logging, torch, math
+import logging, torch, math, csv
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import xarray as xa
@@ -110,10 +110,23 @@ class ResultsAccumulator(object):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
 		os.makedirs( results_save_dir, exist_ok=True )
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
-		results = self.serialize()
+		results: Dict[ str, Tuple[float,float] ] = self.serialize()
 		print(f"Saving results to file: '{file_path}'")
-		with open(file_path, "w") as fh:
-			yaml.dump(results, fh)
+		with open(file_path, 'w', newline='\n') as csvfile:
+			csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			for k,v in results.items():
+				csvwriter.writerow( k.split('-') + list(v) )
+
+	def read(self, save_dir: str):
+		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
+		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
+		results: List[Dict[str,Any]] = []
+		print(f"Resding results from file: '{file_path}'")
+		with open(file_path, 'r', newline='') as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			for row in csvreader:
+				results.append( dict(model=row[0], tset=row[1], epoch=row[2], model_loss=row[3], interp_loss=row[4], alpha=row[5] ))
+		return results
 
 	def print(self):
 		print( f"\n\n---------------------------- {self.task} Results --------------------------------------")
