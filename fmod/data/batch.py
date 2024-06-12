@@ -136,7 +136,7 @@ class BatchDataset(object):
         self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
         self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
         self.ntsteps = self.srbatch.batch_steps * self.ntbatches
-        self.hours_per_step = task_config.hours_per_step
+        self.hours_per_step = task_config.get('hours_per_step',0)
         self.hours_per_batch = self.days_per_batch * 24
         self.current_batch_data = None
 
