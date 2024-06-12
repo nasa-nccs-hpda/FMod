@@ -79,6 +79,7 @@ class Upsampler(nn.Module):
         super(Upsampler, self).__init__()
         self.downscale_factors = downscale_factors
         self.upsample: nn.ModuleList = nn.ModuleList()
+        print( f"Upsampler: downscale_factors = {self.downscale_factors}")
         for iL, usf in enumerate(self.downscale_factors):
             self.upsample.append( Upsample(usf,mode) )
 
