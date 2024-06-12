@@ -17,8 +17,8 @@ class ncFormat(Enum):
 	SRES = "sres"
 
 def nbatches( task_config, tset: TSet ) -> int:
-	nbs: Dict[str,int] = task_config['nbatches']
-	return nbs[tset.value]
+	nbs: Dict[str,int] = task_config.get('nbatches', None)
+	if nbs is not None: return nbs[tset.value]
 
 def batches_date_range( task_config, tset: TSet )-> List[datetime]:
 	days_per_batch: int = task_config.get( 'days_per_batch', 0 )
