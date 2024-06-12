@@ -367,8 +367,11 @@ class ModelTrainer(object):
 		start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 		batch_interp_losses = []
 		inp,  target, ups = None, None, None
+		print( f"start_coords = {start_coords}")
 		for batch_index, start_coord in enumerate(start_coords):
+			print(f"Processing batch[{batch_index}]: {start_coord}")
 			for xyi, tile_loc in tile_locs.items():
+				print(f"Processing tile[{xyi}]: {tile_loc}")
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
 				inp = train_data['input']
 				target: Tensor = train_data['target']
