@@ -151,6 +151,9 @@ class BatchDataset(object):
     def __len__(self):
         return self.steps_per_batch
 
+    def get_channel_idxs(self, channels):
+        return [0]
+
     def get_batch_array(self, oindx: Dict[str,int], start_coord: Union[datetime,int], **kwargs ) -> xa.DataArray:
         rescale = kwargs.get( 'rescale', True )
         origin = self.scale_coords(oindx) if rescale else oindx
