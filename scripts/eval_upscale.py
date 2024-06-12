@@ -15,7 +15,7 @@ dataset = "LLC4320-v1"
 scenario = "s4.1"
 model = "mscnn"
 downscale_factors= [ 2, 2 ]
-ups_mode= 'bicubic'
+ups_mode= 'bilinear'
 
 results = ResultsAccumulator(task,dataset,scenario)
 with ConfigContext(task, model, dataset, scenario) as cc:
