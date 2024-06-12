@@ -35,7 +35,7 @@ class SRModels:
 		self.target_variables = cfg().task.target_variables
 		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
 		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High, TSet.Train )
-		self.model_config['nchannels'] = self.sample_input(TSet.Train).sizes['channel']
+		self.model_config['nchannels'] = len(cfg().task.input_variables)
 		if self.model_config.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features()
 		self.model_config['device'] = device
