@@ -13,7 +13,7 @@ device = ConfigContext.set_device()
 task = "sres"
 dataset = "LLC4320-v1"
 scenario = "s4.1"
-model = "dbpn"
+model = "mscnn"
 downscale_factors= [4]
 ups_mode= 'bicubic'
 
