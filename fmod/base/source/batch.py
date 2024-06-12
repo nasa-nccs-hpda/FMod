@@ -69,7 +69,8 @@ def get_target_steps(btype: BatchType):
 
 def get_steps_per_day() -> int:
 	hours_per_step = cfg().task.get('hours_per_step',0)
-	steps_per_day: float = 0 if (hours_per_step==0) else 24 / hours_per_step
+	if hours_per_step == 0: return 0
+	steps_per_day: float = 24 / hours_per_step
 	assert steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
 	return int(steps_per_day)
 
