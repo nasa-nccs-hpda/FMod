@@ -14,9 +14,13 @@ task = "sres"
 dataset = "LLC4320-v1"
 scenario = "s4.1"
 model = "dbpn"
+downscale_factors= [4]
+ups_mode= 'bicubic'
 
 results = ResultsAccumulator(task,dataset,scenario)
 with ConfigContext(task, model, dataset, scenario) as cc:
+	cc.cfg.model.downscale_factors= downscale_factors
+	cc.cfg.model.ups_mode = ups_mode
 
 	model_manager: SRModels = SRModels( device )
 	trainer: ModelTrainer = ModelTrainer(model_manager)
