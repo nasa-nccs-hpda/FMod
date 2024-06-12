@@ -117,7 +117,6 @@ class BatchDataset(object):
         self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
         self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
         self.load_base: bool = kwargs.pop('load_base', False)
-        self.day_index: int = 0
         self.train_dates: List[datetime] = batches_date_range(task_config,tset)
         self.days_per_batch: int = task_config.days_per_batch
         self.hours_per_step: int = task_config.hours_per_step
@@ -126,7 +125,6 @@ class BatchDataset(object):
         self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
         self.downscale_factors: List[int] = cfg().model.downscale_factors
         self.scalefactor = math.prod(self.downscale_factors)
-        self.current_date: datetime = self.train_dates[0]
         self.current_origin: Dict[str, int] = self.tile_grid.origin
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
@@ -206,13 +204,9 @@ class BatchDataset(object):
         return start_coords
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
-        lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")
+        lgm().log(f" *** MERRA2Dataset.load_date: device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")
         for k,v in batch_inputs.items():
             lgm().log(f" --->> {k}{v.dims}: {v.shape}")
-
-    def __iter__(self):
-        self.day_index = 0
-        return self
 
     def extract_input_target_times(self, dataset: xa.Dataset) -> Tuple[xa.Dataset, xa.Dataset]:
         """Extracts inputs and targets for prediction, from a Dataset with a time dim.
