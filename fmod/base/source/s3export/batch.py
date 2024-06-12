@@ -71,7 +71,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def data_filepath(self, varname: str, **kwargs) -> Tuple[str,int]:
 		root: str = cfg().platform.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
-		dindx = kwargs.get('index',-1)
+		dindx = kwargs.get('index',-2) + 1
 		date: Optional[datetime] = kwargs.get('date',None)
 		if date is not None:
 			dindx = dateindex(date,self.task)
