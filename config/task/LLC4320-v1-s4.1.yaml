@@ -8,18 +8,16 @@ device: "gpu"
 num_workers: 4
 downscale_method: 'interp:bicubic'
 
-index_by_date: False
-batch_size: { train: 50, valid: 50, test: 37 }
-
 batch_iter: 1
 nepochs: 1
 lr: 1e-3
+conform_to_grid: false
+upsample_mode: bicubic
 
+batch_size: { train: 50, valid: 50, test: 37 }
 origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }
 tile_grid: { train: { x: 1, y: 1 }, valid: { x: 1, y: 1 }, test: { x: 1, y: 1 } }
 tile_size: { x: 48, y: 48 }
-conform_to_grid: false
-upsample_mode: bicubic
 
 coords: { x: XC, y: YC, z: '' }
 input_variables: { sst: sea_surface_temperature }  # , 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }
