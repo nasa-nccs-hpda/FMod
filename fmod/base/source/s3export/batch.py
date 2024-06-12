@@ -7,6 +7,7 @@ from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
 from enum import Enum
 from fmod.base.io.loader import TSet
+from glob import glob
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from fmod.base.io.loader import data_suffix, path_suffix
@@ -82,6 +83,21 @@ class S3ExportDataLoader(SRDataLoader):
 		else: raise ValueError(f'version {self.version} not supported')
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
+
+	def dataset_glob(self, varname: str) -> str:
+		root: str = cfg().platform.dataset_root
+		usf: int = math.prod(cfg().model.downscale_factors)
+		if self.version == 0:
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date="*", usf=usf)
+		elif self.version == 1:
+			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf)
+		else: raise ValueError(f'version {self.version} not supported')
+		fglob = f"{root}/{subpath}"
+		return fglob
+
+	def get_dset_size(self) -> int:
+		dsglob = self.dataset_glob( self.varnames.items()[0][0] )
+		return len( glob(dsglob) )
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
 	# 	cdata: np.ndarray = self.ijc[c]

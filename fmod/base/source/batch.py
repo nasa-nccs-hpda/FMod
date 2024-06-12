@@ -237,6 +237,9 @@ class SRBatch:
 		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
 		self.channels: List[str] = None
 
+	def get_dset_size(self):
+		return self.data_loader.get_dset_size()
+
 	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
 		return self.data_loader.load_global_timeslice(vid,date)
 

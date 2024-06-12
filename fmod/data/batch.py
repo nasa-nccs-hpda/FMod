@@ -140,7 +140,6 @@ class BatchDataset(object):
         self.ntsteps = self.srbatch.batch_steps * self.ntbatches
         self.hours_per_step = task_config.hours_per_step
         self.hours_per_batch = self.days_per_batch * 24
-        self.tcoords: List[datetime] = self.get_time_coords()
         self.current_batch_data = None
 
     def data_index_range(self) -> Tuple[int,int]:
@@ -178,10 +177,6 @@ class BatchDataset(object):
         global_timeslice: np.ndarray =  self.srbatch.load_global_timeslice( vid, self.train_dates[date_index] )
         return xa.DataArray( global_timeslice, dims=['y','x'] )
 
-    @property
-    def batch_dates(self)-> List[datetime]:
-        return self.get_batch_dates()
-
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
         if self.vres == srRes.Low:  return c
         else:                       return {k: v * self.scalefactor for k, v in c.items()}
@@ -202,22 +197,13 @@ class BatchDataset(object):
                 if (target_coord is None) or self.in_batch( target_coord, batch_date ):
                     start_coords.append( batch_date )
         else:
+            nidx = self.srbatch.get_dset_size()
+            print( f"  ------------- dataset size = {nidx}  ------------- ")
             for dindex in range(0, nidx, self.batch_size):
                 if (target_coord is None) or self.in_batch_idx(target_coord,dindex):
                     start_coords.append( dindex )
         if randomize:   random.shuffle(start_coords)
         return start_coords
-
-    def get_time_coord(self, tindex: int ) -> datetime:
-        return self.tcoords[tindex]
-    def get_time_coords(self) -> List[datetime]:
-        bdates: List[datetime] = self.get_batch_dates(randomize=False, offset=False )
-        time: List[datetime] = []
-        for bdate in bdates:
-            for bstep in range(self.srbatch.batch_steps):
-                hours = bstep * self.hours_per_step
-                time.append( bdate + timedelta(hours=hours) )
-        return time
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):
         lgm().log(f" *** MERRA2Dataset.load_date[{self.day_index}]: {self.current_date}, device={self.task_config.device}, load time={time.time()-start_time:.2f} sec")

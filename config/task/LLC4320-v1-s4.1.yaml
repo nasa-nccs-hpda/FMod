@@ -13,11 +13,11 @@ days_per_batch: 4
 hours_per_step: 1
 
 index_by_date: False
-batch_size: 40
+batch_size: { train: 50, valid: 50, test: 37 }
+nbatches: { train: 0, valid: 0, test: 0 }
 
-nbatches: { train: 83, valid: 20, test: 3 }
 batch_iter: 1
-nepochs: 30
+nepochs: 1
 lr: 1e-3
 
 origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }

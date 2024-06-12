@@ -31,6 +31,9 @@ class SRDataLoader(object):
 	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
 		raise NotImplementedError("SRDataLoader:load_global_timeslice")
 
+	def get_dset_size(self) -> int:
+		raise NotImplementedError("SRDataLoader:get_dset_size")
+
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 
