@@ -34,8 +34,11 @@ class SRDataLoader(object):
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 
-	def load_batch(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		raise NotImplementedError("SRDataLoader:load_batch")
+	def load_temporal_batch(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
+		raise NotImplementedError("SRDataLoader:load_temporal_batch")
+
+	def load_index_batch(self, origin: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
+		raise NotImplementedError("SRDataLoader:load_index_batch")
 
 	def load_const_dataset(self, origin: Dict[str,int] ):
 		raise NotImplementedError("SRDataLoader:load_const_dataset")

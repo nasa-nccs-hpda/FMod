@@ -240,9 +240,11 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss, mloss
 
-	def get_srbatch(self, origin: Dict[str,int], batch_date: datetime, tset: TSet, as_tensor: bool = True, shuffle: bool = True ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
-		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,batch_date)
-		btarget:  xarray.DataArray = self.target_dataset(tset).get_batch_array(origin,batch_date)
+	def get_srbatch(self, origin: Dict[str,int], tset: TSet, start_coord: Union[datetime,int], **kwargs  ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
+		as_tensor: bool = kwargs.pop('as_tensor',True)
+		shuffle: bool = kwargs.pop('shuffle',False)
+		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,start_coord,**kwargs)
+		btarget:  xarray.DataArray = self.target_dataset(tset).get_batch_array(origin,start_coord,**kwargs)
 		if shuffle:
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
 			binput: xarray.DataArray = binput[ batch_perm, ... ]
@@ -299,16 +301,15 @@ class ModelTrainer(object):
 			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}   ----------- ", display=True )
 
 			self.model.train()
-			batch_dates: List[datetime] = self.input_dataset(TSet.Train).get_batch_dates()
-			lgm().log( f"BATCH START DATES: {[d.strftime('%m/%d:%H/%Y') for d in batch_dates]}")
+			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
 			batch_losses = []
-			for date_index, batch_date in enumerate(batch_dates):
+			for batch_index, start_coord in enumerate(start_coords):
 				try:
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
-						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,batch_date,TSet.Train)
+						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,TSet.Train,start_coord)
 						inp, dindxs = train_data['input'], train_data['didxs']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
@@ -316,7 +317,7 @@ class ModelTrainer(object):
 							[sloss,mloss] = self.loss( prd, targ )
 							losses += sloss
 							lgm().log(f"  ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{date_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {sloss.item():.4f}", display=True, end="")
+							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {sloss.item():.4f}", display=True, end="")
 							if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
 							mloss.backward()
@@ -330,7 +331,7 @@ class ModelTrainer(object):
 
 
 				except Exception as e:
-					print( f"\n !!!!! Error processing batch_date={batch_date} !!!!! {e}")
+					print( f"\n !!!!! Error processing batch {batch_index} !!!!! {e}")
 					print( traceback.format_exc() )
 
 			if self.scheduler is not None:
@@ -360,23 +361,20 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		input_dataset: BatchDataset = self.input_dataset(tset)
-		time_coord: datetime = None if (self.time_index < 0) else input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
-		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
+		start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 		batch_interp_losses = []
 		inp,  target, ups = None, None, None
-		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord}, nbatch_dates={len(batch_dates)}", display=True)
-		for date_index, batch_date in enumerate(batch_dates):
+		for batch_index, start_coord in enumerate(start_coords):
 			for xyi, tile_loc in tile_locs.items():
-				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
 				inp = train_data['input']
 				target: Tensor = train_data['target']
 				ups: Tensor = self.upsample(inp)
 				batch_interp_losses.append( self.loss(ups, target)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{date_index}][{xyi}], Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}], Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = target
@@ -402,13 +400,13 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
-		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
+		start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord}, nbatch_dates={len(batch_dates)}", display=True)
-		for date_index, batch_date in enumerate(batch_dates):
+		for batch_index, start_coord in enumerate(start_coords):
 			for xyi, tile_loc in tile_locs.items():
-				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
 				inp, dindxs = train_data['input'], train_data['didxs']
 				# ups: Tensor = self.get_target_channels(self.upsample(inp))
 				ups: Tensor = self.upsample(inp)
@@ -416,7 +414,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{date_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}, alpha = {batch_model_losses[-1]/batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}, alpha = {batch_model_losses[-1]/batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ
@@ -444,11 +442,12 @@ class ModelTrainer(object):
 		return product, target
 
 	def get_target_channels(self, batch_data: Tensor, tset: TSet) -> Tensor:
-		if self.channel_idxs is None:
-			cidxs: List[int] = self.input_dataset(tset).get_channel_idxs(self.target_variables)
-			self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
-		channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
-		result =  channels[0] if (len(channels) == 1) else torch.cat( channels, dim = 1 )
+		result = tset
+		# if self.channel_idxs is None:
+		# 	cidxs: List[int] = self.input_dataset(tset).get_channel_idxs(self.target_variables)
+		# 	self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
+		# channels = [ torch.select(batch_data, 1, cidx ) for cidx in self.channel_idxs ]
+		# result =  channels[0] if (len(channels) == 1) else torch.cat( channels, dim = 1 )
 		return result
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:

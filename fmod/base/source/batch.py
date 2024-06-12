@@ -32,6 +32,9 @@ class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
 
+def idxarg( **kwargs ) -> Union[datetime,int]:
+	if    'start_time' in kwargs: return kwargs['start_time']
+	elif 'start_index' in kwargs: return kwargs['start_index']
 def index_of_cval(  data: Union[xa.Dataset,xa.DataArray], dim:str, cval: float)-> int:
 	coord: np.ndarray = data.coords[dim].values
 	cindx: np.ndarray = np.where(coord==cval)[0]
@@ -222,11 +225,13 @@ class SRBatch:
 		self.vres = vres
 		self.name = "input" if self.vres == "low" else "target"
 		self.tile_size: Dict[str, int] = tile_size
+		self.tset: TSet = tset
 		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, vres, tset, **kwargs )
-		self.current_batch: xa.Dataset = None
-		self.current_date = None
+		self.current_batch: xa.DataArray = None
+		self.current_start_idx: Optional[Union[datetime,int]] = None
 		self.current_origin = None
 		self.days_per_batch = cfg().task.days_per_batch
+		self.batch_size = cfg().task.batch_size
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
 		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
@@ -245,21 +250,27 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
-	def load_batch(self, origin: Dict[str,int], start: datetime) -> xa.DataArray:
-		dates: Tuple[datetime,datetime] = date_bounds(start, self.days_per_batch)
-		darray: xa.DataArray = self.data_loader.load_batch( origin, dates )
-		lgm().debug( f"load_batch[{start.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
+	def load_batch(self, origin: Dict[str,int], start_coord: Union[datetime,int]) -> xa.DataArray:
+		if type(start_coord) == datetime:
+			dates: Tuple[datetime,datetime] = date_bounds(start_coord, self.days_per_batch)
+			darray: xa.DataArray = self.data_loader.load_temporal_batch( origin, dates )
+			lgm().debug( f"load_batch[{start_coord.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
+		elif type(start_coord) == int:
+			index_range: Tuple[int,int] = (start_coord, start_coord + self.batch_size[self.tset.value] )
+			darray: xa.DataArray = self.data_loader.load_index_batch( origin, index_range )
+			lgm().debug(f"load_batch: {index_range[0]} -> {index_range[1]}, ndates={darray.sizes['time']}")
+		else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(start_coord)}")
 		if self.channels is None:
 			self.channels = darray.coords["channel"].values.tolist()
 		return  darray
 
-	def load(self, origin: Dict[str,int], start: datetime ) -> xa.DataArray:
-		# if (self.current_date != start) and (self.current_origin != origin):
-		t0 = time.time()
-		self.current_batch: xa.DataArray = self.load_batch(origin,start)
-		self.current_date = start
-		self.current_origin = origin
-		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{start}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time()-t0:.3f} sec" )
+	def load(self, origin: Dict[str,int], start_coord: Union[datetime,int] ) -> xa.DataArray:
+		if (self.current_start_idx != start_coord) and (self.current_origin != origin):
+			t0 = time.time()
+			self.current_batch: xa.DataArray = self.load_batch( origin, start_coord )
+			self.current_start_idx = start_coord
+			self.current_origin = origin
+			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
 		return self.current_batch
 
 

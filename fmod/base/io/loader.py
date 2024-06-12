@@ -20,7 +20,7 @@ def nbatches( task_config, tset: TSet ) -> int:
 	nbs: Dict[str,int] = task_config['nbatches']
 	return nbs[tset.value]
 
-def batches_range( task_config, tset: TSet )-> List[datetime]:
+def batches_date_range( task_config, tset: TSet )-> List[datetime]:
 	return date_list( start_date( task_config ), task_config['days_per_batch'] * nbatches( task_config, tset ) )
 
 def path_suffix(vres: str="high") -> str:
