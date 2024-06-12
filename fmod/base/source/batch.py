@@ -68,7 +68,8 @@ def get_target_steps(btype: BatchType):
 	elif btype == BatchType.Forecast: return cfg().task.eval_steps
 
 def get_steps_per_day() -> int:
-	steps_per_day: float = 24 / cfg().task.hours_per_step
+	hours_per_step = cfg().task.get('hours_per_step',0)
+	steps_per_day: float = 0 if (hours_per_step==0) else 24 / hours_per_step
 	assert steps_per_day.is_integer(), "steps_per_day (24/data_timestep) must be an integer"
 	return int(steps_per_day)
 
@@ -230,7 +231,7 @@ class SRBatch:
 		self.current_batch: xa.DataArray = None
 		self.current_start_idx: Optional[Union[datetime,int]] = None
 		self.current_origin = None
-		self.days_per_batch = cfg().task.days_per_batch
+		self.days_per_batch = cfg().task.get('days_per_batch',0)
 		self.batch_size = cfg().task.batch_size
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
