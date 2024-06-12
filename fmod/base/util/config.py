@@ -145,8 +145,10 @@ def cfg_date( csection: str ) -> date:
     dcfg = cfg().get(csection)
     return date( dcfg.year, dcfg.month, dcfg.day )
 
-def start_date( task: DictConfig )-> datetime:
-    toks = [ int(tok) for tok in task.start_date.split("/") ]
+def start_date( task: DictConfig )-> Optional[datetime]:
+    startdate = task.get('start_date', None)
+    if startdate is None: return None
+    toks = [ int(tok) for tok in startdate.split("/") ]
     return  datetime( month=toks[0], day=toks[1], year=toks[2] )
 
 def dateindex(d: datetime, task: DictConfig) -> int:

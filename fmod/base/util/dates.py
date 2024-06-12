@@ -26,12 +26,13 @@ def drepr(d: datetime) -> str:
 def next(d: datetime) -> datetime:
 	return d + timedelta(days=1)
 
-def date_list( start: datetime, num_days: int )-> List[datetime]:
-	d0: datetime = start
+def date_list( start: Optional[datetime], num_days: int )-> List[datetime]:
 	dates: List[datetime] = []
-	for iday in range(0,num_days):
-		dates.append(d0)
-		d0 = next(d0)
+	if (start is not None) and (num_days > 0):
+		d0: datetime = start
+		for iday in range(0,num_days):
+			dates.append(d0)
+			d0 = next(d0)
 	return dates
 
 def date_bounds( start: datetime, num_days: int )-> Tuple[datetime,datetime]:

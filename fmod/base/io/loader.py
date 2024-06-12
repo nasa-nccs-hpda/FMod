@@ -21,7 +21,8 @@ def nbatches( task_config, tset: TSet ) -> int:
 	return nbs[tset.value]
 
 def batches_date_range( task_config, tset: TSet )-> List[datetime]:
-	return date_list( start_date( task_config ), task_config['days_per_batch'] * nbatches( task_config, tset ) )
+	days_per_batch: int = task_config.get( 'days_per_batch', 0 )
+	return date_list( start_date( task_config ), days_per_batch * nbatches( task_config, tset ) )
 
 def path_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)
