@@ -102,7 +102,7 @@ class ModelTrainer(object):
 		self.train_dates: List[datetime] = self.input_dataset(TSet.Train).train_dates
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
-		self.upsampler: Upsampler = Upsampler( downscale_factors=cfg().model.downscale_factors, mode=cfg().task.upsample_mode )
+		self.upsampler: Upsampler = Upsampler( downscale_factors=cfg().model.downscale_factors, mode=cfg().model.upsample_mode )
 		self.conform_to_data_grid()
 	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.input: MLTensors = {}

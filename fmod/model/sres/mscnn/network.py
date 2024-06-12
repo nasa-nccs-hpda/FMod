@@ -24,6 +24,7 @@ class Upsample(nn.Module):
         super().__init__()
         self.mode = mode
         self.downscale_factor = downscale_factor
+        print( f"Creating Upsample stage, downscale_factor={downscale_factor}, mode={mode}")
         self.up = nn.Upsample( scale_factor=downscale_factor, mode=mode )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
