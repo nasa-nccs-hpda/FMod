@@ -251,9 +251,8 @@ class ModelTrainer(object):
 			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
 		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}, range=({btarget.values.min():.3f},{btarget.values.max():.3f})")
 		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}, range=({btarget.values.min():.3f},{btarget.values.max():.3f})")
-		didxs = dict(input=binput.attrs['didx-range'], target=btarget.attrs['didx-range'])
-		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget), didxs=didxs )
-		else:          return dict( input=binput,               target=btarget, didxs=didxs )
+		if as_tensor:  return dict( input=array2tensor(binput), target=array2tensor(btarget) )
+		else:          return dict( input=binput,               target=btarget )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
 		if tset not in self.input: self.evaluate(tset)
@@ -310,7 +309,7 @@ class ModelTrainer(object):
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,TSet.Train,start_coord)
-						inp, dindxs = train_data['input'], train_data['didxs']
+						inp = train_data['input']
 						target: Tensor   = train_data['target']
 						for biter in range(batch_iter):
 							prd, targ = self.apply_network( inp, target )
@@ -410,7 +409,7 @@ class ModelTrainer(object):
 		for batch_index, start_coord in enumerate(start_coords):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
-				inp, dindxs = train_data['input'], train_data['didxs']
+				inp = train_data['input']
 				# ups: Tensor = self.get_target_channels(self.upsample(inp))
 				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
