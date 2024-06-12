@@ -14,7 +14,8 @@ from fmod.data.batch import BatchDataset
 
 def pkey( model: str, tset: TSet, ltype: str ): return '-'.join([model,tset.value,ltype])
 
-def get_temporal_features( time: np.ndarray ) -> np.ndarray:
+def get_temporal_features( time: np.ndarray = None ) -> Optional[np.ndarray]:
+	if time is None: return None
 	sday, syear, t0, pi2 = [], [], time[0], 2 * np.pi
 	for idx, t in enumerate(time):
 		td: float = float((t - t0) / np.timedelta64(1, 'D'))
@@ -24,6 +25,7 @@ def get_temporal_features( time: np.ndarray ) -> np.ndarray:
 	# print( f"{idx}: {pd.Timestamp(t).to_pydatetime().strftime('%m/%d:%H/%Y')}: td[{td:.2f}]=[{sday[-1][0]:.2f},{sday[-1][1]:.2f}] ty[{ty:.2f}]=[{syear[-1][0]:.2f},{syear[-1][1]:.2f}]" )
 	tfeats = np.concatenate([np.array(tf,dtype=np.float32) for tf in [sday, syear]], axis=1)
 	return tfeats.reshape(list(tfeats.shape) + [1, 1])
+
 class SRModels:
 
 	def __init__(self,  device: torch.device):
@@ -32,11 +34,10 @@ class SRModels:
 		self.device = device
 		self.target_variables = cfg().task.target_variables
 		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
-		self.time: np.ndarray = self.sample_input(TSet.Train).coords['time'].values
 		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High, TSet.Train )
 		self.model_config['nchannels'] = self.sample_input(TSet.Train).sizes['channel']
 		if self.model_config.get('use_temporal_features', False ):
-			self.model_config['temporal_features'] = get_temporal_features(self.time)
+			self.model_config['temporal_features'] = get_temporal_features()
 		self.model_config['device'] = device
 
 	def sample_input( self, tset: TSet ) -> xa.DataArray:
