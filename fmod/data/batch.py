@@ -120,7 +120,7 @@ class BatchDataset(object):
         self.train_dates: List[datetime] = batches_date_range(task_config,tset)
         self.days_per_batch: int = task_config.get('days_per_batch',0)
         self.hours_per_step: int = task_config.get('hours_per_step',0)
-        self.batch_size = task_config.batch_size
+        self.batch_size: int = task_config.batch_size[self.tset.value]
         self.steps_per_day = (24 // self.hours_per_step) if (self.hours_per_step > 0) else 0
         self.steps_per_batch: int = self.days_per_batch * self.steps_per_day
         self.downscale_factors: List[int] = cfg().model.downscale_factors
@@ -199,7 +199,7 @@ class BatchDataset(object):
                     start_coords.append( batch_date )
         else:
             nidx = self.srbatch.get_dset_size()
-            print( f"  ------------- dataset size = {nidx}  ------------- ")
+            print( f"  ------------- {self.tset.value} dataset size = {nidx}  ------------- ")
             for dindex in range(0, nidx, self.batch_size):
                 if (target_coord is None) or self.in_batch_idx(target_coord,dindex):
                     start_coords.append( dindex )
