@@ -108,6 +108,7 @@ class ModelTrainer(object):
 		self.input: MLTensors = {}
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
+		self.interp: MLTensors = {}
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
@@ -352,6 +353,40 @@ class ModelTrainer(object):
 			if self.results_accum is not None:
 				self.results_accum.record_losses(self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch)
 			lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
+
+	def eval_upscale(self, tset: TSet, **kwargs) -> float:
+		seed = kwargs.get('seed', 333)
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+		self.time_index = kwargs.get('time_index', self.time_index)
+		self.tile_index = kwargs.get('tile_index', self.tile_index)
+		input_dataset: BatchDataset = self.input_dataset(tset)
+		time_coord: datetime = None if (self.time_index < 0) else input_dataset.get_time_coord(self.time_index)
+
+		proc_start = time.time()
+		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
+		batch_dates: List[datetime] = input_dataset.get_batch_dates(target_date=time_coord, randomize=False, offset=False)
+		batch_interp_losses = []
+		inp,  target, ups = None, None, None
+		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord}, nbatch_dates={len(batch_dates)}", display=True)
+		for date_index, batch_date in enumerate(batch_dates):
+			for xyi, tile_loc in tile_locs.items():
+				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, batch_date, tset)
+				inp = train_data['input']
+				target: Tensor = train_data['target']
+				ups: Tensor = self.upsample(inp)
+				batch_interp_losses.append( self.loss(ups, target)[0].item() )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{date_index}][{xyi}], Loss= {batch_interp_losses[-1]:.4f}", display=True )
+		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
+		self.input[tset.value] = inp
+		self.target[tset.value] = target
+		self.interp[tset.value] = ups
+
+		proc_time = time.time() - proc_start
+		interp_loss: float = np.array(batch_interp_losses).mean()
+		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, interp loss = {interp_loss:.4f}')
+		return interp_loss
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
