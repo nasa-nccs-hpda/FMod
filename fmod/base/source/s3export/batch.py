@@ -96,7 +96,8 @@ class S3ExportDataLoader(SRDataLoader):
 		return fglob
 
 	def get_dset_size(self) -> int:
-		dsglob = self.dataset_glob( self.varnames.items()[0][0] )
+		varname: Tuple[str,str] = list(self.varnames.items())[0]
+		dsglob = self.dataset_glob( varname[0] )
 		return len( glob(dsglob) )
 
 	# def cut_coord(self, oindx: Dict[str,int], c: str) -> np.ndarray:
