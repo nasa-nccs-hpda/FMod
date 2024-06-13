@@ -1,9 +1,11 @@
 name: ???
 nfeatures: 64
-downscale_factors: [2,2]
 unet_depth: 4
 loss_fn: l2
 use_temporal_features: True
+
+downscale_factors: [2,2]
+ups_mode: bicubic
 
 
 

@@ -2,8 +2,10 @@ name: ???
 
 nfeatures: 64
 nrlayers: 16
-downscale_factors: [2,2]
 usmethod: replicate # replicate # transpose
 loss_fn: l2
 kernel_size: 3
 res_scale: 1.0
+
+downscale_factors: [2,2]
+ups_mode: bicubic
