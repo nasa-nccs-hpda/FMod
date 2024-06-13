@@ -112,7 +112,7 @@ class ResultsAccumulator(object):
 	def save(self, save_dir: str):
 		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
 		os.makedirs( results_save_dir, exist_ok=True )
-		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.yml"
+		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
 		results: Dict[ str, Tuple[float,float] ] = self.serialize()
 		print(f"Saving results to file: '{file_path}'")
 		with open(file_path, 'w', newline='\n') as csvfile:
