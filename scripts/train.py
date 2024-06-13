@@ -12,9 +12,9 @@ device = ConfigContext.set_device()
 task = "sres"
 models = [ 'mscnn' ]
 dataset = "LLC4320-v1"
-scenario = "s4.1"
+scenario = "s4"
 load_state = "current"
-seed = 48886
+seed = 48332
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
