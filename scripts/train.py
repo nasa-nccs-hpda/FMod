@@ -10,11 +10,11 @@ hydra.initialize(version_base=None, config_path="../config")
 device = ConfigContext.set_device()
 
 task = "sres"
-models = [ 'mscnn' ]
+models = [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-refresh_state = False
-seed = 48332
+refresh_state = True
+seed = 98332
 
 results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
