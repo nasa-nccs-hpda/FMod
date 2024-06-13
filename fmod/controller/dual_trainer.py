@@ -112,6 +112,7 @@ class ModelTrainer(object):
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
+		self.best_loss: Dict[TSet,float] = { tset: float('inf') for tset in TSet }
 
 	@property
 	def model_name(self):
@@ -285,12 +286,11 @@ class ModelTrainer(object):
 		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
-			self.checkpoint_manager.clear_checkpoint()
+			self.checkpoint_manager.clear_checkpoint(TSet.Train)
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
 			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state.get('epoch',0)
-			loss_history = train_state.get('losses',[])
 			nepochs += epoch0
 
 		self.record_eval(epoch0-1)
@@ -317,7 +317,6 @@ class ModelTrainer(object):
 							losses += sloss
 							lgm().log(f"  ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
 							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: Loss= {sloss.item():.4f}", display=True, end="")
-							self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
 							mloss.backward()
 							self.optimizer.step()
@@ -328,7 +327,6 @@ class ModelTrainer(object):
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 
-
 				except Exception as e:
 					print( f"\n !!!!! Error processing batch {batch_index} !!!!! {e}")
 					print( traceback.format_exc() )
@@ -338,6 +336,7 @@ class ModelTrainer(object):
 
 			epoch_time = (time.time() - epoch_start)/60.0
 			epoch_loss: float = np.array(batch_losses).mean()
+			self.checkpoint_manager.save_checkpoint( epoch, TSet.Train, epoch_loss )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
 			self.record_eval(epoch)
 
@@ -349,7 +348,7 @@ class ModelTrainer(object):
 
 	def record_eval(self, epoch: int ):
 		for tset in [TSet.Validation, TSet.Test]:
-			eval_losses = self.evaluate(tset)
+			eval_losses = self.evaluate(tset,epoch)
 			if self.results_accum is not None:
 				self.results_accum.record_losses(self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch)
 			lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
@@ -388,7 +387,7 @@ class ModelTrainer(object):
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, interp loss = {interp_loss:.4f}')
 		return interp_loss
 
-	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
+	def evaluate(self, tset: TSet, epoch: int, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -424,6 +423,9 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		if model_loss < self.best_loss[tset]:
+			self.checkpoint_manager.save_checkpoint(epoch, tset, model_loss)
+			self.best_loss[tset] = model_loss
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
 		return dict(validation=model_loss, upsampled=interp_loss)
 

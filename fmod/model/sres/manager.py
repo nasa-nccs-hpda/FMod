@@ -76,16 +76,22 @@ class SRModels:
 		model_package = importlib.import_module(importpath)
 		return model_package.get_model( self.model_config ).to(self.device)
 
+def rrkey( model: str, tset: TSet, **kwargs ) -> str:
+	epoch = kwargs.get('epoch', -1)
+	epstr = f"-{epoch}" if epoch >= 0 else ''
+	return f"{model}-{tset.value}{epstr}"
 class ResultRecord(object):
 
-	def __init__(self, model_loss: float, upsampled_loss: float, **kwargs ):
-		self.model_loss = model_loss
-		self.upsampled_loss = upsampled_loss
-		self.epoch = kwargs.get('epoch', -1)
+	def __init__(self, **kwargs ):
+		self.model_loss: float = 0.0
+		self.upsampled_loss: float = 0.0
+		self.epoch: int = -1
+		self.update( **kwargs )
 
-	def key(self, model: str, tset: TSet) -> str:
-		epstr = f"-{self.epoch}" if self.epoch >= 0 else ''
-		return f"{model}-{tset.value}{epstr}"
+	def update(self, **kwargs ):
+		self.model_loss = kwargs.get( 'model_loss', 0.0 )
+		self.upsampled_loss = kwargs.get( 'interp_loss', 0.0 )
+		self.epoch = kwargs.get('epoch', -1)
 
 	def serialize(self) -> Tuple[float,float]:
 		return self.model_loss, self.upsampled_loss
@@ -94,23 +100,35 @@ class ResultRecord(object):
 		return f" --- Model: {self.model_loss:.4f}, Upsample: {self.upsampled_loss:.4f}, Alpha: {self.model_loss/self.upsampled_loss:.3f}"
 class ResultsAccumulator(object):
 
-	def __init__(self, task: str, dataset: str, scenario: str ):
+	def __init__(self, task: str, dataset: str, scenario: str, **kwargs ):
 		self.results: Dict[ str, ResultRecord ] = {}
+		self.refresh_state = kwargs.get('refresh_state',False)
 		self.dataset: str = dataset
 		self.scenario: str = scenario
 		self.task = task
+		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
+		if not self.refresh_state:
+			self.load_results()
+
+	def load_results(self):
+		results: List[Dict[str,Any]] = self.read( )
+		for result in results: self.update_loss_record( result )
+
+	def update_loss_record(self, lrec: Dict[str,Any] ):
+		rr: ResultRecord = self.results.setdefault( rrkey(lrec['model'], lrec['tset'], **lrec),  ResultRecord(**lrec) )
+		rr.update(**lrec)
 
 	def record_losses(self, model: str, tset: TSet, model_loss: float, upsampled_loss: float, **kwargs ):
-		rr: ResultRecord = ResultRecord(model_loss, upsampled_loss, **kwargs)
-		self.results[ rr.key( model, tset ) ] = rr
+		rr: ResultRecord = ResultRecord(model_loss=model_loss, interp_loss=upsampled_loss, **kwargs)
+		self.results[ rrkey( model, tset, **kwargs ) ] = rr
 
 	def serialize(self)-> Dict[ str, Tuple[float,float] ]:
 		sr =  { k: rr.serialize() for k, rr in self.results.items() }
 		return sr
 
 	@exception_handled
-	def save(self, save_dir: str):
-		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
+	def save(self):
+		results_save_dir =  f"{self.save_dir}/{self.task}_result_recs"
 		os.makedirs( results_save_dir, exist_ok=True )
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
 		results: Dict[ str, Tuple[float,float] ] = self.serialize()
@@ -120,8 +138,8 @@ class ResultsAccumulator(object):
 			for k,v in results.items():
 				csvwriter.writerow( k.split('-') + list(v) )
 
-	def read(self, save_dir: str):
-		results_save_dir =  f"{save_dir}/{self.task}_result_recs"
+	def read(self) -> List[Dict[str,Any]]:
+		results_save_dir =  f"{self.save_dir}/{self.task}_result_recs"
 		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
 		results: List[Dict[str,Any]] = []
 		print(f"Reading results from file: '{file_path}'")
@@ -133,8 +151,8 @@ class ResultsAccumulator(object):
 				results.append( result )
 		return results
 
-	def get_plot_data(self, save_dir: str, models: List[str] ) -> Dict[str,Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]]:
-		results = self.read(save_dir)
+	def get_plot_data(self, models: List[str] ) -> Dict[str,Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]]:
+		results = self.read()
 		plot_data = {}
 		for model in models:
 			model_data = {}

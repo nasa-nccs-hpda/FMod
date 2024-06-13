@@ -16,7 +16,7 @@ scenario = "s4"
 refresh_state = True
 seed = 98332
 
-results = ResultsAccumulator(task,dataset,scenario)
+results = ResultsAccumulator(task,dataset,scenario, refresh_state=refresh_state)
 for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
 		t0 = time.time()

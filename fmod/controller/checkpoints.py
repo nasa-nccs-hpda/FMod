@@ -5,6 +5,7 @@ from fmod.base.util.ops import fmbdir, fmtp
 from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
 from torch.nn import Module
+from fmod.base.io.loader import TSet
 import os
 
 
@@ -15,29 +16,25 @@ class CheckpointManager(object):
 		self.model = model
 		self.optimizer = optimizer
 
-	def _save_state(self, epoch: int, losses: List[float], version: str = "current" ) -> str:
-		checkpoint = dict( epoch=epoch, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), losses=losses )
-		cpath = self.checkpoint_path(version)
+	def save_checkpoint(self, epoch: int, tset: TSet, loss: float ) -> str:
+		checkpoint = dict( epoch=epoch, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
+		cpath = self.checkpoint_path(tset)
 		torch.save( checkpoint, cpath )
 		return cpath
 
-	def save_checkpoint(self, epoch: int, losses: List[float] ):
-		cpath = self._save_state( epoch, losses )
-		lgm().log(f"    -- Checkpoint saved --", display=True, end="" )
-
-	def _load_state(self, version: str = "current" ) -> Dict[str,Any]:
-		cpath = self.checkpoint_path(version)
+	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
+		cpath = self.checkpoint_path(tset)
 		checkpoint = torch.load(cpath)
 		self.model.load_state_dict( checkpoint.pop('model_state_dict') )
 		self.optimizer.load_state_dict( checkpoint.pop('optimizer_state_dict') )
 		return checkpoint
 
-	def load_checkpoint( self, version: str = "current" ) -> Dict[str,Any]:
-		cppath = self.checkpoint_path( version )
+	def load_checkpoint( self, tset: TSet ) -> Dict[str,Any]:
+		cppath = self.checkpoint_path( tset )
 		train_state = {}
 		if os.path.exists( cppath ):
 			try:
-				train_state = self._load_state( version)
+				train_state = self._load_state( tset )
 				lgm().log(f"Loaded model from {cppath}", display=True)
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
@@ -46,13 +43,14 @@ class CheckpointManager(object):
 		print( f" ------ Saving checkpoints to '{self.checkpoint_path()}' ------ " )
 		return train_state
 
-	def clear_checkpoint( self, version: str = "current" ):
-		cppath = self.checkpoint_path(version)
+	def clear_checkpoint( self, tset: TSet ):
+		cppath = self.checkpoint_path(tset)
 		if os.path.exists(cppath):
 			print( f" >> Clearing state: {cppath}")
 			os.remove(cppath)
 
-	def checkpoint_path(self, version="current") -> str:
+	def checkpoint_path( self, tset: TSet ) -> str:
+		version = tset.value
 		if version not in self._cpaths:
 			self._cpaths[version] =  str(os.path.join(fmbdir('results'), 'checkpoints/' + fmtp('training_version') + f".{version}.pt"))
 			os.makedirs(os.path.dirname(self._cpaths[version]), 0o777, exist_ok=True)

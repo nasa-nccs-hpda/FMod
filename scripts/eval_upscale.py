@@ -29,7 +29,7 @@ with ConfigContext(task, model, dataset, scenario) as cc:
 		loss: float = trainer.eval_upscale( tset )
 		results.record_losses( model, tset, 0.0, loss )
 
-	results.save( cc.cfg.platform.processed )
+	results.save(  )
 	results.print()
 
 
