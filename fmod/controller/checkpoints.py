@@ -46,6 +46,12 @@ class CheckpointManager(object):
 		print( f" ------ Saving checkpoints to '{self.checkpoint_path()}' ------ " )
 		return train_state
 
+	def clear_checkpoint( self, version: str = "current" ):
+		cppath = self.checkpoint_path(version)
+		if os.path.exists(cppath):
+			print( f" >> Clearing state: {cppath}")
+			os.remove(cppath)
+
 	def checkpoint_path(self, version="current") -> str:
 		if version not in self._cpaths:
 			self._cpaths[version] =  str(os.path.join(fmbdir('results'), 'checkpoints/' + fmtp('training_version') + f".{version}.pt"))

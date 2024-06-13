@@ -274,8 +274,7 @@ class ModelTrainer(object):
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
-		load_state = kwargs.get( 'load_state', 'current' )
-		save_state = kwargs.get('save_state', True)
+		refresh_state = kwargs.get( 'cppath', False )
 		seed = kwargs.get( 'seed', 4456 )
 
 		torch.manual_seed(seed)
@@ -285,13 +284,14 @@ class ModelTrainer(object):
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
 		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
-		if load_state:
-			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+		if refresh_state:
+			self.checkpoint_manager.clear_checkpoint()
+			print(" *** No checkpoint loaded: training from scratch *** ")
+		else:
+			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state.get('epoch',0)
 			loss_history = train_state.get('losses',[])
 			nepochs += epoch0
-		else:
-			print( " *** No checkpoint loaded: training from scratch *** ")
 
 		self.record_eval(epoch0-1)
 		for epoch in range(epoch0,nepochs):
@@ -316,8 +316,8 @@ class ModelTrainer(object):
 							[sloss,mloss] = self.loss( prd, targ )
 							losses += sloss
 							lgm().log(f"  ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: IDX{dindxs['input']}: Loss= {sloss.item():.4f}", display=True, end="")
-							if save_state: self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
+							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: Loss= {sloss.item():.4f}", display=True, end="")
+							self.checkpoint_manager.save_checkpoint(epoch, loss_history + batch_losses)
 							self.optimizer.zero_grad(set_to_none=True)
 							mloss.backward()
 							self.optimizer.step()
@@ -397,15 +397,13 @@ class ModelTrainer(object):
 		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		input_dataset: BatchDataset = self.input_dataset(tset)
-		time_coord: datetime = None if (self.time_index < 0) else input_dataset.get_time_coord(self.time_index)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(input_dataset.tcoords)}, time_coord={time_coord}, nbatch_dates={len(batch_dates)}", display=True)
+		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(start_coords)}", display=True)
 		for batch_index, start_coord in enumerate(start_coords):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
@@ -416,7 +414,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: TIDX{dindxs['target']}, IIDX{dindxs['input']}, Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}, alpha = {batch_model_losses[-1]/batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}, alpha = {batch_model_losses[-1]/batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ

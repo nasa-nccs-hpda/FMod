@@ -13,7 +13,7 @@ task = "sres"
 models = [ 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-load_state = "current"
+refresh_state = False
 seed = 48332
 
 results = ResultsAccumulator(task,dataset,scenario)
@@ -21,7 +21,7 @@ for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
-		trainer.train( load_state=load_state, seed=seed )
+		trainer.train( refresh_state=refresh_state, seed=seed )
 		results.save( fmbdir('processed') )
 
 results.print()
