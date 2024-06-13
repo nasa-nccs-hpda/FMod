@@ -400,10 +400,10 @@ class ModelTrainer(object):
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
-		start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
+		start_coords: List[Union[datetime,int]] = self.input_dataset(tset).get_batch_start_coords()
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
-		lgm().log( f"Evaluating:  time_index={self.time_index}  ntcoords={len(start_coords)}", display=True)
+		lgm().log( f"{tset.name} Evaluation: {len(start_coords)} batches", display=True)
 		for batch_index, start_coord in enumerate(start_coords):
 			for xyi, tile_loc in tile_locs.items():
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
@@ -414,7 +414,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}, alpha = {batch_model_losses[-1]/batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ
