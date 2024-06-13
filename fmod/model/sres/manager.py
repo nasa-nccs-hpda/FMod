@@ -128,7 +128,9 @@ class ResultsAccumulator(object):
 		with open(file_path, 'r', newline='') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for row in csvreader:
-				results.append( dict(model=row[0], tset=row[1], epoch=int(row[2]), model_loss=float(row[3]), interp_loss=float(row[4]), alpha=float(row[5]) ))
+				if len(row) == 4:   result = dict(model=row[0], tset=row[1], epoch=0, model_loss=float(row[2]), interp_loss=float(row[3]) )
+				else:               result = dict(model=row[0], tset=row[1], epoch=int(row[2]), model_loss=float(row[3]), interp_loss=float(row[4]) )
+				results.append( result )
 		return results
 
 	def get_plot_data(self, save_dir: str, models: List[str] ) -> Dict[str,Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]]:
