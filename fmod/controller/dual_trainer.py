@@ -350,7 +350,7 @@ class ModelTrainer(object):
 		for tset in [TSet.Validation, TSet.Test]:
 			eval_losses = self.evaluate(tset,epoch)
 			if self.results_accum is not None:
-				self.results_accum.record_losses(self.model_name, tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch)
+				self.results_accum.record_losses( tset, eval_losses['validation'], eval_losses['upsampled'], epoch=epoch )
 			lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['validation']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
 
 	def eval_upscale(self, tset: TSet, **kwargs) -> float:

@@ -16,17 +16,16 @@ scenario = "s4"
 refresh_state = True
 seed = 98332
 
-results = ResultsAccumulator(task,dataset,scenario, refresh_state=refresh_state)
 for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
 		t0 = time.time()
+		results = ResultsAccumulator(task, dataset, scenario, model, refresh_state=refresh_state)
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train( refresh_state=refresh_state, seed=seed )
-		results.save( fmbdir('processed') )
+		results.save()
 		print( f" ******** Model '{model}' completed {cfg().task.nepochs} epochs of training in {(time.time()-t0)/60:.2f} min ******** ")
-
-results.print()
+		results.rprint()
 
 
 

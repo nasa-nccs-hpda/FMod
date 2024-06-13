@@ -2,6 +2,7 @@ import logging, torch, math, csv
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import xarray as xa
+from io import TextIOWrapper
 import os, time, yaml, numpy as np
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
@@ -11,8 +12,9 @@ from datetime import datetime
 from fmod.base.io.loader import TSet
 from fmod.base.source.loader import srRes
 from fmod.data.batch import BatchDataset
+from collections.abc import Iterable
 
-def pkey( model: str, tset: TSet, ltype: str ): return '-'.join([model,tset.value,ltype])
+def pkey( tset: TSet, ltype: str ): return '-'.join([tset.value,ltype])
 
 def get_temporal_features( time: np.ndarray = None ) -> Optional[np.ndarray]:
 	if time is None: return None
@@ -76,106 +78,168 @@ class SRModels:
 		model_package = importlib.import_module(importpath)
 		return model_package.get_model( self.model_config ).to(self.device)
 
-def rrkey( model: str, tset: TSet, **kwargs ) -> str:
+def rrkey( tset: TSet, **kwargs ) -> str:
 	epoch = kwargs.get('epoch', -1)
 	epstr = f"-{epoch}" if epoch >= 0 else ''
-	return f"{model}-{tset.value}{epstr}"
+	return f"{tset.value}{epstr}"
+
 class ResultRecord(object):
 
-	def __init__(self, **kwargs ):
-		self.model_loss: float = 0.0
-		self.upsampled_loss: float = 0.0
-		self.epoch: int = -1
-		self.update( **kwargs )
+	def __init__(self, tset: TSet, epoch: int, model_loss: float, interp_loss: float ):
+		self.model_loss: float = model_loss
+		self.upsampled_loss: float = interp_loss
+		self.epoch: int = epoch
+		self.tset: TSet = tset
 
-	def update(self, **kwargs ):
-		self.model_loss = kwargs.get( 'model_loss', 0.0 )
-		self.upsampled_loss = kwargs.get( 'interp_loss', 0.0 )
-		self.epoch = kwargs.get('epoch', -1)
-
-	def serialize(self) -> Tuple[float,float]:
-		return self.model_loss, self.upsampled_loss
+	def serialize(self) -> List[str]:
+		return [ self.tset.value, str(self.epoch), f"{self.model_loss:.4f}", f"{self.upsampled_loss:.4f}" ]
 
 	def __str__(self):
-		return f" --- Model: {self.model_loss:.4f}, Upsample: {self.upsampled_loss:.4f}, Alpha: {self.model_loss/self.upsampled_loss:.3f}"
+		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Model: {self.model_loss:.4f}, Upsample: {self.upsampled_loss:.4f}"
+
+class ResultFileWriter:
+
+	def __init__(self, file_path: str):
+		self.file_path = file_path
+		self._csvfile: TextIOWrapper = None
+		self._writer: csv.writer = None
+
+	@property
+	def csvfile(self) -> TextIOWrapper:
+		if self._csvfile is None:
+			self._csvfile = open(self.file_path, 'w', newline='\n')
+		return self._csvfile
+
+	@property
+	def csvwriter(self) -> csv.writer:
+		if self._writer is None:
+			self._writer = csv.writer(self.csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+		return self._writer
+
+	def write_entry(self, entry: List[str]):
+		self.csvwriter.writerow(entry)
+
+	def close(self):
+		if self._csvfile is not None:
+			self._writer = None
+			self._csvfile.close()
+			self._csvfile = None
+
+
+class ResultFileReader:
+
+	def __init__(self, file_path: str):
+		self.file_path = file_path
+		self._csvfile: TextIOWrapper = None
+		self._reader = None
+
+	@property
+	def csvfile(self):
+		if self._csvfile is None:
+			self._csvfile = open(self.file_path, 'r', newline='')
+		return self._csvfile
+
+	@property
+	def csvreader(self) -> csv.reader:
+		if self._reader is None:
+			self._reader =  csv.reader(self.csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+		return self._reader
+
+	def close(self):
+		if self._csvfile is not None:
+			self._reader = None
+			self._csvfile.close()
+			self._csvfile = None
+
 class ResultsAccumulator(object):
 
-	def __init__(self, task: str, dataset: str, scenario: str, **kwargs ):
-		self.results: Dict[ str, ResultRecord ] = {}
-		self.refresh_state = kwargs.get('refresh_state',False)
+	def __init__(self, task: str, dataset: str, scenario: str, model: str, **kwargs):
+		self.results: List[ResultRecord] = []
+		self.refresh_state = kwargs.get('refresh_state', False)
 		self.dataset: str = dataset
 		self.scenario: str = scenario
 		self.task = task
-		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
-		if not self.refresh_state:
-			self.load_results()
+		self.model = model
+		self.save_dir = kwargs.get('save_dir', cfg().platform.processed)
+		self._writer: Optional[ResultFileWriter] = None
+		self._reader: Optional[ResultFileReader] = None
+		if kwargs.get('load',False): self.load_results()
+
+	@property
+	def reader(self) -> ResultFileReader:
+		if self._reader is None:
+			self._reader = ResultFileReader(self.result_file_path())
+		return self._reader
+
+	@property
+	def writer(self) -> ResultFileWriter:
+		if self._writer is None:
+			self._writer = ResultFileWriter( self.result_file_path() )
+		return self._writer
+
+	def result_file_path(self) -> str:
+		results_save_dir = f"{self.save_dir}/{self.task}_result_recs"
+		os.makedirs(results_save_dir, exist_ok=True)
+		return f"{results_save_dir}/{self.dataset}_{self.scenario}_{self.model}_losses.csv"
+
+	def close(self):
+		if self._reader is not None:
+			self._reader.close()
+			self._reader = None
+		if self._writer is not None:
+			self._writer.close()
+			self._writer = None
 
 	def load_results(self):
-		results: List[Dict[str,Any]] = self.read( )
+		results: List[Dict[str,Any]] = self.read_model_results( )
 		for result in results: self.update_loss_record( result )
 
 	def update_loss_record(self, lrec: Dict[str,Any] ):
-		rr: ResultRecord = self.results.setdefault( rrkey(lrec['model'], lrec['tset'], **lrec),  ResultRecord(**lrec) )
+		rr: ResultRecord = self.results.setdefault( rrkey( lrec['tset'], **lrec),  ResultRecord(**lrec) )
 		rr.update(**lrec)
 
-	def record_losses(self, model: str, tset: TSet, model_loss: float, upsampled_loss: float, **kwargs ):
-		rr: ResultRecord = ResultRecord(model_loss=model_loss, interp_loss=upsampled_loss, **kwargs)
-		self.results[ rrkey( model, tset, **kwargs ) ] = rr
+	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float, **kwargs ):
+		rr: ResultRecord = ResultRecord(tset, epoch, model_loss, upsampled_loss )
+		self.results.append( rr )
 
-	def serialize(self)-> Dict[ str, Tuple[float,float] ]:
-		sr =  { k: rr.serialize() for k, rr in self.results.items() }
+	def serialize(self)-> Dict[ str, Tuple[float,float,int] ]:
+		sr =  { k: rr.serialize() for k, rr in self.results }
 		return sr
 
 	@exception_handled
 	def save(self):
-		results_save_dir =  f"{self.save_dir}/{self.task}_result_recs"
-		os.makedirs( results_save_dir, exist_ok=True )
-		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
-		results: Dict[ str, Tuple[float,float] ] = self.serialize()
-		print(f"Saving results to file: '{file_path}'")
-		with open(file_path, 'w', newline='\n') as csvfile:
-			csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-			for k,v in results.items():
-				csvwriter.writerow( k.split('-') + list(v) )
+		for result in self.results:
+			self.writer.write_entry( result.serialize() )
 
-	def read(self) -> List[Dict[str,Any]]:
-		results_save_dir =  f"{self.save_dir}/{self.task}_result_recs"
-		file_path: str = f"{results_save_dir}/{self.dataset}_{self.scenario}_losses.csv"
+	def read_model_results( self ) -> List[Dict[str,Any]]:
 		results: List[Dict[str,Any]] = []
-		print(f"Reading results from file: '{file_path}'")
-		with open(file_path, 'r', newline='') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-			for row in csvreader:
-				if len(row) == 4:   result = dict(model=row[0], tset=row[1], epoch=0, model_loss=float(row[2]), interp_loss=float(row[3]) )
-				else:               result = dict(model=row[0], tset=row[1], epoch=int(row[2]), model_loss=float(row[3]), interp_loss=float(row[4]) )
-				results.append( result )
+		for row in self.reader.csvreader:
+			result = dict( tset=row[0], epoch=int(row[1]), model_loss=float(row[1]), interp_loss=float(row[2]) )
+			results.append( result )
 		return results
 
-	def get_plot_data(self, models: List[str] ) -> Dict[str,Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]]:
-		results = self.read()
-		plot_data = {}
-		for model in models:
-			model_data = {}
-			for tset in [TSet.Validation, TSet.Test]:
-				for ltype in ['model_loss', 'interp_loss']:
-					result_data = model_data.setdefault(pkey(model, tset, ltype), {})
-					for result in results:
-						if result['model'].strip() == model and result['tset'].strip() == tset.value:
-							result_data[ result['epoch'] ] = result[ltype]
+	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
+		results = self.read_model_results()
+		plot_data, model_data = {}, {}
+		for tset in [TSet.Validation, TSet.Test]:
+			for ltype in ['model_loss', 'interp_loss']:
+				result_data = model_data.setdefault(pkey(tset, ltype), [])
+				for result in results:
+					if result['tset'].strip() == tset.value:
+						result_data.append( [ result['epoch'], result[ltype] ] )
 
-			x, y = {}, {}
-			for tset in [TSet.Validation, TSet.Test]:
-				pdata = model_data[pkey(model, tset, 'model_loss')]
-				x[tset] = np.array(list(pdata.keys()))
-				y[tset] = np.array(list(pdata.values()))
-			plot_data[model] = (x,y)
+		x, y = {}, {}
+		for tset in [TSet.Validation, TSet.Test]:
+			pdata = model_data[ pkey(tset, 'model_loss') ]
+			x[tset] = np.array([pd[0] for pd in pdata])
+			y[tset] = np.array([pd[1] for pd in pdata])
+		return x, y
 
-		return plot_data
-
-	def print(self):
+	def rprint(self):
 		print( f"\n\n---------------------------- {self.task} Results --------------------------------------")
 		print(f" * dataset: {self.dataset}")
 		print(f" * scenario: {self.scenario}")
+		print(f" * model: {self.model}")
 		for rid, result in self.results.items():
 			print(f"{rid}: {result}")
 

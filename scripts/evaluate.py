@@ -15,18 +15,17 @@ models = [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4.1"
 
-results = ResultsAccumulator(task,dataset,scenario)
 for model in models:
 	with ConfigContext(task, model, dataset, scenario) as cc:
-
+		results = ResultsAccumulator(task, dataset, scenario, model)
 		model_manager: SRModels = SRModels( device )
 		trainer: ModelTrainer = ModelTrainer(model_manager)
 
 		for tset in [TSet.Test]:
 			losses: Dict[str,float] = trainer.evaluate( tset )
-			results.record_losses( model, tset, losses['validation'], losses['upsampled'] )
+			results.record_losses( tset, 0, losses['validation'], losses['upsampled'] )
 
-		results.save( cc.cfg.platform.processed )
+		results.save( )
 		results.print()
 
 
