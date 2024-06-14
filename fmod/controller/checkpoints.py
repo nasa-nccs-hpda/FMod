@@ -52,12 +52,11 @@ class CheckpointManager(object):
 	def checkpoint_path( self, tset: TSet ) -> str:
 		version = tset.value
 		if version not in self._cpaths:
-			paths = [ f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{ext}.pt" for ext in [version,"current"] ]
-			for path in paths:
-				if os.path.exists(path):
-					self._cpaths[version] =  path
-					break
-			assert self._cpaths[version] is not None, f"Can't find checkpoint file, paths = {paths}"
+			paths = [ f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{ext}.pt" for ext in ["current",version] ]
+			if os.path.exists(paths[0]):
+				self._cpaths[version] = paths[0]
+			if os.path.exists(paths[1]) or self._cpaths[version] is None:
+				self._cpaths[version] = paths[1]
 			os.makedirs(os.path.dirname(self._cpaths[version]), 0o777, exist_ok=True)
 		return self._cpaths[version]
 
