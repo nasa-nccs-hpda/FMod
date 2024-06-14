@@ -300,7 +300,7 @@ class ModelTrainer(object):
 			self.model.train()
 			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
-			lgm().log(f"  ----------- Epoch {epoch + 1}/{nepochs}, nbatches={len(start_coords)}   ----------- ", display=True )
+			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}, nbatches={len(start_coords)}   ----------- ", display=True )
 
 			batch_losses = []
 			for batch_index, start_coord in enumerate(start_coords):
