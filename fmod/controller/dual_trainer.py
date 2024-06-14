@@ -289,7 +289,7 @@ class ModelTrainer(object):
 			self.checkpoint_manager.clear_checkpoint(TSet.Train)
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
-			train_state = self.checkpoint_manager.load_checkpoint()
+			train_state = self.checkpoint_manager.load_checkpoint(tset)
 			epoch0 = train_state.get('epoch',0)
 			nepochs += epoch0
 
