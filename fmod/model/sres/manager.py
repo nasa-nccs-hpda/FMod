@@ -243,9 +243,9 @@ class ResultsAccumulator(object):
 		plot_data, model_data = {}, {}
 		for tset in [TSet.Validation, TSet.Test]:
 			result_data = model_data.setdefault(tset, [])
-			print( f"get_plot_data: {len(self.results)} results, sample tset = {self.results[0].tset}")
+			print( f"get_plot_data: {len(self.results)} results")
 			for result in self.results:
-				if result.tset == tset.value:
+				if result.tset == tset:
 					result_data.append( [ result.epoch, result.model_loss ] )
 
 		x, y = {}, {}
