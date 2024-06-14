@@ -193,7 +193,7 @@ class ResultsAccumulator(object):
 	@property
 	def reader(self) -> ResultFileReader:
 		if self._reader is None:
-			self._reader = ResultFileReader( [ self.result_file_path(model_specific=ms) for ms in [False,True]] )
+			self._reader = ResultFileReader( [ self.result_file_path(model_specific=True) ] )
 		return self._reader
 
 	@property
