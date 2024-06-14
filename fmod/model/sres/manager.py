@@ -165,7 +165,7 @@ class ResultFileReader:
 	def csvreaders(self) -> List[csv.reader]:
 		if self._readers is None:
 			self._readers = []
-			for csvfile in self._csvfiles:
+			for csvfile in self.csvfiles:
 				self._readers.append( csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL) )
 		return self._readers
 
