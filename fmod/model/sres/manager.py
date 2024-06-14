@@ -16,6 +16,16 @@ from collections.abc import Iterable
 
 def pkey( tset: TSet, ltype: str ): return '-'.join([tset.value,ltype])
 
+def tidx() -> int:
+	return int(time.time()/10)
+
+def version_test( test: str ):
+	try:
+		tset = TSet(test)
+		return 0
+	except ValueError:
+		return 1
+
 def get_temporal_features( time: np.ndarray = None ) -> Optional[np.ndarray]:
 	if time is None: return None
 	sday, syear, t0, pi2 = [], [], time[0], 2 * np.pi
@@ -107,8 +117,13 @@ class ResultFileWriter:
 	@property
 	def csvfile(self) -> TextIOWrapper:
 		if self._csvfile is None:
-			self._csvfile = open(self.file_path, 'w', newline='\n')
+			self._csvfile = open(self.file_path, 'a', newline='\n')
 		return self._csvfile
+
+	def refresh(self):
+		if self._csvfile is not None:
+			os.rename(self.file_path, f"{self.file_path}.{tidx()}")
+		self._csvfile = None
 
 	@property
 	def csvwriter(self) -> csv.writer:
@@ -163,7 +178,7 @@ class ResultsAccumulator(object):
 		self.save_dir = kwargs.get('save_dir', cfg().platform.processed)
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None
-		if kwargs.get('load',False): self.load_results()
+		self.load_results()
 
 	@property
 	def reader(self) -> ResultFileReader:
@@ -190,13 +205,13 @@ class ResultsAccumulator(object):
 			self._writer.close()
 			self._writer = None
 
-	def load_results(self):
-		results: List[Dict[str,Any]] = self.read_model_results( )
-		for result in results: self.update_loss_record( result )
-
-	def update_loss_record(self, lrec: Dict[str,Any] ):
-		rr: ResultRecord = self.results.setdefault( rrkey( lrec['tset'], **lrec),  ResultRecord(**lrec) )
-		rr.update(**lrec)
+	def create_record(self, rec: List[str]) -> ResultRecord:
+		skip = version_test(rec[0])
+		if (skip == 0) or (rec[0]==self.model):
+			try:
+				return ResultRecord( TSet(rec[skip]), int(rec[skip+1]), float(rec[skip+2]), float(rec[skip+3]) )
+			except ValueError:
+				return ResultRecord( TSet(rec[skip]), 0, float(rec[skip+1]), float(rec[skip+2]))
 
 	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float, **kwargs ):
 		rr: ResultRecord = ResultRecord(tset, epoch, model_loss, upsampled_loss )
@@ -211,28 +226,25 @@ class ResultsAccumulator(object):
 		for result in self.results:
 			self.writer.write_entry( result.serialize() )
 
-	def read_model_results( self ) -> List[Dict[str,Any]]:
-		results: List[Dict[str,Any]] = []
+	def load_results( self ):
 		for row in self.reader.csvreader:
-			result = dict( tset=row[0], epoch=int(row[1]), model_loss=float(row[1]), interp_loss=float(row[2]) )
-			results.append( result )
-		return results
+			rec = self.create_record(row)
+			if rec is not None:
+				self.results.append( rec )
 
 	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
-		results = self.read_model_results()
 		plot_data, model_data = {}, {}
 		for tset in [TSet.Validation, TSet.Test]:
-			for ltype in ['model_loss', 'interp_loss']:
-				result_data = model_data.setdefault(pkey(tset, ltype), [])
-				for result in results:
-					if result['tset'].strip() == tset.value:
-						result_data.append( [ result['epoch'], result[ltype] ] )
+			result_data = model_data.setdefault(tset, [])
+			for result in self.results:
+				if result.tset == tset.value:
+					result_data.append( [ result.epoch, result.model_loss ] )
 
 		x, y = {}, {}
 		for tset in [TSet.Validation, TSet.Test]:
-			pdata = model_data[ pkey(tset, 'model_loss') ]
-			x[tset] = np.array([pd[0] for pd in pdata])
-			y[tset] = np.array([pd[1] for pd in pdata])
+			result_data = model_data[ tset ]
+			x[tset] = np.array([pd[0] for pd in result_data])
+			y[tset] = np.array([pd[1] for pd in result_data])
 		return x, y
 
 	def rprint(self):
