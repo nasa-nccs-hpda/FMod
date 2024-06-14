@@ -219,7 +219,7 @@ class ResultsAccumulator(object):
 			except ValueError:
 				return ResultRecord( TSet(rec[skip]), 0, float(rec[skip+1]), float(rec[skip+2]))
 
-	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float, **kwargs ):
+	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float ):
 		rr: ResultRecord = ResultRecord(tset, epoch, model_loss, upsampled_loss )
 		self.results.append( rr )
 
