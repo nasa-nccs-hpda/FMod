@@ -155,6 +155,7 @@ class ResultFileReader:
 			for file_path in self.file_paths:
 				try:
 					self._csvfile = open( file_path, 'r', newline='' )
+					print( f"ResultFileReader reading from file: {file_path}")
 					return self._csvfile
 				except FileNotFoundError:
 					pass
@@ -242,7 +243,7 @@ class ResultsAccumulator(object):
 		plot_data, model_data = {}, {}
 		for tset in [TSet.Validation, TSet.Test]:
 			result_data = model_data.setdefault(tset, [])
-			print( f"get_plot_data: {len(self.results)} results")
+			print( f"get_plot_data: {len(self.results)} results, sample tset = {self.results[0].tset}")
 			for result in self.results:
 				if result.tset == tset.value:
 					result_data.append( [ result.epoch, result.model_loss ] )
