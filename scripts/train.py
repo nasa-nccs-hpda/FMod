@@ -14,7 +14,6 @@ models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
 refresh_state = True
-cfg().task.nepochs = 1
 seed = int( time.time()/60 )
 
 for model in models:
