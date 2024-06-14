@@ -144,16 +144,20 @@ class ResultFileWriter:
 
 class ResultFileReader:
 
-	def __init__(self, file_path: str):
-		self.file_path = file_path
+	def __init__(self, file_paths: List[str] ):
+		self.file_paths = file_paths
 		self._csvfile: TextIOWrapper = None
 		self._reader = None
 
 	@property
 	def csvfile(self):
 		if self._csvfile is None:
-			self._csvfile = open(self.file_path, 'r', newline='')
-		return self._csvfile
+			for file_path in self.file_paths:
+				try:
+					self._csvfile = open( file_path, 'r', newline='' )
+					return self._csvfile
+				except FileNotFoundError:
+					pass
 
 	@property
 	def csvreader(self) -> csv.reader:
@@ -184,7 +188,7 @@ class ResultsAccumulator(object):
 	@property
 	def reader(self) -> ResultFileReader:
 		if self._reader is None:
-			self._reader = ResultFileReader(self.result_file_path())
+			self._reader = ResultFileReader( [ self.result_file_path(model_specific=ms) for ms in [False,True]] )
 		return self._reader
 
 	@property
@@ -193,10 +197,11 @@ class ResultsAccumulator(object):
 			self._writer = ResultFileWriter( self.result_file_path() )
 		return self._writer
 
-	def result_file_path(self) -> str:
+	def result_file_path(self, model_specific = True ) -> str:
 		results_save_dir = f"{self.save_dir}/{self.task}_result_recs"
 		os.makedirs(results_save_dir, exist_ok=True)
-		return f"{results_save_dir}/{self.dataset}_{self.scenario}_{self.model}_losses.csv"
+		model_id = f"_{self.model}" if model_specific else ""
+		return f"{results_save_dir}/{self.dataset}_{self.scenario}{model_id}_losses.csv"
 
 	def close(self):
 		if self._reader is not None:
