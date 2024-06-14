@@ -258,7 +258,7 @@ class ResultsAccumulator(object):
 		print(f" * dataset: {self.dataset}")
 		print(f" * scenario: {self.scenario}")
 		print(f" * model: {self.model}")
-		for rid, result in self.results.items():
-			print(f"{rid}: {result}")
+		for result in self.results:
+			print(str(result))
 
 
