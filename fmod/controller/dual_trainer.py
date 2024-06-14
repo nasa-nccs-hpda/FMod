@@ -293,8 +293,8 @@ class ModelTrainer(object):
 			epoch0 = train_state.get('epoch',0)
 			nepochs += epoch0
 
-		self.record_eval(epoch0-1)
-		for epoch in range(epoch0,nepochs):
+		self.record_eval(epoch0)
+		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
