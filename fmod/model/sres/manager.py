@@ -4,6 +4,7 @@ import torch.nn as nn
 import xarray as xa
 from io import TextIOWrapper
 import os, time, yaml, numpy as np
+from fmod.base.util.ops import fmbdir
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig
@@ -175,7 +176,7 @@ class ResultsAccumulator(object):
 		self.scenario: str = scenario
 		self.task = task
 		self.model = model
-		self.save_dir = kwargs.get('save_dir', cfg().platform.processed)
+		self.save_dir = kwargs.get( 'save_dir', fmbdir('processed') )
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None
 		self.load_results()
