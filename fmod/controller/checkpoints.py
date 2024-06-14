@@ -40,7 +40,7 @@ class CheckpointManager(object):
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
 		else:
 			print( f"No checkpoint file found at '{cppath}': starting from scratch.")
-		print( f" ------ Saving checkpoints to '{self.checkpoint_path()}' ------ " )
+		print( f" ------ Saving checkpoints to '{cppath}' ------ " )
 		return train_state
 
 	def clear_checkpoint( self, tset: TSet ):
