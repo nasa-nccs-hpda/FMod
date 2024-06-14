@@ -146,31 +146,35 @@ class ResultFileReader:
 
 	def __init__(self, file_paths: List[str] ):
 		self.file_paths = file_paths
-		self._csvfile: TextIOWrapper = None
-		self._reader = None
+		self._csvfiles: List[TextIOWrapper] = None
+		self._readers: List[csv.reader] = None
 
 	@property
-	def csvfile(self):
-		if self._csvfile is None:
+	def csvfiles(self) -> List[TextIOWrapper]:
+		if self._csvfiles is None:
+			self._csvfiles = []
 			for file_path in self.file_paths:
 				try:
-					self._csvfile = open( file_path, 'r', newline='' )
+					self._csvfiles.append( open( file_path, 'r', newline='' ) )
 					print( f"ResultFileReader reading from file: {file_path}")
-					return self._csvfile
 				except FileNotFoundError:
 					pass
+		return self._csvfiles
 
 	@property
-	def csvreader(self) -> csv.reader:
-		if self._reader is None:
-			self._reader =  csv.reader(self.csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-		return self._reader
+	def csvreaders(self) -> List[csv.reader]:
+		if self._readers is None:
+			self._readers = []
+			for csvfile in self._csvfiles:
+				self._readers.append( csv.reader(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL) )
+		return self._readers
 
 	def close(self):
-		if self._csvfile is not None:
-			self._reader = None
-			self._csvfile.close()
-			self._csvfile = None
+		if self._csvfiles is not None:
+			self._readers = None
+			for csvfile in self._csvfiles:
+				csvfile.close()
+			self._csvfiles = None
 
 class ResultsAccumulator(object):
 
@@ -234,10 +238,11 @@ class ResultsAccumulator(object):
 			self.writer.write_entry( result.serialize() )
 
 	def load_results( self ):
-		for row in self.reader.csvreader:
-			rec = self.create_record(row)
-			if rec is not None:
-				self.results.append( rec )
+		for reader in self.reader.csvreaders:
+			for row in reader:
+				rec = self.create_record(row)
+				if rec is not None:
+					self.results.append( rec )
 
 	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
 		plot_data, model_data = {}, {}
