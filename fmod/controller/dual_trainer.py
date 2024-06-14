@@ -393,7 +393,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
-		self.checkpoint_manager.load_checkpoint()
+		self.checkpoint_manager.load_checkpoint(tset)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
 
