@@ -94,7 +94,7 @@ class SRPlot(object):
 		return self.trainer.input_dataset(self.tset).tcoords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
-		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index)
+		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))

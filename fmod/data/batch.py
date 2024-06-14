@@ -140,6 +140,10 @@ class BatchDataset(object):
         self.hours_per_batch = self.days_per_batch * 24
         self.current_batch_data = None
 
+    @property
+    def tcoord(self):
+        return range(*self.data_index_range())
+
     def data_index_range(self) -> Tuple[int,int]:
         dindxs = self.srbatch.data_loader.dindxs
         return dindxs[0], dindxs[-1]
