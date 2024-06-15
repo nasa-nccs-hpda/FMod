@@ -316,7 +316,7 @@ class ModelTrainer(object):
 							[sloss,mloss] = self.loss( prd, targ )
 							losses += sloss
 							lgm().log(f"  ->apply_network: inp{ts(inp)} target{ts(target)} prd{ts(prd)} targ{ts(targ)}")
-							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: Loss= {sloss.item():.4f}", display=True, end="")
+							lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{batch_index}][{tIdx}]: Loss= {sloss.item():.5f}", display=True, end="")
 							self.optimizer.zero_grad(set_to_none=True)
 							mloss.backward()
 							self.optimizer.step()
@@ -375,7 +375,7 @@ class ModelTrainer(object):
 				target: Tensor = train_data['target']
 				ups: Tensor = self.upsample(inp)
 				batch_interp_losses.append( self.loss(ups, target)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}], Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}], Loss= {batch_interp_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = target
@@ -397,6 +397,7 @@ class ModelTrainer(object):
 		epoch = kwargs.get( 'epoch', train_state.get('epoch', 0) )
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
+		update_checkpoint = kwargs.get('update_checkpoint',True)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
@@ -414,7 +415,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.4f},  Interp-Loss= {batch_interp_losses[-1]:.4f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}][{tile_loc}]: inp-mean={inp.mean():.6f}, Loss= {batch_model_losses[-1]:.5f},  Interp-Loss= {batch_interp_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset.value] = inp
 		self.target[tset.value] = targ
@@ -424,7 +425,7 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if model_loss < self.best_loss[tset]:
+		if (model_loss < self.best_loss[tset]) and update_checkpoint:
 			self.checkpoint_manager.save_checkpoint(epoch, tset, model_loss)
 			self.best_loss[tset] = model_loss
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')

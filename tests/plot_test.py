@@ -24,7 +24,7 @@ with ConfigContext(task, model, dataset, scenario) as cc:
 	trainer: ModelTrainer = ModelTrainer( model_manager, results )
 
 	for tset in TSet:
-		losses: Dict[str,float] = trainer.evaluate( tset )
+		losses: Dict[str,float] = trainer.evaluate( tset, time_index=0, update_checkpoint=False )
 		print( losses )
 
 
