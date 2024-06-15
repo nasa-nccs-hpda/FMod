@@ -106,10 +106,11 @@ class S3ExportDataLoader(SRDataLoader):
 	# 	cdata: np.ndarray = self.ijc[c]
 	# 	return cdata[origin[i2x(c)]: origin[i2x(c)] + self.tile_size[i2x(c)] ]
 
-	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ):
+	def cut_tile( self, idx: int, data_grid: np.ndarray, origin: Dict[str,int] ) -> np.ndarray:
 		tile_bnds = [ origin['y'], origin['y'] + self.tile_size['y'], origin['x'], origin['x'] + self.tile_size['x'] ]
-		if idx == 0: lgm().log( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}", display=True )
-		return data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
+		result: np.ndarray = data_grid[ tile_bnds[0]: tile_bnds[1], tile_bnds[2]: tile_bnds[3] ]
+		lgm().log( f"     ------------------>> cut_tile: origin={origin}, tile_bnds = {tile_bnds}, tile-meanval={result.mean():.5f}", display=True )
+		return result
 
 	def cut_domain( self, timeslice_data: np.ndarray ):
 		origin: Dict[str,int] = cfg().task.origin[self.tset.value]
@@ -131,8 +132,8 @@ class S3ExportDataLoader(SRDataLoader):
 		mmap_mode = 'r' if self.use_memmap else None
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		if self.shape is None:
-			lgm().log( f"Loaded {vid}({fidex}): shape={raw_data.shape}")
-			self.shape = list( raw_data.shape )
+			self.shape = list(raw_data.shape)
+			lgm().log( f"Loaded {vid}({fidex}): shape={self.shape}", display=True )
 		return raw_data
 
 
