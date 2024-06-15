@@ -263,7 +263,7 @@ class SRBatch:
 		elif type(start_coord) == int:
 			index_range: Tuple[int,int] = (start_coord, start_coord + self.batch_size[self.tset.value] )
 			darray: xa.DataArray = self.data_loader.load_index_batch( origin, index_range )
-			lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}")
+			lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, origin={list(origin.values())}",display=True)
 		else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(start_coord)}")
 		if self.channels is None:
 			self.channels = darray.coords["channel"].values.tolist()
