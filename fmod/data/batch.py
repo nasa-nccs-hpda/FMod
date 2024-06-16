@@ -203,7 +203,7 @@ class BatchDataset(object):
                     start_coords.append( batch_date )
         else:
             nidx = self.srbatch.get_dset_size()
-            print( f"  ------------- {self.tset.value} dataset size = {nidx}  ------------- ")
+            print( f"  ------------- {self.tset.value} dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}  ------------- ")
             for dindex in range(0, nidx, self.batch_size):
                 if (target_coord is None) or self.in_batch_idx(target_coord,dindex):
                     start_coords.append( dindex )
