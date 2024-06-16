@@ -64,11 +64,11 @@ class SRPlot(object):
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
 		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
-		fsize = kwargs.get( 'fsize', 6.0 )
+		fsize = kwargs.get( 'fsize', 8.0 )
 		self.tile_grid = TileSelectionGrid(self.tset)
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
-			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*1.5,fsize], layout="tight")
+			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize,fsize], layout="tight")
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )

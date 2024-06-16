@@ -79,7 +79,7 @@ class ModelTrainer(object):
 		if os.path.exists( self.checkpoint_path ):
 			try:
 				self.model = torch.load( self.checkpoint_path )
-				lgm().log(f"Loaded model from {self.checkpoint_path}", display=True)
+				lgm().log(f"Loaded model state from {self.checkpoint_path}", display=True)
 				return True
 			except Exception as e:
 				lgm().log(f"Unable to load model from {self.checkpoint_path}: {e}", display=True)
