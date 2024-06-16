@@ -191,7 +191,7 @@ class BatchDataset(object):
 
     def in_batch_idx(self, target_coord: int, dindex: int) -> bool:
         di = (target_coord - dindex)
-        return (di>0) and (di<self.batch_size)
+        return (di>=0) and (di<self.batch_size)
 
     def get_batch_start_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = None ) -> List[Union[datetime,int]]:
         start_coords = []
