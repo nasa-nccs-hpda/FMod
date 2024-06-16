@@ -62,7 +62,7 @@ class SRPlot(object):
 
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
-		self.losses: Dict[str,float] = trainer.current_losses
+		self.losses: Dict[str,float] = {}
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
 		self.tile_grid = TileSelectionGrid(self.tset)
@@ -90,7 +90,7 @@ class SRPlot(object):
 		return self.sample_input.coords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
-		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
+		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
