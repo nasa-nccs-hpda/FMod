@@ -270,12 +270,11 @@ class SRBatch:
 		return  darray
 
 	def load(self, origin: Dict[str,int], start_coord: Union[datetime,int] ) -> xa.DataArray:
-		if (self.current_start_idx != start_coord) and (self.current_origin != origin):
-			t0 = time.time()
-			self.current_batch: xa.DataArray = self.load_batch( origin, start_coord )
-			self.current_start_idx = start_coord
-			self.current_origin = origin
-			lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
+		t0 = time.time()
+		self.current_batch: xa.DataArray = self.load_batch( origin, start_coord )
+		self.current_start_idx = start_coord
+		self.current_origin = origin
+		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec",display=True)
 		return self.current_batch
 
 
