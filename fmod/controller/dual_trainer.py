@@ -389,6 +389,7 @@ class ModelTrainer(object):
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		print( f"  ^^^^^ evaluate ^^^^^ ")
+		traceback.print_stack()
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
