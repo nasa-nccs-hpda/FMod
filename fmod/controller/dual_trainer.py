@@ -257,9 +257,12 @@ class ModelTrainer(object):
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
 		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}, tset in input: {tset in self.input}")
-		if tset not in self.input: self.evaluate(tset)
+		if not (tset in self.input):
+			self.evaluate(tset)
 		ml_input: Tensor = self.get_target_channels(tset) if targets_only else self.input[tset]
-		return npa( ml_input ).astype(np.float32)
+		result = npa( ml_input ).astype(np.float32)
+		print( f" ----------> got result, shape = {list(result.shape)}")
+		return  result
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
 		inp: np.ndarray = self.get_ml_input(tset)
