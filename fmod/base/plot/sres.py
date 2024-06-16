@@ -149,8 +149,9 @@ class SRPlot(object):
 
 	@property
 	def display_time(self) -> str:
-		ctime: datetime = self.time_coords[self.time_index]
-		return ctime.strftime("%m/%d/%Y:%H")
+		return str(self.time_index)
+	#	ctime: datetime = self.time_coords[self.time_index]
+	#	return ctime.strftime("%m/%d/%Y:%H")
 
 	def update_subplots(self):
 		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
