@@ -28,7 +28,7 @@ class SRDataLoader(object):
 		self.task = task_config
 		self.dindxs = []
 
-	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
+	def load_global_timeslice(self, vid: str, **kwargs) -> np.ndarray:
 		raise NotImplementedError("SRDataLoader:load_global_timeslice")
 
 	def get_dset_size(self) -> int:

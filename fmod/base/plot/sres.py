@@ -98,7 +98,7 @@ class SRPlot(object):
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
-		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice()
+		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice(index=0)
 
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))

@@ -242,8 +242,8 @@ class SRBatch:
 	def get_dset_size(self):
 		return self.data_loader.get_dset_size()
 
-	def load_global_timeslice(self, vid: str, date: datetime) -> np.ndarray:
-		return self.data_loader.load_global_timeslice(vid,date)
+	def load_global_timeslice(self, vid: str, **kwargs) -> np.ndarray:
+		return self.data_loader.load_global_timeslice(vid,**kwargs)
 
 	def constants(self, origin: Dict[str,int] )-> xa.Dataset:
 		if self._constants is None:

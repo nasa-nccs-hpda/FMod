@@ -177,9 +177,9 @@ class BatchDataset(object):
         sgx = self.task_config.tile_grid['x']
         return origin['y']*sgx + origin['x']
 
-    def load_global_timeslice(self, date_index: int = 0, **kwargs ) -> xa.DataArray:
+    def load_global_timeslice(self, **kwargs ) -> xa.DataArray:
         vid: str = kwargs.get( 'vid', self.task_config.target_variables[0] )
-        global_timeslice: np.ndarray =  self.srbatch.load_global_timeslice( vid, self.train_dates[date_index] )
+        global_timeslice: np.ndarray =  self.srbatch.load_global_timeslice( vid, **kwargs )
         return xa.DataArray( global_timeslice, dims=['y','x'] )
 
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
