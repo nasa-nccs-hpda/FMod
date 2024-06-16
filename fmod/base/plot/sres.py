@@ -68,7 +68,7 @@ class SRPlot(object):
 		self.tile_grid = TileSelectionGrid(self.tset)
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
-			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*2,fsize], layout="tight")
+			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize*1.5,fsize], layout="tight")
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
@@ -171,11 +171,11 @@ class SRPlot(object):
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims[ (irow, icol) ] = iplot
-		print( f" ** generate_subplot({irow},{icol}): shape={iplot.get_shape()}")
 
 	def get_subplot_title(self,irow,image) -> str:
 		label = image.attrs['itype']
 		rmserror = ""
+		print( f"get_subplot_title[{label}]: losses = {self.losses}")
 		if irow == 1:
 			if label in self.losses:
 				rmserror = f"{self.losses[label]:.3f}" if (label in self.losses) else ""
