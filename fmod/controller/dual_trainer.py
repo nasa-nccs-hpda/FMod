@@ -256,12 +256,10 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
-		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}, tset in input: {tset in self.input}")
 		if not (tset in self.input):
 			self.evaluate(tset)
 		ml_input: Tensor = self.get_target_channels(tset) if targets_only else self.input[tset]
 		result = npa( ml_input ).astype(np.float32)
-		print( f" ----------> got result, shape = {list(result.shape)}")
 		return  result
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
@@ -270,11 +268,13 @@ class ModelTrainer(object):
 		return ups.numpy()
 
 	def get_ml_target(self, tset: TSet) -> np.ndarray:
-		if tset.value not in self.target: self.evaluate(tset)
+		if tset not in self.target:
+			self.evaluate(tset)
 		return npa( self.target[tset.value] )
 
 	def get_ml_product(self, tset: TSet) -> np.ndarray:
-		if tset.value not in self.product: self.evaluate(tset)
+		if tset not in self.product:
+			self.evaluate(tset)
 		return npa(self.product[tset.value])
 
 	def train(self, **kwargs ) -> Dict[str,float]:
