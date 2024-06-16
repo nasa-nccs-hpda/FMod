@@ -258,7 +258,7 @@ class ModelTrainer(object):
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
 		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}")
 		if tset not in self.input: self.evaluate(tset)
-		ml_input: Tensor = self.get_target_channels(self.input[tset.value]) if targets_only else self.input[tset.value]
+		ml_input: Tensor = self.get_target_channels(self.input[tset]) if targets_only else self.input[tset]
 		return npa( ml_input ).astype(np.float32)
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
@@ -322,9 +322,9 @@ class ModelTrainer(object):
 							mloss.backward()
 							self.optimizer.step()
 
-					self.input[tset.value] = inp
-					self.target[tset.value] = targ
-					self.product[tset.value] = prd
+					self.input[tset] = inp
+					self.target[tset] = targ
+					self.product[tset] = prd
 					ave_loss = losses.item() / ( len(tile_locs) * batch_iter )
 					batch_losses.append(ave_loss)
 
