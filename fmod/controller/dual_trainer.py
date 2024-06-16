@@ -256,9 +256,9 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
-		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}")
+		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}, tset in input: {tset in self.input}")
 		if tset not in self.input: self.evaluate(tset)
-		ml_input: Tensor = self.get_target_channels(self.input[tset]) if targets_only else self.input[tset]
+		ml_input: Tensor = self.get_target_channels(tset) if targets_only else self.input[tset]
 		return npa( ml_input ).astype(np.float32)
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
@@ -378,9 +378,9 @@ class ModelTrainer(object):
 				batch_interp_losses.append( self.loss(ups, target)[0].item() )
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}], Loss= {batch_interp_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
-		self.input[tset.value] = inp
-		self.target[tset.value] = target
-		self.interp[tset.value] = ups
+		self.input[tset] = inp
+		self.target[tset] = target
+		self.interp[tset] = ups
 
 		proc_time = time.time() - proc_start
 		interp_loss: float = np.array(batch_interp_losses).mean()
@@ -447,8 +447,8 @@ class ModelTrainer(object):
 		# return result, net_target
 		return product, target
 
-	def get_target_channels(self, batch_data: Tensor, tset: TSet) -> Tensor:
-		result = tset
+	def get_target_channels(self, tset: TSet) -> Tensor:
+		result = self.input[tset]
 		# if self.channel_idxs is None:
 		# 	cidxs: List[int] = self.input_dataset(tset).get_channel_idxs(self.target_variables)
 		# 	self.channel_idxs = torch.LongTensor( cidxs ).to( self.device )
