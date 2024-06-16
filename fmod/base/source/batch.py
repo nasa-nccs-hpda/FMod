@@ -263,7 +263,7 @@ class SRBatch:
 		elif type(start_coord) == int:
 			index_range: Tuple[int,int] = (start_coord, start_coord + self.batch_size[self.tset.value] )
 			darray: xa.DataArray = self.data_loader.load_index_batch( origin, index_range )
-			lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, origin={list(origin.values())}, mean-val={darray.values.mean()}",display=True)
+			lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, origin={list(origin.values())}")
 		else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(start_coord)}")
 		if self.channels is None:
 			self.channels = darray.coords["channel"].values.tolist()
@@ -274,7 +274,7 @@ class SRBatch:
 		self.current_batch: xa.DataArray = self.load_batch( origin, start_coord )
 		self.current_start_idx = start_coord
 		self.current_origin = origin
-		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec",display=True)
+		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
 		return self.current_batch
 
 
