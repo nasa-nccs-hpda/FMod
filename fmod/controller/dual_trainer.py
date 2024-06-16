@@ -392,7 +392,6 @@ class ModelTrainer(object):
 		return interp_loss
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
-
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)

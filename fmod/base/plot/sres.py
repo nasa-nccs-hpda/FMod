@@ -59,16 +59,16 @@ class SRPlot(object):
 		self.time_index = kwargs.get('time_index', 0)
 		self.tile_index = kwargs.get('tile_index', (0, 0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
+		self.losses: Dict[str,float] = {}
 
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
-		self.losses: Dict[str,float] = {}
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
 		self.tile_grid = TileSelectionGrid(self.tset)
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
-			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, figsize=[fsize,fsize], layout="tight")
+			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
@@ -105,7 +105,7 @@ class SRPlot(object):
 
 		images_data: Dict[str, xa.DataArray] = dict(upsampled=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
-		lgm().log(f"\n update_tile_data ---> images = {list(images_data.keys())}")
+		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
 		return images_data
 
 	def select_point(self,event):
@@ -163,11 +163,17 @@ class SRPlot(object):
 		self.fig.canvas.draw_idle()
 
 	def generate_subplot(self, irow: int, icol: int):
+		image: xa.DataArray = self.get_subplot_image(irow, icol)
 		ax: Axes = self.axs[irow, icol]
 		ax.set_aspect(0.5)
-		image = self.get_subplot_image(irow,icol)
+		ts: Dict[str, int] = self.tile_grid.tile_grid.get_tile_size()
+		ax.set_xlim([0, ts['x']])
+		ax.set_ylim([0, ts['y']])
+		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
+		extent = [ -dx, ts['x']+dx, -dy, ts['y']+dy ]
+
 		vrange = cscale(image, 2.0)
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', extent=extent, yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims[ (irow, icol) ] = iplot
