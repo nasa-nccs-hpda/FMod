@@ -170,8 +170,8 @@ class SRPlot(object):
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,image) )
-		self.ims.setdefault( (irow, icol), iplot )
-		print( f"\n generate_subplot({irow},{icol}): shape={iplot.get_shape()}")
+		self.ims[ (irow, icol) ] = iplot
+		print( f" ** generate_subplot({irow},{icol}): shape={iplot.get_shape()}")
 
 	def get_subplot_title(self,irow,image) -> str:
 		label = image.attrs['itype']
