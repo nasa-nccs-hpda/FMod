@@ -270,12 +270,12 @@ class ModelTrainer(object):
 	def get_ml_target(self, tset: TSet) -> np.ndarray:
 		if tset not in self.target:
 			self.evaluate(tset)
-		return npa( self.target[tset.value] )
+		return npa( self.target[tset] )
 
 	def get_ml_product(self, tset: TSet) -> np.ndarray:
 		if tset not in self.product:
 			self.evaluate(tset)
-		return npa(self.product[tset.value])
+		return npa(self.product[tset])
 
 	def train(self, **kwargs ) -> Dict[str,float]:
 		if cfg().task['nepochs'] == 0: return {}
