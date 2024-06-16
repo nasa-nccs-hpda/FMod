@@ -256,6 +256,7 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
+		print( f"get_ml_input[{tset}] inputs = {list(self.input.keys())}")
 		if tset not in self.input: self.evaluate(tset)
 		ml_input: Tensor = self.get_target_channels(self.input[tset.value]) if targets_only else self.input[tset.value]
 		return npa( ml_input ).astype(np.float32)
@@ -389,7 +390,6 @@ class ModelTrainer(object):
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		print( f"  ^^^^^ evaluate ^^^^^ ")
-		traceback.print_stack()
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -419,9 +419,9 @@ class ModelTrainer(object):
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: inp-mean={inp.mean():.6f}, Loss= {batch_model_losses[-1]:.5f},  Interp-Loss= {batch_interp_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
-		self.input[tset.value] = inp
-		self.target[tset.value] = targ
-		self.product[tset.value] = prd
+		self.input[tset] = inp
+		self.target[tset] = targ
+		self.product[tset] = prd
 
 		proc_time = time.time() - proc_start
 		model_loss: float = np.array(batch_model_losses).mean()
