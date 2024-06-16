@@ -61,7 +61,7 @@ class SRPlot(object):
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
-		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coords))
+		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
 		self.losses: Dict[str,float] = trainer.current_losses
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 6.0 )
@@ -88,10 +88,6 @@ class SRPlot(object):
 	@property
 	def icoords(self) -> DataArrayCoordinates:
 		return self.sample_input.coords
-
-	@property
-	def time_coords(self) -> List[datetime]:
-		return self.trainer.input_dataset(self.tset).tcoords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
 		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
