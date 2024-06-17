@@ -406,7 +406,7 @@ class ModelTrainer(object):
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		start_coords: List[Union[datetime,int]] = self.input_dataset(tset).get_batch_start_coords(target_coord=self.time_index)
-		print(f"  ^^^^^ evaluate, ntiles={len(tile_locs)}, start_coords = {start_coords} ")
+		print(f"  ^^^^^ {tset.name} evaluate, ntiles={len(tile_locs)}, start_coords = {start_coords} ")
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		lgm().log( f"{tset.name} Evaluation: {len(start_coords)} batches", display=True)
