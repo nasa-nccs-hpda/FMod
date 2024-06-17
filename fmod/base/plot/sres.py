@@ -123,11 +123,11 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsampled" # if (self.tset == TSet.Validation) else "domain"
+		return "upsampled"
 
 	@property
 	def result_plot_label(self) -> str:
-		return "validation" if (self.tset == TSet.Validation) else "prediction"
+		return self.tset.value
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]

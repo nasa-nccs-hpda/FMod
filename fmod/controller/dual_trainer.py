@@ -420,7 +420,7 @@ class ModelTrainer(object):
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
 				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: inp-mean={inp.mean():.6f}, Loss= {batch_model_losses[-1]:.5f},  Interp-Loss= {batch_interp_losses[-1]:.5f}", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.5f},  Interp-Loss= {batch_interp_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset] = inp
 		self.target[tset] = targ
