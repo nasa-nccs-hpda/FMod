@@ -85,7 +85,9 @@ class TileGrid(object):
 
     def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
         sf = self.downscale_factor if downscaled else 1
-        return { d: self.tile_size[d] * sf for d in ['x', 'y'] }
+        rv = { d: self.tile_size[d] * sf for d in ['x', 'y'] }
+        print( f" $$$$$$$$$$$$$$$$ get_tile_size: downscaled={downscaled}, tile_size={self.tile_size}, rv={rv}")
+        return  rv
 
     def get_tile_origin( self, ix: int, iy: int, downscaled: bool = False ) -> Dict[str, int]:
         sf = self.downscale_factor if downscaled else 1
