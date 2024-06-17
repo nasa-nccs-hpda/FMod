@@ -59,7 +59,7 @@ class SRPlot(object):
 		self.time_index = kwargs.get('time_index', 0)
 		self.tile_index = kwargs.get('tile_index', (0, 0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
-		self.losses: Dict[str,float] = {}
+		self.losses: Dict[TSet,float] = self.trainer.best_loss
 
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
@@ -90,7 +90,7 @@ class SRPlot(object):
 		return self.sample_input.coords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
-		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
+		self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
@@ -127,7 +127,7 @@ class SRPlot(object):
 
 	@property
 	def result_plot_label(self) -> str:
-		return self.tset.value
+		return self.tset.name
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
