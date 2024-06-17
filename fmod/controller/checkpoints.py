@@ -51,7 +51,8 @@ class CheckpointManager(object):
 
 	@classmethod
 	def checkpoint_path( cls, tset: TSet ) -> str:
-		cpath = f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{tset.value}.pt"
+		vtset: TSet = TSet.Validation if (tset == TSet.Test) else tset
+		cpath = f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{vtset.value}.pt"
 		os.makedirs(os.path.dirname(cpath), 0o777, exist_ok=True)
 		return cpath
 
