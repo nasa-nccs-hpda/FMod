@@ -55,17 +55,17 @@ class SRPlot(object):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
 		self.trainer: ModelTrainer = trainer
 		self.tset: TSet = tset
+		self.tile_grid = TileSelectionGrid(self.tset)
 		self.channel = kwargs.get('channel', 0)
 		self.time_index = kwargs.get('time_index', 0)
 		self.tile_index = kwargs.get('tile_index', (0, 0))
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[TSet,float] = self.trainer.best_loss
-
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
-		self.tile_grid = TileSelectionGrid(self.tset)
+
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
@@ -127,7 +127,7 @@ class SRPlot(object):
 
 	@property
 	def result_plot_label(self) -> str:
-		return self.tset.name
+		return "model"
 
 	def image(self, ir: int, ic: int) -> xa.DataArray:
 		itype = self.splabels[ic][ir]
@@ -163,15 +163,12 @@ class SRPlot(object):
 		self.fig.canvas.draw_idle()
 
 	def generate_subplot(self, irow: int, icol: int):
-		image: xa.DataArray = self.get_subplot_image(irow, icol)
 		ax: Axes = self.axs[irow, icol]
 		ax.set_aspect(0.5)
 		ts: Dict[str, int] = self.tile_grid.tile_grid.get_full_tile_size()
 		ax.set_xlim([0, ts['x']])
 		ax.set_ylim([0, ts['y']])
-		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
-		image = image.assign_coords( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
-		print(f" generate_subplot: ts={ts}, dx,dy={(dx, dy)}, xlim={[0, ts['x']]}, ylim={[0, ts['y']]}, image coords = {list(image.coords.keys())}")
+		image: xa.DataArray = self.get_subplot_image(irow, icol, ts)
 
 		vrange = cscale(image, 2.0)
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
@@ -182,14 +179,13 @@ class SRPlot(object):
 	def get_subplot_title(self,irow,image) -> str:
 		label = image.attrs['itype']
 		rmserror = ""
-		print( f"get_subplot_title[{label}]: losses = {self.losses}")
 		if irow == 1:
-			if label in self.losses:
-				rmserror = f"{self.losses[label]*1000:.3f}" if (label in self.losses) else ""
+			loss: float = self.losses[self.tset]
+			rmserror = f"{loss*1000:.3f}"
 		title = f"{label} {rmserror}"
 		return title
 
-	def get_subplot_image(self, irow: int, icol: int) -> xa.DataArray:
+	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
 		if 'channel' in image.dims:
 			image = image.isel(channel=self.channel)
@@ -197,5 +193,7 @@ class SRPlot(object):
 			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).batch_size
 			lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
+		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
+		image = image.assign_coords( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
 		return image
 
