@@ -29,7 +29,7 @@ class CheckpointManager(object):
 		self.optimizer.load_state_dict( checkpoint.pop('optimizer_state_dict') )
 		return checkpoint
 
-	def load_checkpoint( self, tset: TSet ) -> Dict[str,Any]:
+	def load_checkpoint( self, tset: TSet = TSet.Train ) -> Dict[str,Any]:
 		cppath = self.checkpoint_path( tset )
 		train_state = {}
 		if os.path.exists( cppath ):

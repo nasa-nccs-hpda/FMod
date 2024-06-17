@@ -278,7 +278,7 @@ class ModelTrainer(object):
 		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, context = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if load_state:
-			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state.get('epoch',0)
 			loss_history = train_state.get('losses',[])
 			nepochs += epoch0
@@ -344,7 +344,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
-		self.checkpoint_manager.load_checkpoint(tset)
+		self.checkpoint_manager.load_checkpoint()
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
 		time_coord: datetime = None if (self.time_index < 0) else self.input_dataset(tset).get_time_coord(self.time_index)

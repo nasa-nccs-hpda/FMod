@@ -137,7 +137,7 @@ class ModelTrainer(object):
 		epoch0, nepochs = 0, cfg().task.nepochs
 		train_start = time.time()
 		if load_state:
-			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state['epoch']
 			nepochs += epoch0
 
@@ -313,7 +313,7 @@ class DualModelTrainer(object):
 		epoch0, nepochs = 0, cfg().task.nepochs
 		train_start = time.time()
 		if load_state:
-			train_state = self.checkpoint_manager.load_checkpoint(load_state)
+			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state['epoch']
 			nepochs += epoch0
 

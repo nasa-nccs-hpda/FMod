@@ -295,7 +295,7 @@ class ModelTrainer(object):
 				self.results_accum.refresh_state()
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
-			train_state = self.checkpoint_manager.load_checkpoint(tset)
+			train_state = self.checkpoint_manager.load_checkpoint()
 			if self.results_accum is not None:
 				self.results_accum.load_results()
 			epoch0 = train_state.get('epoch', 0)
@@ -403,11 +403,10 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
-		train_state = self.checkpoint_manager.load_checkpoint(tset)
+		train_state = self.checkpoint_manager.load_checkpoint()
 		epoch = kwargs.get( 'epoch', train_state.get('epoch', 0) )
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		update_checkpoint = kwargs.get('update_checkpoint',True)
 
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
@@ -436,7 +435,7 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if (model_loss < self.best_loss[tset]) and update_checkpoint:
+		if (model_loss < self.best_loss[tset]) and (tset == TSet.Validation):
 			self.checkpoint_manager.save_checkpoint(epoch, tset, model_loss)
 			self.best_loss[tset] = model_loss
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
