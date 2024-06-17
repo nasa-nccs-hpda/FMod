@@ -143,7 +143,7 @@ class SRPlot(object):
 		self.update_subplots()
 
 	def plot( self ):
-		self.tile_grid.overlay_grid( self.axs[1,0] )
+		# self.tile_grid.overlay_grid( self.axs[1,0] )
 		self.update_subplots()
 		return ipw.VBox(self.panels)
 
@@ -185,7 +185,7 @@ class SRPlot(object):
 		print( f"get_subplot_title[{label}]: losses = {self.losses}")
 		if irow == 1:
 			if label in self.losses:
-				rmserror = f"{self.losses[label]:.3f}" if (label in self.losses) else ""
+				rmserror = f"{self.losses[label]*1000:.3f}" if (label in self.losses) else ""
 		title = f"{label} {rmserror}"
 		return title
 
