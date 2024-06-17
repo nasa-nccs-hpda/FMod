@@ -49,14 +49,9 @@ class CheckpointManager(object):
 			print( f" >> Clearing state: {cppath}")
 			os.remove(cppath)
 
-	def checkpoint_path( self, tset: TSet ) -> str:
-		version = tset.value
-		if version not in self._cpaths:
-			paths = [ f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{ext}.pt" for ext in ["current",version] ]
-			if os.path.exists(paths[0]):
-				self._cpaths[version] = paths[0]
-			if os.path.exists(paths[1]) or self._cpaths[version] is None:
-				self._cpaths[version] = paths[1]
-			os.makedirs(os.path.dirname(self._cpaths[version]), 0o777, exist_ok=True)
-		return self._cpaths[version]
+	@classmethod
+	def checkpoint_path( cls, tset: TSet ) -> str:
+		cpath = f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{tset.value}.pt"
+		os.makedirs(os.path.dirname(cpath), 0o777, exist_ok=True)
+		return cpath
 
