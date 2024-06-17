@@ -197,7 +197,7 @@ class BatchDataset(object):
         di = (target_coord - dindex)
         return (di>=0) and (di<self.batch_size)
 
-    def get_batch_start_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = None ) -> List[Union[datetime,int]]:
+    def get_batch_start_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = -1 ) -> List[Union[datetime,int]]:
         start_coords = []
         if self.days_per_batch > 0:
             ndates = len( self.train_dates )
@@ -209,7 +209,7 @@ class BatchDataset(object):
             nidx = self.srbatch.get_dset_size()
             print( f"  ------------- {self.tset.value} dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}  ------------- ")
             for dindex in range(0, nidx, self.batch_size):
-                if (target_coord is None) or self.in_batch_idx(target_coord,dindex):
+                if (target_coord < 0) or self.in_batch_idx(target_coord,dindex):
                     start_coords.append( dindex )
         if randomize:   random.shuffle(start_coords)
         return start_coords
