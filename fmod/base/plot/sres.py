@@ -170,8 +170,8 @@ class SRPlot(object):
 		ax.set_xlim([0, ts['x']])
 		ax.set_ylim([0, ts['y']])
 		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
-		extent = [ -dx, ts['x']+dx, -dy, ts['y']+dy ]
-		print(f" generate_subplot: ts={ts}, dx,dy={(dx, dy)}, extent={extent}")
+		extent = [ -dx/2, ts['x']+dx/2, -dy/2, ts['y']+dy/2 ]
+		print(f" generate_subplot: ts={ts}, dx,dy={(dx, dy)}, extent={extent}, xlim={[0, ts['x']]}, ylim={[0, ts['y']]}")
 
 		vrange = cscale(image, 2.0)
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', extent=extent, yincrease=True, vmin=vrange[0], vmax=vrange[1])
