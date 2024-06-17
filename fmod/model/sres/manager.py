@@ -237,6 +237,7 @@ class ResultsAccumulator(object):
 
 	@exception_handled
 	def save(self):
+		print( f" ** Saving training stats to {self.result_file_path()}")
 		for result in self.results:
 			self.writer.write_entry( result.serialize() )
 
