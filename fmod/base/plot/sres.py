@@ -166,7 +166,7 @@ class SRPlot(object):
 		image: xa.DataArray = self.get_subplot_image(irow, icol)
 		ax: Axes = self.axs[irow, icol]
 		ax.set_aspect(0.5)
-		ts: Dict[str, int] = self.tile_grid.tile_grid.get_tile_size()
+		ts: Dict[str, int] = self.tile_grid.tile_grid.get_full_tile_size()
 		ax.set_xlim([0, ts['x']])
 		ax.set_ylim([0, ts['y']])
 		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
