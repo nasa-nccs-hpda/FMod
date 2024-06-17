@@ -26,7 +26,6 @@ for model in models:
 			results.record_losses( tset, 0, losses['validation'], losses['upsampled'] )
 
 		results.save( )
-		results.print()
 
 
 
