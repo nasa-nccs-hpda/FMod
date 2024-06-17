@@ -170,12 +170,11 @@ class SRPlot(object):
 		ax.set_xlim([0, ts['x']])
 		ax.set_ylim([0, ts['y']])
 		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
-		extent = [ -dx/2, ts['x']+dx/2, -dy/2, ts['y']+dy/2 ]
-		#image.assign_coords()
+		image = image.assign_coords( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
 		print(f" generate_subplot: ts={ts}, dx,dy={(dx, dy)}, xlim={[0, ts['x']]}, ylim={[0, ts['y']]}, image coords = {list(image.coords.keys())}")
 
 		vrange = cscale(image, 2.0)
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', extent=extent, yincrease=True, vmin=vrange[0], vmax=vrange[1])
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims[ (irow, icol) ] = iplot
