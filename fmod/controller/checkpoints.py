@@ -43,11 +43,12 @@ class CheckpointManager(object):
 		print( f" ------ Saving checkpoints to '{cppath}' ------ " )
 		return train_state
 
-	def clear_checkpoint( self, tset: TSet ):
-		cppath = self.checkpoint_path(tset)
-		if os.path.exists(cppath):
-			print( f" >> Clearing state: {cppath}")
-			os.remove(cppath)
+	def clear_checkpoints( self ):
+		for tset in [ TSet.Train, TSet.Validation ]:
+			cppath = self.checkpoint_path(tset)
+			if os.path.exists(cppath):
+				print( f" >> Clearing state: {cppath}")
+				os.remove(cppath)
 
 	@classmethod
 	def checkpoint_path( cls, tset: TSet ) -> str:

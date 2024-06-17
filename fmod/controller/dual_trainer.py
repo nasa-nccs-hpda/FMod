@@ -86,7 +86,7 @@ class ModelTrainer(object):
 		super(ModelTrainer, self).__init__()
 		self.device: torch.device = model_manager.device
 		self.model_manager = model_manager
-		self.results_accum = results_accumulator
+		self.results_accum: ResultsAccumulator = results_accumulator
 		self.min_loss = float('inf')
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
@@ -277,24 +277,30 @@ class ModelTrainer(object):
 			self.evaluate(tset)
 		return npa(self.product[tset])
 
-	def train(self, **kwargs ) -> Dict[str,float]:
+	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
-		refresh_state = kwargs.get( 'cppath', False )
-		seed = kwargs.get( 'seed', 4456 )
+		refresh_state = kwargs.get('refresh_state', False)
+		seed = kwargs.get('seed', 4456)
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		self.scheduler = kwargs.get( 'scheduler', None )
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay',0.0))
-		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
+		self.scheduler = kwargs.get('scheduler', None)
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
+		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
-			self.checkpoint_manager.clear_checkpoint(TSet.Train)
+			self.checkpoint_manager.clear_checkpoints()
+			if self.results_accum is not None:
+				self.results_accum.refresh_state()
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
 			train_state = self.checkpoint_manager.load_checkpoint(tset)
-			epoch0 = train_state.get('epoch',0)
+			if self.results_accum is not None:
+				self.results_accum.load_results()
+			epoch0 = train_state.get('epoch', 0)
+			loss = train_state.get('loss', float('inf'))
+			self.best_loss[TSet.Validation] = loss
 			nepochs += epoch0
 
 		self.record_eval(epoch0)

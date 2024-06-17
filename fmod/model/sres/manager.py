@@ -180,7 +180,6 @@ class ResultsAccumulator(object):
 
 	def __init__(self, task: str, dataset: str, scenario: str, model: str, **kwargs):
 		self.results: List[ResultRecord] = []
-		self.refresh_state = kwargs.get('refresh_state', False)
 		self.dataset: str = dataset
 		self.scenario: str = scenario
 		self.task = task
@@ -188,7 +187,6 @@ class ResultsAccumulator(object):
 		self.save_dir = kwargs.get( 'save_dir', fmbdir('processed') )
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None
-		self.load_results()
 
 	@property
 	def reader(self) -> ResultFileReader:
@@ -207,6 +205,11 @@ class ResultsAccumulator(object):
 		os.makedirs(results_save_dir, exist_ok=True)
 		model_id = f"_{self.model}" if model_specific else ""
 		return f"{results_save_dir}/{self.dataset}_{self.scenario}{model_id}_losses.csv"
+
+	def refresh_state(self):
+		rfile =self.result_file_path()
+		if os.path.exists( rfile ):
+			os.remove( rfile )
 
 	def close(self):
 		if self._reader is not None:
