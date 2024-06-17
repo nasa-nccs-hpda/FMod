@@ -434,7 +434,7 @@ class ModelTrainer(object):
 			self.checkpoint_manager.save_checkpoint(epoch, tset, model_loss)
 			self.best_loss[tset] = model_loss
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
-		return dict(validation=model_loss, upsampled=interp_loss)
+		return dict( model=self.best_loss[tset], upsampled=interp_loss )
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
