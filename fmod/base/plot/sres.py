@@ -58,14 +58,14 @@ class SRPlot(object):
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(self.tset)
 		self.tile_grid.create_tile_recs(**kwargs)
 		self.channelx: int = kwargs.get('channel', 0)
-		self.time_index: int = kwargs.get( 'time_index', 0 )
-		self.tileId: int = kwargs.get( 'tile_index', 0 )
-		self.tile_index: Tuple[int,int] = None
+		self.time_index: int = kwargs.get( 'time_id', 0 )
+		self.tileId: int = kwargs.get( 'tile_id', 0 )
+		self.tile_index: Tuple[int,int] = self.tile_grid.get_tile_coords( self.tileId )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[TSet,float] = {}
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
-		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
-		self.sslider: StepSlider = StepSlider('Tile:', self.tile_grid.ntiles )
+		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['time'] )
+		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
 
