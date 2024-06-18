@@ -75,9 +75,9 @@ class SRPlot(object):
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
-		self.panels = [self.fig.canvas,self.tslider]
+		self.panels = [ self.fig.canvas, self.tslider, self.sslider ]
 		self.tslider.set_callback( self.time_update )
-		self.tslider.set_callback( self.tile_update )
+		self.sslider.set_callback( self.tile_update )
 
 	@property
 	def sample_target(self) -> xa.DataArray:
