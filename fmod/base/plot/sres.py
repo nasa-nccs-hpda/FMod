@@ -192,7 +192,7 @@ class SRPlot(object):
 		self.ims[ (irow, icol) ] = iplot
 
 	def get_subplot_title(self,irow,icol) -> str:
-		label = self.plot_titles[icol][irow]
+		label = self.plot_titles[irow][icol]
 		rmserror = ""
 		if irow == 1:
 			loss: float = self.losses[label]
