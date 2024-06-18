@@ -67,6 +67,7 @@ class SRPlot(object):
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['time'] )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
+		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
 
@@ -96,11 +97,12 @@ class SRPlot(object):
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
-		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
+		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index ) # , upsample=True
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
 		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice(index=0)
+		print( f"update_tile_data: prediction shape = {prediction.shape}, target shape = {target.shape}")
 
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
@@ -109,7 +111,7 @@ class SRPlot(object):
 			data: np.ndarray = self.trainer.get_ml_upsampled(self.tset)
 			upsampled = xa.DataArray(data, dims=['time', 'channel', 'y', 'x'], coords=coords)
 
-		images_data: Dict[str, xa.DataArray] = dict(upsampled=upsampled, input=model_input, target=target, domain=domain)
+		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
 		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
 		return images_data
@@ -129,7 +131,7 @@ class SRPlot(object):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsampled"
+		return "upsample"
 
 	@property
 	def result_plot_label(self) -> str:
@@ -189,8 +191,8 @@ class SRPlot(object):
 		ax.set_title( self.get_subplot_title(irow,image) )
 		self.ims[ (irow, icol) ] = iplot
 
-	def get_subplot_title(self,irow,image) -> str:
-		label = image.attrs['itype']
+	def get_subplot_title(self,irow,icol) -> str:
+		label = self.plot_titles[icol][irow]
 		rmserror = ""
 		if irow == 1:
 			loss: float = self.losses[label]
