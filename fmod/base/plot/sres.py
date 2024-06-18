@@ -63,7 +63,7 @@ class SRPlot(object):
 		self.channel: int = kwargs.get( 'channel', 0 )
 		self.tile_index: Tuple[int,int] = self.tile_grid.get_tile_coords( self.tileId )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
-		self.losses: Dict[TSet,float] = {}
+		self.losses: Dict[str,float] = {}
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['time'] )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
@@ -188,7 +188,7 @@ class SRPlot(object):
 		vrange = cscale(image, 2.0)
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
-		ax.set_title( self.get_subplot_title(irow,image) )
+		ax.set_title( self.get_subplot_title(irow,icol) )
 		self.ims[ (irow, icol) ] = iplot
 
 	def get_subplot_title(self,irow,icol) -> str:
