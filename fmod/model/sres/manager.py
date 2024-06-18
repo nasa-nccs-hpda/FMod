@@ -219,13 +219,9 @@ class ResultsAccumulator(object):
 			self._writer.close()
 			self._writer = None
 
-	def create_record(self, rec: List[str]) -> ResultRecord:
-		skip = version_test(rec[0])
-		if (skip == 0) or (rec[0]==self.model):
-			try:
-				return ResultRecord( TSet(rec[skip]), int(rec[skip+1]), float(rec[skip+2]), float(rec[skip+3]) )
-			except ValueError:
-				return ResultRecord( TSet(rec[skip]), 0, float(rec[skip+1]), float(rec[skip+2]))
+	@classmethod
+	def create_record( cls, rec: List[str] ) -> ResultRecord:
+		return ResultRecord( TSet(rec[0]), int(rec[1]), float(rec[2]), float(rec[3]) )
 
 	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float ):
 		rr: ResultRecord = ResultRecord(tset, epoch, model_loss, upsampled_loss )
@@ -247,6 +243,7 @@ class ResultsAccumulator(object):
 				rec = self.create_record(row)
 				if rec is not None:
 					self.results.append( rec )
+		print(f" ** Loading training stats ({len(self.results)} recs) from {self.result_file_path()}")
 
 	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
 		plot_data, model_data = {}, {}
