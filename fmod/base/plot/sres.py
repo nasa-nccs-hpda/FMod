@@ -60,6 +60,7 @@ class SRPlot(object):
 		self.channelx: int = kwargs.get('channel', 0)
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
+		self.channel: int = kwargs.get( 'channel', 0 )
 		self.tile_index: Tuple[int,int] = self.tile_grid.get_tile_coords( self.tileId )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[TSet,float] = {}
