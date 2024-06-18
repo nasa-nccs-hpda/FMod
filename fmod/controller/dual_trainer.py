@@ -356,7 +356,7 @@ class ModelTrainer(object):
 		return self.current_losses
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float] ):
-		eval_losses = self.evaluate(epoch=epoch)
+		eval_losses = self.evaluate( epoch=epoch, upsample=(epoch==0) )
 		if self.results_accum is not None:
 			self.results_accum.record_losses( TSet.Validation, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
@@ -442,7 +442,7 @@ class ModelTrainer(object):
 		if (model_loss < self.validation_loss) and (tset == TSet.Validation):
 			self.validation_loss = model_loss
 			self.checkpoint_manager.save_checkpoint( epoch, tset, self.validation_loss )
-		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
+		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		losses = dict( model=model_loss )
 		if interp_loss is not None:
 			losses['upsample'] = interp_loss
