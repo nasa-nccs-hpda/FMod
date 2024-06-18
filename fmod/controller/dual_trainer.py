@@ -351,18 +351,19 @@ class ModelTrainer(object):
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		self.record_eval( nepochs, tset = TSet.Test )
 		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def record_eval(self, epoch: int, losses: Dict[TSet,float] ):
-		eval_losses = self.evaluate( epoch=epoch, upsample=(epoch==0) )
+	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation ):
+		eval_losses = self.evaluate( tset, epoch=epoch, upsample=(epoch==0) )
 		if self.results_accum is not None:
-			self.results_accum.record_losses( TSet.Validation, epoch, eval_losses['model'] )
+			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
 				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
-			for tset, loss in losses.items():
-				self.results_accum.record_losses( tset, epoch, loss )
+			for etset, loss in losses.items():
+				self.results_accum.record_losses( etset, epoch, loss )
 		return eval_losses
 
 	def eval_upscale(self, tset: TSet, **kwargs) -> float:
