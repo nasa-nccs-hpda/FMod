@@ -13,7 +13,7 @@ task = "sres"
 models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-refresh_state = False
+refresh_state = True
 seed = int( time.time()/60 )
 
 for model in models:

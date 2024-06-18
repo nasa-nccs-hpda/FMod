@@ -96,17 +96,16 @@ def rrkey( tset: TSet, **kwargs ) -> str:
 
 class ResultRecord(object):
 
-	def __init__(self, tset: TSet, epoch: int, model_loss: float, interp_loss: float ):
-		self.model_loss: float = model_loss
-		self.upsampled_loss: float = interp_loss
+	def __init__(self, tset: TSet, epoch: int, loss: float ):
+		self.loss: float = loss
 		self.epoch: int = epoch
 		self.tset: TSet = tset
 
 	def serialize(self) -> List[str]:
-		return [ self.tset.value, str(self.epoch), f"{self.model_loss:.4f}", f"{self.upsampled_loss:.4f}" ]
+		return [ self.tset.value, str(self.epoch), f"{self.loss:.4f}" ]
 
 	def __str__(self):
-		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Model: {self.model_loss:.4f}, Upsample: {self.upsampled_loss:.4f}"
+		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Loss: {self.loss:.4f}"
 
 class ResultFileWriter:
 
@@ -221,10 +220,10 @@ class ResultsAccumulator(object):
 
 	@classmethod
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
-		return ResultRecord( TSet(rec[0]), int(rec[1]), float(rec[2]), float(rec[3]) )
+		return ResultRecord( TSet(rec[0]), int(rec[1]), float(rec[2]) )
 
-	def record_losses(self, tset: TSet, epoch, model_loss: float, upsampled_loss: float ):
-		rr: ResultRecord = ResultRecord(tset, epoch, model_loss, upsampled_loss )
+	def record_losses(self, tset: TSet, epoch, loss: float ):
+		rr: ResultRecord = ResultRecord(tset, epoch, loss )
 		self.results.append( rr )
 
 	def serialize(self)-> Dict[ str, Tuple[float,float,int] ]:
@@ -252,7 +251,7 @@ class ResultsAccumulator(object):
 			print( f"get_plot_data: {len(self.results)} results")
 			for result in self.results:
 				if result.tset == tset:
-					result_data.append( [ result.epoch, result.model_loss ] )
+					result_data.append( [ result.epoch, result.loss ] )
 
 		x, y = {}, {}
 		for tset in [TSet.Validation]:

@@ -11,6 +11,8 @@ class TSet(Enum):
 	Train = 'train'
 	Validation = 'valid'
 	Test = 'test'
+	Upsample = 'upsample'
+
 class ncFormat(Enum):
 	Standard = 'standard'
 	DALI = 'dali'

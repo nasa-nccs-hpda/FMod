@@ -112,7 +112,7 @@ class ModelTrainer(object):
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
-		self.best_loss: Dict[TSet,float] = { tset: float('inf') for tset in TSet }
+		self.validation_loss: float = float('inf')
 
 	@property
 	def model_name(self):
@@ -299,8 +299,7 @@ class ModelTrainer(object):
 			if self.results_accum is not None:
 				self.results_accum.load_results()
 			epoch0 = train_state.get('epoch', 0)
-			loss = train_state.get('loss', float('inf'))
-			self.best_loss[TSet.Validation] = loss
+			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
 		self.record_eval(epoch0)
@@ -348,7 +347,7 @@ class ModelTrainer(object):
 			epoch_loss: float = np.array(batch_losses).mean()
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Train, epoch_loss )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
-			self.record_eval(epoch)
+			self.record_eval( epoch, {TSet.Train: epoch_loss} )
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
@@ -356,12 +355,15 @@ class ModelTrainer(object):
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def record_eval(self, epoch: int ):
-		for tset in [TSet.Validation, TSet.Test]:
-			eval_losses = self.evaluate(tset,epoch=epoch)
-			if self.results_accum is not None:
-				self.results_accum.record_losses( tset, epoch, eval_losses['model'], eval_losses['upsampled'] )
-			lgm().log(f" ** EVAL {tset.value}, model-loss: {eval_losses['model']:.4f}, interp-loss: {eval_losses['upsampled']:.4f}", display=True)
+	def record_eval(self, epoch: int, losses: Dict[TSet,float] ):
+		eval_losses = self.evaluate(epoch=epoch)
+		if self.results_accum is not None:
+			self.results_accum.record_losses( TSet.Validation, epoch, eval_losses['model'] )
+			if 'upsample' in eval_losses:
+				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
+			for tset, loss in losses.items():
+				self.results_accum.record_losses( tset, epoch, loss )
+		return eval_losses
 
 	def eval_upscale(self, tset: TSet, **kwargs) -> float:
 		seed = kwargs.get('seed', 333)
@@ -397,8 +399,9 @@ class ModelTrainer(object):
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, interp loss = {interp_loss:.4f}')
 		return interp_loss
 
-	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
+	def evaluate(self, tset: TSet = TSet.Validation, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
+		upsample = kwargs.get('upsample', False)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
@@ -420,12 +423,13 @@ class ModelTrainer(object):
 				train_data: Dict[str, Tensor] = self.get_srbatch(tile_loc, tset, start_coord)
 				inp = train_data['input']
 				# ups: Tensor = self.get_target_channels(self.upsample(inp))
-				ups: Tensor = self.upsample(inp)
 				target: Tensor = train_data['target']
 				prd, targ = self.apply_network(inp, target)
 				batch_model_losses.append( self.loss(prd, targ)[0].item() )
-				batch_interp_losses.append( self.loss(ups, targ)[0].item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.5f},  Interp-Loss= {batch_interp_losses[-1]:.5f}", display=True )
+				if upsample:
+					ups: Tensor = self.upsample(inp)
+					batch_interp_losses.append( self.loss(ups, targ)[0].item() )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{batch_index}][{xyi}]: Loss= {batch_model_losses[-1]:.5f}", display=True )
 		if inp is None: lgm().log( " ---------->> No tiles processed!", display=True)
 		self.input[tset] = inp
 		self.target[tset] = targ
@@ -433,13 +437,16 @@ class ModelTrainer(object):
 
 		proc_time = time.time() - proc_start
 		model_loss: float = np.array(batch_model_losses).mean()
-		interp_loss: float = np.array(batch_interp_losses).mean()
+		interp_loss: float = np.array(batch_interp_losses).mean() if len(batch_interp_losses) > 0 else None
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if (model_loss < self.best_loss[tset]) and (tset == TSet.Validation):
-			self.checkpoint_manager.save_checkpoint(epoch, tset, model_loss)
-			self.best_loss[tset] = model_loss
+		if (model_loss < self.validation_loss) and (tset == TSet.Validation):
+			self.validation_loss = model_loss
+			self.checkpoint_manager.save_checkpoint( epoch, tset, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}, interp loss = {interp_loss:.4f}')
-		return dict( model=self.best_loss[tset], upsampled=interp_loss )
+		losses = dict( model=model_loss )
+		if interp_loss is not None:
+			losses['upsample'] = interp_loss
+		return losses
 
 	def apply_network(self, input_data: Tensor, target_data: Tensor = None ) -> Tuple[TensorOrTensors,Tensor]:
 		net_input: Tensor  = input_data
