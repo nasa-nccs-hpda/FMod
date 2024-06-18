@@ -302,7 +302,7 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		self.record_eval(epoch0)
+		self.record_eval(epoch0,{})
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
