@@ -250,7 +250,7 @@ class ResultsAccumulator(object):
 			result_data = model_data.setdefault(tset, {})
 			print( f"get_plot_data: {len(self.results)} results")
 			for result in self.results:
-				if result.tset == tset:
+				if (result.tset == tset) and (result.epoch > 0):
 					result_data[ result.epoch ] = result.loss
 
 		x, y = {}, {}
