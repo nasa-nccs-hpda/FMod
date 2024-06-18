@@ -125,7 +125,7 @@ class SRPlot(object):
 		print(f" ---> selected_tile: {selected_tile}")
 		if selected_tile is not None:
 			self.tile_index = selected_tile
-			self.update_tile_data()
+			self.images_data = self.update_tile_data()
 			self.update_subplots()
 			lgm().log( f" ---> selected_tile = {selected_tile}")
 
@@ -147,14 +147,14 @@ class SRPlot(object):
 	def time_update(self, sindex: int):
 		lgm().log(f"\n time_update ---> sindex = {sindex}")
 		self.time_index = sindex
-		self.update_tile_data()
+		self.images_data = self.update_tile_data()
 		self.update_subplots()
 
 	@exception_handled
 	def tile_update(self, sindex: int):
 		lgm().log( f"\n tile_update ---> sindex = {sindex}" )
 		self.tileId = sindex
-		self.update_tile_data()
+		self.images_data = self.update_tile_data()
 		self.update_subplots()
 
 
