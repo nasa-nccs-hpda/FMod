@@ -56,6 +56,7 @@ class SRPlot(object):
 		self.trainer: ModelTrainer = trainer
 		self.tset: TSet = tset
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(self.tset)
+		self.tile_grid.create_tile_recs(**kwargs)
 		self.channelx: int = kwargs.get('channel', 0)
 		self.time_index: int = kwargs.get( 'time_index', 0 )
 		self.tileId: int = kwargs.get( 'tile_index', 0 )
