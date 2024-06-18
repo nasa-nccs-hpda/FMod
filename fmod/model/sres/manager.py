@@ -247,7 +247,7 @@ class ResultsAccumulator(object):
 
 	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
 		plot_data, model_data = {}, {}
-		for tset in [TSet.Validation, TSet.Test]:
+		for tset in [TSet.Validation]:
 			result_data = model_data.setdefault(tset, [])
 			print( f"get_plot_data: {len(self.results)} results")
 			for result in self.results:
@@ -255,7 +255,7 @@ class ResultsAccumulator(object):
 					result_data.append( [ result.epoch, result.model_loss ] )
 
 		x, y = {}, {}
-		for tset in [TSet.Validation, TSet.Test]:
+		for tset in [TSet.Validation]:
 			result_data = model_data[ tset ]
 			x[tset] = np.array([pd[0] for pd in result_data])
 			y[tset] = np.array([pd[1] for pd in result_data])
