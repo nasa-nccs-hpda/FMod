@@ -34,6 +34,13 @@ class TileSelectionGrid(object):
 		self.tiles: Dict[Tuple[int, int], Rectangle] = None
 		self._selection_callback = default_selection_callabck
 
+	def get_tile_coords(self, tile_index: int) -> Tuple[int, int]:
+		return list(self.tiles.keys())[tile_index]
+
+	@property
+	def ntiles(self):
+		return len(self.tiles)
+
 	def get_selected(self, x: float, y: float ) -> Optional[Tuple[int,int]]:
 		for xyi, r in self.tiles.items():
 			if r.contains_point( (x,y) ):

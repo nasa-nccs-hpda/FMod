@@ -55,14 +55,16 @@ class SRPlot(object):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
 		self.trainer: ModelTrainer = trainer
 		self.tset: TSet = tset
-		self.tile_grid = TileSelectionGrid(self.tset)
-		self.channel = kwargs.get('channel', 0)
-		self.time_index = kwargs.get('time_index', 0)
-		self.tile_index = kwargs.get('tile_index', (0, 0))
+		self.tile_grid: TileSelectionGrid = TileSelectionGrid(self.tset)
+		self.channelx: int = kwargs.get('channel', 0)
+		self.time_index: int = kwargs.get( 'time_index', 0 )
+		self.tileId: int = kwargs.get( 'tile_index', 0 )
+		self.tile_index: Tuple[int,int] = None
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[TSet,float] = {}
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
 		self.tslider: StepSlider = StepSlider('Time:', self.sample_input.sizes['time'] )
+		self.sslider: StepSlider = StepSlider('Tile:', self.tile_grid.ntiles )
 		self.ims = {}
 		fsize = kwargs.get( 'fsize', 8.0 )
 
@@ -72,6 +74,7 @@ class SRPlot(object):
 			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
 		self.panels = [self.fig.canvas,self.tslider]
 		self.tslider.set_callback( self.time_update )
+		self.tslider.set_callback( self.tile_update )
 
 	@property
 	def sample_target(self) -> xa.DataArray:
@@ -90,6 +93,7 @@ class SRPlot(object):
 		return self.sample_input.coords
 
 	def update_tile_data(self) -> Dict[str, xa.DataArray]:
+		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
 		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index )
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
@@ -142,6 +146,13 @@ class SRPlot(object):
 		self.update_tile_data()
 		self.update_subplots()
 
+	@exception_handled
+	def tile_update(self, sindex: int):
+		self.tileId = sindex
+		self.update_tile_data()
+		self.update_subplots()
+
+
 	def plot( self ):
 		# self.tile_grid.overlay_grid( self.axs[1,0] )
 		self.update_subplots()
@@ -154,7 +165,7 @@ class SRPlot(object):
 	#	return ctime.strftime("%m/%d/%Y:%H")
 
 	def update_subplots(self):
-		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
+		self.fig.suptitle(f'Time: {self.display_time}, Tile: {self.tile_index}', fontsize=10, va="top", y=1.0)
 
 		for irow in [0, 1]:
 			for icol in [0, 1]:
