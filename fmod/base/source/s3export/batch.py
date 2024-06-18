@@ -146,7 +146,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], **kwargs ) -> xa.DataArray:
 		raw_data: np.memmap = self.open_timeslice(vid[0], **kwargs)
 		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
-		lgm().debug( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}, data mean={tile_data.mean():.4f}")
+		# lgm().log( f" $$ load_channel: raw_data{raw_data.shape}, tile_data{tile_data.shape}, origin={origin}, data mean={tile_data.mean():.4f}")
 		result = xa.DataArray( scale( vid[0], tile_data ), dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
 
