@@ -102,7 +102,7 @@ class SRPlot(object):
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
 		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice(index=0)
-		print( f"update_tile_data: prediction shape = {prediction.shape}, target shape = {target.shape}")
+		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
@@ -152,6 +152,7 @@ class SRPlot(object):
 
 	@exception_handled
 	def tile_update(self, sindex: int):
+		lgm().log( f"\n tile_update ---> sindex = {sindex}" )
 		self.tileId = sindex
 		self.update_tile_data()
 		self.update_subplots()
@@ -206,7 +207,7 @@ class SRPlot(object):
 			image = image.isel(channel=self.channel)
 		if 'time' in image.dims:
 			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).batch_size
-			lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
+			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
 		image = image.assign_coords( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
