@@ -1,4 +1,4 @@
-name: ???
+name: lapsrn
 
 nfeatures: 128
 loss_fn: l2

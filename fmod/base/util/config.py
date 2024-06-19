@@ -30,7 +30,6 @@ def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logg
     cfg().task.scenario = scenario
     cfg().task.dataset = dataset
     cfg().task.training_version = config_name
-    cfg().model.name = model
     lgm().set_level( log_level )
     for wfilter in warning_filters:
         warnings.filterwarnings(wfilter)      # "error"
