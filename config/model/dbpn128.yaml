@@ -1,0 +1,10 @@
+name: ???
+
+nfeatures: 128
+depth: 3
+scale: 4
+nprojectionfeatures: 32
+loss_fn: l2
+
+downscale_factors: [2,2]
+ups_mode: bicubic

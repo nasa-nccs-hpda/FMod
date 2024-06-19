@@ -10,10 +10,10 @@ from fmod.base.util.ops import fmbdir, fmtp
 hydra.initialize(version_base=None, config_path="../config")
 
 task = "sres"
-models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+models = [ 'dbpn128' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-refresh_state = False
+refresh_state = True
 gpu = 0
 seed = int( time.time()/60 )
 
