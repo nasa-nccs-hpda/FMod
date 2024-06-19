@@ -41,7 +41,7 @@ def cfgdir() -> str:
 
 class ConfigContext(initialize):
 
-    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../config"):
+    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
         super(ConfigContext,self).__init__(config_path)
         self.task: str = task
         self.model: str = model
