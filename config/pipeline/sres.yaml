@@ -4,5 +4,6 @@ ddp_sharding: true
 
 num_workers: 1
 device:  "cuda"
+gpu: 1
 process_rank:  0
 world_size:  1

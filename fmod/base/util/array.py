@@ -6,6 +6,7 @@ from fmod.base.util.config import cfg2meta, cfg
 from fmod.base.util.ops import format_timedeltas, fmbdir
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from fmod.base.util.model import dataset_to_stacked
+from fmod.base.gpu import set_device, get_device
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
@@ -58,14 +59,6 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
     darray.attrs['channels'] = channels
     return darray.transpose( "batch", "channels", coords['y'], coords['x'] )
-
-def get_device():
-    devname = cfg().task.device
-    if devname == "gpu": devname = "cuda"
-    device = torch.device(devname)
-    if device.type == "cuda" and device.index is None:
-        device = torch.device("cuda:0")
-    return device
 
 def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
