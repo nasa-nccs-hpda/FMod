@@ -102,10 +102,10 @@ class ResultRecord(object):
 		self.tset: TSet = tset
 
 	def serialize(self) -> List[str]:
-		return [ self.tset.value, str(self.epoch), f"{self.loss:.4f}" ]
+		return [ self.tset.value, str(self.epoch), f"{self.loss:.6f}" ]
 
 	def __str__(self):
-		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Loss: {self.loss:.4f}"
+		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Loss: {self.loss:.6f}"
 
 class ResultFileWriter:
 
@@ -236,21 +236,24 @@ class ResultsAccumulator(object):
 		for result in self.results:
 			self.writer.write_entry( result.serialize() )
 
+	def load_row(self, row: List[str]):
+		rec = self.create_record(row)
+		if rec is not None:
+			self.results.append(rec)
+
 	def load_results( self ):
 		for reader in self.reader.csvreaders:
 			for row in reader:
-				rec = self.create_record(row)
-				if rec is not None:
-					self.results.append( rec )
+				self.load_row(row)
 		print(f" ** Loading training stats ({len(self.results)} recs) from {self.result_file_path()}")
 
-	def get_plot_data(self ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
+	def get_plot_data(self, estart: int = 1 ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
 		plot_data, model_data = {}, {}
 		for tset in [TSet.Train, TSet.Validation]:
 			result_data = model_data.setdefault(tset, {})
 			print( f"get_plot_data: {len(self.results)} results")
 			for result in self.results:
-				if (result.tset == tset) and (result.epoch > 0):
+				if (result.tset == tset) and (result.epoch >= estart):
 					result_data[ result.epoch ] = result.loss
 
 		x, y = {}, {}
