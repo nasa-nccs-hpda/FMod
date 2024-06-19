@@ -1,0 +1,6 @@
+defaults:
+  - platform: ???
+  - task: ???
+  - model: ???
+  - pipeline: sres
+  - _self_

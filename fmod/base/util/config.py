@@ -3,6 +3,7 @@ import logging
 import xarray, warnings, torch
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
+from hydra.initialize import initialize
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
@@ -23,16 +24,14 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN, warning_filters=[]) -> DictConfig:
-    config_name = f"{task}-{model}-{dataset}-{scenario}"
-    Configuration.init( config_name )
+def fmconfig( task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
+    overrides = {'++task':task, '++model':model, '++platform':f'{dataset}-{server}', '++pipeline':pipeline}
+    Configuration.init( pipeline, dict( **overrides, **ccustom) )
     cfg().task.name = task
     cfg().task.scenario = scenario
     cfg().task.dataset = dataset
-    cfg().task.training_version = config_name
+    cfg().task.training_version = f"{task}-{model}-{dataset}-{scenario}"
     lgm().set_level( log_level )
-    for wfilter in warning_filters:
-        warnings.filterwarnings(wfilter)      # "error"
     return Configuration.instance().cfg
 
 def cfgdir() -> str:
@@ -40,9 +39,10 @@ def cfgdir() -> str:
     print( f'cdir = {cdir}')
     return str(cdir)
 
-class ConfigContext:
+class ConfigContext(initialize):
 
-    def __init__(self, task: str, model: str, dataset: str, scenario: str, log_level=logging.WARN):
+    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../config"):
+        super(ConfigContext,self).__init__(config_path)
         self.task: str = task
         self.model: str = model
         self.dataset: str = dataset
@@ -50,38 +50,42 @@ class ConfigContext:
         self.log_level: int = log_level
         self.cfg: DictConfig = None
         self.name: str = None
+        self.ccustom: Dict[str,str] = ccustom
+        self.pipeline: str = pipeline
+        self.server: str = server
 
-    def __enter__(self):
-       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.log_level)
+    def __enter__(self, *args: Any, **kwargs: Any):
+       super(ConfigContext, self).__enter__( *args, **kwargs)
+       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
        self.name = Configuration.instance().config_name
        print( 'Entering cfg-context: ', self.name )
        return self
 
-    def __exit__(self, exc_type, exc_value, tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
+       super(ConfigContext, self).__exit__(exc_type, exc_val, exc_tb )
        print( 'Exiting cfg-context: ', self.name )
        Configuration.clear()
        self.cfg = None
        self.name = None
        if exc_type is not None:
-           traceback.print_exception( exc_type, value=exc_value, tb=tb)
-       return True
+           traceback.print_exception( exc_type, value=exc_val, tb=exc_tb)
 
 class ConfigBase(ABC):
     _instance = None
     _instantiated = None
 
-    def __init__(self, config_name: str, **kwargs ):
+    def __init__(self, config_name: str, overrides: Dict[str,str] ):
         self.config_name = config_name
-        self.cfg: DictConfig = self.get_parms(**kwargs)
+        self.cfg: DictConfig = self.get_parms(overrides)
 
     @abstractmethod
-    def get_parms(self, **kwargs) -> DictConfig:
+    def get_parms(self, overrides: Dict[str,str] ) -> DictConfig:
         return None
 
     @classmethod
-    def init(cls, config_name: str ):
+    def init(cls, config_name: str, overrides: Dict[str,str] ):
         if cls._instance is None:
-            inst = cls( config_name )
+            inst = cls( config_name, overrides )
             cls._instance = inst
             cls._instantiated = cls
             print(f' *** Configuration {config_name} initialized *** ')
@@ -97,8 +101,9 @@ class ConfigBase(ABC):
 
 
 class Configuration(ConfigBase):
-    def get_parms(self, **kwargs) -> DictConfig:
-        return hydra.compose(self.config_name, return_hydra_config=True)
+    def get_parms(self, overrides: Dict[str,str]) -> DictConfig:
+        return hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
+
 
 def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
     csections = csection.split(".")
