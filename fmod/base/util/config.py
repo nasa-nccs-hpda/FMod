@@ -24,13 +24,14 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
-    overrides = {'task':task, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
+def fmconfig( model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
+    taskname = f"{dataset}-{scenario}"
+    overrides = {'task':taskname, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
     Configuration.init( pipeline, dict( **overrides, **ccustom) )
-    cfg().task.name = task
+    cfg().task.name = taskname
     cfg().task.scenario = scenario
     cfg().task.dataset = dataset
-    cfg().task.training_version = f"{task}-{model}-{dataset}-{scenario}"
+    cfg().task.training_version = f"{model}-{dataset}-{scenario}"
     lgm().set_level( log_level )
     return Configuration.instance().cfg
 
