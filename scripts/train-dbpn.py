@@ -9,13 +9,12 @@ from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.ops import fmbdir, fmtp
 hydra.initialize(version_base=None, config_path="../config")
 
-
 task = "sres"
 models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
 refresh_state = False
-gpu = 1
+gpu = 0
 seed = int( time.time()/60 )
 
 for model in models:
