@@ -42,9 +42,8 @@ def cfgdir() -> str:
 
 class ConfigContext(initialize):
 
-    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
+    def __init__(self, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
         super(ConfigContext,self).__init__(config_path)
-        self.task: str = task
         self.model: str = model
         self.dataset: str = dataset
         self.scenario: str = scenario
@@ -57,7 +56,7 @@ class ConfigContext(initialize):
 
     def __enter__(self, *args: Any, **kwargs: Any):
        super(ConfigContext, self).__enter__( *args, **kwargs)
-       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
+       self.cfg = fmconfig( self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
        self.name = Configuration.instance().config_name
        print( 'Entering cfg-context: ', self.name )
        return self
