@@ -25,7 +25,7 @@ def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
 def fmconfig( task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
-    overrides = {'++task':task, '++model':model, '++platform':f'{dataset}-{server}', '++pipeline':pipeline}
+    overrides = {'task':task, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
     Configuration.init( pipeline, dict( **overrides, **ccustom) )
     cfg().task.name = task
     cfg().task.scenario = scenario
