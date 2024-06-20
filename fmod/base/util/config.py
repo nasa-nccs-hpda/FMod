@@ -24,8 +24,9 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
+def fmconfig( model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
     taskname = f"{dataset}-{scenario}"
+    print( f"fmconfig: ccustom={ccustom}")
     overrides = {'task':taskname, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
     Configuration.init( pipeline, dict( **overrides, **ccustom) )
     cfg().task.name = taskname
@@ -42,7 +43,7 @@ def cfgdir() -> str:
 
 class ConfigContext(initialize):
 
-    def __init__(self, model: str, dataset: str, scenario: str, ccustom: Dict[str,str], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
+    def __init__(self, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
         super(ConfigContext,self).__init__(config_path)
         self.model: str = model
         self.dataset: str = dataset
@@ -50,7 +51,7 @@ class ConfigContext(initialize):
         self.log_level: int = log_level
         self.cfg: DictConfig = None
         self.name: str = None
-        self.ccustom: Dict[str,str] = ccustom
+        self.ccustom: Dict[str,Any] = ccustom
         self.pipeline: str = pipeline
         self.server: str = server
 
@@ -74,16 +75,16 @@ class ConfigBase(ABC):
     _instance = None
     _instantiated = None
 
-    def __init__(self, config_name: str, overrides: Dict[str,str] ):
+    def __init__(self, config_name: str, overrides: Dict[str,Any] ):
         self.config_name = config_name
         self.cfg: DictConfig = self.get_parms(overrides)
 
     @abstractmethod
-    def get_parms(self, overrides: Dict[str,str] ) -> DictConfig:
+    def get_parms(self, overrides: Dict[str,Any] ) -> DictConfig:
         return None
 
     @classmethod
-    def init(cls, config_name: str, overrides: Dict[str,str] ):
+    def init(cls, config_name: str, overrides: Dict[str,Any] ):
         if cls._instance is None:
             inst = cls( config_name, overrides )
             cls._instance = inst
@@ -101,7 +102,7 @@ class ConfigBase(ABC):
 
 
 class Configuration(ConfigBase):
-    def get_parms(self, overrides: Dict[str,str]) -> DictConfig:
+    def get_parms(self, overrides: Dict[str,Any]) -> DictConfig:
         return hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
 
 

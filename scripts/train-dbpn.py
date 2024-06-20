@@ -13,12 +13,13 @@ task = "sres"
 models = [ 'dbpn128' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-refresh_state = True
+refresh_state = False
 gpu = 0
 seed = int( time.time()/60 )
+ccustom = { 'task.nepochs': 1 }
 
 for model in models:
-	with ConfigContext(task, model, dataset, scenario) as cc:
+	with ConfigContext(model, dataset, scenario, ccustom ) as cc:
 		cfg().pipeline['gpu'] = gpu
 		t0 = time.time()
 		results = ResultsAccumulator(task, dataset, scenario, model, refresh_state=refresh_state)
