@@ -10,7 +10,7 @@ from fmod.base.util.ops import fmbdir, fmtp
 
 
 task = "sres"
-models = [ 'dbpn128' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
 refresh_state = False

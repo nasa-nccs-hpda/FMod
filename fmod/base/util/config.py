@@ -26,7 +26,6 @@ def cid() -> str:
 
 def fmconfig( model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
     taskname = f"{dataset}-{scenario}"
-    print( f"fmconfig: ccustom={ccustom}")
     overrides = {'task':taskname, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
     Configuration.init( pipeline, dict( **overrides, **ccustom) )
     cfg().task.name = taskname
