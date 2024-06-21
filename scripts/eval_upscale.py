@@ -17,7 +17,7 @@ model = "mscnn"
 downscale_factors= [ 4 ]
 ups_mode= 'bicubic'
 
-results = ResultsAccumulator(task,dataset,scenario)
+results = ResultsAccumulator(task,dataset,scenario, model)
 with ConfigContext(task, model, dataset, scenario) as cc:
 	cc.cfg.model.downscale_factors= downscale_factors
 	cc.cfg.model.ups_mode = ups_mode

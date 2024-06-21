@@ -25,8 +25,8 @@ def cfg() -> DictConfig:
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
 
-def fmconfig( model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
-    taskname = f"{dataset}-{scenario}"
+def fmconfig( task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
+    taskname = f"{task}-{dataset}-{scenario}"
     overrides = {'task':taskname, 'model':model, 'platform':f'{dataset}-{server}', 'pipeline':pipeline}
     Configuration.init( pipeline, dict( **overrides, **ccustom) )
     cfg().task.name = taskname
@@ -43,9 +43,11 @@ def cfgdir() -> str:
 
 class ConfigContext(initialize):
 
-    def __init__(self, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
+    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
         super(ConfigContext,self).__init__(config_path)
+        task: str = task
         self.model: str = model
+        self.task: str
         self.dataset: str = dataset
         self.scenario: str = scenario
         self.log_level: int = log_level
@@ -57,7 +59,7 @@ class ConfigContext(initialize):
 
     def __enter__(self, *args: Any, **kwargs: Any):
        super(ConfigContext, self).__enter__( *args, **kwargs)
-       self.cfg = fmconfig( self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
+       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
        self.name = Configuration.instance().config_name
        print( 'Entering cfg-context: ', self.name )
        return self
