@@ -70,17 +70,13 @@ class ConfigContext(initialize):
        if exc_type is not None:
            traceback.print_exception( exc_type, value=exc_val, tb=exc_tb)
 
-class ConfigBase(ABC):
+class Configuration(ABC):
     _instance = None
     _instantiated = None
 
-    def __init__(self, config_name: str, overrides: Dict[str,Any] ):
+    def __init__( self, config_name: str, overrides: Dict[str,Any] ):
         self.config_name = config_name
-        self.cfg: DictConfig = self.get_parms(overrides)
-
-    @abstractmethod
-    def get_parms(self, overrides: Dict[str,Any] ) -> DictConfig:
-        return None
+        self.cfg: DictConfig = hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
 
     @classmethod
     def init(cls, config_name: str, overrides: Dict[str,Any] ):
@@ -98,11 +94,6 @@ class ConfigBase(ABC):
     @classmethod
     def instance(cls) -> "Configuration":
         return cls._instance
-
-
-class Configuration(ConfigBase):
-    def get_parms(self, overrides: Dict[str,Any]) -> DictConfig:
-        return hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
 
 
 def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
