@@ -47,7 +47,7 @@ class ConfigContext(initialize):
         super(ConfigContext,self).__init__(config_path)
         task: str = task
         self.model: str = model
-        self.task: str
+        self.task: str = task
         self.dataset: str = dataset
         self.scenario: str = scenario
         self.log_level: int = log_level
