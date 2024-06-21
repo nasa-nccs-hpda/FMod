@@ -3,6 +3,7 @@ import logging
 import xarray, warnings, torch
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
+from hydra.core.global_hydra import GlobalHydra
 from hydra.initialize import initialize
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -76,6 +77,8 @@ class Configuration(ABC):
 
     def __init__( self, config_name: str, overrides: Dict[str,Any] ):
         self.config_name = config_name
+        if not GlobalHydra().is_initialized():
+            hydra.initialize(version_base=None, config_path="../../../conf")
         self.cfg: DictConfig = hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
 
     @classmethod
