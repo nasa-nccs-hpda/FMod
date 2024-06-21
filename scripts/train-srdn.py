@@ -7,7 +7,6 @@ from fmod.controller.dual_trainer import ModelTrainer
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.ops import fmbdir, fmtp
-hydra.initialize(version_base=None, config_path="../config")
 
 task = "sres"
 models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]

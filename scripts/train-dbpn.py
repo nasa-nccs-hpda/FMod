@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.ops import fmbdir, fmtp
 
-
 task = "sres"
 models = [ 'dbpn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
