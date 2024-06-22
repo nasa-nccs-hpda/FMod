@@ -15,7 +15,7 @@ scenario = "s4"
 refresh_state = False
 gpu = 0
 seed = int( time.time()/60 )
-ccustom = { 'task.nepochs': 3 }
+ccustom = { 'task.nepochs': 30 }
 
 for model in models:
 	with ConfigContext( task, model, dataset, scenario, ccustom ) as cc:
