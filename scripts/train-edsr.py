@@ -11,10 +11,10 @@ from fmod.base.util.ops import fmbdir, fmtp
 refresh_state = False
 seed = int( time.time()/60 )
 task = "sres"
-models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+models = [ 'edsr' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
+ccustom = { 'task.nepochs': 35, 'pipeline.gpu': 1 }
 
 for model in models:
 	with ConfigContext( task, model, dataset, scenario, ccustom ) as cc:
