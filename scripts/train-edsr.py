@@ -14,7 +14,7 @@ task = "sres"
 models = [ 'edsr' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 dataset = "LLC4320-v1"
 scenario = "s4"
-ccustom = { 'task.nepochs': 35, 'pipeline.gpu': 1 }
+ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 1, 'task.lr': 3e-4 }
 
 for model in models:
 	with ConfigContext( task, model, dataset, scenario, ccustom ) as cc:
