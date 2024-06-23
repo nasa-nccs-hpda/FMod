@@ -81,8 +81,8 @@ class Configuration(ABC):
         self.config_name = config_name
         if not GlobalHydra().is_initialized():
             hydra.initialize(version_base=None, config_path="../../../config")
-        self.cfg: DictConfig = hydra.compose(config_name=self.config_name, overrides=[ f"{ov[0]}={ov[1]}" for ov in overrides.items()] )
-        OmegaConf.resolve(self.cfg)
+        self.compose = hydra.compose(config_name=self.config_name, overrides=[f"{ov[0]}={ov[1]}" for ov in overrides.items()])
+        self.cfg: DictConfig = self.compose
 
     @classmethod
     def init(cls, config_name: str, overrides: Dict[str,Any] ):
