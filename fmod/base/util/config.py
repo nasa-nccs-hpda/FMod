@@ -46,7 +46,8 @@ class ConfigContext:
 
     @property
     def cfg_file( self ):
-        return os.path.abspath( os.path.join(self.cfg_path, self.name) )
+        currdir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(currdir, self.cfg_path, self.name)
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
