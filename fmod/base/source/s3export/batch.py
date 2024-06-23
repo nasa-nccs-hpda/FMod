@@ -124,6 +124,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def open_timeslice(self, vid: str, **kwargs) -> np.memmap:
 		fpath, fidex = self.data_filepath( vid, **kwargs )
 		mmap_mode = 'r' if self.use_memmap else None
+		print( f"open_timeslice: {fpath}")
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		if self.shape is None:
 			self.shape = list(raw_data.shape)
