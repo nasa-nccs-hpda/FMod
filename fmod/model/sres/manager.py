@@ -4,7 +4,6 @@ import torch.nn as nn
 import xarray as xa
 from io import TextIOWrapper
 import os, time, yaml, numpy as np
-from fmod.base.util.ops import fmbdir
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 from omegaconf import DictConfig

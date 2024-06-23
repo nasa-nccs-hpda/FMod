@@ -2,7 +2,6 @@ import xarray as xa, math, os
 from datetime import datetime
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
-from fmod.base.util.ops import format_timedeltas, fmbdir
 import xarray as xa
 import time, numpy as np
 from fmod.base.util.dates import date_list

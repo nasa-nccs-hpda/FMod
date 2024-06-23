@@ -5,7 +5,6 @@ import numpy as np
 from fmod.base.util.config import cfg
 from typing import List, Union, Tuple, Optional, Dict, Type, Any, Sequence, Mapping, Literal, Hashable
 import glob, sys, os, time, traceback
-from fmod.base.util.ops import fmbdir, fmtp
 from fmod.base.util.dates import skw, dstr
 from datetime import date
 from fmod.controller.rescale import DataLoader, QType
@@ -98,7 +97,7 @@ class MERRA2DataProcessor:
                     self.stats[vres].save( statname, filepath )
 
     def get_monthly_files(self, year: int, month: int) -> Dict[ str, Tuple[List[str],List[str]] ]:
-        dsroot: str = fmbdir('dataset_root')
+        dsroot: str = cfg().dataset.dataset_root
         assert "{year}" in self.var_file_template, "{year} field missing from platform.cov_files parameter"
         dset_files: Dict[str, Tuple[List[str],List[str]] ] = {}
         assert "{month}" in self.var_file_template, "{month} field missing from platform.cov_files parameter"
@@ -112,7 +111,7 @@ class MERRA2DataProcessor:
         return dset_files
 
     def get_daily_files(self, d: date) -> Tuple[ Dict[str, Tuple[str, List[str]]], Dict[str, Tuple[str, List[str]]]]:
-        dsroot: str = fmbdir('dataset_root')
+        dsroot: str = cfg().dataset.dataset_root
         dset_files:  Dict[str, Tuple[str, List[str]]] = {}
         const_files: Dict[str, Tuple[str, List[str]]] = {}
         for collection, vlist in self.vars.items():

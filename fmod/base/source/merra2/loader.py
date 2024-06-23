@@ -8,7 +8,7 @@ from fmod.base.io.loader import TSet
 from fmod.base.util.config import get_data_indices, get_roi, get_dims
 from fmod.controller.stats import StatsAccumulator, StatsEntry
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional
-from fmod.base.util.ops import format_timedeltas, fmbdir
+from fmod.base.util.ops import format_timedeltas
 from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 import numpy as np

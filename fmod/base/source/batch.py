@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.source.loader import SRDataLoader, FMDataLoader
-from fmod.base.util.ops import format_timedeltas, fmbdir
+from fmod.base.util.ops import format_timedeltas
 import xarray as xa
 import time, numpy as np
 from typing import Dict, List, Optional, Union

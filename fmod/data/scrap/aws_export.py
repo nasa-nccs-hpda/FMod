@@ -9,7 +9,7 @@ from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range, batches_date_range
-from fmod.base.util.ops import format_timedeltas, fmbdir
+from fmod.base.util.ops import format_timedeltas
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from modulus.datapipes.datapipe import Datapipe
 from fmod.base.source.merra2.model import FMBatch, BatchType, SRBatch

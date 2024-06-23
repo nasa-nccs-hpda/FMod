@@ -175,22 +175,12 @@ def parse_file_parts(file_name):
 def sformat( param: str, params: Dict[str,str] ) -> str:
 	try: return param.format(**params)
 	except KeyError: return param
+
 def pformat( param: Any, params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
 	if (type(param) is str) and ('{' in param): return sformat(param, params)
 	if type(param) is dict: return { k: sformat(p, params) for k,p in param.items() }
 	return param
 
-def resolve_links( pdict: DictConfig, pkey: str ) -> str:
-	parms = dict(pdict.items())
-	for irecur in range(8):
-		parms = { pkey: pformat(pval,parms) for pkey,pval in parms.items() }
-	return parms[pkey]
-
-def fmbdir( dtype: str ) -> str:
-	return resolve_links( cfg().platform, dtype )
-
-def fmtp( dtype: str ) -> str:
-	return resolve_links( cfg().task, dtype )
 def print_norms( norms: Dict[str, xa.Dataset] ):
 	print(f"\n ----------------------------------------- Norm Data ----------------------------------------- ")
 	for norm in norms.keys():
