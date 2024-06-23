@@ -50,6 +50,7 @@ class ConfigContext:
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
+        print( f"Activating {self.name}: '{self.cfg_file}'")
         self.cfg: DictConfig = OmegaConf.load(self.cfg_file)
         cfg().task.name = f"{self.task}-{self.dataset}-{self.scenario}"
         cfg().task.scenario = self.scenario
