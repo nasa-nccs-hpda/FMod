@@ -2,5 +2,6 @@ defaults:
   - platform: ???
   - task: ???
   - model: ???
+  - dataset: ???
   - pipeline: sres
   - _self_
