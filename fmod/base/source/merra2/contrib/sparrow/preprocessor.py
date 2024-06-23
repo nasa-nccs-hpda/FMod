@@ -56,7 +56,7 @@ class CovariateDataProcessor:
 
     @property
     def data_dir(self):
-        return cfg().platform.dataset_root.format( **cfg().platform )
+        return cfg().dataset.dataset_root.format( **cfg().platform )
 
     @property
     def cache_dir(self):

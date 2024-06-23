@@ -27,7 +27,7 @@ def dstr(date: datetime) -> str:
 	return '{:04}{:02}{:02}{:02}'.format( date.year, date.month, date.day, date.hour )
 
 def coords_filepath() -> str:
-	return f"{cfg().platform.dataset_root}/xy_coords.nc"
+	return f"{cfg().dataset.dataset_root}/xy_coords.nc"
 
 def i2x( c: str ) -> str:
 	if c == "i": return "x"
@@ -69,7 +69,7 @@ class S3ExportDataLoader(SRDataLoader):
 		self.shape = None
 
 	def data_filepath(self, varname: str, **kwargs) -> Tuple[str,int]:
-		root: str = cfg().platform.dataset_root
+		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
 		dindx = kwargs.get('index',-2) + 1
 		date: Optional[datetime] = kwargs.get('date',None)
@@ -82,7 +82,7 @@ class S3ExportDataLoader(SRDataLoader):
 		return fpath, dindx
 
 	def dataset_glob(self, varname: str) -> str:
-		root: str = cfg().platform.dataset_root
+		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
 		cfg().dataset.update(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf )
 		subpath: str = cfg().platform.dataset_files[self.vres.value]
