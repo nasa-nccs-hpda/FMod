@@ -76,22 +76,16 @@ class S3ExportDataLoader(SRDataLoader):
 		if date is not None:
 			dindx = dateindex(date,self.task)
 		self.dindxs.append(dindx)
-		if self.version == 0:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date=dstr(date), usf=usf)
-		elif self.version == 1:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf)
-		else: raise ValueError(f'version {self.version} not supported')
+		cfg().dataset.update( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
+		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
 
 	def dataset_glob(self, varname: str) -> str:
 		root: str = cfg().platform.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
-		if self.version == 0:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, date="*", usf=usf)
-		elif self.version == 1:
-			subpath: str = cfg().platform.dataset_files[self.vres.value].format(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf)
-		else: raise ValueError(f'version {self.version} not supported')
+		cfg().dataset.update(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf )
+		subpath: str = cfg().platform.dataset_files[self.vres.value]
 		fglob = f"{root}/{subpath}"
 		return fglob
 
