@@ -1,18 +1,14 @@
 import logging
-
 import xarray, warnings, torch
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
-from hydra.core.global_hydra import GlobalHydra
-from hydra.initialize import initialize
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta, datetime
 from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
-import hydra, traceback, os
+import traceback, os
 import numpy as np
 import pprint
 
@@ -20,86 +16,65 @@ pp = pprint.PrettyPrinter(indent=4)
 DataCoordinates = Union[DataArrayCoordinates,DatasetCoordinates]
 
 def cfg() -> DictConfig:
-    return Configuration.instance().cfg
+    return ConfigContext.instance().cfg
 
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
-
-def fmconfig( task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.INFO ) -> DictConfig:
-    taskname = f"{task}-{dataset}-{scenario}"
-    overrides = {'task':taskname, 'model':model, 'platform':server, 'dataset':dataset, 'pipeline':pipeline}
-    Configuration.init( pipeline, dict( **overrides, **ccustom) )
-    cfg().task.name = taskname
-    cfg().task.scenario = scenario
-    cfg().task.dataset = dataset
-    cfg().task.training_version = f"{model}-{dataset}-{scenario}"
-    lgm().set_level( log_level )
-    return Configuration.instance().cfg
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"
     print( f'cdir = {cdir}')
     return str(cdir)
 
-class ConfigContext(initialize):
+ #self.compose = hydra.compose(config_name=self.config_name, overrides=[f"{ov[0]}={ov[1]}" for ov in overrides.items()])
 
-    def __init__(self, task: str, model: str, dataset: str, scenario: str, ccustom: Dict[str,Any], pipeline: str="sres", server: str="explore", log_level=logging.WARN, config_path="../../../config"):
-        super(ConfigContext,self).__init__(config_path)
-        task: str = task
-        self.model: str = model
-        self.task: str = task
-        self.dataset: str = dataset
-        self.scenario: str = scenario
-        self.log_level: int = log_level
+class ConfigContext:
+    _instance = None
+    cfg_path: str = "../../../config"
+
+    def __init__(self, name: str, configuration: Dict[str,str], ccustom: Dict[str,Any]):
+        self.name = name
+        self.task: str = configuration['task']
+        self.model: str = configuration['model']
+        self.dataset: str = configuration['dataset']
+        self.scenario: str = configuration['scenario']
         self.cfg: DictConfig = None
-        self.name: str = None
         self.ccustom: Dict[str,Any] = ccustom
-        self.pipeline: str = pipeline
-        self.server: str = server
+        self.pipeline: str = configuration['pipeline']
+        self.server: str = configuration['server']
+        self._instance = self
+
+    @property
+    def cfg_file( self ):
+        return os.path.abspath( os.path.join(self.cfg_path, self.name) )
+
+    def activate(self):
+        assert self.cfg is None, "Context already activated"
+        self.cfg: DictConfig = OmegaConf.load(self.cfg_file)
+        cfg().task.name = f"{self.task}-{self.dataset}-{self.scenario}"
+        cfg().task.scenario = self.scenario
+        cfg().task.dataset = self.dataset
+        cfg().task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
+        OmegaConf.update( self.cfg, **self.ccustom )
+
+    def deactivate(self):
+        self.cfg = None
+        self._instance = None
+
+    @classmethod
+    def instance(cls) -> "ConfigContext":
+        return cls._instance
 
     def __enter__(self, *args: Any, **kwargs: Any):
-       super(ConfigContext, self).__enter__( *args, **kwargs)
-       self.cfg = fmconfig( self.task, self.model, self.dataset, self.scenario, self.ccustom, self.pipeline, self.server, self.log_level)
-       self.name = Configuration.instance().config_name
+       self.activate()
        print( 'Entering cfg-context: ', self.name )
        return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
-       super(ConfigContext, self).__exit__(exc_type, exc_val, exc_tb )
        print( 'Exiting cfg-context: ', self.name )
-       Configuration.clear()
-       self.cfg = None
-       self.name = None
+       self.deactivate()
        if exc_type is not None:
            traceback.print_exception( exc_type, value=exc_val, tb=exc_tb)
-
-class Configuration(ABC):
-    _instance = None
-    _instantiated = None
-
-    def __init__( self, config_name: str, overrides: Dict[str,Any] ):
-        self.config_name = config_name
-        if not GlobalHydra().is_initialized():
-            hydra.initialize(version_base=None, config_path="../../../config")
-        self.compose = hydra.compose(config_name=self.config_name, overrides=[f"{ov[0]}={ov[1]}" for ov in overrides.items()])
-        self.cfg: DictConfig = self.compose
-
-    @classmethod
-    def init(cls, config_name: str, overrides: Dict[str,Any] ):
-        if cls._instance is None:
-            inst = cls( config_name, overrides )
-            cls._instance = inst
-            cls._instantiated = cls
-            print(f' *** Configuration {config_name} initialized *** ')
-
-    @classmethod
-    def clear(cls):
-        cls._instance = None
-
-
-    @classmethod
-    def instance(cls) -> "Configuration":
-        return cls._instance
 
 
 def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):

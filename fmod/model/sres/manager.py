@@ -176,12 +176,12 @@ class ResultFileReader:
 
 class ResultsAccumulator(object):
 
-	def __init__(self, task: str, dataset: str, scenario: str, model: str, **kwargs):
+	def __init__(self, **kwargs):
 		self.results: List[ResultRecord] = []
-		self.dataset: str = dataset
-		self.scenario: str = scenario
-		self.task = task
-		self.model = model
+		self.dataset: str = kwargs['dataset']
+		self.scenario: str = kwargs['scenario']
+		self.task = kwargs['task']
+		self.model = kwargs['model']
 		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None
