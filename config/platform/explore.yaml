@@ -1,0 +1,9 @@
+root:      "/explore/nobackup/projects/ilab/data/SR"
+results:   "{.root}/results"
+cache:     "{.root}/cache"
+processed: '{.root}/processed'
+
+
+
+
+

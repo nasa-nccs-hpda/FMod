@@ -1,0 +1,4 @@
+
+dataset_root:  "/css/merra2/MERRA2_all/"
+dataset_files: "Y{year}/M{month}/MERRA2.{collection}.{year}{month}{day}.nc4"
+constant_file: "MERRA2.{collection}.00000000.nc4"

@@ -1,7 +1,0 @@
-root:      "/explore/nobackup/projects/ilab/data/SR"
-results:   "{root}/results"
-cache:     "{root}/cache"
-processed: '{root}/processed'
-
-dataset_root:  "/explore/nobackup/people/jli30/share/data/"
-dataset_files: { lr: "{res}_npy/{varname}/X{usf}/{varname}_x{usf}_{date}.npy", hr: "{res}_npy/{varname}/{varname}_{date}.npy" }
