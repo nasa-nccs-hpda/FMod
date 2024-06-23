@@ -85,7 +85,7 @@ class S3ExportDataLoader(SRDataLoader):
 		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
 		cfg().dataset.update(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf )
-		subpath: str = cfg().platform.dataset_files[self.vres.value]
+		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fglob = f"{root}/{subpath}"
 		return fglob
 

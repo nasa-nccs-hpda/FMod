@@ -155,7 +155,7 @@ class MERRA2DataProcessor:
         self.vars: Dict[str, List[str]] = cfg().preprocess.vars
         self.dmap: Dict = cfg().preprocess.dims
         self.corder = ['time','z','y','x']
-        self.var_file_template =  cfg().platform.dataset_files
+        self.var_file_template =  cfg().dataset.dataset_files
         self.const_file_template =  cfg().platform.constant_file
         self.stats = StatsAccumulator()
 

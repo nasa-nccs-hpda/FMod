@@ -68,7 +68,7 @@ class MERRA2DataProcessor:
         self.format = ncFormat(cfg().task.get('nc_format', 'standard'))
         self.month_range = cfg().preprocess.get('month_range',[0,12,1])
         self.vars: Dict[str, List[str]] = cfg().preprocess.vars
-        self.var_file_template =  cfg().platform.dataset_files
+        self.var_file_template =  cfg().dataset.dataset_files
         self.const_file_template =  cfg().platform.constant_file
         self.stats = { vres: StatsAccumulator(vres) for vres in ["high",'low'] }
         self.rescaler = DataLoader()
