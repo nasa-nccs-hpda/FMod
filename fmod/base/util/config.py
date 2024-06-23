@@ -30,7 +30,7 @@ def cfgdir() -> str:
 
 class ConfigContext:
     _instance = None
-    cfg_path: str = "../../../config"
+    cfg_path: str = "../../../../config"
 
     def __init__(self, name: str, configuration: Dict[str,str], ccustom: Dict[str,Any]):
         self.name = name
@@ -47,7 +47,7 @@ class ConfigContext:
     @property
     def cfg_file( self ):
         currdir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(currdir, self.cfg_path, self.name)
+        return os.path.abspath( os.path.join(currdir, self.cfg_path, self.name) )
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
