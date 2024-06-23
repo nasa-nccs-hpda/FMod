@@ -12,7 +12,7 @@ refresh_state = False
 seed = int( time.time()/60 )
 task = "sres"
 models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
-dataset = "LLC4320-v1"
+dataset = "LLC4320"
 scenario = "s4"
 ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
 
