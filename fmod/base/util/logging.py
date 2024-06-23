@@ -68,9 +68,8 @@ class LogManager(object):
         self._level = level
 
     def init_logging(self):
-        from fmod.base.util.ops import fmbdir, fmtp
         from fmod.base.util.config import cfg, cid
-        self.log_dir =  f"{fmbdir('cache')}/logs"
+        self.log_dir =  f"{cfg().platform.cache}/logs"
 
         overwrite = cfg().task.get("overwrite_log", True)
         self._lid = "" if overwrite else f"-{os.getpid()}"

@@ -26,9 +26,9 @@ class Merra2DataLoader(object):
 		version = cfg().task.dataset_version
 		if vartype == VarType.Dynamic:
 			assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-			fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{data_suffix(self.vres)}"
+			fpath = f"{cfg().platform.processed}/{version}/{drepr(d)}{data_suffix(self.vres)}"
 		else:
-			fpath = f"{fmbdir('processed')}/{version}/const{data_suffix(self.vres)}"
+			fpath = f"{cfg().platform.processed}/{version}/const{data_suffix(self.vres)}"
 		os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
 		return fpath
 
@@ -73,7 +73,7 @@ class Merra2DataLoader(object):
 		return {snames[sname]: pdstats[sname] for sname in sndef.keys()}
 
 	def stats_filepath(self, version: str, statname: str) -> str:
-		return f"{fmbdir('processed')}/{version}/stats{path_suffix(self.vres)}/{statname}"
+		return f"{cfg().platform.processed}/{version}/stats{path_suffix(self.vres)}/{statname}"
 
 	@log_timing
 	def load_stats(self,statname: str, **kwargs) -> xa.Dataset:

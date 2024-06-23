@@ -175,7 +175,6 @@ def parse_file_parts(file_name):
 def sformat( param: str, params: Dict[str,str] ) -> str:
 	try: return param.format(**params)
 	except KeyError: return param
-
 def pformat( param: Any, params: Dict[str,str] ) -> Union[str,Dict[str,str]]:
 	if (type(param) is str) and ('{' in param): return sformat(param, params)
 	if type(param) is dict: return { k: sformat(p, params) for k,p in param.items() }

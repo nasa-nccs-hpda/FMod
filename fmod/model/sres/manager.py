@@ -182,7 +182,7 @@ class ResultsAccumulator(object):
 		self.scenario: str = scenario
 		self.task = task
 		self.model = model
-		self.save_dir = kwargs.get( 'save_dir', fmbdir('processed') )
+		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None
 

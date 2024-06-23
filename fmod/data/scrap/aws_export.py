@@ -34,7 +34,7 @@ class AWSExportDataset(BaseDataset):
 	def cache_filepath(self, d: date = None, vres: str = "high") -> str:
 		version = cfg().task.dataset_version
 		assert d is not None, "cache_filepath: date arg is required for dynamic variables"
-		fpath = f"{fmbdir('processed')}/{version}/{drepr(d)}{data_suffix(vres)}"
+		fpath = f"{cfg().platform.processed}/{version}/{drepr(d)}{data_suffix(vres)}"
 		os.makedirs(os.path.dirname(fpath), mode=0o777, exist_ok=True)
 		return fpath
 

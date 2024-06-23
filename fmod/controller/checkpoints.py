@@ -1,7 +1,6 @@
 import torch
 from typing import Any, Dict, List
 from fmod.base.util.config import cfg
-from fmod.base.util.ops import fmbdir, fmtp
 from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
 from torch.nn import Module
@@ -53,7 +52,7 @@ class CheckpointManager(object):
 	@classmethod
 	def checkpoint_path( cls, tset: TSet ) -> str:
 		vtset: TSet = TSet.Validation if (tset == TSet.Test) else tset
-		cpath = f"{fmbdir('results')}/checkpoints/{fmtp('training_version')}.{vtset.value}.pt"
+		cpath = f"{cfg().platform.results}/checkpoints/{cfg().task.training_version}.{vtset.value}.pt"
 		os.makedirs(os.path.dirname(cpath), 0o777, exist_ok=True)
 		return cpath
 

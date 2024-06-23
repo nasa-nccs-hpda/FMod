@@ -98,7 +98,7 @@ def merge_batch( self, slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.D
 	return xa.merge( [dynamics, constants], compat='override' )
 
 def load_predef_norm_data() -> Dict[str,xa.Dataset]:
-	root, norms, drop_vars = fmbdir('model'), {}, None
+	root, norms, drop_vars = cfg().platform.model, {}, None
 	with open(f"{root}/stats/diffs_stddev_by_level.nc", "rb") as f:
 		dset: xa.Dataset = xa.load_dataset(f)
 		drop_vars = [ vname for vname in dset.data_vars.keys() if vname not in predef_norms ]

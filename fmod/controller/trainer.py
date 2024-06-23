@@ -7,7 +7,7 @@ from fmod.controller.downscale import Downscaler
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
-from fmod.base.util.ops import fmbdir, fmtp
+
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.base.util.array import array2tensor
@@ -87,7 +87,7 @@ class ModelTrainer(object):
 
 	@property
 	def checkpoint_path(self, **kwargs ) -> str:
-		return str( os.path.join( fmbdir('results'), 'checkpoints/' + fmtp('training_version') + ".pt") )
+		return str( os.path.join( cfg().platform.results, 'checkpoints/' + cfg().task.training_version + ".pt") )
 
 	@property
 	def loader_args(self) -> Dict[str, Any]:
