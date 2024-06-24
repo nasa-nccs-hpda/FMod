@@ -36,7 +36,7 @@ class ConfigContext(initialize):
     def __init__(self, name: str,  ccustom: Dict[str,Any], **kwargs ):
 
         self.configuration = kwargs
-        self.config_path: str = self.get_config('config_path', "../../../../config" )
+        self.config_path: str = self.get_config('config_path', "../../../config" )
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
         self.name = name
