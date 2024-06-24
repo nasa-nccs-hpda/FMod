@@ -7,22 +7,22 @@ from fmod.controller.dual_trainer import ModelTrainer
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 
+
 refresh_state = False
 seed = int( time.time()/60 )
 cname = "sres"
 models = [ 'lapsrn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 
 ConfigContext.set_defaults(
-	task = "sres",
+	task = "cape_basin",
 	dataset = "LLC4320",
-	scenario = "s4",
 	pipeline = "sres",
 	platform = "explore"
 )
-ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 1 }
+ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 3 }
 
 for model in models:
-	with ConfigContext( cname, ccustom, model=model ) as cc:
+	with ConfigContext( cname, model=model, **ccustom ) as cc:
 		t0 = time.time()
 		results = ResultsAccumulator(cc)
 		model_manager: SRModels = SRModels( set_device() )
