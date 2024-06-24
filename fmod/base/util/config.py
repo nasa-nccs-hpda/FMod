@@ -53,11 +53,12 @@ class ConfigContext:
         assert self.cfg is None, "Context already activated"
         print( f"Activating {self.name}: '{self.cfg_file}'")
         self.cfg: DictConfig = OmegaConf.load(self.cfg_file)
+        OmegaConf.update(self.cfg, **self.ccustom)
         self.cfg.task.name = f"{self.task}-{self.dataset}-{self.scenario}"
         self.cfg.task.scenario = self.scenario
         self.cfg.task.dataset = self.dataset
         self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
-        OmegaConf.update( self.cfg, **self.ccustom )
+
 
     def deactivate(self):
         self.cfg = None
@@ -65,7 +66,7 @@ class ConfigContext:
 
     @classmethod
     def instance(cls) -> "ConfigContext":
-        assert cls._instance is not None, "No active Context"
+        assert cls._instance is not None, "No active Config Context"
         return cls._instance
 
     def __enter__(self, *args: Any, **kwargs: Any):
