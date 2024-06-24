@@ -51,8 +51,8 @@ class ConfigContext:
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
-        print( f"Activating {self.name}: '{self.cfg_file}'")
         self.cfg = self.load()
+        print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
         self.cfg.task.name = f"{self.task}-{self.dataset}-{self.scenario}"
         self.cfg.task.scenario = self.scenario
         self.cfg.task.dataset = self.dataset
