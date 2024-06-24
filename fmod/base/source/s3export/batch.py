@@ -77,7 +77,6 @@ class S3ExportDataLoader(SRDataLoader):
 			dindx = dateindex(date,self.task)
 		self.dindxs.append(dindx)
 		cfg().dataset.update( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
-		OmegaConf.resolve(cfg().dataset)
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
@@ -86,7 +85,6 @@ class S3ExportDataLoader(SRDataLoader):
 		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
 		cfg().dataset.update(res=self.vres.value, varname=varname, index="*", tset=self.tset.value, usf=usf )
-		OmegaConf.resolve(cfg().dataset)
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fglob = f"{root}/{subpath}"
 		return fglob
