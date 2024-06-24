@@ -41,7 +41,7 @@ class ConfigContext:
         self.cfg: DictConfig = None
         self.ccustom: Dict[str,Any] = ccustom
         self.pipeline: str = configuration['pipeline']
-        self.server: str = configuration['server']
+        self.platform: str = configuration['platform']
         ConfigContext._instance = self
 
     @property
