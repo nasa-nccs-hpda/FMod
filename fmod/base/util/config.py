@@ -42,7 +42,7 @@ class ConfigContext:
         self.ccustom: Dict[str,Any] = ccustom
         self.pipeline: str = configuration['pipeline']
         self.server: str = configuration['server']
-        self._instance = self
+        ConfigContext._instance = self
 
     @property
     def cfg_file( self ):
