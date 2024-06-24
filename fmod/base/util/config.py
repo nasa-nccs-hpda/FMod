@@ -47,16 +47,16 @@ class ConfigContext:
     @property
     def cfg_file( self ):
         currdir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.abspath( os.path.join(currdir, self.cfg_path,  f"{self.name}.yaml" ) )
+        return os.path.abspath( os.path.join(currdir, self.cfg_path,  f"{self.name}.yaml") )
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
         print( f"Activating {self.name}: '{self.cfg_file}'")
         self.cfg: DictConfig = OmegaConf.load(self.cfg_file)
-        cfg().task.name = f"{self.task}-{self.dataset}-{self.scenario}"
-        cfg().task.scenario = self.scenario
-        cfg().task.dataset = self.dataset
-        cfg().task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
+        self.cfg.task.name = f"{self.task}-{self.dataset}-{self.scenario}"
+        self.cfg.task.scenario = self.scenario
+        self.cfg.task.dataset = self.dataset
+        self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
         OmegaConf.update( self.cfg, **self.ccustom )
 
     def deactivate(self):
