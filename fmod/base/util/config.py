@@ -36,7 +36,6 @@ class ConfigContext(initialize):
     def __init__(self, name: str, **kwargs ):
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
         self.name = name
-        self.config_path: str = self.get_config('config_path', "../../../config")
         self.model: str = self.get_config('model')
         self.pipeline: str = self.get_config('pipeline')
         self.platform: str = self.get_config('platform')
@@ -45,6 +44,7 @@ class ConfigContext(initialize):
         self.scenario: str = self.get_config('scenario')
         self.task: str = "-".join( [ self.parameters, self.dataset, self.scenario ] )
         self.configuration = dict( **self.defaults, task=self.task, **kwargs )
+        self.config_path: str = self.get_config('config_path', "../../../config")
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
 
     def get_config(self,name: str, default: Any = None ):
