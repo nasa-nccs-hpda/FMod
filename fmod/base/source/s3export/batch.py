@@ -78,7 +78,6 @@ class S3ExportDataLoader(SRDataLoader):
 		self.dindxs.append(dindx)
 		dset_params = dict( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		print( f"\n\nData Filepath params: {cfg().dataset.items()}" )
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
@@ -88,7 +87,6 @@ class S3ExportDataLoader(SRDataLoader):
 		usf: int = math.prod(cfg().model.downscale_factors)
 		dset_params = dict( res=self.vres.value, varname=varname, index=f"*", tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		print( f"\n\nData Filepath params: {cfg().dataset.items()}" )
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fglob = f"{root}/{subpath}"
 		return fglob
@@ -128,7 +126,6 @@ class S3ExportDataLoader(SRDataLoader):
 	def open_timeslice(self, vid: str, **kwargs) -> np.memmap:
 		fpath, fidex = self.data_filepath( vid, **kwargs )
 		mmap_mode = 'r' if self.use_memmap else None
-		print( f"open_timeslice: {fpath}")
 		raw_data: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		if self.shape is None:
 			self.shape = list(raw_data.shape)
