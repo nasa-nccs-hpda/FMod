@@ -34,12 +34,13 @@ class ConfigContext(initialize):
     defaults: Dict = {}
 
     def __init__(self, name: str,  ccustom: Dict[str,Any], **kwargs ):
-        self.ccustom: Dict[str,Any] = ccustom
+
+        self.configuration = kwargs
         self.config_path: str = self.get_config('config_path', "../../../../config" )
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
-        self.configuration = kwargs
         self.name = name
+        self.ccustom: Dict[str, Any] = ccustom
         self.task: str = self.get_config('task')
         self.model: str = self.get_config('model')
         self.dataset: str = self.get_config('dataset')
