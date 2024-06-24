@@ -180,7 +180,6 @@ class ResultsAccumulator(object):
 	def __init__(self, cc: ConfigContext, **kwargs):
 		self.results: List[ResultRecord] = []
 		self.dataset: str = cc.dataset
-		self.scenario: str = cc.scenario
 		self.task = cc.task
 		self.model = cc.model
 		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
@@ -203,7 +202,7 @@ class ResultsAccumulator(object):
 		results_save_dir = f"{self.save_dir}/{self.task}_result_recs"
 		os.makedirs(results_save_dir, exist_ok=True)
 		model_id = f"_{self.model}" if model_specific else ""
-		return f"{results_save_dir}/{self.dataset}_{self.scenario}{model_id}_losses.csv"
+		return f"{results_save_dir}/{self.dataset}_{self.task}{model_id}_losses.csv"
 
 	def refresh_state(self):
 		rfile =self.result_file_path()
@@ -266,7 +265,6 @@ class ResultsAccumulator(object):
 	def rprint(self):
 		print( f"\n\n---------------------------- {self.task} Results --------------------------------------")
 		print(f" * dataset: {self.dataset}")
-		print(f" * scenario: {self.scenario}")
 		print(f" * model: {self.model}")
 		for result in self.results:
 			print(str(result))
