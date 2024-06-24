@@ -18,7 +18,7 @@ config = dict(
 	dataset = "LLC4320",
 	scenario = "s4",
 	pipeline = "sres",
-	server = "explore"
+	platform = "explore"
 )
 ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
 
