@@ -3,6 +3,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 import torch.nn as nn
 import xarray as xa
 from io import TextIOWrapper
+from fmod.base.util.config import ConfigContext, cfg
 import os, time, yaml, numpy as np
 from fmod.base.util.config import cfg
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
@@ -176,12 +177,12 @@ class ResultFileReader:
 
 class ResultsAccumulator(object):
 
-	def __init__(self, **kwargs):
+	def __init__(self, cc: ConfigContext, **kwargs):
 		self.results: List[ResultRecord] = []
-		self.dataset: str = kwargs['dataset']
-		self.scenario: str = kwargs['scenario']
-		self.task = kwargs['task']
-		self.model = kwargs['model']
+		self.dataset: str = cc.dataset
+		self.scenario: str = cc.scenario
+		self.task = cc.task
+		self.model = cc.model
 		self.save_dir = kwargs.get( 'save_dir', cfg().platform.processed )
 		self._writer: Optional[ResultFileWriter] = None
 		self._reader: Optional[ResultFileReader] = None

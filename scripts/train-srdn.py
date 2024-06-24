@@ -13,7 +13,7 @@ seed = int( time.time()/60 )
 cname = "sres"
 models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 
-config = dict(
+ConfigContext.set_defaults(
 	task = "sres",
 	dataset = "LLC4320",
 	scenario = "s4",
@@ -23,10 +23,9 @@ config = dict(
 ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
 
 for model in models:
-	config['model'] = model
-	with ConfigContext( cname, config, ccustom ) as cc:
+	with ConfigContext( cname, ccustom, model=model ) as cc:
 		t0 = time.time()
-		results = ResultsAccumulator( refresh_state=refresh_state, **config )
+		results = ResultsAccumulator(cc)
 		model_manager: SRModels = SRModels( set_device() )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train( refresh_state=refresh_state, seed=seed )

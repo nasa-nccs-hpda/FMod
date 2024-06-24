@@ -2,26 +2,29 @@ import torch, time
 import xarray as xa
 from fmod.base.gpu import set_device, get_device
 import hydra, os
-from fmod.base.util.config import fmconfig, ConfigContext, cfg
+from fmod.base.util.config import ConfigContext, cfg
 from fmod.controller.dual_trainer import ModelTrainer
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 
-
-task = "sres"
-models = [ 'lapsrn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
-dataset = "LLC4320-v1"
-scenario = "s4"
 refresh_state = False
-gpu = 1
 seed = int( time.time()/60 )
-ccustom = { 'task.nepochs': 30 }
+cname = "sres"
+models = [ 'lapsrn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+
+ConfigContext.set_defaults(
+	task = "sres",
+	dataset = "LLC4320",
+	scenario = "s4",
+	pipeline = "sres",
+	platform = "explore"
+)
+ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 1 }
 
 for model in models:
-	with ConfigContext(task, model, dataset, scenario, ccustom) as cc:
-		cfg().pipeline['gpu'] = gpu
+	with ConfigContext( cname, ccustom, model=model ) as cc:
 		t0 = time.time()
-		results = ResultsAccumulator(task, dataset, scenario, model, refresh_state=refresh_state)
+		results = ResultsAccumulator(cc)
 		model_manager: SRModels = SRModels( set_device() )
 		trainer: ModelTrainer = ModelTrainer( model_manager, results )
 		trainer.train( refresh_state=refresh_state, seed=seed )

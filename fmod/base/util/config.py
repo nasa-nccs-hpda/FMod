@@ -2,13 +2,16 @@ import logging
 import xarray, warnings, torch
 import xarray.core.coordinates
 from omegaconf import DictConfig, OmegaConf
+from hydra.core.global_hydra import GlobalHydra
+from hydra.initialize import initialize
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Hashable
 from dataclasses import dataclass
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from datetime import date, timedelta, datetime
 from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
-import traceback, os
+import hydra, traceback, os
 import numpy as np
 import pprint
 
@@ -16,7 +19,7 @@ pp = pprint.PrettyPrinter(indent=4)
 DataCoordinates = Union[DataArrayCoordinates,DatasetCoordinates]
 
 def cfg() -> DictConfig:
-    return ConfigContext.instance().cfg
+    return ConfigContext.cfg
 
 def cid() -> str:
     return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
@@ -26,28 +29,44 @@ def cfgdir() -> str:
     print( f'cdir = {cdir}')
     return str(cdir)
 
- #self.compose = hydra.compose(config_name=self.config_name, overrides=[f"{ov[0]}={ov[1]}" for ov in overrides.items()])
+class ConfigContext(initialize):
+    cfg: Optional[DictConfig] = None
+    defaults: Dict = {}
 
-class ConfigContext:
-    _instance = None
-    cfg_path: str = "../../../../config"
-
-    def __init__(self, name: str, configuration: Dict[str,str], ccustom: Dict[str,Any]):
+    def __init__(self, name: str,  ccustom: Dict[str,Any], **kwargs ):
+        super(ConfigContext, self).__init__()
+        assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
+        self.configuration = kwargs
         self.name = name
-        self.task: str = configuration['task']
-        self.model: str = configuration['model']
-        self.dataset: str = configuration['dataset']
-        self.scenario: str = configuration['scenario']
-        self.cfg: DictConfig = None
         self.ccustom: Dict[str,Any] = ccustom
-        self.pipeline: str = configuration['pipeline']
-        self.platform: str = configuration['platform']
-        ConfigContext._instance = self
+        self.config_path: str = self.get_config('config_path', "../../../../config" )
+        self.task: str = self.get_config('task')
+        self.model: str = self.get_config('model')
+        self.dataset: str = self.get_config('dataset')
+        self.scenario: str = self.get_config('scenario')
+        self.pipeline: str = self.get_config('pipeline')
+        self.platform: str = self.get_config('platform')
+
+    def get_config(self,name: str, default: Any = None ):
+        return self.configuration.get( name, self.defaults.get(name,default) )
+
+    @classmethod
+    def set_defaults(cls, **kwargs):
+        cls.defaults = kwargs
 
     @property
     def cfg_file( self ):
         currdir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.abspath( os.path.join(currdir, self.cfg_path,  f"{self.name}.yaml") )
+        return os.path.abspath( os.path.join(currdir, self.config_path,  f"{self.name}.yaml") )
+
+    def deactivate(self):
+        self.cfg = None
+
+    @classmethod
+    def activate_global(cls, name: str,  ccustom: Dict[str,Any], **kwargs ) -> 'ConfigContext':
+        cc = ConfigContext( name, ccustom, **kwargs )
+        cc.activate()
+        return cc
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
@@ -59,30 +78,26 @@ class ConfigContext:
         self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
 
     def load(self) -> DictConfig:
-        cfg: DictConfig = OmegaConf.load(self.cfg_file)
-        for k,v in self.ccustom.items():
-            OmegaConf.update(cfg, k, v )
-        return cfg
-
-    def deactivate(self):
-        self.cfg = None
-        self._instance = None
-
-    @classmethod
-    def instance(cls) -> "ConfigContext":
-        assert cls._instance is not None, "No active Config Context"
-        return cls._instance
+        assert not GlobalHydra().is_initialized(), "Config context is already active"
+        assert self.cfg is None, "Another Config context has been activateed"
+        hydra.initialize( version_base=None, config_path=self.config_path )
+        return hydra.compose(config_name=self.name, overrides=[f"{ov[0]}={ov[1]}" for ov in self.ccustom.items()])
 
     def __enter__(self, *args: Any, **kwargs: Any):
+       super(ConfigContext, self).__enter__(*args, **kwargs)
        self.activate()
        print( 'Entering cfg-context: ', self.name )
        return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
+       super(ConfigContext, self).__exit__(exc_type, exc_val, exc_tb)
        print( 'Exiting cfg-context: ', self.name )
        self.deactivate()
        if exc_type is not None:
            traceback.print_exception( exc_type, value=exc_val, tb=exc_tb)
+
+    def __del__ (self):
+        self.deactivate()
 
 
 def cfg2meta(csection: str, meta: object, on_missing: str = "ignore"):
