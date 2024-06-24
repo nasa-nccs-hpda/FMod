@@ -22,7 +22,7 @@ def cfg() -> DictConfig:
     return ConfigContext.cfg
 
 def cid() -> str:
-    return '-'.join([ cfg().task.name, cfg().model.name, cfg().task.dataset, cfg().task.scenario ])
+    return '-'.join([ cfg().model.name, cfg().task.dataset, cfg().task.name ])
 
 def cfgdir() -> str:
     cdir = Path(__file__).parent.parent.parent / "config"
@@ -42,7 +42,6 @@ class ConfigContext(initialize):
         self.platform: str = self.get_config('platform')
         self.task: str = self.get_config('task')
         self.dataset: str = self.get_config('dataset')
-        self.scenario: str = self.get_config('scenario')
         self.config_path: str = self.get_config('config_path', "../../../config")
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
 
@@ -72,9 +71,8 @@ class ConfigContext(initialize):
         self.cfg = self.load()
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
         self.cfg.task.name = self.task
-        self.cfg.task.scenario = self.scenario
         self.cfg.task.dataset = self.dataset
-        self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
+        self.cfg.task.training_version = cid()
 
     def load(self) -> DictConfig:
         assert self.cfg is None, "Another Config context has already been activateed"
