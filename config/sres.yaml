@@ -3,5 +3,6 @@ defaults:
   - task: ???
   - model: ???
   - dataset: ???
+  - parameters: ???
   - pipeline: sres
   - _self_
