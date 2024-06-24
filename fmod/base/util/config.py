@@ -80,6 +80,7 @@ class ConfigContext(initialize):
         assert self.cfg is None, "Another Config context has already been activateed"
         if not GlobalHydra().is_initialized():
             hydra.initialize(version_base=None, config_path=self.config_path)
+        print( f"load {self.name}: config = {self.configuration}")
         return hydra.compose(config_name=self.name, overrides=[f"{ov[0]}={ov[1]}" for ov in self.configuration.items()])
 
     def __enter__(self, *args: Any, **kwargs: Any):
