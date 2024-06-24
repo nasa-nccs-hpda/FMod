@@ -59,7 +59,7 @@ class ConfigContext(initialize):
         return os.path.abspath( os.path.join(currdir, self.config_path,  f"{self.name}.yaml") )
 
     def deactivate(self):
-        self.cfg = None
+        ConfigContext.cfg = None
 
     @classmethod
     def activate_global(cls, name: str, **kwargs ) -> 'ConfigContext':
@@ -69,11 +69,11 @@ class ConfigContext(initialize):
 
     def activate(self):
         assert self.cfg is None, "Context already activated"
-        self.cfg = self.load()
+        ConfigContext.cfg = self.load()
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
-        self.cfg.task.name = self.task
-        self.cfg.task.dataset = self.dataset
-        self.cfg.task.training_version = self.cid
+        ConfigContext.cfg.task.name = self.task
+        ConfigContext.cfg.task.dataset = self.dataset
+        ConfigContext.cfg.task.training_version = self.cid
 
     def load(self) -> DictConfig:
         assert self.cfg is None, "Another Config context has already been activateed"
