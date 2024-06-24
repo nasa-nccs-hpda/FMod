@@ -40,7 +40,7 @@ class ConfigContext(initialize):
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
         self.name = name
-        self.ccustom: Dict[str, Any] = ccustom
+        self.ccustom: Dict[str, Any] = dict( **self.defaults, **ccustom )
         self.task: str = self.get_config('task')
         self.model: str = self.get_config('model')
         self.dataset: str = self.get_config('dataset')
