@@ -76,7 +76,8 @@ class S3ExportDataLoader(SRDataLoader):
 		if date is not None:
 			dindx = dateindex(date,self.task)
 		self.dindxs.append(dindx)
-		cfg().dataset.update( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
+		dset_params = dict( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
+		for k,v in dset_params.items(): cfg().dataset[k] = v
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
