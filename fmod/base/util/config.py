@@ -40,10 +40,9 @@ class ConfigContext(initialize):
         self.model: str = self.get_config('model')
         self.pipeline: str = self.get_config('pipeline')
         self.platform: str = self.get_config('platform')
-        self.parameters: str = self.get_config('parameters')
+        self.task: str = self.get_config('task')
         self.dataset: str = self.get_config('dataset')
         self.scenario: str = self.get_config('scenario')
-        self.configuration['task'] = "-".join( [ self.parameters, self.dataset, self.scenario ] )
         self.config_path: str = self.get_config('config_path', "../../../config")
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
 
@@ -72,7 +71,7 @@ class ConfigContext(initialize):
         assert self.cfg is None, "Context already activated"
         self.cfg = self.load()
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
-        self.cfg.task.name = self.parameters
+        self.cfg.task.name = self.task
         self.cfg.task.scenario = self.scenario
         self.cfg.task.dataset = self.dataset
         self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
