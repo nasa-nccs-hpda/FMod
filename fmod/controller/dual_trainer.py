@@ -7,7 +7,7 @@ from fmod.base.io.loader import ncFormat, TSet
 from fmod.base.source.loader import srRes
 from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
-#from fmod.base.util.grid import GridOps
+from fmod.base.gpu import set_device
 from fmod.base.util.array import array2tensor
 from fmod.model.sres.mscnn.network import Upsampler
 from fmod.data.batch import BatchDataset, TileGrid
@@ -82,10 +82,10 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self, model_manager: SRModels, results_accumulator: ResultsAccumulator = None ):
+	def __init__(self, results_accumulator: ResultsAccumulator = None ):
 		super(ModelTrainer, self).__init__()
-		self.device: torch.device = model_manager.device
-		self.model_manager = model_manager
+		self.model_manager: SRModels = SRModels( set_device() )
+		self.device: torch.device = self.model_manager.device
 		self.results_accum: ResultsAccumulator = results_accumulator
 		self.min_loss = float('inf')
 		self.eps = 1e-6
@@ -93,7 +93,7 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.optimizer = None
 		self.checkpoint_manager = None
-		self.model = model_manager.get_model()
+		self.model = self.model_manager.get_model()
 		self.checkpoint_manager: CheckpointManager = None
 		self.loss_module: nn.Module = None
 		self.layer_losses = []

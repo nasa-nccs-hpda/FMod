@@ -25,8 +25,7 @@ for model in models:
 	with ConfigContext( cname, model=model, **ccustom ) as cc:
 		t0 = time.time()
 		results = ResultsAccumulator(cc)
-		model_manager: SRModels = SRModels( set_device() )
-		trainer: ModelTrainer = ModelTrainer( model_manager, results )
+		trainer: ModelTrainer = ModelTrainer( results )
 		trainer.train( refresh_state=refresh_state, seed=seed )
 		results.save()
 		print( f" ******** Model '{model}' completed {cfg().task.nepochs} epochs of training in {(time.time()-t0)/60:.2f} min ******** ")
