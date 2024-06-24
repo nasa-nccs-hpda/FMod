@@ -43,6 +43,7 @@ class ConfigContext(initialize):
         self.task: str = self.get_config('task')
         self.dataset: str = self.get_config('dataset')
         self.config_path: str = self.get_config('config_path', "../../../config")
+        self.cid = '-'.join( [self.model, self.dataset, self.task] )
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
 
     def get_config(self,name: str, default: Any = None ):
@@ -72,7 +73,7 @@ class ConfigContext(initialize):
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
         self.cfg.task.name = self.task
         self.cfg.task.dataset = self.dataset
-        self.cfg.task.training_version = cid()
+        self.cfg.task.training_version = self.cid
 
     def load(self) -> DictConfig:
         assert self.cfg is None, "Another Config context has already been activateed"
