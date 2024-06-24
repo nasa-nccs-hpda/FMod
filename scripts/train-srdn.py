@@ -14,7 +14,7 @@ cname = "sres"
 models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 
 ConfigContext.set_defaults(
-	task = "sres",
+	parameters = "cape_basin",
 	dataset = "LLC4320",
 	scenario = "s4",
 	pipeline = "sres",
