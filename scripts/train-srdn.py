@@ -23,7 +23,7 @@ ConfigContext.set_defaults(
 ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
 
 for model in models:
-	with ConfigContext( cname, ccustom, model=model ) as cc:
+	with ConfigContext( cname, model=model, **ccustom ) as cc:
 		t0 = time.time()
 		results = ResultsAccumulator(cc)
 		model_manager: SRModels = SRModels( set_device() )
