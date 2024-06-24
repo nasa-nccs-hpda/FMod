@@ -65,6 +65,7 @@ class ConfigContext:
 
     @classmethod
     def instance(cls) -> "ConfigContext":
+        assert cls._instance is not None, "No active Context"
         return cls._instance
 
     def __enter__(self, *args: Any, **kwargs: Any):
