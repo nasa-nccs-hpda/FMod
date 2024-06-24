@@ -39,10 +39,11 @@ class ConfigContext(initialize):
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
         self.name = name
-        self.task: str = self.get_config('task')
-        self.model: str = self.get_config('model')
+        self.parameters: str = self.get_config('parameters')
         self.dataset: str = self.get_config('dataset')
         self.scenario: str = self.get_config('scenario')
+        self.task: str = "-".join( [ self.parameters, self.dataset, self.scenario ] )
+        self.model: str = self.get_config('model')
         self.pipeline: str = self.get_config('pipeline')
         self.platform: str = self.get_config('platform')
 
@@ -71,7 +72,7 @@ class ConfigContext(initialize):
         assert self.cfg is None, "Context already activated"
         self.cfg = self.load()
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
-        self.cfg.task.name = f"{self.task}-{self.dataset}-{self.scenario}"
+        self.cfg.task.name = self.parameters
         self.cfg.task.scenario = self.scenario
         self.cfg.task.dataset = self.dataset
         self.cfg.task.training_version = f"{self.model}-{self.dataset}-{self.scenario}"
