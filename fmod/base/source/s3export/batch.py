@@ -78,6 +78,7 @@ class S3ExportDataLoader(SRDataLoader):
 		self.dindxs.append(dindx)
 		dset_params = dict( res=self.vres.value, varname=varname, index=f"{dindx:04}", tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
+		print( f"Data Filepath params: {cfg().dataset.items()}" )
 		subpath: str = cfg().dataset.dataset_files[self.vres.value]
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
