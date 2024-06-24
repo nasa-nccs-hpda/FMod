@@ -3,7 +3,7 @@ import xarray, traceback, random
 from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
-from fmod.base.io.loader import ncFormat, TSet
+from fmod.base.util.config import ConfigContext, cfg
 from fmod.base.source.loader import srRes
 from fmod.base.io.loader import TSet
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
@@ -82,11 +82,11 @@ class ModelTrainer(object):
 
 	model_cfg = ['batch_size', 'num_workers', 'persistent_workers' ]
 
-	def __init__(self, results_accumulator: ResultsAccumulator = None ):
+	def __init__(self, cc: ConfigContext ):
 		super(ModelTrainer, self).__init__()
 		self.model_manager: SRModels = SRModels( set_device() )
 		self.device: torch.device = self.model_manager.device
-		self.results_accum: ResultsAccumulator = results_accumulator
+		self.results_accum: ResultsAccumulator = ResultsAccumulator(cc)
 		self.min_loss = float('inf')
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
@@ -281,6 +281,7 @@ class ModelTrainer(object):
 		if cfg().task['nepochs'] == 0: return {}
 		refresh_state = kwargs.get('refresh_state', False)
 		seed = kwargs.get('seed', 4456)
+		t0 = time.time()
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -352,8 +353,10 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		self.record_eval( nepochs, {}, tset = TSet.Test )
-		print(f' -------> Training model with {ntotal_params} took {train_time/60:.2f} min.')
+		print(f' -------> Training model with {ntotal_params} wts took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
+		self.results_accum.save()
+		self.results_accum.rprint()
 		return self.current_losses
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation ):

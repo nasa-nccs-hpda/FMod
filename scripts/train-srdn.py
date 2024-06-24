@@ -1,35 +1,21 @@
-import torch, time
-import xarray as xa
-from fmod.base.gpu import set_device, get_device
-import hydra, os
-from fmod.base.util.config import ConfigContext, cfg
-from fmod.controller.dual_trainer import ModelTrainer
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
-from fmod.model.sres.manager import SRModels, ResultsAccumulator
+from fmod.controller.workflow import WorkflowController
 
+cname: str = "sres"
+models: List[str] = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+ccustom: Dict[str,Any] = { 'task.nepochs': 30, 'pipeline.gpu': 2 }
 
-refresh_state = False
-seed = int( time.time()/60 )
-cname = "sres"
-models = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
-
-ConfigContext.set_defaults(
-	task = "cape_basin",
+configuration = dict(
+	task = "sres",
 	dataset = "LLC4320",
+	scenario = "s4",
 	pipeline = "sres",
 	platform = "explore"
 )
-ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 0 }
 
-for model in models:
-	with ConfigContext( cname, model=model, **ccustom ) as cc:
-		t0 = time.time()
-		results = ResultsAccumulator(cc)
-		trainer: ModelTrainer = ModelTrainer( results )
-		trainer.train( refresh_state=refresh_state, seed=seed )
-		results.save()
-		print( f" ******** Model '{model}' completed {cfg().task.nepochs} epochs of training in {(time.time()-t0)/60:.2f} min ******** ")
-		results.rprint()
+controller = WorkflowController( cname, configuration )
+controller.train( models, **ccustom )
+
 
 
 
