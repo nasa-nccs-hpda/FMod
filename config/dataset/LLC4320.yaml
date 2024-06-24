@@ -5,5 +5,5 @@ usf: ???
 index: ???
 
 dataset_root:  "/explore/nobackup/people/jli30/share/data/"
-dataset_files: { lr: "${dataset.varname}_192x192/${.tset}/${.res}_${dataset.varname}/X${.usf}/${.res}_${dataset.varname}_${.index}.npy",
-                 hr: "${dataset.varname}_192x192/${.tset}/${.res}_${dataset.varname}/${.res}_${dataset.varname}_${.index}.npy" }
+dataset_files: { lr: "${dataset.varname}_192x192/${dataset.tset}/${dataset.res}_${dataset.varname}/X${dataset.usf}/${dataset.res}_${dataset.varname}_${dataset.index}.npy",
+                 hr: "${dataset.varname}_192x192/${dataset.tset}/${dataset.res}_${dataset.varname}/${dataset.res}_${dataset.varname}_${dataset.index}.npy" }
