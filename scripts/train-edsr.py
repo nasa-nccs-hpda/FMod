@@ -14,16 +14,15 @@ cname = "sres"
 models = [ 'edsr' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
 
 ConfigContext.set_defaults(
-	task = "sres",
+	task = "cape_basin",
 	dataset = "LLC4320",
-	scenario = "s4",
 	pipeline = "sres",
 	platform = "explore"
 )
-ccustom = { 'task.nepochs': 30, 'pipeline.gpu': 1, 'task.lr': 3e-4 }
+ccustom = { 'task.nepochs': 30, 'task.lr': 3e-4, 'pipeline.gpu': 1 }
 
 for model in models:
-	with ConfigContext( cname, ccustom, model=model ) as cc:
+	with ConfigContext( cname, model=model, **ccustom ) as cc:
 		t0 = time.time()
 		results = ResultsAccumulator(cc)
 		model_manager: SRModels = SRModels( set_device() )
