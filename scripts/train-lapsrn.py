@@ -6,9 +6,8 @@ models: List[str] = [ 'lapsrn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'ms
 ccustom: Dict[str,Any] = { 'task.nepochs': 30, 'pipeline.gpu': 3 }
 
 configuration = dict(
-	task = "sres",
+	task = "cape_basin",
 	dataset = "LLC4320",
-	scenario = "s4",
 	pipeline = "sres",
 	platform = "explore"
 )
