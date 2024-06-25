@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from view.plot.base import Plot
+from fmod.view.plot.base import Plot
 from fmod.base.io.loader import ncFormat, TSet
 from fmod.controller.dual_trainer import ModelTrainer
 

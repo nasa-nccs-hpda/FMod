@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xa
 from matplotlib.image import AxesImage
 
-from view.plot.widgets import StepSlider
+from fmod.view.plot.widgets import StepSlider
 from fmod.base.util.config import cfg
 from fmod.controller.dual_trainer import TileGrid
 from fmod.data.batch import BatchDataset

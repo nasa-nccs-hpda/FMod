@@ -5,11 +5,11 @@ from fmod.base.util.ops import xaformat_timedeltas
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from view.plot import StepSlider
+from fmod.view.plot import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
 from fmod.base.util.logging import lgm, exception_handled
-from view.plot import color_range
+from fmod.view.plot import color_range
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 

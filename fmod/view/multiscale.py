@@ -4,7 +4,7 @@ from typing  import List, Tuple, Dict
 from fmod.base.util.ops import xaformat_timedeltas
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from view.plot import StepSlider
+from fmod.view.plot import StepSlider
 from fmod.base.util.logging import lgm, exception_handled
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
