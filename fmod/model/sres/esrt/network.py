@@ -1,13 +1,11 @@
 from fmod.model.sres.esrt import blocks
-import torch
+import torch, math
 import torch.nn as nn
 import torch.nn.functional as F
 from fmod.model.sres.common.tools import extract_image_patches, reduce_mean, reduce_sum, same_padding, reverse_patches
 from fmod.model.sres.common.transformer import drop_path, DropPath, PatchEmbed, Mlp, MLABlock
 from fmod.model.sres.common.position import PositionEmbeddingLearned, PositionEmbeddingSine
-
-def make_model(upscale=4):
-	return ESRT(upscale=upscale)
+from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
 
 ## Channel Attention (CA) Layer
 class CALayer(nn.Module):
@@ -150,16 +148,13 @@ class Un(nn.Module):
 		return self.weight1(x) + self.weight2(out)
 
 class ESRT(nn.Module):
-	def __init__(self, upscale=4, conv=blocks.default_conv):
+	def __init__(self, upscale: int, nfeatures: int, kernel_size: int, nblocks: int, conv: Callable ):
 		super(ESRT, self).__init__()
 		wn = lambda x: torch.nn.utils.weight_norm(x)
-		n_feats = 32
-		n_blocks = 1
-		kernel_size = 3
 		scale = upscale  # args.scale[0] #gaile
 		act = nn.ReLU(True)
 		# self.up_sample = F.interpolate(scale_factor=2, mode='nearest')
-		self.n_blocks = n_blocks
+		self.n_blocks = nblocks
 
 		# RGB mean for DIV2K
 		rgb_mean = (0.4488, 0.4371, 0.4040)
@@ -167,26 +162,23 @@ class ESRT(nn.Module):
 		# self.sub_mean = blocks.MeanShift(args.rgb_range, rgb_mean, rgb_std)
 
 		# define head module
-		modules_head = [conv(3, n_feats, kernel_size)]
+		modules_head = [conv(3, nfeatures, kernel_size)]
 
 		# define body module
 		modules_body = nn.ModuleList()
-		for i in range(n_blocks):
-			modules_body.append(
-				Un(n_feats=n_feats, wn=wn))
+		for i in range(self.n_blocks):
+			modules_body.append( Un(n_feats=nfeatures, wn=wn) )
 
 		# define tail module
 		modules_tail = [
+			blocks.Upsampler(conv, scale, nfeatures, act=False),
+			conv(nfeatures, 3, kernel_size) ]
 
-			blocks.Upsampler(conv, scale, n_feats, act=False),
-			conv(n_feats, 3, kernel_size)]
-
-		self.up = nn.Sequential(blocks.Upsampler(conv, scale, n_feats, act=False),
-			BasicConv(n_feats, 3, 3, 1, 1))
+		self.up = nn.Sequential( blocks.Upsampler(conv, scale, nfeatures, act=False), BasicConv(nfeatures, 3, 3, 1, 1) )
 		self.head = nn.Sequential(*modules_head)
 		self.body = nn.Sequential(*modules_body)
 		self.tail = nn.Sequential(*modules_tail)
-		self.reduce = conv(n_blocks * n_feats, n_feats, kernel_size)
+		self.reduce = conv(self.n_blocks * nfeatures, nfeatures, kernel_size)
 
 	def forward(self, x1, x2=None, test=False):
 		# x1 = self.sub_mean(x1)
@@ -231,4 +223,17 @@ class ESRT(nn.Module):
 			missing = set(own_state.keys()) - set(state_dict.keys())
 			if len(missing) > 0:
 				raise KeyError('missing keys in state_dict: "{}"'.format(missing))
+
+
+def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
+	nchannels:          int     = mconfig['nchannels']
+	nfeatures:          int     = mconfig['nfeatures']
+	scale_factors:   List[int]  = mconfig['downscale_factors']
+	kernel_size:        int     = mconfig['kernel_size']
+	nblocks:            int     = mconfig['nblocks']
+	usmethod:           str     = mconfig['usmethod']
+
+	upscale = math.prod(scale_factors)
+	return ESRT( upscale=upscale, nfeatures=nfeatures, kernel_size=kernel_size, nblocks=nblocks, conv=blocks.default_conv)
+
 

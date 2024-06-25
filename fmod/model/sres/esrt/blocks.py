@@ -2,11 +2,8 @@ import math
 import torch
 import torch.nn as nn
 
-def default_conv(in_channels, out_channels, kernel_size, bias=True, groups=1):
-	wn = lambda x: torch.nn.utils.weight_norm(x)
-	return nn.Conv2d(
-		in_channels, out_channels, kernel_size,
-		padding=(kernel_size // 2), bias=bias, groups=groups)
+def default_conv(in_channels, out_channels, kernel_size, bias=True, groups=1) -> nn.Conv2d:
+	return nn.Conv2d( in_channels, out_channels, kernel_size, padding=(kernel_size // 2), bias=bias, groups=groups)
 
 class Scale(nn.Module):
 
@@ -31,10 +28,7 @@ class BasicBlock(nn.Sequential):
 	def __init__(
 		self, in_channels, out_channels, kernel_size, stride=1, bias=False,
 		bn=True, act=nn.ReLU(True)):
-		m = [nn.Conv2d(
-			in_channels, out_channels, kernel_size,
-			padding=(kernel_size // 2), stride=stride, bias=bias)
-		]
+		m = [ nn.Conv2d( in_channels, out_channels, kernel_size, padding=(kernel_size // 2), stride=stride, bias=bias) ]
 		if bn: m.append(nn.BatchNorm2d(out_channels))
 		if act is not None: m.append(act)
 		super(BasicBlock, self).__init__(*m)

@@ -1,0 +1,8 @@
+name: edsr
+
+nfeatures: 32
+loss_fn: l2
+kernel_size: 3
+nblocks: 1
+downscale_factors: [2,2]
+
