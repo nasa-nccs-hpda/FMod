@@ -13,6 +13,7 @@ class WorkflowController(object):
 		self.refresh_state = kwargs.get('refresh_state', False )
 		self.config: ConfigContext = None
 		self.trainer: ModelTrainer = None
+		self.plot: Any = None
 		ConfigContext.set_defaults( **configuration )
 
 	def train(self, models: List[str], **kwargs):
@@ -26,7 +27,7 @@ class WorkflowController(object):
 		self.config = ConfigContext.activate_global(cname, **kwargs )
 		self.trainer = ModelTrainer( self.config )
 
-	def srplot(self, tset: TSet, **kwargs ):
-		srplot = SRPlot(self.trainer, tset, **kwargs )
-		return srplot.plot()
+	def get_result_view(self, tset: TSet, **kwargs ):
+		self.plot = SRPlot(self.trainer, tset, **kwargs )
+		return self.plot.plot()
 
