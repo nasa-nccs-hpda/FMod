@@ -1,19 +1,13 @@
-import math, torch, numpy as np
+import torch, numpy as np
 import xarray as xa
-from typing  import List, Tuple, Union, Optional, Dict
-from fmod.base.util.ops import xaformat_timedeltas, print_data_column
-import matplotlib.ticker as ticker
+from typing  import Tuple, Dict
+from fmod.base.util.ops import xaformat_timedeltas
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from fmod.controller.stats import l2loss
-from fmod.base.util.config import cfg
-from torch import nn
-from matplotlib.axes import Axes
-from matplotlib.image import AxesImage
 from fmod.base.io.loader import TSet
 from fmod.view.tile_selection_grid import TileSelectionGrid
-from fmod.base.plot.widgets import StepSlider
-from fmod.base.util.logging import lgm, exception_handled, log_timing
+from view.plot import StepSlider
+from fmod.base.util.logging import lgm, exception_handled
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 

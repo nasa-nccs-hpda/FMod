@@ -1,16 +1,15 @@
 import math, numpy as np
 import xarray as xa
-from typing  import List, Tuple, Union, Optional, Dict
-from fmod.base.util.ops import xaformat_timedeltas, print_data_column
+from typing  import List, Tuple, Optional, Dict
+from fmod.base.util.ops import xaformat_timedeltas
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from fmod.base.plot.widgets import StepSlider
+from view.plot import StepSlider
 from matplotlib.image import AxesImage
 from fmod.base.util.grid import GridOps
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.base.plot.forecast import color_range
-from fmod.base.util.ops import nnan, pctnan
+from fmod.base.util.logging import lgm, exception_handled
+from view.plot import color_range
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 

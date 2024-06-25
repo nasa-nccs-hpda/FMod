@@ -1,22 +1,17 @@
-import math, torch, numpy as np
+import torch, numpy as np
 import xarray as xa
-from datetime import datetime
-from typing  import List, Tuple, Union, Optional, Dict
-from fmod.base.util.ops import xaformat_timedeltas, print_data_column
-import matplotlib.ticker as ticker
+from typing  import List, Tuple, Optional, Dict
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from fmod.controller.stats import l2loss
-from fmod.base.util.config import cfg
-from torch import nn
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from xarray.core.coordinates import DataArrayCoordinates, DatasetCoordinates
+from xarray.core.coordinates import DataArrayCoordinates
 from fmod.controller.dual_trainer import ModelTrainer
 from fmod.base.io.loader import TSet
 from fmod.view.tile_selection_grid import TileSelectionGrid
-from fmod.base.plot.widgets import StepSlider
-from fmod.base.util.logging import lgm, exception_handled, log_timing
+from view.plot.widgets import StepSlider
+from fmod.base.util.logging import lgm, exception_handled
+from fmod.view.plot.base import Plot
 
 colors = ["red", "blue", "green", "cyan", "magenta", "yellow", "grey", "brown", "pink", "purple", "orange", "black"]
 
@@ -51,9 +46,9 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
-class SRPlot(object):
+class ResultPlot(Plot):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
-		self.trainer: ModelTrainer = trainer
+		super(ResultPlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(self.tset)
 		self.tile_grid.create_tile_recs(**kwargs)
@@ -69,12 +64,9 @@ class SRPlot(object):
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
 		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
 		self.ims = {}
-		fsize = kwargs.get( 'fsize', 8.0 )
-
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
-		with plt.ioff():
-			self.fig, self.axs = plt.subplots(nrows=2, ncols=self.ncols, sharex=True, sharey=True, figsize=[fsize,fsize], layout="tight")
-			self.fig.canvas.mpl_connect('button_press_event', self.select_point)
+		self.callbacks = dict(button_press_event=self.select_point)
+		self.create_figure( nrows=2, ncols=self.ncols, sharex=True, sharey=True, callbacks=self.callbacks, title='SRes Loss Over Training Epochs' )
 		self.panels = [ self.fig.canvas, self.tslider, self.sslider ]
 		self.tslider.set_callback( self.time_update )
 		self.sslider.set_callback( self.tile_update )

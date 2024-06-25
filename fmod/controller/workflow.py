@@ -1,10 +1,11 @@
-import torch, time
-from fmod.base.util.config import ConfigContext, cfg
+import time
+from fmod.base.util.config import ConfigContext
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.base.io.loader import ncFormat, TSet
+from fmod.base.io.loader import TSet
 import matplotlib.pyplot as plt
-from typing import Any, Dict, List, Tuple, Type, Optional, Union
-from fmod.base.plot.sres import SRPlot
+from typing import Any, Dict, List
+from fmod.view.plot.results import ResultPlot
+from fmod.view.plot.base import Plot
 
 class WorkflowController(object):
 
@@ -14,7 +15,7 @@ class WorkflowController(object):
 		self.refresh_state = kwargs.get('refresh_state', False )
 		self.config: ConfigContext = None
 		self.trainer: ModelTrainer = None
-		self.plot: Any = None
+		self.plot: Plot = None
 		self.model = None
 		ConfigContext.set_defaults( **configuration )
 
@@ -31,7 +32,7 @@ class WorkflowController(object):
 		self.trainer = ModelTrainer( self.config )
 
 	def get_result_view(self, tset: TSet, **kwargs ):
-		self.plot = SRPlot(self.trainer, tset, **kwargs )
+		self.plot = ResultPlot(self.trainer, tset, **kwargs)
 		return self.plot.plot()
 
 	def get_training_view(self, **kwargs):
