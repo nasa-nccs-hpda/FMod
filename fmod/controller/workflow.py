@@ -2,7 +2,6 @@ import time
 from fmod.base.util.config import ConfigContext
 from fmod.controller.dual_trainer import ModelTrainer
 from fmod.base.io.loader import TSet
-import matplotlib.pyplot as plt
 from typing import Any, Dict, List
 from fmod.view.plot.results import ResultPlot
 from fmod.view.plot.training import TrainingPlot
