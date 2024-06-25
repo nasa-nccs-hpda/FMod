@@ -5,6 +5,7 @@ from fmod.base.io.loader import TSet
 import matplotlib.pyplot as plt
 from typing import Any, Dict, List
 from fmod.view.plot.results import ResultPlot
+from fmod.view.plot.training import TrainingPlot
 from fmod.view.plot.base import Plot
 
 class WorkflowController(object):
@@ -36,23 +37,6 @@ class WorkflowController(object):
 		return self.plot.plot()
 
 	def get_training_view(self, **kwargs):
-		fsize = kwargs.get( 'fsize', 8.0 )
-		yscale = kwargs.get('yscale', 'log')
-		with plt.ioff():
-			fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[fsize * 2, fsize], layout="tight")
-		fig.suptitle('SRes Loss Over Training Epochs', fontsize=14, va="top", y=1.0)
-		fmt = {TSet.Train: 'b', TSet.Validation: 'g'}
-		self.trainer.results_accum.load_results()
-		(x, y), min_loss = self.trainer.results_accum.get_plot_data(), {}
-		for tset in [TSet.Train, TSet.Validation]:
-			xp, yp = x[tset], y[tset]
-			min_loss[tset] = yp.min() if (yp.size > 0) else 0.0
-			ax.plot(xp, yp, fmt[tset], label=tset.name)
-		ax.set_xlabel("Epoch")
-		ax.set_ylabel("Loss")
-		ax.set_yscale(yscale)
-		ax.set_title(f"Model '{self.model}':  Validation Loss = {min_loss[TSet.Validation]:.4f} ")
-		ax.legend()
-		fig.canvas.draw_idle()
-		return fig.canvas
+		self.plot = TrainingPlot(self.trainer, **kwargs)
+		return self.plot.plot()
 

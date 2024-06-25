@@ -150,7 +150,7 @@ class ResultPlot(Plot):
 		self.update_subplots()
 
 
-	def plot( self ):
+	def plot( self ) -> ipw.Box:
 		# self.tile_grid.overlay_grid( self.axs[1,0] )
 		self.update_subplots()
 		return ipw.VBox(self.panels)
