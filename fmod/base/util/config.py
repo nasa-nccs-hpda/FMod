@@ -58,8 +58,10 @@ class ConfigContext(initialize):
         currdir = os.path.dirname(os.path.abspath(__file__))
         return os.path.abspath( os.path.join(currdir, self.config_path,  f"{self.name}.yaml") )
 
-    def deactivate(self):
-        ConfigContext.cfg = None
+    @classmethod
+    def deactivate(cls):
+        if ConfigContext.cfg is not None:
+            ConfigContext.cfg = None
 
     @classmethod
     def activate_global(cls, name: str, **kwargs ) -> 'ConfigContext':
