@@ -24,17 +24,18 @@ class CheckpointManager(object):
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
 		cpath = self.checkpoint_path(tset)
 		checkpoint = torch.load(cpath)
-		self.model.load_state_dict( checkpoint.pop('model_state_dict') )
-		self.optimizer.load_state_dict( checkpoint.pop('optimizer_state_dict') )
 		return checkpoint
 
-	def load_checkpoint( self, tset: TSet = TSet.Train ) -> Dict[str,Any]:
+	def load_checkpoint( self, tset: TSet = TSet.Train, update_model=True ) -> Dict[str,Any]:
 		cppath = self.checkpoint_path( tset )
 		train_state = {}
 		if os.path.exists( cppath ):
 			try:
 				train_state = self._load_state( tset )
 				lgm().log(f"Loaded model checkpoint from {cppath}", display=True)
+				if update_model:
+					self.model.load_state_dict( train_state.pop('model_state_dict') )
+					self.optimizer.load_state_dict( train_state.pop('optimizer_state_dict') )
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
 		else:

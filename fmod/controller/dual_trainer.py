@@ -91,10 +91,9 @@ class ModelTrainer(object):
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
 		self.scheduler = None
-		self.optimizer = None
-		self.checkpoint_manager = None
 		self.model = self.model_manager.get_model()
-		self.checkpoint_manager: CheckpointManager = None
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
+		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
 		self.channel_idxs: torch.LongTensor = None
@@ -286,8 +285,6 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get('scheduler', None)
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
-		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
@@ -303,7 +300,7 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		self.record_eval(epoch0,{})
+		self.record_eval(epoch0,{}, TSet.Validation )
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -348,18 +345,18 @@ class ModelTrainer(object):
 			epoch_loss: float = np.array(batch_losses).mean()
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Train, epoch_loss )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
-			self.record_eval( epoch, {TSet.Train: epoch_loss}, flush=True )
+			self.record_eval( epoch, {TSet.Train: epoch_loss}, TSet.Validation )
 
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		self.record_eval( nepochs, {}, tset = TSet.Test, flush=True )
+		self.record_eval( nepochs, {},  TSet.Test )
 		print(f' -------> Training model with {ntotal_params} wts took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation, flush: bool = False ):
-		eval_losses = self.evaluate( tset, epoch=epoch, upsample=(epoch==0) )
+	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, flush: bool = True ):
+		eval_losses = self.evaluate( tset, epoch, upsample=(epoch==0) )
 		if self.results_accum is not None:
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
@@ -404,18 +401,17 @@ class ModelTrainer(object):
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, interp loss = {interp_loss:.4f}')
 		return interp_loss
 
-	def evaluate(self, tset: TSet = TSet.Validation, **kwargs) -> Dict[str,float]:
+	def evaluate(self, tset: TSet, epoch: int = -1, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		upsample = kwargs.get('upsample', False)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
-		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
-		train_state = self.checkpoint_manager.load_checkpoint()
-		epoch = kwargs.get( 'epoch', train_state.get('epoch', 0) )
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-
+		if (tset == TSet.Validation) or (epoch == -1):
+			train_state = self.checkpoint_manager.load_checkpoint( tset, update_model=False )
+			self.validation_loss = train_state.get('loss', float('inf'))
+			epoch = train_state.get( 'epoch', 0 )
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		start_coords: List[Union[datetime,int]] = self.input_dataset(tset).get_batch_start_coords(target_coord=self.time_index)
@@ -444,9 +440,9 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean() if len(batch_interp_losses) > 0 else None
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if (model_loss < self.validation_loss) and (tset == TSet.Validation):
+		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
-			self.checkpoint_manager.save_checkpoint( epoch, tset, self.validation_loss )
+			self.checkpoint_manager.save_checkpoint( epoch, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		losses = dict( model=model_loss )
 		if interp_loss is not None:

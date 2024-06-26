@@ -60,8 +60,7 @@ class ConfigContext(initialize):
 
     @classmethod
     def deactivate(cls):
-        if ConfigContext.cfg is not None:
-            ConfigContext.cfg = None
+        cls.cfg = None
 
     @classmethod
     def activate_global(cls, name: str, **kwargs ) -> 'ConfigContext':
