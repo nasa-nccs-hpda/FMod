@@ -356,7 +356,7 @@ class ModelTrainer(object):
 		return self.current_losses
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, flush: bool = True ):
-		eval_losses = self.evaluate( tset, epoch, upsample=(epoch==0) )
+		eval_losses = self.evaluate( tset, upsample=(epoch==0) )
 		if self.results_accum is not None:
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
@@ -401,17 +401,17 @@ class ModelTrainer(object):
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, interp loss = {interp_loss:.4f}')
 		return interp_loss
 
-	def evaluate(self, tset: TSet, epoch: int = -1, **kwargs) -> Dict[str,float]:
+	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		upsample = kwargs.get('upsample', False)
+		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		if (tset == TSet.Validation) or (epoch == -1):
-			train_state = self.checkpoint_manager.load_checkpoint( tset, update_model=False )
-			self.validation_loss = train_state.get('loss', float('inf'))
-			epoch = train_state.get( 'epoch', 0 )
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, update_model=(tset==TSet.Test) )
+		self.validation_loss = train_state.get('loss', float('inf'))
+		epoch = train_state.get( 'epoch', 0 )
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		start_coords: List[Union[datetime,int]] = self.input_dataset(tset).get_batch_start_coords(target_coord=self.time_index)
