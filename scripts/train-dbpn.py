@@ -3,10 +3,10 @@ from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
 models: List[str] = [ 'dbpn' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 3, 'pipeline.gpu': 0 }
+ccustom: Dict[str,Any] = { 'task.nepochs': 10, 'pipeline.gpu': 0 }
 
 configuration = dict(
-	task = "cape_basin_3x3",
+	task = "cape_basin_1x1",
 	dataset = "LLC4320",
 	pipeline = "sres",
 	platform = "explore"
