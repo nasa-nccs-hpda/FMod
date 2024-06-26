@@ -348,18 +348,19 @@ class ModelTrainer(object):
 			epoch_loss: float = np.array(batch_losses).mean()
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Train, epoch_loss )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
-			self.record_eval( epoch, {TSet.Train: epoch_loss} )
+			self.record_eval( epoch, {TSet.Train: epoch_loss}, flush=True )
+
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		self.record_eval( nepochs, {}, tset = TSet.Test )
 		print(f' -------> Training model with {ntotal_params} wts took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
-		self.results_accum.save()
+
 		self.results_accum.rprint()
 		return self.current_losses
 
-	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation ):
+	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation, flush: bool = False ):
 		eval_losses = self.evaluate( tset, epoch=epoch, upsample=(epoch==0) )
 		if self.results_accum is not None:
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
@@ -367,6 +368,8 @@ class ModelTrainer(object):
 				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
 			for etset, loss in losses.items():
 				self.results_accum.record_losses( etset, epoch, loss )
+		if flush:
+			self.results_accum.flush()
 		return eval_losses
 
 	def eval_upscale(self, tset: TSet, **kwargs) -> float:

@@ -216,6 +216,7 @@ class ResultsAccumulator(object):
 		if self._writer is not None:
 			self._writer.close()
 			self._writer = None
+		self.results = []
 
 	@classmethod
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
@@ -228,6 +229,11 @@ class ResultsAccumulator(object):
 	def serialize(self)-> Dict[ str, Tuple[float,float,int] ]:
 		sr =  { k: rr.serialize() for k, rr in self.results }
 		return sr
+
+	def flush(self):
+		self.save()
+		self.close()
+
 
 	@exception_handled
 	def save(self):
