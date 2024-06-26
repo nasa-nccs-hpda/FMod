@@ -39,10 +39,8 @@ class one_conv(nn.Module):
 		self.weight2 = blocks.Scale(1)
 
 	def forward(self, x):
-		if self.flag == False:
-			output = self.weight1(x) + self.weight2(self.conv1(self.conv(x)))
-		else:
-			output = self.weight1(x) + self.weight2(self.conv1(self.relu(self.conv(x))))
+		if not self.flag:   output = self.weight1(x) + self.weight2(self.conv1(self.conv(x)))
+		else:               output = self.weight1(x) + self.weight2(self.conv1(self.relu(self.conv(x))))
 		return output  # torch.cat((x,output),1)
 
 class BasicConv(nn.Module):
@@ -92,7 +90,6 @@ class one_module(nn.Module):
 		x1 = self.layer1(x)
 		x2 = self.layer2(x1)
 		# x3 = self.layer3(x2)
-		# pdb.set_trace()
 		x4 = self.layer4(self.atten(self.alise(torch.cat([self.weight2(x2), self.weight3(x1)], 1))))
 		return self.weight4(x) + self.weight5(x4)
 
@@ -148,33 +145,22 @@ class Un(nn.Module):
 		return self.weight1(x) + self.weight2(out)
 
 class ESRT(nn.Module):
-	def __init__(self, upscale: int, nfeatures: int, kernel_size: int, nblocks: int, conv: Callable ):
+	def __init__(self, nchannels: int, nfeatures: int, upscale: int, kernel_size: int, nblocks: int, conv: Callable ):
 		super(ESRT, self).__init__()
 		wn = lambda x: torch.nn.utils.weight_norm(x)
-		scale = upscale  # args.scale[0] #gaile
-		act = nn.ReLU(True)
-		# self.up_sample = F.interpolate(scale_factor=2, mode='nearest')
+		scale = upscale
 		self.n_blocks = nblocks
 
-		# RGB mean for DIV2K
-		rgb_mean = (0.4488, 0.4371, 0.4040)
-		rgb_std = (1.0, 1.0, 1.0)
-		# self.sub_mean = blocks.MeanShift(args.rgb_range, rgb_mean, rgb_std)
-
-		# define head module
-		modules_head = [conv(3, nfeatures, kernel_size)]
-
-		# define body module
+		modules_head = [ conv(nchannels, nfeatures, kernel_size) ]
 		modules_body = nn.ModuleList()
 		for i in range(self.n_blocks):
 			modules_body.append( Un(n_feats=nfeatures, wn=wn) )
-
-		# define tail module
 		modules_tail = [
 			blocks.Upsampler(conv, scale, nfeatures, act=False),
 			conv(nfeatures, 3, kernel_size) ]
 
-		self.up = nn.Sequential( blocks.Upsampler(conv, scale, nfeatures, act=False), BasicConv(nfeatures, 3, 3, 1, 1) )
+		self.up = nn.Sequential(  blocks.Upsampler(conv, scale, nfeatures, act=False),
+								  BasicConv(nfeatures, 3, 3, 1, 1) )
 		self.head = nn.Sequential(*modules_head)
 		self.body = nn.Sequential(*modules_body)
 		self.tail = nn.Sequential(*modules_tail)
@@ -210,19 +196,16 @@ class ESRT(nn.Module):
 					if name.find('tail') >= 0:
 						print('Replace pre-trained upsampler to new one...')
 					else:
-						raise RuntimeError('While copying the parameter named {}, '
-						                   'whose dimensions in the model are {} and '
-						                   'whose dimensions in the checkpoint are {}.'
-						.format(name, own_state[name].size(), param.size()))
+						raise RuntimeError(f'While copying the parameter named {name}, whose dimensions in the model'
+						                   f' are {own_state[name].size()} and whose dimensions in the checkpoint are {param.size()}.')
 			elif strict:
 				if name.find('tail') == -1:
-					raise KeyError('unexpected key "{}" in state_dict'
-					.format(name))
+					raise KeyError(f'unexpected key "{name}" in state_dict')
 
 		if strict:
 			missing = set(own_state.keys()) - set(state_dict.keys())
 			if len(missing) > 0:
-				raise KeyError('missing keys in state_dict: "{}"'.format(missing))
+				raise KeyError(f'missing keys in state_dict: "{missing}"')
 
 
 def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
@@ -231,9 +214,8 @@ def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
 	scale_factors:   List[int]  = mconfig['downscale_factors']
 	kernel_size:        int     = mconfig['kernel_size']
 	nblocks:            int     = mconfig['nblocks']
-	usmethod:           str     = mconfig['usmethod']
 
 	upscale = math.prod(scale_factors)
-	return ESRT( upscale=upscale, nfeatures=nfeatures, kernel_size=kernel_size, nblocks=nblocks, conv=blocks.default_conv)
+	return ESRT( nchannels, nfeatures, upscale, kernel_size, nblocks, conv=blocks.default_conv)
 
 

@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
-models: List[str] = [ 'lapsrn' ]
+models: List[str] = [ 'esrt' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 10, 'task.lr': 1e-4, 'pipeline.gpu': 0 }
 
 configuration = dict(
@@ -14,7 +14,6 @@ configuration = dict(
 
 controller = WorkflowController( cname, configuration )
 controller.train( models, **ccustom )
-
 
 
 

@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
-models: List[str] = [ 'srdn' ] # [ 'dbpn', 'edsr', 'srdn', 'unet', 'vdsr', 'mscnn', 'lapsrn' ]
+models: List[str] = [ 'srdn' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 10, 'task.lr': 2e-4, 'pipeline.gpu': 1 }
 
 configuration = dict(
