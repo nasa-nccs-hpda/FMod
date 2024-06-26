@@ -353,11 +353,9 @@ class ModelTrainer(object):
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		self.record_eval( nepochs, {}, tset = TSet.Test )
+		self.record_eval( nepochs, {}, tset = TSet.Test, flush=True )
 		print(f' -------> Training model with {ntotal_params} wts took {train_time/60:.2f} min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
-
-		self.results_accum.rprint()
 		return self.current_losses
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet = TSet.Validation, flush: bool = False ):
