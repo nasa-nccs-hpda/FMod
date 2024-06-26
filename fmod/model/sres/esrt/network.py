@@ -1,4 +1,4 @@
-from fmod.model.sres.esrt import blocks
+from . import blocks
 import torch, math
 import torch.nn as nn
 import torch.nn.functional as F

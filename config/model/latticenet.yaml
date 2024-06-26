@@ -1,0 +1,10 @@
+name: latticenet
+
+nfeatures: 64
+loss_fn: l2
+kernel_size: 3
+ndiff: 16
+downscale_factors: [2,2]
+ups_mode: bicubic
+
+
