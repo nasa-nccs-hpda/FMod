@@ -6,7 +6,7 @@ models: List[str] = [ 'dbpn' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 3, 'pipeline.gpu': 0 }
 
 configuration = dict(
-	task = "cape_basin",
+	task = "cape_basin_3x3",
 	dataset = "LLC4320",
 	pipeline = "sres",
 	platform = "explore"

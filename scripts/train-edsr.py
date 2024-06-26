@@ -6,7 +6,7 @@ models: List[str] = [ 'edsr' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 30, 'task.lr': 5e-5, 'pipeline.gpu': 1 }
 
 configuration = dict(
-	task = "cape_basin",
+	task = "cape_basin_3x3",
 	dataset = "LLC4320",
 	pipeline = "sres",
 	platform = "explore"

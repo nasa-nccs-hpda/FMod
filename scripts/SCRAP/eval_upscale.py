@@ -7,7 +7,7 @@ from fmod.controller.dual_trainer import ModelTrainer
 from fmod.base.io.loader import TSet
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 device = ConfigContext.set_device()
 
 task = "sres"
