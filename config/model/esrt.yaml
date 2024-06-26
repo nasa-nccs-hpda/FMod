@@ -1,4 +1,4 @@
-name: edsr
+name: esrt
 
 nfeatures: 32
 loss_fn: l2
