@@ -69,12 +69,13 @@ class ConfigContext(initialize):
         return cc
 
     def activate(self):
-        assert self.cfg is None, "Context already activated"
-        ConfigContext.cfg = self.load()
+        assert ConfigContext.cfg is None, "Context already activated"
+        cfg = ConfigContext.cfg = self.load()
         print( f"Activating {self.name}: '{self.cfg_file}', keys = {list(self.cfg.keys())}")
-        ConfigContext.cfg.task.name = self.task
-        ConfigContext.cfg.task.dataset = self.dataset
-        ConfigContext.cfg.task.training_version = self.cid
+        cfg.task.name = self.task
+        cfg.task.dataset = self.dataset
+        cfg.task.training_version = self.cid
+        cfg.pipeline.gpu = int(os.getenv('FMOD_GPU',cfg.pipeline.gpu))
 
     def load(self) -> DictConfig:
         assert self.cfg is None, "Another Config context has already been activateed"

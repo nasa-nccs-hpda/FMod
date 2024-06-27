@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
+import hydra
 
 cname: str = "sres"
 models: List[str] = [ 'esrt' ]
@@ -14,6 +15,7 @@ configuration = dict(
 
 controller = WorkflowController( cname, configuration )
 controller.train( models, **ccustom )
+
 
 
 
