@@ -21,8 +21,6 @@ class CC(nn.Module):
 		)
 
 	def forward(self, x):
-
-		# mean
 		ca_mean = self.avg_pool(x)
 		ca_mean = self.conv_mean(ca_mean)
 
@@ -132,17 +130,12 @@ class LatticeNet(nn.Module):
 			nn.Conv2d(nfeatures , nfeatures  // 2, kernel_size=1, padding=0, bias=True),
 			nn.ReLU())
 
-		# define tail module
 		modules_tail = [nn.Conv2d(nfeatures , nfeatures , kernel_size=3, padding=1, bias=True),
 			nn.Conv2d(nfeatures , 3 * (scale ** 2), kernel_size=3, padding=1, bias=True),
 			nn.PixelShuffle(scale)]
 		self.tail = nn.Sequential(*modules_tail)
 
-		self.add_mean = blocks.MeanShift(args.rgb_range, rgb_mean, rgb_std, 1)
-
 	def forward(self, x):
-		x = self.sub_mean(x)
-
 		x = self.conv1(x)
 		x = self.conv2(x)
 
@@ -165,10 +158,7 @@ class LatticeNet(nn.Module):
 
 		res = out_TDM3 + x
 		out = self.tail(res)
-
-		x = self.add_mean(out)
-
-		return x
+		return out
 
 
 	def load_state_dict(self, state_dict, strict=False):
