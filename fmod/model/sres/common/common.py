@@ -19,23 +19,22 @@ common_parms = dict(
 	ups_mode='bicubic'
 )
 
+def init_parms( mparms: Dict[str, Any], custom_parms: Dict[str, Any]) -> Dict[str, Any]:
+	parms = {pname: cfg().model.get(pname, dval) for pname, dval in common_parms.items()}
+	parms['scale'] = math.prod(parms['downscale_factors'])
+	for pdict in [mparms, custom_parms]:
+		for pname, dval in pdict.items():
+			parms[pname] = cfg().model.get(pname, dval)
+	return parms
+
 class FModule(nn.Module):
 
 	def __init__( self, mparms: Dict[str,Any], **custom_parms ):
 		super(FModule, self).__init__()
-		self.config: DictConfig = cfg().model
-		self.parms = self.init_parms( mparms, custom_parms )
+		self.parms = init_parms( mparms, custom_parms )
 		self.conv = default_conv
 		self.act: nn.Module = nn.ReLU(True)
 		self.wn = lambda x: torch.nn.utils.weight_norm(x)
-
-	def init_parms(self, mparms: Dict[str,Any], custom_parms: Dict[str,Any]) -> Dict[str,Any]:
-		parms = { pname: self.config.get( pname, dval ) for pname, dval in common_parms.items() }
-		parms['scale'] = math.prod( self.downscale_factors )
-		for pdict in [ mparms, custom_parms]:
-			for pname, dval in pdict.items():
-				parms[pname] = self.config.get( pname, dval )
-		return parms
 
 	def __setattr__(self, key: str, value: Any) -> None:
 		if 'parms' not in self.__dict__.keys():
