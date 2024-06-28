@@ -11,7 +11,7 @@ def get_model( **config ) -> nn.Module:
 class SRDN(FModule):
 
 	def __init__(self, **kwargs):
-		parms = dict(kernel_size={}, stride = 1, momentum = 0.5)
+		parms = dict( stride = 1, momentum = 0.5, usmethod= 'replicate' )
 		super(SRDN, self).__init__(parms, **kwargs)
 
 		nfeat = self.nfeatures['hidden']
