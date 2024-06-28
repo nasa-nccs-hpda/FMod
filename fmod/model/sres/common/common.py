@@ -44,7 +44,7 @@ class FModule(nn.Module):
 			super(FModule, self).__setattr__(key, value)
 
 	def __getattr__(self, key: str) -> Any:
-		if key in self.parms.keys():
+		if (key != 'parms') and (key in self.parms.keys()):
 			return self.parms[key]
 		else:
 			super(FModule, self).__getattr__(key)
