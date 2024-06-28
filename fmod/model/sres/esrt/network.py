@@ -14,7 +14,7 @@ class ESRT(FModule):
 
 	def __init__(self, **kwargs):
 		super(ESRT, self).__init__({}, **kwargs)
-		modules_head = [ self.conv(self.nchannels_in, self.nfeatures, self.kernel_size) ]
+		modules_head = [ self.conv(self.nchannels_in, self.nfeatures, self.kernel_size, self.bias) ]
 		modules_body = nn.ModuleList()
 		for i in range(self.nlayers):
 			modules_body.append( Un(n_feats=self.nfeatures, wn=self.wn) )
