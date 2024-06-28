@@ -7,7 +7,7 @@ ccustom: Dict[str,Any] = { 'task.nepochs': 5, 'task.lr': 5e-5 }
 refresh = True
 
 configuration = dict(
-	task = "cape_basin_1x1ß",
+	task = "cape_basin_1x1",
 	dataset = "LLC4320",
 	pipeline = "sres",
 	platform = "explore"
