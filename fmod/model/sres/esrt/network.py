@@ -21,7 +21,7 @@ class ESRT(FModule):
 
 		modules_tail = [
 			blocks.Upsampler(self.conv, self.scale, self.nfeatures, act=False),
-			self.conv(self.nfeatures, self.nchannels_out, self.kernel_size) ]
+			self.conv(self.nfeatures, self.nchannels_out, self.kernel_size, self.bias) ]
 
 		self.up = nn.Sequential(  blocks.Upsampler(self.conv, self.scale, self.nfeatures, act=False),
 								  BasicConv(self.nfeatures, self.nchannels_out, 3, 1, 1) )
