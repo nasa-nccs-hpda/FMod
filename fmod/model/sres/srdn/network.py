@@ -21,7 +21,7 @@ class SRDN(FModule):
 		)
 
 		ks =  self.kernel_size['hidden']
-		res_layers = [ ( f"Residual-{iR}", Residual(nfeat, ks, self.stride, self.momentum) ) for iR in range(self.layers) ]
+		res_layers = [ ( f"Residual-{iR}", Residual(nfeat, ks, self.stride, self.momentum) ) for iR in range(self.nlayers) ]
 		self.residuals = nn.Sequential( OrderedDict( res_layers ) )
 
 		self.global_residual = nn.Sequential(
