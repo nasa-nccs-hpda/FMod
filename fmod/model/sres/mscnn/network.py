@@ -13,6 +13,7 @@ class MSCNN(FModule):
 
     def __init__(self, **kwargs):
         super(MSCNN, self).__init__({}, **kwargs)
+
         self.inc: nn.Module = DoubleConv( self.nchannels_in, self.nfeatures)
         self.downscale: nn.ModuleList = nn.ModuleList()
         self.upsample: nn.ModuleList = nn.ModuleList()
@@ -20,7 +21,7 @@ class MSCNN(FModule):
         self.unet: Optional[UNet] = UNet(self.nfeatures, self.nlayers) if self.nlayers > 0 else None
         for iL, usf in enumerate(self.downscale_factors):
             self.downscale.append(ConvDownscale(self.nfeatures, self.nfeatures, usf))
-            self.crossscale.append(Crossscale(self.nfeatures, self.n_channels_out))
+            self.crossscale.append(Crossscale(self.nfeatures, self.nchannels_out))
             self.upsample.append(Upsample(usf, self.ups_mode))
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:

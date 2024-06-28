@@ -19,7 +19,7 @@ class LapSRN(FModule):
         self.crossscale: nn.ModuleList = nn.ModuleList()
         for iL, usf in enumerate(self.downscale_factors):
             self.downscale.append(  ConvDownscale( self.nfeatures, self.nfeatures, usf))
-            self.crossscale.append(  Crossscale( self.nfeatures, self.n_channels_out ) )
+            self.crossscale.append(  Crossscale( self.nfeatures, self.nchannels_out ) )
             self.upsample.append( Upsample( usf, self.ups_mode ) )
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
