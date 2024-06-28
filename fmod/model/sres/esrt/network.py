@@ -28,7 +28,7 @@ class ESRT(FModule):
 		self.head = nn.Sequential(*modules_head)
 		self.body = nn.Sequential(*modules_body)
 		self.tail = nn.Sequential(*modules_tail)
-		self.reduce = self.conv( self.nlayers*self.nfeatures,  self.nfeatures,  self.kernel_size )
+		self.reduce = self.conv( self.nlayers*self.nfeatures,  self.nfeatures,  self.kernel_size, self.bias )
 
 	def forward(self, x1, x2=None, test=False):
 		x1 = self.head(x1)
