@@ -38,13 +38,17 @@ class FModule(nn.Module):
 
 	def __setattr__(self, key: str, value: Any) -> None:
 		if ('parms' in self.__dict__.keys()) and (key in self.parms.keys()):
+			if key == "head": print( "head -> parms")
 			self.parms[key] = value
 		else:
+			if key == "head": print("head -> attrs")
 			super(FModule, self).__setattr__(key, value)
 
 	def __getattr__(self, key: str) -> Any:
 		if 'parms' in self.__dict__.keys() and (key in self.parms.keys()):
+			if key == "head": print("head <- parms")
 			return self.parms[key]
+		if key == "head": print("head <- attrs")
 		super(FModule, self).__getattr__(key)
 
 	def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
