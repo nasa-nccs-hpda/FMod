@@ -31,7 +31,7 @@ class FModule(nn.Module):
 
 	def init_parms(self, mparms: Dict[str,Any], custom_parms: Dict[str,Any]) -> Dict[str,Any]:
 		parms = { pname: self.config.get( pname, dval ) for pname, dval in common_parms.items() }
-		parms['scale'] = math.prod( self.parms['downscale_factors'] )
+		parms['scale'] = math.prod( self.downscale_factors )
 		for pdict in [ mparms, custom_parms]:
 			for pname, dval in pdict.items():
 				parms[pname] = self.config.get( pname, dval )
