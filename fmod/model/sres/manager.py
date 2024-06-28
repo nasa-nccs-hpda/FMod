@@ -48,7 +48,7 @@ class SRModels:
 		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
 		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High, TSet.Train )
 		self.model_config = dict( nchannels_in = len(cfg().task.input_variables), nchannels_out = len(cfg().task.target_variables), device = device )
-		if cfg().models.get('use_temporal_features', False ):
+		if cfg().model.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features()
 
 	def sample_input( self, tset: TSet ) -> xa.DataArray:
