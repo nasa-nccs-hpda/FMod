@@ -37,15 +37,10 @@ class FModule(nn.Module):
 		self.wn = lambda x: torch.nn.utils.weight_norm(x)
 
 	def __setattr__(self, key: str, value: Any) -> None:
-		if 'parms' not in self.__dict__.keys():
-			if key == 'parms':
-				self.parms = value
-				return
+		if ('parms' in self.__dict__.keys()) and (key in self.parms.keys()):
+			self.parms[key] = value
 		else:
-			if key in self.parms.keys():
-				self.parms[key] = value
-				return
-		super(FModule, self).__setattr__(key, value)
+			super(FModule, self).__setattr__(key, value)
 
 	def __getattr__(self, key: str) -> Any:
 		if 'parms' in self.__dict__.keys() and (key in self.parms.keys()):
