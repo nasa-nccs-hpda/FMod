@@ -6,6 +6,40 @@ from fmod.model.sres.common.tools import extract_image_patches, reduce_mean, red
 from fmod.model.sres.common.transformer import drop_path, DropPath, PatchEmbed, Mlp, MLABlock
 from fmod.model.sres.common.position import PositionEmbeddingLearned, PositionEmbeddingSine
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
+from fmod.model.sres.common.common import FModule
+
+def get_model( **config ) -> nn.Module:
+	return ESRT(**config)
+class ESRT(FModule):
+
+	def __init__(self, **kwargs):
+		super(ESRT, self).__init__({}, **kwargs)
+		modules_head = [ self.conv(self.nchannels_in, self.nfeatures, self.kernel_size) ]
+		modules_body = nn.ModuleList()
+		for i in range(self.nlayers):
+			modules_body.append( Un(n_feats=self.nfeatures, wn=self.wn) )
+
+		modules_tail = [
+			blocks.Upsampler(self.conv, self.scale, self.nfeatures, act=False),
+			self.conv(self.nfeatures, self.nchannels_out, self.kernel_size) ]
+
+		self.up = nn.Sequential(  blocks.Upsampler(self.conv, self.scale, self.nfeatures, act=False),
+								  BasicConv(self.nfeatures, self.nchannels_out, 3, 1, 1) )
+		self.head = nn.Sequential(*modules_head)
+		self.body = nn.Sequential(*modules_body)
+		self.tail = nn.Sequential(*modules_tail)
+		self.reduce = self.conv( self.nlayers*self.nfeatures,  self.nfeatures,  self.kernel_size )
+
+	def forward(self, x1, x2=None, test=False):
+		x1 = self.head(x1)
+		res2 = x1
+		body_out = [ self.body[i](x1) for i in range(self.n_blocks) ]
+		res1 = torch.cat(body_out, 1)
+		res1 = self.reduce(res1)
+		x1 = self.tail(res1)
+		x1 = self.up(res2) + x1
+		return x1
+
 
 ## Channel Attention (CA) Layer
 class CALayer(nn.Module):
@@ -143,79 +177,5 @@ class Un(nn.Module):
 		out = self.alise(out)
 
 		return self.weight1(x) + self.weight2(out)
-
-class ESRT(nn.Module):
-	def __init__(self, nchannels: int, nfeatures: int, upscale: int, kernel_size: int, nblocks: int, conv: Callable ):
-		super(ESRT, self).__init__()
-		wn = lambda x: torch.nn.utils.weight_norm(x)
-		scale = upscale
-		self.n_blocks = nblocks
-
-		modules_head = [ conv(nchannels, nfeatures, kernel_size) ]
-		modules_body = nn.ModuleList()
-		for i in range(self.n_blocks):
-			modules_body.append( Un(n_feats=nfeatures, wn=wn) )
-		modules_tail = [
-			blocks.Upsampler(conv, scale, nfeatures, act=False),
-			conv(nfeatures, 3, kernel_size) ]
-
-		self.up = nn.Sequential(  blocks.Upsampler(conv, scale, nfeatures, act=False),
-								  BasicConv(nfeatures, 3, 3, 1, 1) )
-		self.head = nn.Sequential(*modules_head)
-		self.body = nn.Sequential(*modules_body)
-		self.tail = nn.Sequential(*modules_tail)
-		self.reduce = conv(self.n_blocks * nfeatures, nfeatures, kernel_size)
-
-	def forward(self, x1, x2=None, test=False):
-		# x1 = self.sub_mean(x1)
-		x1 = self.head(x1)
-		res2 = x1
-		# res2 = x2
-		body_out = []
-		for i in range(self.n_blocks):
-			x1 = self.body[i](x1)
-			body_out.append(x1)
-		res1 = torch.cat(body_out, 1)
-		res1 = self.reduce(res1)
-
-		x1 = self.tail(res1)
-		x1 = self.up(res2) + x1
-		# x1 = self.add_mean(x1)
-		# x2 = self.tail(res2)
-		return x1
-
-	def load_state_dict(self, state_dict, strict=False):
-		own_state = self.state_dict()
-		for name, param in state_dict.items():
-			if name in own_state:
-				if isinstance(param, nn.Parameter):
-					param = param.data
-				try:
-					own_state[name].copy_(param)
-				except Exception:
-					if name.find('tail') >= 0:
-						print('Replace pre-trained upsampler to new one...')
-					else:
-						raise RuntimeError(f'While copying the parameter named {name}, whose dimensions in the model'
-						                   f' are {own_state[name].size()} and whose dimensions in the checkpoint are {param.size()}.')
-			elif strict:
-				if name.find('tail') == -1:
-					raise KeyError(f'unexpected key "{name}" in state_dict')
-
-		if strict:
-			missing = set(own_state.keys()) - set(state_dict.keys())
-			if len(missing) > 0:
-				raise KeyError(f'missing keys in state_dict: "{missing}"')
-
-
-def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
-	nchannels:          int     = mconfig['nchannels']
-	nfeatures:          int     = mconfig['nfeatures']
-	scale_factors:   List[int]  = mconfig['downscale_factors']
-	kernel_size:        int     = mconfig['kernel_size']
-	nblocks:            int     = mconfig['nblocks']
-
-	upscale = math.prod(scale_factors)
-	return ESRT( nchannels, nfeatures, upscale, kernel_size, nblocks, conv=blocks.default_conv)
 
 

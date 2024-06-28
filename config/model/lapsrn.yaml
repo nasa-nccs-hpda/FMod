@@ -3,7 +3,6 @@ name: lapsrn
 nfeatures: 128
 loss_fn: l2
 multiscale_loss: True
-
 downscale_factors: [2,2]
 ups_mode: bicubic
 

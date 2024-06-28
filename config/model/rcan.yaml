@@ -1,11 +1,15 @@
-name: vdsr
+nname: rcan
 
 nfeatures: 64
-nlayers: 4
+nlayers: 10
+cbottleneck: 2
+nblocks: 20
+
 usmethod: replicate # replicate # transpose
 loss_fn: l2
 kernel_size: 3
 res_scale: 1.0
-
+batch_norm: False
+bias: True
 downscale_factors: [2,2]
 ups_mode: bicubic

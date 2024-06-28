@@ -91,7 +91,7 @@ class ModelTrainer(object):
 		self.eps = 1e-6
 		self._sht, self._isht = None, None
 		self.scheduler = None
-		self.model = self.model_manager.get_model()
+		self.model = self.model_manager.get_model( )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		self.loss_module: nn.Module = None

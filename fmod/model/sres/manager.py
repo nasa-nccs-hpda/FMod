@@ -42,16 +42,14 @@ def get_temporal_features( time: np.ndarray = None ) -> Optional[np.ndarray]:
 class SRModels:
 
 	def __init__(self,  device: torch.device):
-		self.model_config = dict( cfg().model.items() )
 		self.model_name = cfg().model.name
 		self.device = device
 		self.target_variables = cfg().task.target_variables
 		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
 		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High, TSet.Train )
-		self.model_config['nchannels'] = len(cfg().task.input_variables)
-		if self.model_config.get('use_temporal_features', False ):
+		self.model_config = dict( nchannels_in = len(cfg().task.input_variables), nchannels_out = len(cfg().task.target_variables), device = device )
+		if cfg().models.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features()
-		self.model_config['device'] = device
 
 	def sample_input( self, tset: TSet ) -> xa.DataArray:
 		return self.get_batch_array( srRes.Low, tset )
@@ -87,7 +85,7 @@ class SRModels:
 	def get_model(self) -> nn.Module:
 		importpath = f"fmod.model.sres.{self.model_name}.network"
 		model_package = importlib.import_module(importpath)
-		return model_package.get_model( self.model_config ).to(self.device)
+		return model_package.get_model( **self.model_config ).to(self.device)
 
 def rrkey( tset: TSet, **kwargs ) -> str:
 	epoch = kwargs.get('epoch', -1)

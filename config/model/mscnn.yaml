@@ -3,8 +3,7 @@ name: mscnn
 nfeatures: 64
 loss_fn: l2
 multiscale_loss: True
-unet_depth: 4
-
+nlayers: 4
 downscale_factors: [2,2]
 ups_mode: bicubic
 

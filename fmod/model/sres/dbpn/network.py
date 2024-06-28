@@ -1,99 +1,40 @@
 # Deep Back-Projection Networks For Super-Resolution
 # https://arxiv.org/abs/1803.02735
-
 from fmod.model.sres.util import *
 import torch, math, torch.nn as nn
-from fmod.model.sres.common.cnn import default_conv
+from fmod.model.sres.common.common import FModule
+from .blocks import DenseProjection
 
-conv_spec = { 2: (6, 2, 2),  4: (8, 4, 2),  8: (12, 8, 2) }
+def get_model( **config ) -> nn.Module:
+	return DBPN(**config)
+class DBPN(FModule):
 
-def projection_conv( in_channels: int, out_channels: int, scale: int, upscale=True ):
-	kernel_size, stride, padding = conv_spec[scale]
-	conv_f = nn.ConvTranspose2d if upscale else nn.Conv2d
-	return conv_f( in_channels, out_channels, kernel_size, stride=stride, padding=padding )
-
-class DenseProjection(nn.Module):
-	def __init__(self,
-		in_channels: int,
-		nfeatures: int,
-		scale: int,
-		upscale: bool =True,
-		bottleneck: bool =True
-	):
-		super(DenseProjection, self).__init__()
-		if bottleneck:
-			self.bottleneck = nn.Sequential(*[
-				nn.Conv2d(in_channels, nfeatures, 1),
-				nn.PReLU(nfeatures)
-			])
-			inter_channels = nfeatures
-		else:
-			self.bottleneck = None
-			inter_channels = in_channels
-
-		self.conv_1 = nn.Sequential(*[
-			projection_conv(inter_channels, nfeatures, scale, upscale),
-			nn.PReLU(nfeatures)
-		])
-		self.conv_2 = nn.Sequential(*[
-			projection_conv(nfeatures, inter_channels, scale, not upscale),
-			nn.PReLU(inter_channels)
-		])
-		self.conv_3 = nn.Sequential(*[
-			projection_conv(inter_channels, nfeatures, scale, upscale),
-			nn.PReLU(nfeatures)
-		])
-
-	def forward(self, x):
-		if self.bottleneck is not None:
-			x = self.bottleneck(x)
-
-		a_0 = self.conv_1(x)
-		b_0 = self.conv_2(a_0)
-		e = b_0.sub(x)
-		a_1 = self.conv_3(e)
-
-		out = a_0.add(a_1)
-
-		return out
-
-class DBPN(nn.Module):
-	def __init__( self,
-        nchannels: int,
-		scale: int = 2,
-		nfeatures: int = 128,
-		nprojectionfeatures: int = 32,
-		depth: int = 2
-	):
-		super(DBPN, self).__init__()
-		self.depth = depth
+	def __init__( self, **config ):
+		parms =  dict( nprojectionfeatures = 32, depth = 2 )
+		super(DBPN, self).__init__( parms, **config )
 
 		initial = [
-			nn.Conv2d( nchannels, nfeatures, 3, padding=1),
-			nn.PReLU(nfeatures),
-			nn.Conv2d(nfeatures, nprojectionfeatures, 1),
-			nn.PReLU(nprojectionfeatures)
+			nn.Conv2d( self.nchannels_in, self.nfeatures, 3, padding=1),
+			nn.PReLU(self.nfeatures),
+			nn.Conv2d(self.nfeatures, self.nprojectionfeatures, 1),
+			nn.PReLU(self.nprojectionfeatures)
 		]
 		self.initial = nn.Sequential(*initial)
 
 		self.upmodules = nn.ModuleList()
 		self.downmodules = nn.ModuleList()
-		channels = nprojectionfeatures
+		channels = self.nprojectionfeatures
 		for i in range(self.depth):
-			self.upmodules.append( DenseProjection(channels, nprojectionfeatures, scale, True, i > 1) )
+			self.upmodules.append( DenseProjection(channels, self.nprojectionfeatures, self.scale, True, i > 1) )
 			if i != 0:
-				channels += nprojectionfeatures
+				channels += self.nprojectionfeatures
 
-		channels = nprojectionfeatures
+		channels = self.nprojectionfeatures
 		for i in range(self.depth - 1):
-			self.downmodules.append(
-				DenseProjection(channels, nprojectionfeatures, scale, False, i != 0)
-			)
-			channels += nprojectionfeatures
+			self.downmodules.append( DenseProjection(channels, self.nprojectionfeatures, self.scale, False, i != 0) )
+			channels += self.nprojectionfeatures
 
-		reconstruction = [
-			nn.Conv2d(self.depth * nprojectionfeatures, nchannels, 3, padding=1)
-		]
+		reconstruction = [ nn.Conv2d(self.depth * self.nprojectionfeatures, self.nchannels_out, 3, padding=1) ]
 		self.reconstruction = nn.Sequential(*reconstruction)
 
 	def forward(self, x):
@@ -110,12 +51,3 @@ class DBPN(nn.Module):
 		out = self.reconstruction(torch.cat(h_list, dim=1))
 
 		return out
-
-def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
-	nchannels:          int     = mconfig['nchannels']
-	nfeatures:          int     = mconfig['nfeatures']
-	depth:              int     = mconfig['depth']
-	nprojectionfeatures: int    = mconfig['nprojectionfeatures']
-	scale_factors:   List[int]  = mconfig['downscale_factors']
-	scale:              int = math.prod(scale_factors)
-	return DBPN(nchannels, scale, nfeatures, nprojectionfeatures, depth)

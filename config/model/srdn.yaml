@@ -3,8 +3,7 @@ name: srdn
 nfeatures:
   hidden: 64
   upscale: 128
-  output: 1
-nrlayers: 16
+nlayers: 16
 usmethod: replicate # replicate # transpose
 loss_fn: l2
 kernel_size:

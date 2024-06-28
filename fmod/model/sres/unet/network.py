@@ -4,6 +4,69 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping
 from fmod.base.util.logging import lgm, exception_handled, log_timing
+from fmod.model.sres.common.common import FModule
+
+def get_model( **config ) -> nn.Module:
+    return UNetSR(**config)
+class UNetSR(FModule):
+
+    def __init__(self, **kwargs):
+        super(UNetSR, self).__init__({}, **kwargs)
+        n_upscale_ops = len(self.downscale_factors)
+        self.workflow = nn.Sequential(
+            DoubleConv( self.nchannels_in, self.nfeatures ),
+            UNet( self.nfeatures, self.nlayers, self.temporal_features ),
+            self.get_upscale_layers(n_upscale_ops),
+            OutConv( self.nfeatures, self.nchannels_out ) )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.workflow(x)
+
+    def get_upscale_layers(self, nlayers: int) -> nn.Module:
+        upscale = nn.Sequential()
+        for iL in range(nlayers):
+            upscale.add_module( f"ups{iL}", Upscale( self.nfeatures, self.nfeatures) )
+        return upscale
+
+
+class UNet(nn.Module):
+
+    def __init__(self, nfeatures: int, depth: int, temporal_features: torch.Tensor ):
+        super(UNet, self).__init__()
+        self.depth: int = depth
+        self.downscale = nn.ModuleList()
+        self.upscale = nn.ModuleList()
+        self.temporal_features: torch.Tensor = temporal_features
+        self.ntf = 0 if self.temporal_features is None else self.temporal_features.shape[1]
+
+        for iL in range(depth):
+            usf, dsf = 2 ** (depth-iL-1), 2 ** iL
+            ntf = self.ntf if (iL==depth-1) else 0
+            self.downscale.append( MPDownscale(nfeatures * dsf, nfeatures * dsf * 2 - ntf) )
+            self.upscale.append( UNetUpscale(nfeatures * usf * 2, nfeatures * usf) )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        skip = []
+        for iL in range(self.depth):
+            skip.insert(0, x)
+            x: torch.Tensor = self.downscale[iL](x)
+        if self.ntf > 0:
+            x = torch.cat((x, self.temporal_features), 1 )
+        for iL in range(self.depth):
+            x = self.upscale[iL](x,skip[iL])
+        return x
+
+class UNetUpscale(nn.Module):
+
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv( 2*out_channels, out_channels )
+
+    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+        xup = self.up(x)
+        y: torch.Tensor = torch.cat([xup, skip], dim=1 )
+        return self.conv(y)
 
 class DoubleConv(nn.Module):
 
@@ -76,19 +139,6 @@ class Upscale(nn.Module):
         x = self.up(x)
         return self.conv(x)
 
-class UNetUpscale(nn.Module):
-
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
-        self.conv = DoubleConv( 2*out_channels, out_channels )
-
-    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
-        xup = self.up(x)
-        y: torch.Tensor = torch.cat([xup, skip], dim=1 )
-        return self.conv(y)
-
-
 class OutConv(nn.Module):
     def __init__(self, in_channels: int, out_channels: int):
         super(OutConv, self).__init__()
@@ -96,62 +146,3 @@ class OutConv(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.conv(x)
-
-class UNet(nn.Module):
-    def __init__(self, nfeatures: int, depth: int, temporal_features: torch.Tensor ):
-        super(UNet, self).__init__()
-        self.depth: int = depth
-        self.downscale = nn.ModuleList()
-        self.upscale = nn.ModuleList()
-        self.temporal_features: torch.Tensor = temporal_features
-        self.ntf = 0 if self.temporal_features is None else self.temporal_features.shape[1]
-
-        for iL in range(depth):
-            usf, dsf = 2 ** (depth-iL-1), 2 ** iL
-            ntf = self.ntf if (iL==depth-1) else 0
-            self.downscale.append( MPDownscale(nfeatures * dsf, nfeatures * dsf * 2 - ntf) )
-            self.upscale.append( UNetUpscale(nfeatures * usf * 2, nfeatures * usf) )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        skip = []
-        for iL in range(self.depth):
-            skip.insert(0, x)
-            x: torch.Tensor = self.downscale[iL](x)
-        if self.ntf > 0:
-            x = torch.cat((x, self.temporal_features), 1 )
-        for iL in range(self.depth):
-            x = self.upscale[iL](x,skip[iL])
-        return x
-
-
-class UNetSR(nn.Module):
-    def __init__(self, n_channels: int, n_features: int, unet_depth: int, n_upscale_ops: int, temporal_features: torch.Tensor ):
-        super(UNetSR, self).__init__()
-        self.n_channels: int = n_channels
-        self.n_features: int = n_features
-        self.workflow = nn.Sequential(
-            DoubleConv( n_channels, n_features ),
-            UNet( n_features, unet_depth, temporal_features ),
-            self.get_upscale_layers( n_upscale_ops ),
-            OutConv( n_features, self.n_channels ),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.workflow(x)
-
-    def get_upscale_layers(self, nlayers: int) -> nn.Module:
-        upscale = nn.Sequential()
-        for iL in range(nlayers):
-            upscale.add_module( f"ups{iL}", Upscale( self.n_features, self.n_features) )
-        return upscale
-
-def get_model( mconfig: Dict[str, Any] ) -> nn.Module:
-    nchannels:          int                 = mconfig['nchannels']
-    nfeatures:          int                 = mconfig['nfeatures']
-    downscale_factors: List[int]            = mconfig['downscale_factors']
-    unet_depth:         int                 = mconfig['unet_depth']
-    temporal_features: Optional[np.ndarray] = mconfig.get('temporal_features',None)
-    device:         torch.device            = mconfig['device']
-    n_upscale_ops = len(downscale_factors)
-    tfeat: torch.Tensor = None if (temporal_features is None) else torch.from_numpy(temporal_features).to(device)
-    return UNetSR( nchannels, nfeatures, unet_depth, n_upscale_ops, tfeat )

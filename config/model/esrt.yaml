@@ -3,7 +3,8 @@ name: esrt
 nfeatures: 32
 loss_fn: l2
 kernel_size: 3
-nblocks: 1
+nlayers: 1
 downscale_factors: [2,2]
 ups_mode: bicubic
+
 

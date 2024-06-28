@@ -1,6 +1,6 @@
 name: unet
 nfeatures: 64
-unet_depth: 4
+nlayers: 4
 loss_fn: l2
 use_temporal_features: True
 
