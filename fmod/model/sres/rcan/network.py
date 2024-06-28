@@ -69,7 +69,7 @@ class ResidualGroup(nn.Module):
 	def __init__(self, conv, n_feat, kernel_size, reduction, act, n_resblocks):
 		super(ResidualGroup, self).__init__()
 		modules_body = [ RCAB( conv, n_feat, kernel_size, reduction, bias=True, bn=False, act=act ) for _ in range(n_resblocks) ]
-		modules_body.append(conv(n_feat, n_feat, kernel_size))
+		modules_body.append(conv(n_feat, n_feat, kernel_size, bias=True))
 		self.body = nn.Sequential(*modules_body)
 
 	def forward(self, x):
