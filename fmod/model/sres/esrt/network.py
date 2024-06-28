@@ -6,6 +6,7 @@ from fmod.model.sres.common.tools import extract_image_patches, reduce_mean, red
 from fmod.model.sres.common.transformer import drop_path, DropPath, PatchEmbed, Mlp, MLABlock
 from fmod.model.sres.common.position import PositionEmbeddingLearned, PositionEmbeddingSine
 from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapping, Callable
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.model.sres.common.common import FModule
 
 def get_model( **config ) -> nn.Module:
@@ -25,6 +26,7 @@ class ESRT(FModule):
 
 		self.up = nn.Sequential(  blocks.Upsampler(self.conv, self.scale, self.nfeatures, act=False),
 								  BasicConv(self.nfeatures, self.nchannels_out, 3, 1, 1) )
+		lgm().log( f"ESRT: set head attr")
 		self.head = nn.Sequential(*modules_head)
 		self.body = nn.Sequential(*modules_body)
 		self.tail = nn.Sequential(*modules_tail)
