@@ -38,12 +38,14 @@ class FModule(nn.Module):
 
 	def __setattr__(self, key: str, value: Any) -> None:
 		if ('parms' in self.__dict__.keys()) and (key in self.parms.keys()):
+			print( f"FModule.setattr({key}), parms={list(self.parms.keys())}")
 			self.parms[key] = value
 		else:
 			super(FModule, self).__setattr__(key, value)
 
 	def __getattr__(self, key: str) -> Any:
 		if 'parms' in self.__dict__.keys() and (key in self.parms.keys()):
+			print(f"FModule.getattr({key}), parms={list(self.parms.keys())}")
 			return self.parms[key]
 		super(FModule, self).__getattr__(key)
 
