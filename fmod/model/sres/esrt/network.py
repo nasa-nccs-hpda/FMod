@@ -35,7 +35,7 @@ class ESRT(FModule):
 	def forward(self, x1, x2=None, test=False):
 		x1 = self.head(x1)
 		res2 = x1
-		body_out = [ self.body[i](x1) for i in range(self.n_blocks) ]
+		body_out = [ self.body[i](x1) for i in range(self.nlayers) ]
 		res1 = torch.cat(body_out, 1)
 		res1 = self.reduce(res1)
 		x1 = self.tail(res1)
