@@ -13,7 +13,7 @@ class RCAN(FModule):
 
 		modules_head = [ self.conv(self.nchannels_in, self.nfeatures, self.kernel_size, self.bias) ]
 		modules_body = [ ResidualGroup( self.conv, self.nfeatures , self.kernel_size, self.cbottleneck, act=self.act, n_resblocks=self.nblocks) for _ in range(self.nlayers)]
-		modules_body.append( self.conv(self.nfeatures , self.nfeatures , self.kernel_size))
+		modules_body.append( self.conv(self.nfeatures , self.nfeatures , self.kernel_size, self.bias))
 		modules_tail = [ blocks.Upsampler(self.conv, self.scale, self.nfeatures , act=False), self.conv(self.nfeatures , self.nchannels_out, self.kernel_size, self.bias) ]
 
 		self.head = nn.Sequential(*modules_head)
