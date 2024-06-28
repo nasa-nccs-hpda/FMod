@@ -5,6 +5,7 @@ import hydra
 cname: str = "sres"
 models: List[str] = [ 'esrt' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 5, 'task.lr': 1e-4 }
+refresh=True
 
 configuration = dict(
 	task = "cape_basin_1x1",
@@ -13,7 +14,7 @@ configuration = dict(
 	platform = "explore"
 )
 
-controller = WorkflowController( cname, configuration )
+controller = WorkflowController( cname, configuration, refresh_state=refresh )
 controller.train( models, **ccustom )
 
 
