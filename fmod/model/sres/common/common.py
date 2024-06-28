@@ -23,8 +23,8 @@ class FModule(nn.Module):
 
 	def __init__( self, mparms: Dict[str,Any], **custom_parms ):
 		super(FModule, self).__init__()
-		self.parms = self.init_parms( mparms, custom_parms )
 		self.config: DictConfig = cfg().model
+		self.parms = self.init_parms( mparms, custom_parms )
 		self.conv = default_conv
 		self.act: nn.Module = nn.ReLU(True)
 		self.wn = lambda x: torch.nn.utils.weight_norm(x)
@@ -38,16 +38,20 @@ class FModule(nn.Module):
 		return parms
 
 	def __setattr__(self, key: str, value: Any) -> None:
-		if (key != 'parms') and (key in self.parms.keys()):
-			self.parms[key] = value
+		if 'parms' not in self.__dict__.keys():
+			if key == 'parms':
+				self.parms = value
+				return
 		else:
-			super(FModule, self).__setattr__(key, value)
+			if key in self.parms.keys():
+				self.parms[key] = value
+				return
+		super(FModule, self).__setattr__(key, value)
 
 	def __getattr__(self, key: str) -> Any:
-		if (key != 'parms') and (key in self.parms.keys()):
+		if 'parms' in self.__dict__.keys() and (key in self.parms.keys()):
 			return self.parms[key]
-		else:
-			super(FModule, self).__getattr__(key)
+		super(FModule, self).__getattr__(key)
 
 	def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
 		own_state = self.state_dict()
