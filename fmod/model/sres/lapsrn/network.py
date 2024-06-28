@@ -13,7 +13,7 @@ class LapSRN(FModule):
 
     def __init__(self, **kwargs):
         super(LapSRN, self).__init__({}, **kwargs)
-        self.inc: nn.Module = DoubleConv( self.n_channels_in, self.nfeatures )
+        self.inc: nn.Module = DoubleConv( self.nchannels_in, self.nfeatures )
         self.downscale: nn.ModuleList = nn.ModuleList()
         self.upsample: nn.ModuleList = nn.ModuleList()
         self.crossscale: nn.ModuleList = nn.ModuleList()
