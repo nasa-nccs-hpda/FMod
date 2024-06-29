@@ -267,13 +267,9 @@ class ModelTrainer(object):
 		return ups.numpy()
 
 	def get_ml_target(self, tset: TSet) -> np.ndarray:
-		if tset not in self.target:
-			self.evaluate(tset)
 		return npa( self.target[tset] )
 
 	def get_ml_product(self, tset: TSet) -> np.ndarray:
-		if tset not in self.product:
-			self.evaluate(tset)
 		return npa(self.product[tset])
 
 	def train(self, **kwargs) -> Dict[str, float]:
@@ -408,13 +404,13 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, update_model=(tset==TSet.Test) )
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, update_model=(tset!=TSet.Train) )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		proc_start = time.time()
 		tile_locs: Dict[Tuple[int, int], Dict[str, int]] = TileGrid(tset).get_tile_locations(selected_tile=self.tile_index)
 		start_coords: List[Union[datetime,int]] = self.input_dataset(tset).get_batch_start_coords(target_coord=self.time_index)
-		print(f"  ^^^^^ {tset.name} evaluate, ntiles={len(tile_locs)}, time_index = {self.time_index}, tile_index = {self.tile_index} ")
+		print(f"  ^^^^^ {tset.name} evaluate, ntiles={len(tile_locs)}, nts={len(start_coords)}, time_index = {self.time_index}, tile_index = {self.tile_index} ")
 		batch_model_losses, batch_interp_losses = [], []
 		inp, prd, targ, ups, batch_date = None, None, None, None, None
 		lgm().log( f"{tset.name} Evaluation: {len(start_coords)} batches", display=True)
@@ -439,10 +435,8 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean() if len(batch_interp_losses) > 0 else None
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		print( f" *****  evaluate[{epoch}]: model_loss={model_loss:.5f}, val loss={self.validation_loss:.5f} *****  ")
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
-			print(f" ---> SAVE VALIDATION checkpoint: {self.validation_loss:.5f}")
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		losses = dict( model=model_loss )
