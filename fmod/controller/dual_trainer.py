@@ -255,8 +255,6 @@ class ModelTrainer(object):
 		else:          return dict( input=binput,               target=btarget )
 
 	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
-		if not (tset in self.input):
-			self.evaluate(tset)
 		ml_input: Tensor = self.get_target_channels(tset) if targets_only else self.input[tset]
 		result = npa( ml_input ).astype(np.float32)
 		return  result
@@ -350,15 +348,15 @@ class ModelTrainer(object):
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
-	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, flush: bool = True ):
-		eval_losses = self.evaluate( tset, upsample=(epoch==0) )
+	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, **kwargs ):
+		eval_losses = self.evaluate( tset, upsample=(epoch==0), **kwargs )
 		if self.results_accum is not None:
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
 				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
 			for etset, loss in losses.items():
 				self.results_accum.record_losses( etset, epoch, loss )
-		if flush:
+		if kwargs.get('flush',False):
 			self.results_accum.flush()
 		return eval_losses
 
@@ -404,7 +402,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, update_model=(tset!=TSet.Train) )
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		proc_start = time.time()

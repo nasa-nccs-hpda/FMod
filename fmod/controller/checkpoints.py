@@ -27,7 +27,8 @@ class CheckpointManager(object):
 		checkpoint = torch.load(cpath)
 		return checkpoint
 
-	def load_checkpoint( self, tset: TSet = TSet.Train, update_model=True ) -> Dict[str,Any]:
+	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Dict[str,Any]:
+		update_model = kwargs.get('update_model', False)
 		cppath = self.checkpoint_path( tset )
 		train_state = {}
 		if os.path.exists( cppath ):

@@ -59,7 +59,7 @@ class ResultPlot(Plot):
 		self.tile_index: Tuple[int,int] = self.tile_grid.get_tile_coords( self.tileId )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[str,float] = {}
-		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data()
+		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['time'] )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
 		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
@@ -87,9 +87,9 @@ class ResultPlot(Plot):
 	def icoords(self) -> DataArrayCoordinates:
 		return self.sample_input.coords
 
-	def update_tile_data(self) -> Dict[str, xa.DataArray]:
+	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
-		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, upsample=True ) #
+		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, upsample=True, **kwargs )
 		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
 		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
 		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
