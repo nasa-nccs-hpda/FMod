@@ -3,7 +3,7 @@ from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
 models: List[str] = [ 'edsr' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 5, 'task.lr': 5e-5 }
+ccustom: Dict[str,Any] = { 'task.nepochs': 200, 'task.lr': 5e-5 }
 refresh = True
 
 configuration = dict(
