@@ -3,11 +3,11 @@ from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
 models: List[str] = [ 'unet' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 5, 'task.lr': 1e-4 }
+ccustom: Dict[str,Any] = { 'task.nepochs': 200, 'task.lr': 1e-4 }
 refresh = True
 
 configuration = dict(
-	task = "cape_basin_3x3",
+	task = "cape_basin_1x1",
 	dataset = "LLC4320",
 	pipeline = "sres",
 	platform = "explore"

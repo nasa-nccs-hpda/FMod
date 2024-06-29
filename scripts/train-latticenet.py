@@ -3,7 +3,7 @@ from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
 models: List[str] = [ 'latticenet' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 5, 'task.lr': 1e-4 }
+ccustom: Dict[str,Any] = { 'task.nepochs': 200, 'task.lr': 1e-4 }
 refresh = False
 
 configuration = dict(
