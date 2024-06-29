@@ -286,7 +286,7 @@ class ModelTrainer(object):
 				self.results_accum.refresh_state()
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
-			train_state = self.checkpoint_manager.load_checkpoint()
+			train_state = self.checkpoint_manager.load_checkpoint( update_model=True )
 			if self.results_accum is not None:
 				self.results_accum.load_results()
 			epoch0 = train_state.get('epoch', 0)
