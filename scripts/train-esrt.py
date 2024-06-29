@@ -4,7 +4,7 @@ import hydra
 
 cname: str = "sres"
 models: List[str] = [ 'esrt' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 200, 'task.lr': 1e-4 }
+ccustom: Dict[str,Any] = { 'task.nepochs': 300, 'task.lr': 1e-4 }
 refresh=False
 
 configuration = dict(
