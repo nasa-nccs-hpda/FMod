@@ -351,12 +351,13 @@ class ModelTrainer(object):
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, **kwargs ):
 		eval_losses = self.evaluate( tset, upsample=(epoch==0), **kwargs )
 		if self.results_accum is not None:
+			print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
 			if 'upsample' in eval_losses:
 				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
 			for etset, loss in losses.items():
 				self.results_accum.record_losses( etset, epoch, loss )
-		if kwargs.get('flush',False):
+		if kwargs.get('flush',True):
 			self.results_accum.flush()
 		return eval_losses
 
