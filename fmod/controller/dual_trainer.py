@@ -280,7 +280,6 @@ class ModelTrainer(object):
 		if cfg().task['nepochs'] == 0: return {}
 		refresh_state = kwargs.get('refresh_state', False)
 		seed = kwargs.get('seed', 4456)
-		t0 = time.time()
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -351,7 +350,7 @@ class ModelTrainer(object):
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		self.record_eval( nepochs, {},  TSet.Test )
-		print(f' -------> Training model with {ntotal_params} wts took {train_time/60:.2f} min.')
+		print(f'\n -------> Training model with {ntotal_params} wts took {train_time/60:.2f} ({train_time/(60*nepochs):.2f} per epoch) min.')
 		self.current_losses = dict( prediction=epoch_loss, **eval_losses )
 		return self.current_losses
 
@@ -440,8 +439,10 @@ class ModelTrainer(object):
 		model_loss: float = np.array(batch_model_losses).mean()
 		interp_loss: float = np.array(batch_interp_losses).mean() if len(batch_interp_losses) > 0 else None
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		print( f" *****  evaluate[{epoch}]: model_loss={model_loss:.5f}, val loss={self.validation_loss:.5f} *****  ")
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
+			print(f" ---> SAVE VALIDATION checkpoint: {self.validation_loss:.5f}")
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		losses = dict( model=model_loss )
