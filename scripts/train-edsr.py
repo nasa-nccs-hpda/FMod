@@ -4,7 +4,7 @@ from fmod.controller.workflow import WorkflowController
 cname: str = "sres"
 models: List[str] = [ 'edsr' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 1000, 'task.lr': 5e-5 }
-refresh = True
+refresh = False
 
 configuration = dict(
 	task = "cape_basin_1x1",
