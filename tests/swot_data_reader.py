@@ -4,18 +4,16 @@ from fmod.base.source.loader.raw import SRRawDataLoader
 
 cname = "sres"
 model = "rcan"
+platform = "explore",
+task = "swot_1x1",
+dataset = "swot"
 file_index  =  1425024
+varname="SST"
 
-configuration = dict(
-	platform = "explore",
-	task = "swot_1x1",
-	dataset = "swot"
-)
-ConfigContext.set_defaults( **configuration )
-
+ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
-	data: np.ndarray = loader.load_file( varname="SST", index=file_index )
+	data: np.ndarray = loader.load_file( varname=varname, index=file_index )
 	print( data.shape )
 
 
