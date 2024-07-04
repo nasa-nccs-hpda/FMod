@@ -9,7 +9,7 @@ from fmod.controller.rescale import DataLoader
 from datetime import date
 from xarray.core.types import InterpOptions, Interp1dOptions
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-sr')
 reference_date = date(1990, 6, 1)
 

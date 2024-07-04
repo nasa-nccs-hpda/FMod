@@ -1,0 +1,29 @@
+name: ???
+scenario: ???
+dataset: ???
+training_version: ???
+
+tensor_type: "torch"
+device: "gpu"
+num_workers: 4
+downscale_method: 'interp:bicubic'
+
+batch_size: { train: 50, valid: 50, test: 37 }
+batch_iter:  1
+nepochs: 30
+lr: 1e-4
+
+origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }
+tile_grid: { train: { x: 1, y: 1 }, valid: { x: 1, y: 1 }, test: { x: 1, y: 1 } }
+tile_size: { x: 48, y: 48 }
+conform_to_grid: false
+upsample_mode: bicubic
+
+coords: { x: XC, y: YC, z: '' }
+input_variables: { SST: sea_surface_temperature }
+variable_ranges: { SST: { min: 2.9963, max: 23.4310 } }
+target_variables: [ SST ]
+forcing_variables: []
+
+
+

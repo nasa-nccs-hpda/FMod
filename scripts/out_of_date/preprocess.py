@@ -8,7 +8,7 @@ from multiprocessing import Pool, cpu_count
 from fmod.base.io.loader import ncFormat
 import hydra, os
 
-hydra.initialize( version_base=None, config_path="../config" )
+hydra.initialize( version_base=None, config_path="../../config")
 configure( 'merra2-finetuning' )
 reprocess=False
 nproc = cpu_count()-2

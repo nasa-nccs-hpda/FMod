@@ -137,7 +137,7 @@ class GraphCastTrainer(BaseTrainer):
 
 
 if __name__ == "__main__":
-    hydra.initialize(version_base=None, config_path="../config")
+    hydra.initialize(version_base=None, config_path="../../config")
     configure('merra2-finetuning')
     DistributedManager.initialize()
     dist = DistributedManager()

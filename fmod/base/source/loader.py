@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 import xarray as xa
 import time, numpy as np
+
+from fmod.base.source.loader import SRDataLoader
 from fmod.base.util.dates import date_list
 from datetime import date
 from fmod.base.util.logging import lgm, log_timing
@@ -15,11 +17,25 @@ from fmod.base.io.loader import TSet
 class srRes(Enum):
 	Low = 'lr'
 	High = 'hr'
+	Raw = 'raw'
 
 	@classmethod
 	def from_config(cls, sval: str ) -> 'srRes':
 		if sval == "low": return cls.Low
 		if sval == "high": return cls.High
+
+class SRRawDataLoader(object):
+
+	@classmethod
+	def get_loader(cls, task_config: DictConfig, **kwargs) -> 'SRRawDataLoader':
+		dset: str = task_config.dataset
+		if dset.startswith("swot"):
+			from fmod.base.source.swot.raw import SWOTRawDataLoader
+			return SWOTRawDataLoader( task_config, **kwargs )
+
+	def load_file(self, **kwargs) -> np.ndarray:
+		raise NotImplementedError("SRRawDataLoader:load")
+
 class SRDataLoader(object):
 
 	def __init__(self, task_config: DictConfig, vres: srRes ):
@@ -56,6 +72,9 @@ class SRDataLoader(object):
 		if dset.startswith("LLC4320"):
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
 			return S3ExportDataLoader( task_config, tile_size, vres, tset, **kwargs )
+		elif dset.startswith("swot"):
+			from fmod.base.source.swot.batch import SWOTDataLoader
+			return SWOTDataLoader( task_config, tile_size, vres, tset, **kwargs )
 		elif dset.startswith("merra2"):
 			return None
 

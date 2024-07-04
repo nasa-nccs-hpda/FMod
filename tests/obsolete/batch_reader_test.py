@@ -6,7 +6,7 @@ from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 from fmod.controller.ncbatch import ncBatchDataset
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-unet-s1')
 lgm().set_level( logging.DEBUG )
 

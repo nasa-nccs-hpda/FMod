@@ -35,7 +35,7 @@ from modulus.utils.generative import EasyDict
 from models.sres._legacy.corrdiff.nvidia import training_loop
 from fmod.model.corrdiff.datasets.dataset import init_dataset_from_config
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-corrdiff')
 def main(cfg: DictConfig) -> None:
     """Train diffusion-based generative model using the techniques described in the

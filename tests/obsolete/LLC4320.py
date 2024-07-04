@@ -8,7 +8,7 @@ from fmod.base.util.config import fmconfig, cfg
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.source.s3export.batch import srRes, S3ExportReader
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 task="sres"
 model="mscnn"
 dataset="LLC4320"

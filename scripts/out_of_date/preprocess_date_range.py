@@ -7,7 +7,7 @@ from fmod.base.source.merra2.model import clear_const_file
 import hydra, os  
 from multiprocessing import Pool, cpu_count
 
-hydra.initialize( version_base=None, config_path="../config" )
+hydra.initialize( version_base=None, config_path="../../config")
 configure( 'merra2-srdn-s1' )
 reprocess=True
 nproc = cpu_count()

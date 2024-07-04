@@ -3,7 +3,7 @@ from nvidia.dali.backend import TensorGPU
 from fmod.base.util.config import configure, cfg2meta
 import hydra
 
-hydra.initialize( version_base=None, config_path="../config" )
+hydra.initialize( version_base=None, config_path="../../config")
 configure( 'merra2-finetuning' )
 pmeta: MetaData =cfg2meta('pipeline', MetaData(), on_missing="skip" )
 

@@ -5,7 +5,7 @@ from fmod.base.util.dates import date_list
 from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 from fmod.model.corrdiff.dataset import M2DownscalingDataset
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-sr')
 
 # set device

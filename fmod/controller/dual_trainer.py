@@ -93,6 +93,7 @@ class ModelTrainer(object):
 		self.scheduler = None
 		self.model = self.model_manager.get_model( )
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=cfg().task.lr, weight_decay=cfg().task.get('weight_decay', 0.0))
+
 		self.checkpoint_manager = CheckpointManager(self.model, self.optimizer)
 		self.loss_module: nn.Module = None
 		self.layer_losses = []
@@ -116,6 +117,9 @@ class ModelTrainer(object):
 	@property
 	def model_name(self):
 		return self.model_manager.model_name
+
+	def raw_dataset(self, tset: TSet)-> BatchDataset:
+		return self.model_manager.get_dataset( srRes.Raw, tset )
 
 	def input_dataset(self, tset: TSet)-> BatchDataset:
 		return self.model_manager.get_dataset( srRes.Low, tset )

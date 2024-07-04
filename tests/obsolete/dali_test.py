@@ -7,7 +7,7 @@ from fmod.base.source.merra2.batch import load_batch
 from nvidia.dali.pipeline import pipeline_def
 from nvidia.dali.backend import TensorCPU, TensorGPU, TensorListCPU, TensorListGPU
 
-hydra.initialize( version_base=None, config_path="../config" )
+hydra.initialize( version_base=None, config_path="../../config")
 configure( 'merra2-dali' )
 nproc = cpu_count()-2
 start: date = date(1990,4,1)

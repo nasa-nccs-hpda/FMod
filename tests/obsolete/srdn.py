@@ -10,7 +10,7 @@ from fmod.plot.training_results import ResultsPlotter
 from fmod.controller.trainer import DualModelTrainer
 from fmod.controller.merra2 import MERRA2Dataset
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-srdn-s1')
 # lgm().set_level( logging.DEBUG )
 

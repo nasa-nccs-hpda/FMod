@@ -39,3 +39,10 @@ class WorkflowController(object):
 		self.plot = TrainingPlot(self.trainer, **kwargs)
 		return self.plot.plot()
 
+	def test(self, model: str, test_name: str, **kwargs):
+		with ConfigContext(self.cname, model=model, **kwargs) as cc:
+			self.config = cc
+			self.trainer = ModelTrainer(cc)
+			if test_name == "load_raw_dataset":
+				self.trainer.model_manager.get_raw_dataset()
+

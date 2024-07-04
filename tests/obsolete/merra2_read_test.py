@@ -7,7 +7,7 @@ from fmod.base.util.config import cfg, start_date,  cfg2args, pp
 import xarray as xa
 from datetime import date
 
-hydra.initialize(version_base=None, config_path="../config")
+hydra.initialize(version_base=None, config_path="../../config")
 configure('merra2-sr')
 reference_date = date(1990,1,1 )
 vres = "high"
