@@ -4,7 +4,7 @@ from fmod.base.source.loader.raw import SRRawDataLoader
 
 cname = "sres"
 model = "rcan"
-file_index = 1425024
+file_index  =  1425024
 
 configuration = dict(
 	platform = "explore",
