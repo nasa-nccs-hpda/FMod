@@ -1,4 +1,4 @@
-from fmod.base.source.loader import SRRawDataLoader
+from fmod.base.source.loader.raw import SRRawDataLoader
 import xarray as xa, math, os
 from fmod.base.util.config import cfg, dateindex
 from omegaconf import DictConfig, OmegaConf
