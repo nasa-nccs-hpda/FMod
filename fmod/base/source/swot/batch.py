@@ -58,7 +58,7 @@ def filepath(ftype: str ) -> str:
 import numpy as np
 import matplotlib.pyplot as plt
 # import utils
-varname = "SST"
+CoordIdx = Union[ Dict[str,int], Tuple[int,int] ]
 
 class SWOTDataLoader(SRDataLoader):
 
@@ -141,24 +141,24 @@ class SWOTDataLoader(SRDataLoader):
 		mmap_mode = 'r' if self.use_memmap else None
 		timeslice: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		return self.cut_domain(timeslice)
-
-	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], **kwargs ) -> xa.DataArray:
-		raw_data: np.memmap = self.open_timeslice(vid[0], **kwargs)
-		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
-		result = xa.DataArray( scale( vid[0], tile_data ), dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
-		return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
-
-	def load_timeslice( self, idx: int, origin: CoordIdx, **kwargs ) -> xa.DataArray:
-		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, **kwargs ) for vid in self.varnames.items() ]
-		result = xa.concat( arrays, "channel" )
-		result = result.expand_dims(axis=0, dim=dict(time=[tcoord(**kwargs)]))
-		return result
-
-	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		timeslices = [ self.load_timeslice( idx, origin, date=date ) for idx, date in enumerate( datelist( date_range ) ) ]
-		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
-		return result
+	#
+	# def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], **kwargs ) -> xa.DataArray:
+	# 	raw_data: np.memmap = self.open_timeslice(vid[0], **kwargs)
+	# 	tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
+	# 	result = xa.DataArray( scale( vid[0], tile_data ), dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
+	# 	return result.expand_dims( axis=0, dim=dict(channel=[vid[0]]) )
+	#
+	# def load_timeslice( self, idx: int, origin: CoordIdx, **kwargs ) -> xa.DataArray:
+	# 	arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, **kwargs ) for vid in self.varnames.items() ]
+	# 	result = xa.concat( arrays, "channel" )
+	# 	result = result.expand_dims(axis=0, dim=dict(time=[tcoord(**kwargs)]))
+	# 	return result
+	#
+	# def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
+	# 	timeslices = [ self.load_timeslice( idx, origin, date=date ) for idx, date in enumerate( datelist( date_range ) ) ]
+	# 	result = xa.concat(timeslices, "time")
+	# 	lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
+	# 	return result
 
 	def load_index_batch( self, origin: CoordIdx, index_range: Tuple[int,int] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, index=idx ) for idx in range( *index_range ) ]
