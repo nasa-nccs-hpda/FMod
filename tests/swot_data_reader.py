@@ -1,9 +1,6 @@
 import numpy as np
 from fmod.base.util.config import ConfigContext, cfg
-from fmod.base.source.loader import srRes
-from fmod.base.io.loader import ncFormat, TSet
-from fmod.base.source.loader import SRRawDataLoader
-from fmod.controller.workflow import WorkflowController
+from base.source.loader.raw import SRRawDataLoader
 
 cname = "sres"
 model = "rcan"
