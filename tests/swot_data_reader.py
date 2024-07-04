@@ -4,8 +4,8 @@ from fmod.base.source.loader.raw import SRRawDataLoader
 
 cname = "sres"
 model = "rcan"
-platform = "explore",
-task = "swot_1x1",
+platform = "explore"
+task = "swot_1x1"
 dataset = "swot"
 file_index  =  1425024
 varname="SST"
