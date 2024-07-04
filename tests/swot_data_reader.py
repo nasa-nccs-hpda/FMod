@@ -1,6 +1,6 @@
 import numpy as np
 from fmod.base.util.config import ConfigContext, cfg
-from base.source.loader.raw import SRRawDataLoader
+from fmod.base.source.loader.raw import SRRawDataLoader
 
 cname = "sres"
 model = "rcan"
