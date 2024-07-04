@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np, xarray as xa
 from fmod.base.util.config import ConfigContext, cfg
 from fmod.base.source.loader.raw import SRRawDataLoader
 
@@ -13,7 +13,7 @@ varname="SST"
 ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
-	data: np.ndarray = loader.load_file( varname=varname, index=file_index )
+	data: xa.DataArray = loader.load_file( varname=varname, index=file_index )
 	print( data.shape )
 
 

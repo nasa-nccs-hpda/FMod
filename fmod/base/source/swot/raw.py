@@ -19,7 +19,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.task = task_config
 		self.parms = kwargs
 
-	def load_file( self, **kwargs ) -> np.ndarray:
+	def load_file( self, **kwargs ) -> xa.DataArray:
 		for cparm, value in kwargs.items():
 			cfg().dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile(filepath('template'), '>f4')
@@ -29,5 +29,5 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_template[mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
 		print(sss_east.shape, sss_west.shape)
-		result = np.c_[sss_east, sss_west.T[::-1, :]]
-		return result
+		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
+		return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
