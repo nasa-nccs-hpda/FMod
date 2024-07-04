@@ -11,6 +11,7 @@ configuration = dict(
 	task = "swot_1x1",
 	dataset = "swot"
 )
+ConfigContext.set_defaults( **configuration )
 
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
