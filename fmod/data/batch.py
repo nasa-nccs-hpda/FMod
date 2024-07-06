@@ -42,6 +42,8 @@ AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
+def get_grid_shape( grid_shape: int, image_shape: int, tile_size: int ) -> int:
+    return grid_shape if (grid_shape >= 0) else image_shape // tile_size
 def get_timedeltas( dset: xa.Dataset ):
     return format_timedeltas( dset.coords["time"] )
 Tensor = torch.Tensor
@@ -82,6 +84,17 @@ class TileGrid(object):
         self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
         downscale_factors: List[int] = cfg().model.downscale_factors
         self.downscale_factor = math.prod(downscale_factors)
+
+    def get_global_shape(self, image_shape: Dict[str, int]):
+        ts = self.get_full_tile_size()
+        global_shape = {dim: image_shape[dim] // ts[dim] for dim in ['x', 'y']}
+        return global_shape
+
+    def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
+        global_shape = self.get_global_shape(image_shape)
+        ts = self.get_full_tile_size()
+        grid_shape = { dim: get_grid_shape(self.tile_grid[dim], global_shape[dim], ts[dim]) for dim in ['x', 'y'] }
+        return grid_shape
 
     def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
         sf = self.downscale_factor if downscaled else 1
