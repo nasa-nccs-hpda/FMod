@@ -13,7 +13,7 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from .util import mds2d
 import numpy as np
 
-def filepath(self, ftype: str) -> str:
+def filepath(ftype: str) -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files[ftype]}"
 
 class SWOTRawDataLoader(SRRawDataLoader):
