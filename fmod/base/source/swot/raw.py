@@ -13,20 +13,22 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from .util import mds2d
 import numpy as np
 
-def filepath(ftype: str ) -> str:
-	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files[ftype]}"
+
 class SWOTRawDataLoader(SRRawDataLoader):
 
-	def __init__(self, **kwargs ):
+	def __init__(self, task_config: DictConfig, **kwargs ):
+		super(SWOTRawDataLoader, self).__init__(task_config)
 		self.parms = kwargs
-		self.tile_grid = TileGrid()
-		self.varnames: Dict[str, str] = cfg().task.input_variables
+		self.dataset = DictConfig.copy( cfg().dataset )
+
+	def filepath(self, ftype: str) -> str:
+		return f"{self.dataset.dataset_root}/{self.dataset.dataset_files[ftype]}"
 
 	def load_file( self, **kwargs ) -> np.ndarray:
 		for cparm, value in kwargs.items():
 			cfg().dataset[cparm] = value
-		var_template: np.ndarray = np.fromfile(filepath('template'), '>f4')
-		var_data: np.ndarray = np.fromfile(filepath('raw'), '>f4')
+		var_template: np.ndarray = np.fromfile(self.filepath('template'), '>f4')
+		var_data: np.ndarray = np.fromfile(self.filepath('raw'), '>f4')
 		mask = (var_template == 0)
 		var_template[~mask] = var_data
 		var_template[mask] = np.nan

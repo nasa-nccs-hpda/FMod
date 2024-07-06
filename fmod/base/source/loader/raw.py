@@ -2,14 +2,18 @@ import math, os
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 import time, numpy as np
-
+from fmod.data.batch import TileGrid
 import xarray as xa
-
 from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from omegaconf import DictConfig, OmegaConf
 
 class SRRawDataLoader(object):
+
+	def __init__(self, config: DictConfig, **kwargs):
+		self.config = config
+		self.tile_grid = TileGrid()
+		self.varnames: Dict[str, str] = self.config.input_variables
 
 	@classmethod
 	def get_loader(cls, task_config: DictConfig, **kwargs) -> 'SRRawDataLoader':
