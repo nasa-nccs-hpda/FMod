@@ -48,9 +48,13 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ishape = dict(x=raw_data.shape[-1], y=raw_data.shape[-2])
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(ishape)
-		tile_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
-		tile_data = tile_data.reshape( raw_data.shape[0], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
+		print( f"roi = {roi}")
+		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
+		print(f"region_data = {region_data.shape}")
+		tile_data = region_data.reshape( raw_data.shape[0], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
+		print(f"tile_data = {tile_data.shape}")
 		tiles = np.swapaxes(tile_data, -2, -3).reshape( raw_data.shape[0], grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
+		print(f"tiles = {tiles.shape}")
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
 		print( msk.shape )
 		print( tiles.shape )
