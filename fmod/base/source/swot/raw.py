@@ -47,6 +47,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
+		print(f"raw_data = {raw_data.shape}, ishape = {ishape}")
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(ishape)
 		print( f"roi = {roi}")
