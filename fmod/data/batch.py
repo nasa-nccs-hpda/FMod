@@ -91,7 +91,7 @@ class TileGrid(object):
     def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
         global_shape = self.get_global_grid_shape(image_shape)
         ts = self.get_full_tile_size()
-        print(f"get_grid_shape: global_shape={global_shape}, ts={ts}")
+        print(f"get_grid_shape: global_shape={global_shape}, tile_grid={self.tile_grid}, ts={ts}")
         grid_shape = { dim: get_grid_shape(self.tile_grid[dim], global_shape[dim], ts[dim]) for dim in ['x', 'y'] }
         return grid_shape
 
