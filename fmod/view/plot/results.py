@@ -7,7 +7,7 @@ from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from xarray.core.coordinates import DataArrayCoordinates
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.view.plot.widgets import StepSlider
 from fmod.base.util.logging import lgm, exception_handled

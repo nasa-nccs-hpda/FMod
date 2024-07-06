@@ -10,19 +10,7 @@ from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg
 from omegaconf import DictConfig, OmegaConf
 from fmod.base.util.ops import remove_filepath
-from fmod.base.io.loader import TSet
-
-class srRes(Enum):
-	Low = 'lr'
-	High = 'hr'
-	Raw = 'raw'
-
-	@classmethod
-	def from_config(cls, sval: str ) -> 'srRes':
-		if sval == "low": return cls.Low
-		if sval == "high": return cls.High
-
-
+from fmod.base.io.loader import TSet, srRes
 
 class SRDataLoader(object):
 

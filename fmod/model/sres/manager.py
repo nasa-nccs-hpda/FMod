@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union, Sequence, Mapp
 from omegaconf import DictConfig
 import importlib, pandas as pd
 from datetime import datetime
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 from fmod.base.source.loader import srRes
 from fmod.data.batch import BatchDataset
 from collections.abc import Iterable

@@ -4,7 +4,7 @@ import hydra, os
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.base.util.config import fmconfig, ConfigContext
 from fmod.controller.dual_trainer import ModelTrainer
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 
 hydra.initialize(version_base=None, config_path="../../config")

@@ -18,6 +18,17 @@ class ncFormat(Enum):
 	DALI = 'dali'
 	SRES = "sres"
 
+class srRes(Enum):
+	Low = 'lr'
+	High = 'hr'
+	Raw = 'raw'
+
+	@classmethod
+	def from_config(cls, sval: str ) -> 'srRes':
+		if sval == "low": return cls.Low
+		if sval == "high": return cls.High
+		if sval == "raw": return cls.Raw
+
 def nbatches( task_config, tset: TSet ) -> int:
 	nbs: Dict[str,int] = task_config.get('nbatches', None)
 	if nbs is not None: return nbs[tset.value]

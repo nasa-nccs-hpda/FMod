@@ -4,7 +4,7 @@ from datetime import date
 from fmod.base.util.dates import drepr, date_list
 from nvidia.dali import fn
 from enum import Enum
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 from fmod.base.util.config import get_data_indices, get_roi, get_dims
 from fmod.controller.stats import StatsAccumulator, StatsEntry
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional

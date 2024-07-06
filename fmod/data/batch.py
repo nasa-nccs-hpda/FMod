@@ -3,15 +3,13 @@ import torch, time, random, traceback, math
 from omegaconf import DictConfig
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from fmod.base.source.batch import SRBatch
 from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import TSet, batches_date_range, nbatches
-from fmod.base.source.loader import srRes
+from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches
 from fmod.base.util.config import cfg
 from random import randint
 import pandas as pd

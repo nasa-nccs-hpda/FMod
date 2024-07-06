@@ -4,7 +4,7 @@ from typing  import Tuple, Dict
 from fmod.base.util.ops import xaformat_timedeltas
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 from fmod.view.tile_selection_grid import TileSelectionGrid
 from fmod.view.plot import StepSlider
 from fmod.base.util.logging import lgm, exception_handled

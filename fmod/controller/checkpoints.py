@@ -4,7 +4,7 @@ from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
 from torch.nn import Module
-from fmod.base.io.loader import TSet
+from fmod.base.io.loader import TSet, srRes
 import os
 
 
