@@ -52,4 +52,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		tile_data = tile_data.reshape( raw_data.shape[0], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, -2, -3).reshape( raw_data.shape[0], grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
+		print( msk.shape )
+		print( tiles.shape )
 		return np.compress(msk, tiles, -3)
