@@ -91,12 +91,14 @@ class TileGrid(object):
     def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
         global_shape = self.get_global_grid_shape(image_shape)
         ts = self.get_full_tile_size()
+        print(f"get_grid_shape: global_shape={global_shape}, ts={ts}")
         grid_shape = { dim: get_grid_shape(self.tile_grid[dim], global_shape[dim], ts[dim]) for dim in ['x', 'y'] }
         return grid_shape
 
     def get_active_region(self, image_shape: Dict[str, int] ) -> Dict[str, Tuple[int,int]]:
         ts = self.get_full_tile_size()
         gs = self.get_grid_shape( image_shape )
+        print( f"get_active_region: gs={gs}, ts={ts}" )
         region = { d: (self.origin[d],self.origin[d]+ts[d]*gs[d]) for d in ['x', 'y'] }
         return region
 
