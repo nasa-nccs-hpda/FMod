@@ -18,5 +18,5 @@ class SRRawDataLoader(object):
 			from fmod.base.source.swot.raw import SWOTRawDataLoader
 			return SWOTRawDataLoader( task_config, **kwargs )
 
-	def load_file(self, **kwargs) -> xa.DataArray:
-		raise NotImplementedError("SRRawDataLoader:load")
+	def load_timeslice(self, **kwargs) -> xa.DataArray:
+		raise NotImplementedError("SRRawDataLoader:load_timeslice")

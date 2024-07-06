@@ -85,16 +85,22 @@ class TileGrid(object):
         downscale_factors: List[int] = cfg().model.downscale_factors
         self.downscale_factor = math.prod(downscale_factors)
 
-    def get_global_shape(self, image_shape: Dict[str, int]):
+    def get_global_grid_shape(self, image_shape: Dict[str, int]):
         ts = self.get_full_tile_size()
         global_shape = {dim: image_shape[dim] // ts[dim] for dim in ['x', 'y']}
         return global_shape
 
     def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
-        global_shape = self.get_global_shape(image_shape)
+        global_shape = self.get_global_grid_shape(image_shape)
         ts = self.get_full_tile_size()
         grid_shape = { dim: get_grid_shape(self.tile_grid[dim], global_shape[dim], ts[dim]) for dim in ['x', 'y'] }
         return grid_shape
+
+    def get_active_region(self, image_shape: Dict[str, int] ) -> Dict[str, Tuple[int,int]]:
+        ts = self.get_full_tile_size()
+        gs = self.get_grid_shape( image_shape )
+        region = { (self.origin[d],self.origin[d]+ts[d]*gs[d]) for d in ['x', 'y'] }
+        return region
 
     def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
         sf = self.downscale_factor if downscaled else 1

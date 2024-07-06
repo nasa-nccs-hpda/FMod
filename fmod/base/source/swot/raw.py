@@ -20,9 +20,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def __init__(self, **kwargs ):
 		self.parms = kwargs
 		self.tile_grid = TileGrid()
+		self.varnames: Dict[str, str] = cfg().task.input_variables
 
-
-	def load_file( self, **kwargs ) -> xa.DataArray:
+	def load_file( self, **kwargs ) -> np.ndarray:
 		for cparm, value in kwargs.items():
 			cfg().dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile(filepath('template'), '>f4')
@@ -33,12 +33,21 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		sss_east, sss_west = mds2d(var_template)
 		print(sss_east.shape, sss_west.shape)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
-		return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
+		return result
 
-	def get_tiles(self, raw_data: np.ndarray, **kwargs):
-		ts = self.tile_grid.get_full_tile_size()
-		tile_grid: Dict[str, int] = self.tile_grid.get_grid_shape( dict(x=raw_data.shape[-1], y=raw_data.shape[-2]) )
-		sss_reshape = np.swapaxes(raw_data.reshape(ny_n, ngrid, nx_n, ngrid), 1, 2).reshape(ny_n * nx_n, ngrid, ngrid)  # reshape the global data to ny_n*nx_n stamps each of which has ngrid x ngrid shape
-		# Find the regions that hava no land (nan) values
-		msk = np.isfinite(sss_reshape.mean(axis=-1).mean(axis=-1))
-		sss_stamps = sss_reshape[msk, ...]
+	def load_timeslice( self, **kwargs ) -> np.ndarray:
+		vardata: List[np.ndarray] = [ self.load_file( varname=varname, **kwargs ) for varname in self.varnames ]
+		return self.get_tiles( np.stack(vardata) )
+
+		#return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
+
+	def get_tiles(self, raw_data: np.ndarray) -> np.ndarray:
+		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
+		ishape = dict(x=raw_data.shape[-1], y=raw_data.shape[-2])
+		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( ishape )
+		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(ishape)
+		tile_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
+		tile_data = tile_data.reshape(..., grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
+		tiles = np.swapaxes(tile_data, -2, -3).reshape(..., grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
+		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
+		return np.compress(msk, tiles, -3)
