@@ -40,8 +40,6 @@ AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
-def get_grid_shape( grid_shape: int, image_shape: int, tile_size: int ) -> int:
-    return grid_shape if (grid_shape >= 0) else image_shape // tile_size
 def get_timedeltas( dset: xa.Dataset ):
     return format_timedeltas( dset.coords["time"] )
 Tensor = torch.Tensor
@@ -77,7 +75,7 @@ class TileGrid(object):
         origins: Dict[str,Dict[str,int]] = cfg().task.get('origin',{})
         # print( f"TileGrid: origins={list(origins.keys())}, tset='{self.tset.value}'")
         self.origin: Dict[str,int] = origins[self.tset.value]
-        self.tile_grid: Dict[str, int] = cfg().task.tile_grid[self.tset.value]
+        self.tile_grid: Dict[str, int] = None
         self.tile_size: Dict[str,int] = cfg().task.tile_size
         self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
         downscale_factors: List[int] = cfg().model.downscale_factors
@@ -89,11 +87,12 @@ class TileGrid(object):
         return global_shape
 
     def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
-        global_shape = self.get_global_grid_shape(image_shape)
+        global_grid_shape = self.get_global_grid_shape(image_shape)
+        cfg_grid_shape = cfg().task.tile_grid[self.tset.value]
         ts = self.get_full_tile_size()
-        print(f"get_grid_shape: global_shape={global_shape}, tile_grid={self.tile_grid}, ts={ts}")
-        grid_shape = { dim: get_grid_shape(self.tile_grid[dim], global_shape[dim], ts[dim]) for dim in ['x', 'y'] }
-        return grid_shape
+        print(f"get_grid_shape: global_grid_shape={global_grid_shape}, cfg_grid_shape={cfg_grid_shape}")
+        self.tile_grid = { dim: (cfg_grid_shape[dim] if (cfg_grid_shape[dim]>=0) else global_grid_shape[dim]) for dim in ['x', 'y'] }
+        return self.tile_grid
 
     def get_active_region(self, image_shape: Dict[str, int] ) -> Dict[str, Tuple[int,int]]:
         ts = self.get_full_tile_size()
