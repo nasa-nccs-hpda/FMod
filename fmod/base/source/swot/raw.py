@@ -35,6 +35,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		sss_east, sss_west = mds2d(var_template)
 		print(sss_east.shape, sss_west.shape)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
+		print( f"load_file result = {result.shape}")
 		return result
 
 	def load_timeslice( self, **kwargs ) -> np.ndarray:
