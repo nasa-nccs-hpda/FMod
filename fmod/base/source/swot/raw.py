@@ -40,7 +40,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	def load_timeslice( self, **kwargs ) -> np.ndarray:
 		vardata: List[np.ndarray] = [ self.load_file( varname=varname, **kwargs ) for varname in self.varnames ]
-		return self.get_tiles( np.stack(vardata) )
+		return self.get_tiles( np.concatenate(vardata,axis=0) )
 
 		#return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
 
