@@ -26,7 +26,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	def load_file( self, **kwargs ) -> np.ndarray:
 		for cparm, value in kwargs.items():
-			cfg().dataset[cparm] = value
+			self.dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile(self.filepath('template'), '>f4')
 		var_data: np.ndarray = np.fromfile(self.filepath('raw'), '>f4')
 		mask = (var_template == 0)
@@ -38,13 +38,13 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		print( f"load_file result = {result.shape}")
 		return result
 
-	def load_timeslice( self, **kwargs ) -> np.ndarray:
+	def load_timeslice( self, **kwargs ) -> xa.DataArray:
 		vardata: List[np.ndarray] = [ self.load_file( varname=varname, **kwargs ) for varname in self.varnames ]
 		return self.get_tiles( np.concatenate(vardata,axis=0) )
 
 		#return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
 
-	def get_tiles(self, raw_data: np.ndarray) -> np.ndarray:       # dims=["channel","y","x"]
+	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:       # dims=["channel","y","x"]
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
 		print(f"get_tiles(raw_data) = {raw_data.shape}, ndim = {raw_data.ndim}")
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
@@ -60,6 +60,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		print(f"tiles = {tiles.shape}")
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
-		print( msk.shape )
+		ntiles = np.count_nonzero(msk)
+		print( f"msk = {msk.shape}, ntiles = {ntiles}"  )
 		print( tiles.shape )
-		return np.compress(msk, tiles, 0)
+		result = np.compress( msk, tiles, 0)
+		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		return xa.DataArray(result, dims=["sample","channel", "y", "x"])
