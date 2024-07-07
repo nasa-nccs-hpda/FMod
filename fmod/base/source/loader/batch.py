@@ -34,8 +34,14 @@ class SRDataLoader(object):
 	def load_index_batch(self, origin: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
+	def load_tile_batch(self, tile_index: int, time_index: int, tset: TSet ) -> xa.DataArray:
+		raise NotImplementedError("SRDataLoader:load_index_batch")
+
 	def load_const_dataset(self, origin: Dict[str,int] ):
 		raise NotImplementedError("SRDataLoader:load_const_dataset")
+
+	def get_batch_time_indices(self):
+		raise NotImplementedError("SRDataLoader:get_batch_time_indices")
 
 	@classmethod
 	def rcoords( cls, dset: xa.Dataset ):
@@ -50,7 +56,7 @@ class SRDataLoader(object):
 			return S3ExportDataLoader( task_config, tile_size, vres, tset, **kwargs )
 		elif dset.startswith("swot"):
 			from fmod.base.source.swot.batch import SWOTDataLoader
-			return SWOTDataLoader( task_config, tile_size, vres, tset, **kwargs )
+			return SWOTDataLoader( task_config, vres, **kwargs )
 		elif dset.startswith("merra2"):
 			return None
 

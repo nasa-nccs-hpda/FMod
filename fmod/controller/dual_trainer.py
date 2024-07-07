@@ -247,7 +247,7 @@ class ModelTrainer(object):
 	def get_srbatch(self, origin: Dict[str,int], tset: TSet, start_coord: Union[datetime,int], **kwargs  ) -> Dict[str,Union[torch.Tensor,xarray.DataArray]]:
 		as_tensor: bool = kwargs.pop('as_tensor',True)
 		shuffle: bool = kwargs.pop('shuffle',False)
-		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,start_coord,**kwargs)
+		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(origin,start_coord,**kwargs)     # TODO: merge input & target sources for tile batches
 		btarget:  xarray.DataArray = self.target_dataset(tset).get_batch_array(origin,start_coord,**kwargs)
 		if shuffle:
 			batch_perm: Tensor = torch.randperm(binput.shape[0])
@@ -302,8 +302,8 @@ class ModelTrainer(object):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
-			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
-			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()
+			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()            # TODO: get time indices
+			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()               # TODO: get tile indices
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}, nbatches={len(start_coords)}   ----------- ", display=True )
 
 			batch_losses = []

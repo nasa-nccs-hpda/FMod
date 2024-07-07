@@ -22,9 +22,15 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		super(SWOTRawDataLoader, self).__init__(task_config)
 		self.parms = kwargs
 		self.dataset = DictConfig.copy( cfg().dataset )
+		self.tset: TSet = None
+		self.time_index: int = -1
+		self.timeslice: xa.DataArray = None
 
-	def load_file( self, **kwargs ) -> np.ndarray:
-		for cparm, value in kwargs.items():
+	def get_batch_time_indices(self):
+		pass                                # TODO: implement
+
+	def load_file( self,  varname: str,  tile_index: int, time_index: int, tset: TSet ) -> np.ndarray:
+		for cparm, value in dict(varname=varname, index=time_index, tset=tset.value).items():
 			cfg().dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile( filepath('template'), '>f4' )
 		var_data: np.ndarray = np.fromfile( filepath('raw'), '>f4' )
@@ -32,36 +38,36 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_template[~mask] = var_data
 		var_template[mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
-		print(sss_east.shape, sss_west.shape)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
-		print( f"load_file result = {result.shape}")
+		lgm().log( f"load_file result = {result.shape}")
 		return result
 
-	def load_timeslice( self, **kwargs ) -> xa.DataArray:
-		vardata: List[np.ndarray] = [ self.load_file( varname=varname, **kwargs ) for varname in self.varnames ]
-		return self.get_tiles( np.concatenate(vardata,axis=0) )
+	def load_batch( self, tile_index: int, time_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
+		if time_index != self.time_index:
+			vardata: List[np.ndarray] = [ self.load_file( varname,  tile_index, time_index, tset ) for varname in self.varnames ]
+			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
+			self.time_index = time_index
+		return self.select_batch( tile_index, tset )
 
-		#return xa.DataArray( result, dims=["channel","y","x"], name=kwargs.get('varname','') )
+	def select_batch( self, tile_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
+		ntiles: int = self.timeslice.shape[0]
+		batch_size: int = self.config.batch_size[tset.value]
+		if tile_index < ntiles:
+			batch_end = min( tile_index+batch_size, ntiles )
+			return self.timeslice.isel( samples=slice( tile_index, batch_end ) )
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:       # dims=["channel","y","x"]
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
-		print(f"get_tiles(raw_data) = {raw_data.shape}, ndim = {raw_data.ndim}")
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
-		print(f"raw_data = {raw_data.shape}, ishape = {ishape}")
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(ishape)
-		print( f"roi = {roi}")
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
-		print(f"region_data = {region_data.shape}")
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
-		print(f"tile_data = {tile_data.shape}")
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
-		print(f"tiles = {tiles.shape}")
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
+		tile_idxs = np.arange(tiles.shape[0])[msk]
 		ntiles = np.count_nonzero(msk)
-		print( f"msk = {msk.shape}, ntiles = {ntiles}"  )
-		print( tiles.shape )
 		result = np.compress( msk, tiles, 0)
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
-		return xa.DataArray(result, dims=["sample","channel", "y", "x"])
+		return xa.DataArray(result, dims=["sample","channel", "y", "x"], coords=dict(samples=tile_idxs, channel=np.array(self.varnames) ) )

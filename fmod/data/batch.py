@@ -9,7 +9,8 @@ from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
-from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches
+from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches, batchDomain
+from fmod.base.source.batch import SRBatch
 from fmod.base.util.config import cfg
 from random import randint
 import pandas as pd
@@ -151,6 +152,7 @@ class BatchDataset(object):
         self.train_steps: int = task_config.get('train_steps',1)
         self.nsteps_input: int = task_config.get('nsteps_input', 1)
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
+        self.batch_domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
 
         self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, vres, tset, **kwargs )
         self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
@@ -180,9 +182,10 @@ class BatchDataset(object):
     def get_channel_idxs(self, channels):
         return [0]
 
-    def get_batch_array(self, oindx: Dict[str,int], start_coord: Union[datetime,int], **kwargs ) -> xa.DataArray:
-        rescale = kwargs.get( 'rescale', True )
-        origin = self.scale_coords(oindx) if rescale else oindx
+    def get_batch_array(self, origin: Dict[str,int], start_coord: Union[datetime,int], **kwargs ) -> xa.DataArray:
+        if self.batch_domain == batchDomain.Time:
+            rescale = kwargs.get( 'rescale', True )
+            origin = self.scale_coords(origin) if rescale else origin
         batch_data: xa.DataArray = self.srbatch.load( origin, start_coord)
         return batch_data
 
@@ -217,18 +220,22 @@ class BatchDataset(object):
 
     def get_batch_start_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = -1 ) -> List[Union[datetime,int]]:
         start_coords = []
-        if self.days_per_batch > 0:
-            ndates = len( self.train_dates )
-            for dindex in range( 0, ndates, self.days_per_batch):
-                batch_date = self.train_dates[ dindex ]
-                if (target_coord is None) or self.in_batch( target_coord, batch_date ):
-                    start_coords.append( batch_date )
-        else:
-            nidx = self.srbatch.get_dset_size()
-            print( f"  ------------- {self.tset.value} dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}  ------------- ")
-            for dindex in range(0, nidx, self.batch_size):
-                if (target_coord < 0) or self.in_batch_idx(target_coord,dindex):
-                    start_coords.append( dindex )
+        if self.batch_domain == batchDomain.Time:
+
+            if self.days_per_batch > 0:
+                ndates = len( self.train_dates )
+                for dindex in range( 0, ndates, self.days_per_batch):
+                    batch_date = self.train_dates[ dindex ]
+                    if (target_coord is None) or self.in_batch( target_coord, batch_date ):
+                        start_coords.append( batch_date )
+            else:
+                nidx = self.srbatch.get_dset_size()
+                print( f"  ------------- {self.tset.value} dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}  ------------- ")
+                for dindex in range(0, nidx, self.batch_size):
+                    if (target_coord < 0) or self.in_batch_idx(target_coord,dindex):
+                        start_coords.append( dindex )
+        elif self.batch_domain == batchDomain.Tiles:
+            start_coords = self.srbatch.get_batch_time_indices()
         if randomize:   random.shuffle(start_coords)
         return start_coords
 

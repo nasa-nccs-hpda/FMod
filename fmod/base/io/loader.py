@@ -29,6 +29,15 @@ class srRes(Enum):
 		if sval == "high": return cls.High
 		if sval == "raw": return cls.Raw
 
+class batchDomain(Enum):
+	Time = 'time'
+	Tiles = 'tiles'
+
+	@classmethod
+	def from_config(cls, sval: str) -> 'batchDomain':
+		if sval == "time": return cls.Time
+		if sval == "tiles": return cls.Tiles
+
 def nbatches( task_config, tset: TSet ) -> int:
 	nbs: Dict[str,int] = task_config.get('nbatches', None)
 	if nbs is not None: return nbs[tset.value]
