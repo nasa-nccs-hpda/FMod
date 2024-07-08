@@ -30,7 +30,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
-		cfg().dataset.varname = self.varnames[0]
+		cfg().dataset['varname'] = self.varnames[0]
 		files = [ os.path.basename(fpath) for fpath in glob( filepath('raw') ) ]
 		template = filepath('raw').replace("*",{})
 		indices = [ int(parse(template,f)[0]) for f in files ]
