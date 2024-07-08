@@ -4,7 +4,7 @@ from datetime import datetime
 from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Optional
 from fmod.base.util.config import ConfigContext, cfg
-from fmod.base.source.loader import srRes
+from fmod.base.io.loader import srRes
 from fmod.base.io.loader import TSet, srRes
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 from fmod.base.gpu import set_device
