@@ -11,7 +11,7 @@ from fmod.base.gpu import set_device
 from fmod.base.util.array import array2tensor
 from fmod.model.sres.mscnn.network import Upsampler
 from fmod.data.batch import BatchDataset
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant

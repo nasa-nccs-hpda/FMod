@@ -2,7 +2,7 @@ import math, os
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 import time, numpy as np
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 import xarray as xa
 from fmod.base.util.logging import lgm, log_timing
 from fmod.base.util.config import cfg

@@ -11,7 +11,7 @@ from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
 from fmod.data.batch import BatchDataset
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 from fmod.model.sres.manager import SRModels
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant

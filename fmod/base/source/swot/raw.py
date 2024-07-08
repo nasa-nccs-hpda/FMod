@@ -1,7 +1,7 @@
 from fmod.base.source.loader.raw import SRRawDataLoader
 import xarray as xa, math, os
 from fmod.base.util.config import cfg, dateindex
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 from fmod.base.io.loader import ncFormat, TSet
 from omegaconf import DictConfig, OmegaConf
 from nvidia.dali import fn

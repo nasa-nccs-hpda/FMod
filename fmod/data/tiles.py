@@ -1,8 +1,8 @@
 import math, random
 from typing import Dict, Tuple, List, Optional
-from base.io.loader import TSet, batchDomain
-from base.util.config import cfg
-from data.batch import rshuffle
+from fmod.base.io.loader import TSet, batchDomain
+from fmod.base.util.config import cfg
+
 
 class TileIterator(object):
 

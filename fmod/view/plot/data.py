@@ -9,7 +9,7 @@ from matplotlib.image import AxesImage
 
 from fmod.view.plot.widgets import StepSlider
 from fmod.base.util.config import cfg
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 from fmod.data.batch import BatchDataset
 from fmod.base.util.config import start_date
 

@@ -6,7 +6,7 @@ from torch import Tensor
 from typing import Any, Dict, List, Tuple, Union, Sequence, Callable, Optional
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords
 from fmod.base.util.array import array2tensor
-from data.tiles import TileGrid
+from fmod.data.tiles import TileGrid
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from omegaconf import DictConfig, OmegaConf
