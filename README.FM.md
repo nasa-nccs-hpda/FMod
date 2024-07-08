@@ -29,7 +29,7 @@ Foundation Models and Super Resolution with MERRA2 training / fine tuning.
     >   * pip install lightning-bolts 
     >   * pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" pytorch-extension
     >   * pip install nvidia-modulus[all] nvidia-modulus-sym
-    >   * pip install tensorly tensorly-torch netCDF4 h5py h5netcdf parameterized cartopy ipympl opt_einsum hydroeval
+    >   * pip install tensorly tensorly-torch parse netCDF4 h5py h5netcdf parameterized cartopy ipympl opt_einsum hydroeval
     >   * cd torch-harmonics; pip install .
 
 * Alternate pytorch-extension installation

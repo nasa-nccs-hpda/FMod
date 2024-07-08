@@ -11,6 +11,8 @@ from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Op
 from fmod.base.io.loader import data_suffix, path_suffix
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from .util import mds2d
+from glob import glob
+from parse import parse
 import numpy as np
 
 def filepath(ftype: str) -> str:
@@ -27,7 +29,11 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.timeslice: xa.DataArray = None
 
 	def get_batch_time_indices(self):
-		pass                                # TODO: implement
+		cfg().dataset.index = "*"
+		files = [ os.path.basename(fpath) for fpath in glob( filepath('raw') ) ]
+		template = filepath('raw').replace("*",{})
+		indices = [ int(parse(template,f)[0]) for f in files ]
+		return indices
 
 	def load_file( self,  varname: str,  tile_index: int, time_index: int, tset: TSet ) -> np.ndarray:
 		for cparm, value in dict(varname=varname, index=time_index, tset=tset.value).items():
