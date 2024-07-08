@@ -8,9 +8,11 @@ from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
+from fmod.data.tiles import TileIterator
 from fmod.base.util.logging import lgm, exception_handled
 from fmod.base.util.ops import pctnan, pctnant
 from fmod.controller.checkpoints import CheckpointManager
+from fmod.base.io.loader import ncFormat, TSet
 import numpy as np
 import torch.nn as nn
 import time
@@ -164,9 +166,9 @@ class ModelTrainer(object):
 			acc_loss: float = 0
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
-			tile_locations: List[Tuple[int, int]] = self.input_dataset.get_tile_locations()
+			tiles = TileIterator(TSet.Train)
 			for batch_date in batch_dates:
-				for tloc in tile_locations:
+				for tloc in iter(tiles):
 					train_data: Dict[str,torch.Tensor] = self.get_batch(tloc,batch_date)
 					input: torch.Tensor = train_data['input']
 					target: torch.Tensor   = train_data['target']

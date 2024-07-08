@@ -1,8 +1,10 @@
 import numpy as np, xarray as xa
-import torch, time, random, traceback, math
+import torch, time, random, math
 from omegaconf import DictConfig
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+
+from data.tiles import TileGrid
 from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
@@ -12,7 +14,6 @@ from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches, batchDomain
 from fmod.base.source.batch import SRBatch
 from fmod.base.util.config import cfg
-from random import randint
 import pandas as pd
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
@@ -68,66 +69,6 @@ class MetaData(DatapipeMetaData):
     cuda_graphs: bool = True
     # Parallel
     ddp_sharding: bool = True
-
-class TileGrid(object):
-
-    def __init__(self, tset: TSet = TSet.Train):
-        self.tset: TSet = tset
-        origins: Dict[str,Dict[str,int]] = cfg().task.get('origin',{})
-        # print( f"TileGrid: origins={list(origins.keys())}, tset='{self.tset.value}'")
-        self.origin: Dict[str,int] = origins[self.tset.value]
-        self.tile_grid: Dict[str, int] = None
-        self.tile_size: Dict[str,int] = cfg().task.tile_size
-        self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
-        downscale_factors: List[int] = cfg().model.downscale_factors
-        self.downscale_factor = math.prod(downscale_factors)
-
-    def get_global_grid_shape(self, image_shape: Dict[str, int]):
-        ts = self.get_full_tile_size()
-        global_shape = {dim: image_shape[dim] // ts[dim] for dim in ['x', 'y']}
-        return global_shape
-
-    def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
-        global_grid_shape = self.get_global_grid_shape(image_shape)
-        cfg_grid_shape = cfg().task.tile_grid[self.tset.value]
-        self.tile_grid = { dim: (cfg_grid_shape[dim] if (cfg_grid_shape[dim]>=0) else global_grid_shape[dim]) for dim in ['x', 'y'] }
-        return self.tile_grid
-
-    def get_active_region(self, image_shape: Dict[str, int] ) -> Dict[str, Tuple[int,int]]:
-        ts = self.get_full_tile_size()
-        gs = self.get_grid_shape( image_shape )
-        print( f"get_active_region: gs={gs}, ts={ts}" )
-        region = { d: (self.origin[d],self.origin[d]+ts[d]*gs[d]) for d in ['x', 'y'] }
-        return region
-
-    def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
-        sf = self.downscale_factor if downscaled else 1
-        rv = { d: self.tile_size[d] * sf for d in ['x', 'y'] }
-        return  rv
-
-    def get_full_tile_size(self) -> Dict[str, int]:
-        return { d: self.tile_size[d] * self.downscale_factor for d in ['x', 'y'] }
-
-    def get_tile_origin( self, ix: int, iy: int, downscaled: bool = False ) -> Dict[str, int]:
-        sf = self.downscale_factor if downscaled else 1
-        return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
-
-    def get_tile_locations(self, randomize=False, downscaled: bool = False, selected_tile: Tuple[int,int] = None ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
-        if len(self.tlocs) == 0:
-            if self.tile_grid is None:
-                self.tile_grid = cfg().task.tile_grid[self.tset.value]
-            for ix in range(self.tile_grid['x']):
-                for iy in range(self.tile_grid['y']):
-                    if (selected_tile is None) or ((ix,iy) == selected_tile):
-                        self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
-        if randomize: rshuffle(self.tlocs)
-        return self.tlocs
-
-    @classmethod
-    def cdim(cls, ix: int, iy: int, dim: str) -> int:
-        if dim == 'x': return ix
-        if dim == 'y': return iy
-
 
 class BatchDataset(object):
 

@@ -10,7 +10,8 @@ from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 from fmod.base.gpu import set_device
 from fmod.base.util.array import array2tensor
 from fmod.model.sres.mscnn.network import Upsampler
-from fmod.data.batch import BatchDataset, TileGrid
+from fmod.data.batch import BatchDataset
+from data.tiles import TileGrid
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant
@@ -312,7 +313,6 @@ class ModelTrainer(object):
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
-						print( f"BATCH({batch_index}) {start_coord}, TILE: {tIdx} {tile_loc}")
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,TSet.Train,start_coord)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']
