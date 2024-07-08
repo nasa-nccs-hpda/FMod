@@ -8,7 +8,6 @@ model = "rcan"
 platform = "explore"
 task = "swot_1x1"
 dataset = "swot"
-file_index  =  1425024
 
 ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
