@@ -32,7 +32,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		cfg().dataset.index = "*"
 		cfg().dataset['varname'] = list(self.varnames.keys())[0]
 		files = [ os.path.basename(fpath) for fpath in glob( filepath('raw') ) ]
-		template = filepath('raw').replace("*",{})
+		template = filepath('raw').replace("*",'{}')
 		indices = [ int(parse(template,f)[0]) for f in files ]
 		return indices
 
