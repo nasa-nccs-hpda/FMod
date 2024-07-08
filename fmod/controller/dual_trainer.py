@@ -302,7 +302,7 @@ class ModelTrainer(object):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
-			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()            # TODO: get time indices
+			start_coords: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_start_coords()
 			tile_locs: Dict[ Tuple[int,int], Dict[str,int] ] =  TileGrid( TSet.Train).get_tile_locations()               # TODO: get tile indices
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}, nbatches={len(start_coords)}   ----------- ", display=True )
 
@@ -312,6 +312,7 @@ class ModelTrainer(object):
 					losses = torch.tensor( 0.0, device=self.device, dtype=torch.float32 )
 					inp, prd, targ = None, None, None
 					for tIdx, tile_loc in tile_locs.items():
+						print( f"BATCH({batch_index}) {start_coord}, TILE: {tIdx} {tile_loc}")
 						train_data: Dict[str,Tensor] = self.get_srbatch(tile_loc,TSet.Train,start_coord)
 						inp = train_data['input']
 						target: Tensor   = train_data['target']

@@ -31,13 +31,8 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
 		cfg().dataset['varname'] = list(self.varnames.keys())[0]
-		fpaths = glob( filepath('raw') )
-		files = [ fpath.split("/")[-1] for fpath in  fpaths]
+		files = [ fpath.split("/")[-1] for fpath in  glob( filepath('raw') ) ]
 		template = filepath('raw').replace("*",'{}').split("/")[-1]
-		print( template )
-		print( files[0] )
-		print( len(files) )
-		print( parse( template, files[0] ) )
 		indices = [ int(parse(template,f)[0]) for f in files ]
 		return indices
 
