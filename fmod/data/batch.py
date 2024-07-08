@@ -90,8 +90,6 @@ class TileGrid(object):
     def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
         global_grid_shape = self.get_global_grid_shape(image_shape)
         cfg_grid_shape = cfg().task.tile_grid[self.tset.value]
-        ts = self.get_full_tile_size()
-        print(f"get_grid_shape: global_grid_shape={global_grid_shape}, cfg_grid_shape={cfg_grid_shape}")
         self.tile_grid = { dim: (cfg_grid_shape[dim] if (cfg_grid_shape[dim]>=0) else global_grid_shape[dim]) for dim in ['x', 'y'] }
         return self.tile_grid
 
@@ -116,6 +114,8 @@ class TileGrid(object):
 
     def get_tile_locations(self, randomize=False, downscaled: bool = False, selected_tile: Tuple[int,int] = None ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
         if len(self.tlocs) == 0:
+            if self.tile_grid is None:
+                self.tile_grid = cfg().task.tile_grid[self.tset.value]
             for ix in range(self.tile_grid['x']):
                 for iy in range(self.tile_grid['y']):
                     if (selected_tile is None) or ((ix,iy) == selected_tile):
