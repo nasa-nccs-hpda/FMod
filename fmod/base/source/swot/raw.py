@@ -33,8 +33,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		cfg().dataset['varname'] = list(self.varnames.keys())[0]
 		fpaths = glob( filepath('raw') )
 		files = [ fpath.split("/")[-1] for fpath in  fpaths]
-		template = filepath('raw').replace("*",'{}')
-		print(fpaths[0])
+		template = files[0].replace("*",'{}')
 		print( template )
 		print( files[0] )
 		print( len(files) )
