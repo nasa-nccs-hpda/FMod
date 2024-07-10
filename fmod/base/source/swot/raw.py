@@ -63,7 +63,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			lgm().log( f"select_batch[{self.time_index}]: slice= {(tile_range[0],slice_end)}",display=True)
 			return self.timeslice.isel( batch=slice(tile_range[0],slice_end) )
 
-	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:       # dims=["channel","y","x"]
+	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])

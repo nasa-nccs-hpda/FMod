@@ -273,7 +273,7 @@ class SRBatch:
 		else:
 			raise Exception(f"Unknown 'batch_domain' in load_batch: {self.batch_domain}")
 		if self.channels is None:
-			self.channels = darray.coords["channel"].values.tolist()
+			self.channels = darray.coords["channels"].values.tolist()
 		return  darray
 
 	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> xa.DataArray:
