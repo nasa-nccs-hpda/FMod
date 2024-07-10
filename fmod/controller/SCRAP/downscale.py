@@ -17,7 +17,7 @@ class Downscaler(object):
 
 	def __init__(self, **kwargs ):
 		downscale_method: str = cfg().task.downscale_method.split(':')
-		self.model = kwargs.get( 'model',  downscale_method[0] )
+		self.model = kwargs.get('../../../config/model',  downscale_method[0])
 		self.method= kwargs.get( 'method', downscale_method[1] )
 		self.c: Dict[str,str] = cfg().task.coords
 		self.kargs = dict( fill_value="extrapolate" )

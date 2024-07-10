@@ -350,47 +350,6 @@ class DualModelTrainer(object):
 		else:
 			raise Exception(f"Unknown error function {etype}")
 
-	def inference(self, **kwargs ) -> Tuple[ List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray], List[xarray.DataArray] ]:
-		seed = kwargs.get('seed',0)
-		max_step = kwargs.get( 'max_step', -1)
-		torch.manual_seed(seed)
-		torch.cuda.manual_seed(seed)
-		inputs, predictions, targets = [], [], []
-		interpolates: List[xarray.DataArray] = []
-		acc_loss, acc_interp_loss = 0, 0
-		with torch.inference_mode():
-			for istep, (xinp, xtar, xbase) in enumerate( iter(self) ):
-				if istep == max_step: break
-				out: Tensor = self.model( array2tensor(xinp) )
-				tar: Tensor = array2tensor(xtar)
-				prediction: xarray.DataArray = xtar.copy( data=npa(out) )
-				predictions.append( prediction )
-				targets.append( xtar )
-				inputs.append( xinp )
-				interpolate: xarray.DataArray = self.downscaler.interpolate(xbase, xtar)
-				interpolates.append( interpolate )
-				if cfg().model.loss_fn == 'l2':
-					loss = self.l2loss_sphere( out, tar )
-					interp_loss = self.l2loss_sphere( array2tensor(interpolate), tar )
-				elif cfg().model.loss_fn == "spectral-l2":
-					loss = self.spectral_l2loss_sphere( out, tar )
-					interp_loss = self.spectral_l2loss_sphere( array2tensor(interpolate), tar )
-				else:
-					raise Exception("Unknown loss function {}".format(cfg().model.loss_fn))
-				lgm().log(f' * STEP {istep}: in{xinp.dims}{list(xinp.shape)}, prediction{prediction.dims}{list(prediction.shape)}, tar{xtar.dims}{list(xtar.shape)}, inter{interpolate.dims}{list(interpolate.shape)}, loss={loss:.2f}, interp_loss={interp_loss:.2f}' )
-				if istep == 0:
-					lgm().log( f"\n----  STATS COMP:  prediction <-> interpolation  ---- ", display=True )
-					self.error_comp( kwargs.get('etype','mse'), prediction, interpolate, xtar, ["lat", "lon"], cids=self.chanids('target'), display=True )
-
-				acc_interp_loss += interp_loss.item()
-				acc_loss += loss.item()
-
-		acc_loss = acc_loss / len(self.input_dataset)
-		acc_interp_loss = acc_interp_loss / len(self.input_dataset)
-		lgm().log(f" ** Accumulated Loss: {acc_loss}, Accum Interp Loss: {acc_interp_loss}", display=True)
-
-
-		return inputs, targets, predictions, interpolates
 
 	def error_comp(self, etype: str, result1: xarray.DataArray, result2: xarray.DataArray, target: xarray.DataArray, dims: List[str], **kwargs):
 		loss1 = self.error( etype, result1, target, dims).tolist()

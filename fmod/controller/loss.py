@@ -1,21 +1,9 @@
 import torch, math
-import xarray
-from torch import Tensor
-from typing import Any, Dict, List, Tuple
 from fmod.base.util.config import cfg
-from fmod.controller.downscale import Downscaler
 from fmod.base.util.grid import GridOps
 import torch_harmonics as harmonics
 from fmod.base.io.loader import BaseDataset
-from fmod.controller.trainer import TaskType
-from fmod.base.util.logging import lgm, exception_handled
-from fmod.base.util.ops import pctnan, pctnant
-from fmod.base.util.array import array2tensor
-from fmod.controller.checkpoints import CheckpointManager
-from enum import Enum
-import numpy as np
-import torch.nn as nn
-import time, os
+from controller.SCRAP.trainer import TaskType
 
 class SphericalLoss(object):
 

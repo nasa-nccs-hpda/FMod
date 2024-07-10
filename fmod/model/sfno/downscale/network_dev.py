@@ -2,9 +2,9 @@ from fmod.base.util.config import cfg
 from fmod.model.sfno.sht import InverseRealSHT, RealSHT
 from ..layers import *
 from functools import partial
-from fmod.base.util.logging import lgm, exception_handled, log_timing
-from fmod.controller.trainer import TaskType
-from fmod.base.util.ops import nnan, pctnan, pctnant
+from fmod.base.util.logging import lgm
+from controller.SCRAP.trainer import TaskType
+from fmod.base.util.ops import pctnant
 
 class SpectralFilterLayer(nn.Module):
 	"""

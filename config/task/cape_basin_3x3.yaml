@@ -6,10 +6,8 @@ training_version: ???
 tensor_type: "torch"
 device: "gpu"
 num_workers: 4
-downscale_method: 'interp:bicubic'
 
 batch_size: { train: 50, valid: 50, test: 37 }
-batch_iter:  1
 nepochs: 30
 lr: 1e-4
 
@@ -19,6 +17,7 @@ tile_size: { x: 16, y: 16 }
 batch_domain:  'time'
 conform_to_grid: false
 upsample_mode: bicubic
+downsample_mode: bicubic
 
 coords: { x: XC, y: YC, z: '' }
 input_variables: { sst: sea_surface_temperature }  # , 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }

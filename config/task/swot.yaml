@@ -6,10 +6,8 @@ training_version: ???
 tensor_type: "torch"
 device: "gpu"
 num_workers: 4
-downscale_method: 'interp:bicubic'
 
 batch_size: { train: 50, valid: 50, test: 37 }
-batch_iter:  1
 nepochs: 30
 lr: 1e-4
 
@@ -19,10 +17,10 @@ tile_size: { x: 48, y: 48 }
 batch_domain:  'tiles'
 conform_to_grid: false
 upsample_mode: bicubic
+downsample_mode: bicubic
 
-coords: { x: XC, y: YC, z: '' }
 input_variables: { SST: sea_surface_temperature }
-variable_ranges: { SST: { min: 2.9963, max: 23.4310 } }
+variable_ranges: { SST: { min: 3.0, max: 24.0 } }
 target_variables: [ SST ]
 forcing_variables: []
 

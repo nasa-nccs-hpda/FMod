@@ -67,12 +67,12 @@ def array2tensor( darray: xa.DataArray ) -> Tensor:
 def downsample( target_data: xa.DataArray) -> Tensor:
     target_tensor: Tensor = array2tensor(target_data)
     scale_factor = math.prod(cfg().model.downscale_factors)
-    downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0 / scale_factor, mode=cfg().model.ups_mode)
+    downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0 / scale_factor, mode=cfg().task.downsample_mode)
     return downsampled
 
 def upsample( input_tensor: Tensor ) -> Tensor:
     scale_factor = math.prod(cfg().model.downscale_factors)
-    upsampled = torch.nn.functional.interpolate(input_tensor, scale_factor=scale_factor, mode=cfg().model.ups_mode)
+    upsampled = torch.nn.functional.interpolate(input_tensor, scale_factor=scale_factor, mode=cfg().task.upsample_mode)
     return upsampled
 
     #target_channels = cfg().task.target_variables
