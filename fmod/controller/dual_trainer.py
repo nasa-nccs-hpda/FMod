@@ -226,7 +226,7 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get('scheduler', None)
-		epoch0, epoch_loss, nepochs, batch_iter, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs, cfg().task.batch_iter, [], {}, TSet.Train
+		epoch0, epoch_loss, nepochs, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
 			self.checkpoint_manager.clear_checkpoints()
