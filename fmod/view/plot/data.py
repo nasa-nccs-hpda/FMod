@@ -38,7 +38,7 @@ class DataPlot(object):
 		self.tile_grid: TileGrid = TileGrid()
 		self.sample_input: xa.DataArray = input_dataset.get_current_batch_array()
 		self.time_coord: List[datetime] = [ pd.Timestamp(d).to_pydatetime() for d in self.sample_input.coords['time'].values]
-		self.channel_coord: List[str] = self.sample_input.coords['channel'].values.tolist()
+		self.channel_coord: List[str] = self.sample_input.coords['channels'].values.tolist()
 		print( f"sample_input{self.sample_input.dims}{self.sample_input.shape}, channels = {self.channel_coord}")
 		self.tslider: StepSlider = StepSlider('Time:', len(self.time_coord))
 		self.cslider: StepSlider = StepSlider('Channel:', len(self.channel_coord))
@@ -68,7 +68,7 @@ class DataPlot(object):
 			ax = self.axs[ icol ]
 			dset: BatchDataset = self.get_dset(icol)
 			batch: xa.DataArray = dset.get_batch_array( self.origin, start_time=self.start_date )
-			image: xa.DataArray = norm( batch.isel( channel=self.channel_index, time=self.time_index ).squeeze() )
+			image: xa.DataArray = norm( batch.isel( channels=self.channel_index, time=self.time_index ).squeeze() )
 			if icol in self.ims:
 				self.ims[icol].set_data(image.values)
 			else:

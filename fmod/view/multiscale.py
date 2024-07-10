@@ -39,7 +39,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 	ims, pvars, ntypes, ptypes, nvars = {}, {}, len(images), [''], 1
 	sample: xa.DataArray = list(images.values())[0]
 	time: xa.DataArray = xaformat_timedeltas( sample.coords['time'] )
-	channels: List[str] = sample.coords['channel'].values.tolist()
+	channels: List[str] = sample.coords['channels'].values.tolist()
 	cslider: StepSlider = StepSlider( 'Channel:', len(channels)  )
 	tslider: StepSlider = StepSlider( 'Time:', time.size  )
 	fsize = kwargs.get( 'fsize', 5.0 )
@@ -53,7 +53,7 @@ def mplplot( images: Dict[str,xa.DataArray], **kwargs ):
 		ax.set_aspect(0.5)
 		vrange = cscale( image, 2.0 )
 		tslice: xa.DataArray = image.isel(time=tslider.value)
-		cslice: xa.DataArray = tslice.isel(channel=cslider.value).fillna( 0.0 )
+		cslice: xa.DataArray = tslice.isel(channels=cslider.value).fillna( 0.0 )
 		ims[itype] =  cslice.plot.imshow( ax=ax, x="i", y="j", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
 		ax.set_title(f" {tname} ")
 

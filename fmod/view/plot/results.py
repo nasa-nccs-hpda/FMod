@@ -99,9 +99,9 @@ class ResultPlot(Plot):
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
 		else:
-			coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channel=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
+			coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
 			data: np.ndarray = self.trainer.get_ml_upsampled(self.tset)
-			upsampled = xa.DataArray(data, dims=['time', 'channel', 'y', 'x'], coords=coords)
+			upsampled = xa.DataArray(data, dims=['time', 'channels', 'y', 'x'], coords=coords)
 
 		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
@@ -196,7 +196,7 @@ class ResultPlot(Plot):
 	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
 		if 'channel' in image.dims:
-			image = image.isel(channel=self.channel)
+			image = image.isel(channels=self.channel)
 		if 'time' in image.dims:
 			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).batch_size
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
