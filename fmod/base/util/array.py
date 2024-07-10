@@ -1,4 +1,4 @@
-import numpy as np, xarray as xa
+import numpy as np, xarray as xa, math
 import torch, dataclasses
 from nvidia.dali.tensors import TensorCPU, TensorListCPU
 from fmod.base.util.dates import date_list, year_range
@@ -6,6 +6,7 @@ from fmod.base.util.config import cfg2meta, cfg
 from typing import Iterable, List, Tuple, Union, Optional, Dict, Any, Sequence
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.gpu import set_device, get_device
+from fmod.base.util.ops import format_timedeltas
 
 TimedeltaLike = Any  # Something convertible to pd.Timedelta.
 TimedeltaStr = str  # A string convertible to pd.Timedelta.
@@ -62,3 +63,12 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
 def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
     return torch.tensor( array_data, device=get_device(), requires_grad=True, dtype=torch.float32 )
+
+def get_target( input_data: xa.DataArray, **kwargs) -> Tuple[Tensor,Tensor]:
+    upscale = kwargs.get( 'upscale', False )
+    target_channels = cfg().task.target_variables
+    target_inputs: Tensor = array2tensor(input_data.sel(channel=target_channels))
+    scale_factor = math.prod(cfg().model.downscale_factors)
+    target_tensor = torch.nn.functional.interpolate(target_inputs, scale_factor=1.0 / scale_factor, mode=cfg().model.ups_mode)
+    upscaled_target = None if not upscale else torch.nn.functional.interpolate(target_tensor, scale_factor=scale_factor, mode=cfg().model.ups_mode)
+    return target_tensor, upscaled_target

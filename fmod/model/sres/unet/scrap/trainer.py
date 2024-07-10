@@ -2,7 +2,7 @@ import torch
 import xarray
 from datetime import date
 from torch import Tensor
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 from fmod.base.util.config import  cfg
 from fmod.base.util.grid import GridOps
 from fmod.base.util.array import array2tensor
@@ -154,6 +154,7 @@ class ModelTrainer(object):
 		self.checkpoint_manager = CheckpointManager(self.model,self.optimizer)
 		epoch0, nepochs = 0, cfg().task.nepochs
 		train_start = time.time()
+		tiles = TileIterator(TSet.Train)
 		if load_state:
 			train_state = self.checkpoint_manager.load_checkpoint()
 			epoch0 = train_state['epoch']
@@ -166,10 +167,10 @@ class ModelTrainer(object):
 			acc_loss: float = 0
 			self.model.train()
 			batch_dates: List[date] = self.input_dataset.randomize()
-			tiles = TileIterator(TSet.Train)
 			for batch_date in batch_dates:
 				for tloc in iter(tiles):
-					train_data: Dict[str,torch.Tensor] = self.get_batch(tloc,batch_date)
+					train_data: Optional[Dict[str,torch.Tensor]] = self.get_batch(tloc,batch_date)
+					if train_data is None: break
 					input: torch.Tensor = train_data['input']
 					target: torch.Tensor   = train_data['target']
 					prd:  torch.Tensor  = self.model( input )

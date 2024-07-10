@@ -1,8 +1,8 @@
 import math, random
 from typing import Dict, Tuple, List, Optional
 from fmod.base.io.loader import TSet, batchDomain
+from fmod.base.source.swot.batch import SWOTDataLoader
 from fmod.base.util.config import cfg
-
 
 class TileIterator(object):
 
@@ -11,6 +11,8 @@ class TileIterator(object):
         self.randomize: bool = kwargs.get('randomize', False)
         self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
         self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
+        self.batch_size: int = cfg().task.batch_size[tset.value]
+        self.ntiles = kwargs.get('ntiles', 0)
         self.index: int = 0
 
     def __iter__(self):
@@ -20,13 +22,20 @@ class TileIterator(object):
 
     @property
     def active(self):
-        return self.index < len(self.regular_grid)
-
-    def __next__(self) ->  Optional[ Dict[str,int] ]:
         if self.domain == batchDomain.Time:
-            if not self.active: raise StopIteration()
+            return self.index < len(self.regular_grid)
+        elif self.domain == batchDomain.Tiles:
+            return (self.ntiles == 0) or (self.index < self.ntiles)
+
+    def __next__(self) ->  Dict[str,int]:
+        if not self.active: raise StopIteration()
+        if self.domain == batchDomain.Time:
             result = self.regular_grid[self.index]
             self.index = self.index + 1
+            return result
+        elif self.domain == batchDomain.Tiles:
+            result = dict( start=self.index, end=self.index + self.batch_size )
+            self.index = self.index + self.batch_size
             return result
 
 class TileGrid(object):

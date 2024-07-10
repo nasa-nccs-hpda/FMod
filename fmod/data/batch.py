@@ -159,10 +159,9 @@ class BatchDataset(object):
         di = (target_coord - dindex)
         return (di>=0) and (di<self.batch_size)
 
-    def get_batch_start_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = -1 ) -> List[Union[datetime,int]]:
+    def get_batch_time_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = -1) -> List[Union[datetime,int]]:
         start_coords = []
         if self.batch_domain == batchDomain.Time:
-
             if self.days_per_batch > 0:
                 ndates = len( self.train_dates )
                 for dindex in range( 0, ndates, self.days_per_batch):
