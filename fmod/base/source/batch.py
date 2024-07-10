@@ -197,7 +197,7 @@ class FMBatch:
 		self.target_steps = get_target_steps(btype)
 		self.batch_steps: int = cfg().task.nsteps_input + len(self.target_steps)
 		self.constants: xa.Dataset = self.date_loader.load_const_dataset( **kwargs )
-		self.norm_data: Dict[str, xa.Dataset] = self.date_loader.load_norm_data()
+		#self.norm_data: Dict[str, xa.Dataset] = self.date_loader.load_norm_data()
 		self.current_batch: xa.Dataset = None
 
 	def load(self, d: date, **kwargs):
@@ -234,7 +234,7 @@ class SRBatch:
 		self.batch_domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
 		self.batch_steps: int = self.days_per_batch * get_steps_per_day()
 		self._constants: Optional[xa.Dataset] = None
-		self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
+		#self.norm_data: Dict[str, xa.Dataset] = self.data_loader.load_norm_data()
 		self.channels: List[str] = None
 
 	def get_batch_time_indices(self):
