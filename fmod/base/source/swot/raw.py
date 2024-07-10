@@ -77,4 +77,5 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ntiles = np.count_nonzero(msk)
 		result = np.compress( msk, tiles, 0)
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		print( f"get_tiles: shape = {result.shape}")
 		return xa.DataArray(result, dims=["sample","channel", "y", "x"], coords=dict(samples=tile_idxs, channel=np.array(self.varnames) ) )

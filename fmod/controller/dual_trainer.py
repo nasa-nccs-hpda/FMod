@@ -198,7 +198,6 @@ class ModelTrainer(object):
 		return sloss, mloss
 
 	def get_srbatch(self, ctime: Union[datetime,int], ctile: Dict[str,int], tset: TSet,  **kwargs  ) -> xarray.DataArray:
-		as_tensor: bool = kwargs.pop('as_tensor',True)
 		shuffle: bool = kwargs.pop('shuffle',False)
 		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
 		if shuffle:
