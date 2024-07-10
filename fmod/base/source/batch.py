@@ -256,7 +256,7 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
-	def load_batch(self, ctile: Dict[str,int], ctime: Union[datetime,int]) -> xa.DataArray:
+	def load_batch(self, ctile: Dict[str,int], ctime: Union[datetime,int]) -> Optional[xa.DataArray]:
 		if self.batch_domain == batchDomain.Time:
 			if type(ctime) == datetime:
 				dates: Tuple[datetime,datetime] = date_bounds(ctime, self.days_per_batch)
@@ -276,12 +276,13 @@ class SRBatch:
 			self.channels = darray.coords["channels"].values.tolist()
 		return  darray
 
-	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> xa.DataArray:
+	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> Optional[xa.DataArray]:
 		t0 = time.time()
-		self.current_batch: xa.DataArray = self.load_batch( ctile, ctime )
+		self.current_batch: Optional[xa.DataArray] = self.load_batch( ctile, ctime )
 		self.current_start_idx = ctime
 		self.current_origin = ctile
-		lgm().log( f" -----> load {self.vres}-res batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
+		if self.current_batch is not None:
+			lgm().log( f" -----> load {self.vres}-res batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
 		return self.current_batch
 
 

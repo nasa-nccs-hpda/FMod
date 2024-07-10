@@ -8,7 +8,7 @@ from fmod.data.tiles import TileGrid
 from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
-from typing import List, Tuple, Union, Dict, Any, Sequence
+from typing import List, Tuple, Union, Dict, Any, Sequence, Optional
 from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches, batchDomain
@@ -145,7 +145,7 @@ class BatchDataset(object):
     def get_channel_idxs(self, channels):
         return [0]
 
-    def get_batch_array(self, ctile: Dict[str,int], ctime: Union[datetime,int], **kwargs ) -> xa.DataArray:
+    def get_batch_array(self, ctile: Dict[str,int], ctime: Union[datetime,int], **kwargs ) -> Optional[xa.DataArray]:
         if self.batch_domain == batchDomain.Time:
             rescale = kwargs.get( 'rescale', True )
             ctile = self.scale_coords(ctile) if rescale else ctile

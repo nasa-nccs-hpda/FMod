@@ -195,13 +195,14 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss, mloss
 
-	def get_srbatch(self, ctile: Dict[str,int], ctime: Union[datetime,int], tset: TSet,  **kwargs  ) -> xarray.DataArray:
+	def get_srbatch(self, ctile: Dict[str,int], ctime: Union[datetime,int], tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
-		btarget:  xarray.DataArray  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
-		if shuffle:
-			batch_perm: Tensor = torch.randperm(btarget.shape[0])
-			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
+		btarget:  Optional[xarray.DataArray]  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
+		if btarget is not None:
+			if shuffle:
+				batch_perm: Tensor = torch.randperm(btarget.shape[0])
+				btarget: xarray.DataArray = btarget[ batch_perm, ... ]
+			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> np.ndarray:
@@ -254,7 +255,7 @@ class ModelTrainer(object):
 			binput, boutput, btarget, ibatch = None, None, None, 0
 			for itime, ctime in enumerate(ctimes):
 				for ctile in iter(ctiles):
-					batch_data: xa.DataArray = self.get_srbatch(ctile,ctime,TSet.Train)
+					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime,TSet.Train)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}", display=True )
@@ -319,7 +320,7 @@ class ModelTrainer(object):
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(ctimes):
 			for ctile in iter(ctiles):
-				batch_data: xa.DataArray = self.get_srbatch(ctile, ctime, TSet.Train)
+				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, TSet.Train)
 				if batch_data is None: break
 				binput, boutput, btarget = self.apply_network( batch_data )
 				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}", display=True )

@@ -1,7 +1,7 @@
 import xarray as xa, math, os
 from datetime import datetime
 from enum import Enum
-from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
+from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal, Optional
 import xarray as xa
 import time, numpy as np
 from fmod.base.util.dates import date_list
@@ -34,7 +34,7 @@ class SRDataLoader(object):
 	def load_index_batch(self, ctile: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
-	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int, tset: TSet ) -> xa.DataArray:
+	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int, tset: TSet ) -> Optional[xa.DataArray]:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
 	def load_const_dataset(self, ctile: Dict[str,int] ):
