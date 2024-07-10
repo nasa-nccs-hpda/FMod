@@ -350,7 +350,7 @@ class ModelTrainer(object):
 
 	def apply_network(self, target_data: xa.DataArray ) -> Tuple[Tensor,TensorOrTensors,Tensor]:
 		target_channels = cfg().task.target_variables
-		btarget: Tensor = array2tensor( target_data.sel(channel=target_channels) )
+		btarget: Tensor = array2tensor( target_data.sel(channels=target_channels) )
 		binput = downsample(target_data)
 		product: TensorOrTensors = self.model( binput )
 		return binput, product, btarget
