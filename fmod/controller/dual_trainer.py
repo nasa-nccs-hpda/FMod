@@ -8,7 +8,7 @@ from fmod.data.tiles import TileIterator
 from fmod.base.io.loader import TSet, srRes, batchDomain
 from fmod.base.util.config import cdelta, cfg, cval, get_data_coords, dateindex
 from fmod.base.gpu import set_device
-from fmod.base.util.array import array2tensor, get_target
+from fmod.base.util.array import array2tensor, downsample, upsample
 from fmod.model.sres.mscnn.network import Upsampler
 from fmod.data.batch import BatchDataset
 from fmod.data.tiles import TileGrid
@@ -102,17 +102,18 @@ class ModelTrainer(object):
 		self.target_variables = cfg().task.target_variables
 		self.downscale_factors = cfg().model.downscale_factors
 		self.scale_factor = math.prod(self.downscale_factors)
-		self.upsampler: Upsampler = Upsampler( downscale_factors=cfg().model.downscale_factors, mode=cfg().model.ups_mode )
 		self.conform_to_data_grid()
 	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
 		self.input: MLTensors = {}
 		self.target: MLTensors = {}
 		self.product: MLTensors = {}
 		self.interp: MLTensors = {}
+		self.upsampled: Tensor = None
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
 		self.validation_loss: float = float('inf')
+		self.upsampled_loss: float = float('inf')
 
 	@property
 	def model_name(self):
@@ -133,9 +134,6 @@ class ModelTrainer(object):
 	def get_sample_target(self, tset: TSet) -> xa.DataArray:
 		return self.model_manager.get_sample_target(tset)
 
-	def upsample(self, tensor: Tensor ) -> Tensor:
-		upsampled = self.upsampler( unsqueeze( tensor ) )
-		return upsampled
 
 	# def configure_grid(self, tset: TSet ):
 	# 	tar: xarray.DataArray = self.target_dataset(tset).get_current_batch_array()
@@ -199,27 +197,20 @@ class ModelTrainer(object):
 
 	def get_srbatch(self, ctime: Union[datetime,int], ctile: Dict[str,int], tset: TSet,  **kwargs  ) -> xarray.DataArray:
 		shuffle: bool = kwargs.pop('shuffle',False)
-		binput:  xarray.DataArray  = self.input_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
+		btarget:  xarray.DataArray  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
 		if shuffle:
-			batch_perm: Tensor = torch.randperm(binput.shape[0])
-			binput: xarray.DataArray = binput[ batch_perm, ... ]
-		lgm().log(f" *** input{binput.dims}{binput.shape}, mean={binput.mean():.3f}, std={binput.std():.3f}")
-		return binput
+			batch_perm: Tensor = torch.randperm(btarget.shape[0])
+			btarget: xarray.DataArray = btarget[ batch_perm, ... ]
+		lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
+		return btarget
 
-	# def downsample(self, binput:  xarray.DataArray, **kwargs) -> xarray.DataArray:
-	# 	method = cfg().task.downsample
-	# 	result = binput.interp(coords, method, True, **kwargs )
-
-
-	def get_ml_input(self, tset: TSet, targets_only: bool = False) -> np.ndarray:
-		ml_input: Tensor = self.get_target_channels(tset) if targets_only else self.input[tset]
+	def get_ml_input(self, tset: TSet) -> np.ndarray:
+		ml_input: Tensor =  self.input[tset]
 		result = npa( ml_input ).astype(np.float32)
 		return  result
 
 	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
-		inp: np.ndarray = self.get_ml_input(tset)
-		ups: Tensor = self.upsample( torch.from_numpy( inp ) )
-		return ups.numpy()
+		return self.upsampled[tset].numpy()
 
 	def get_ml_target(self, tset: TSet) -> np.ndarray:
 		return npa( self.target[tset] )
@@ -265,10 +256,9 @@ class ModelTrainer(object):
 				for ctile in iter(ctiles):
 					batch_data: xa.DataArray = self.get_srbatch(ctime,ctile,TSet.Train)
 					if batch_data is None: break
-					binput, boutput = self.apply_network( batch_data )
-					btarget, _ = get_target( batch_data)
+					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{batch_data.shape} target{ts(btarget)} prd{ts(boutput)}", display=True )
-					[sloss, mloss] = self.loss(boutput, btarget)
+					[sloss, mloss] = self.loss(boutput,btarget)
 					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{itime}][{ibatch}]: Loss= {sloss.item():.5f}", display=True, end="")
 					self.optimizer.zero_grad(set_to_none=True)
 					mloss.backward()
@@ -312,6 +302,7 @@ class ModelTrainer(object):
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
+		interp_loss = kwargs.get('interp_loss', False)
 		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -330,14 +321,14 @@ class ModelTrainer(object):
 			for ctile in iter(ctiles):
 				batch_data: xa.DataArray = self.get_srbatch(ctime, ctile, TSet.Train)
 				if batch_data is None: break
-				binput, boutput = self.apply_network(batch_data)
-				btarget, binterp = get_target( batch_data, upscale=True )
+				binput, boutput, btarget = self.apply_network( batch_data )
 				lgm().log(f"  ->apply_network: inp{batch_data.shape} target{ts(btarget)} prd{ts(boutput)}", display=True )
 				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
-				[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-				mloss, iloss = model_sloss.item(), interp_sloss.item()
-				batch_model_losses.append( mloss )
-				batch_interp_losses.append( iloss )
+				batch_model_losses.append( model_sloss.item() )
+				if interp_loss:
+					binterp = upsample(binput)
+					[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+					batch_interp_losses.append( interp_sloss.item() )
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch}]: Loss= {batch_model_losses[-1]:.5f}", display=True )
 				ibatch = ibatch + 1
 		if binput is None: lgm().log( " ---------->> No tiles processed!", display=True)
@@ -347,18 +338,22 @@ class ModelTrainer(object):
 
 		proc_time = time.time() - proc_start
 		model_loss: float = np.array(batch_model_losses).mean()
-		interp_loss: float = np.array(batch_interp_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
 			self.checkpoint_manager.save_checkpoint( epoch, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
-		return dict( model=model_loss, upsample=interp_loss )
+		result = dict( model=model_loss )
+		if interp_loss:
+			result['upsample'] = np.array(batch_interp_losses).mean()
+		return result
 
-	def apply_network(self, input_data: xa.DataArray ) -> Tuple[Tensor,TensorOrTensors]:
-		input_tensor: Tensor = array2tensor(input_data)
-		product: TensorOrTensors = self.model( input_tensor )
-		return input_tensor, product
+	def apply_network(self, target_data: xa.DataArray ) -> Tuple[Tensor,TensorOrTensors,Tensor]:
+		target_channels = cfg().task.target_variables
+		btarget: Tensor = array2tensor( target_data.sel(channel=target_channels) )
+		binput = downsample(target_data)
+		product: TensorOrTensors = self.model( binput )
+		return binput, product, btarget
 
 	def forecast(self, **kwargs ) -> Tuple[ List[np.ndarray], List[np.ndarray], List[np.ndarray] ]:
 		seed = kwargs.get('seed',0)
@@ -382,29 +377,3 @@ class ModelTrainer(object):
 
 		return inputs, targets, predictions
 
-		# def apply1(self, origin: Dict[str,int], batch_date: datetime, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-		# 	seed = kwargs.get('seed',0)
-		# 	torch.manual_seed(seed)
-		# 	torch.cuda.manual_seed(seed)
-		# 	with torch.inference_mode():
-		# 		input_batch = self.input_dataset.get_batch( origin, batch_date)
-		# 		target_batch = self.target_dataset.get_batch( origin, batch_date)
-		# 		inp: torch.Tensor = array2tensor( input_batch['input'] )
-		# 		tar: torch.Tensor = array2tensor( target_batch['target'] )
-		# 		out: TensorOrTensors = self.apply_network(inp)
-		# 		product: torch.Tensor = out if type(out) is torch.Tensor else out[-1]
-		# 		lgm().log(f' * in: {list(inp.shape)}, target: {list(tar.shape)}, out: {list(product.shape)}', display=True)
-		# 		return npa(inp), npa(tar), npa(product)
-
-	def apply(self, tile_loc: Dict[str, int], batch_date: datetime, tset: TSet, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-		seed = kwargs.get('seed', 0)
-		torch.manual_seed(seed)
-		torch.cuda.manual_seed(seed)
-		with torch.inference_mode():
-			train_data: Dict[str, Tensor] = self.get_srbatch( tile_loc, batch_date, tset )
-			inp: Tensor = train_data['input'].squeeze()
-			target: Tensor = train_data['target'].squeeze()
-			prd,targ = self.apply_network(inp,target)
-			loss: torch.Tensor = self.loss(prd, targ)
-			filtered_input: np.ndarray = self.model_manager.filter_targets(npa(inp))
-			return filtered_input,  npa(targ),  npa(prd), loss.item()

@@ -64,11 +64,16 @@ def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )
     return torch.tensor( array_data, device=get_device(), requires_grad=True, dtype=torch.float32 )
 
-def get_target( input_data: xa.DataArray, **kwargs) -> Tuple[Tensor,Tensor]:
-    upscale = kwargs.get( 'upscale', False )
-    target_channels = cfg().task.target_variables
-    target_inputs: Tensor = array2tensor(input_data.sel(channel=target_channels))
+def downsample( target_data: xa.DataArray) -> Tensor:
+    target_tensor: Tensor = array2tensor(target_data)
     scale_factor = math.prod(cfg().model.downscale_factors)
-    target_tensor = torch.nn.functional.interpolate(target_inputs, scale_factor=1.0 / scale_factor, mode=cfg().model.ups_mode)
-    upscaled_target = None if not upscale else torch.nn.functional.interpolate(target_tensor, scale_factor=scale_factor, mode=cfg().model.ups_mode)
-    return target_tensor, upscaled_target
+    downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0 / scale_factor, mode=cfg().model.ups_mode)
+    return downsampled
+
+def upsample( input_tensor: Tensor ) -> Tensor:
+    scale_factor = math.prod(cfg().model.downscale_factors)
+    upsampled = torch.nn.functional.interpolate(input_tensor, scale_factor=scale_factor, mode=cfg().model.ups_mode)
+    return upsampled
+
+    #target_channels = cfg().task.target_variables
+    # target_tensor: Tensor = array2tensor(target_data.sel(channel=target_channels))
