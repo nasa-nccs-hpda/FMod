@@ -42,7 +42,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_template: np.ndarray = np.fromfile( filepath('template'), '>f4' )
 		var_data: np.ndarray = np.fromfile( filepath('raw'), '>f4' )
 		mask = (var_template != 0)
-		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}")
+		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, file={filepath('raw')}")
+		print(f"   >>> data file={filepath('raw')}")
+		print(f"   >>> template file={filepath('template')}")
 		var_template[mask] = var_data
 		var_template[~mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
