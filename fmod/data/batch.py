@@ -181,7 +181,7 @@ class BatchDataset(object):
         di = (target_coord - dindex)
         return (di>=0) and (di<self.batch_size)
 
-    def get_batch_time_coords(self, randomize: bool = False, target_coord: Union[datetime,int] = -1) -> List[Union[datetime,int]]:
+    def get_batch_time_coords(self, target_coord: Union[datetime,int] = -1) -> List[Union[datetime,int]]:
         start_coords = []
         if self.batch_domain == batchDomain.Time:
             if self.days_per_batch > 0:
@@ -198,7 +198,7 @@ class BatchDataset(object):
                         start_coords.append( dindex )
         elif self.batch_domain == batchDomain.Tiles:
             start_coords = self.srbatch.get_batch_time_indices()
-        if randomize:   random.shuffle(start_coords)
+        random.shuffle(start_coords)
         return start_coords
 
     def log(self, batch_inputs: Dict[str,xa.DataArray], start_time: float ):

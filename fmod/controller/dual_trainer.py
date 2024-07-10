@@ -24,6 +24,16 @@ import time, csv
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ TSet, torch.Tensor]
+TimeType = Union[datetime, int]
+
+def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
+	ttsplit = cfg().task.ttsplit
+	start, result, nt = 0, {}, len(times)
+	for tset, tset_fraction in ttsplit.items():
+		end = start + int(tset_fraction * nt)
+		result[TSet(tset)] = times[start:end]
+		start = end
+	return result
 
 def smean( data: xarray.DataArray, dims: List[str] = None ) -> str:
 	means: np.ndarray = data.mean(dim=dims).values
@@ -114,6 +124,7 @@ class ModelTrainer(object):
 		self.tile_index: Optional[Tuple[int,int]] = None
 		self.validation_loss: float = float('inf')
 		self.upsampled_loss: float = float('inf')
+		self.data_timestamps: Dict[TSet,List[Union[datetime, int]]] = {}
 
 	@property
 	def model_name(self):
@@ -195,7 +206,7 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss, mloss
 
-	def get_srbatch(self, ctile: Dict[str,int], ctime: Union[datetime,int], tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
+	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType, tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
 		btarget:  Optional[xarray.DataArray]  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
 		if btarget is not None:
@@ -242,18 +253,20 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		self.record_eval(epoch0,{}, TSet.Validation )
+		ctimes: List[TimeType] = self.input_dataset(TSet.Train).get_batch_time_coords()
+		self.data_timestamps = ttsplit_times(ctimes)
+
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
-			ctimes: List[Union[datetime,int]] = self.input_dataset(TSet.Train).get_batch_time_coords()
+
 			ctiles = TileIterator(TSet.Train)
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 
 			batch_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
 			binput, boutput, btarget, ibatch = None, None, None, 0
-			for itime, ctime in enumerate(ctimes):
+			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
 				for ctile in iter(ctiles):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime,TSet.Train)
 					if batch_data is None: break
@@ -313,8 +326,8 @@ class ModelTrainer(object):
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		proc_start = time.time()
-		ctimes: List[Union[datetime, int]] = self.input_dataset(TSet.Train).get_batch_time_coords()
 		ctiles = TileIterator(TSet.Train)
+		ctimes = self.data_timestamps[tset]
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
