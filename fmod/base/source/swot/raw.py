@@ -60,7 +60,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ntiles: int = self.timeslice.shape[0]
 		if tile_range[0] < ntiles:
 			slice_end = min(tile_range[1], ntiles)
-			lgm().log( f"select_batch[{self.time_index}]: slice= {(tile_range[0],slice_end)}",display=True)
+			lgm().log( f"select_batch[{self.time_index}]: tile_range= {(tile_range[0],slice_end)}",display=True)
 			return self.timeslice.isel( batch=slice(tile_range[0],slice_end) )
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
