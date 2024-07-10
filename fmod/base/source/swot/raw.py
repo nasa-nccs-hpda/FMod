@@ -59,7 +59,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def select_batch( self, tile_range: Tuple[int,int]  ) -> Optional[xa.DataArray]:
 		ntiles: int = self.timeslice.shape[0]
 		if tile_range[0] < ntiles:
-			return self.timeslice.isel( samples=slice( tile_range[0],  min( tile_range[1], ntiles ) ) )
+			slice_end = min(tile_range[1], ntiles)
+			lgm().log( f"select_batch[{self.time_index}]: slice= {(tile_range[0],slice_end)}",display=True)
+			return self.timeslice.isel( samples=slice(tile_range[0],slice_end) )
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:       # dims=["channel","y","x"]
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
