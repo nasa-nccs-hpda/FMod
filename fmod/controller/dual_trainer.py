@@ -271,7 +271,7 @@ class ModelTrainer(object):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime,TSet.Train)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
-					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}", display=True )
+					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 					[sloss, mloss] = self.loss(boutput,btarget)
 					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{itime}][{ibatch}]: Loss= {sloss.item():.5f}", display=True, end="")
 					self.optimizer.zero_grad(set_to_none=True)
@@ -337,7 +337,7 @@ class ModelTrainer(object):
 				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, TSet.Train)
 				if batch_data is None: break
 				binput, boutput, btarget = self.apply_network( batch_data )
-				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}", display=True )
+				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 				batch_model_losses.append( model_sloss.item() )
 				if interp_loss:
