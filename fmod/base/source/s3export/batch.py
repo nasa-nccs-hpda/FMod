@@ -149,7 +149,7 @@ class S3ExportDataLoader(SRDataLoader):
 
 	def load_timeslice( self, idx: int, origin: CoordIdx, **kwargs ) -> xa.DataArray:
 		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, **kwargs ) for vid in self.varnames.items() ]
-		result = xa.concat( arrays, "channel" )
+		result = xa.concat( arrays, "channels" )
 		result = result.expand_dims(axis=0, dim=dict(time=[tcoord(**kwargs)]))
 		return result
 
