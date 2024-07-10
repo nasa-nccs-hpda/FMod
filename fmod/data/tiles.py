@@ -1,7 +1,6 @@
 import math, random
 from typing import Dict, Tuple, List, Optional
 from fmod.base.io.loader import TSet, batchDomain
-from fmod.base.source.swot.batch import SWOTDataLoader
 from fmod.base.util.config import cfg
 
 class TileIterator(object):
