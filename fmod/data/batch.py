@@ -96,14 +96,36 @@ class BatchDataset(object):
         self.batch_domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
 
         self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, vres, tset, **kwargs )
-        self.norms: Dict[str, xa.Dataset] = self.srbatch.norm_data
-        self.mu: xa.Dataset  = self.norms.get('mean_by_level')
-        self.sd: xa.Dataset  = self.norms.get('stddev_by_level')
-        self.dsd: xa.Dataset = self.norms.get('diffs_stddev_by_level')
+        self._norms: Dict[str, xa.Dataset] = None
+        self._mu: xa.Dataset  = None
+        self._sd: xa.Dataset  = None
+        self._dsd: xa.Dataset = None
         self.ntsteps = self.srbatch.batch_steps * self.ntbatches
         self.hours_per_step = task_config.get('hours_per_step',0)
         self.hours_per_batch = self.days_per_batch * 24
         self.current_batch_data = None
+
+    @property
+    def norms(self)-> Dict[str, xa.Dataset]:
+        if self._norms is None:
+            self._norms = self.srbatch.norm_data
+        return self._norms
+
+    @property
+    def mu(self)-> xa.Dataset:
+        if self._mu is None:
+            self._mu = self.norms.get('mean_by_level')
+        return self._mu
+
+    def sd(self)-> xa.Dataset:
+        if self._sd is None:
+            self._sd = self.norms.get('diffs_stddev_by_level')
+        return self._sd
+
+    def dsd(self)-> xa.Dataset:
+        if self._dsd is None:
+            self._dsd = self.norms.get('diffs_stddev_by_level')
+        return self._dsd
 
     @property
     def tcoord(self):
