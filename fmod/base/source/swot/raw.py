@@ -36,7 +36,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		indices = [ int(parse(template,f)[0]) for f in files ]
 		return indices
 
-	def load_file( self,  varname: str,  tile_index: int, time_index: int, tset: TSet ) -> np.ndarray:
+	def load_file( self,  varname: str, time_index: int, tset: TSet ) -> np.ndarray:
 		for cparm, value in dict(varname=varname, index=time_index, tset=tset.value).items():
 			cfg().dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile( filepath('template'), '>f4' )
@@ -49,19 +49,17 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		lgm().log( f"load_file result = {result.shape}")
 		return result
 
-	def load_batch( self, tile_index: int, time_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
+	def load_batch( self, tile_range: Tuple[int,int], time_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
 		if time_index != self.time_index:
-			vardata: List[np.ndarray] = [ self.load_file( varname,  tile_index, time_index, tset ) for varname in self.varnames ]
+			vardata: List[np.ndarray] = [ self.load_file( varname, time_index, tset ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
 			self.time_index = time_index
-		return self.select_batch( tile_index, tset )
+		return self.select_batch( tile_range )
 
-	def select_batch( self, tile_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
+	def select_batch( self, tile_range: Tuple[int,int]  ) -> Optional[xa.DataArray]:
 		ntiles: int = self.timeslice.shape[0]
-		batch_size: int = self.config.batch_size[tset.value]
-		if tile_index < ntiles:
-			batch_end = min( tile_index+batch_size, ntiles )
-			return self.timeslice.isel( samples=slice( tile_index, batch_end ) )
+		if tile_range[0] < ntiles:
+			return self.timeslice.isel( samples=slice( tile_range[0],  min( tile_range[1], ntiles ) ) )
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:       # dims=["channel","y","x"]
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()

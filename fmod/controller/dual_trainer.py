@@ -195,7 +195,7 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss, mloss
 
-	def get_srbatch(self, ctime: Union[datetime,int], ctile: Dict[str,int], tset: TSet,  **kwargs  ) -> xarray.DataArray:
+	def get_srbatch(self, ctile: Dict[str,int], ctime: Union[datetime,int], tset: TSet,  **kwargs  ) -> xarray.DataArray:
 		shuffle: bool = kwargs.pop('shuffle',False)
 		btarget:  xarray.DataArray  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
 		if shuffle:
@@ -254,7 +254,7 @@ class ModelTrainer(object):
 			binput, boutput, btarget, ibatch = None, None, None, 0
 			for itime, ctime in enumerate(ctimes):
 				for ctile in iter(ctiles):
-					batch_data: xa.DataArray = self.get_srbatch(ctime,ctile,TSet.Train)
+					batch_data: xa.DataArray = self.get_srbatch(ctile,ctime,TSet.Train)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}", display=True )
@@ -319,7 +319,7 @@ class ModelTrainer(object):
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(ctimes):
 			for ctile in iter(ctiles):
-				batch_data: xa.DataArray = self.get_srbatch(ctime, ctile, TSet.Train)
+				batch_data: xa.DataArray = self.get_srbatch(ctile, ctime, TSet.Train)
 				if batch_data is None: break
 				binput, boutput, btarget = self.apply_network( batch_data )
 				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}", display=True )

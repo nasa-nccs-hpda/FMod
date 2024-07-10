@@ -28,16 +28,16 @@ class SRDataLoader(object):
 	def load_norm_data(self)-> Dict[str, xa.Dataset]:
 		raise NotImplementedError("SRDataLoader:load_norm_data")
 
-	def load_temporal_batch(self, origin: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
+	def load_temporal_batch(self, ctile: Dict[str,int], date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_temporal_batch")
 
-	def load_index_batch(self, origin: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
+	def load_index_batch(self, ctile: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
-	def load_tile_batch(self, tile_index: int, time_index: int, tset: TSet ) -> xa.DataArray:
+	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int, tset: TSet ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
-	def load_const_dataset(self, origin: Dict[str,int] ):
+	def load_const_dataset(self, ctile: Dict[str,int] ):
 		raise NotImplementedError("SRDataLoader:load_const_dataset")
 
 	def get_batch_time_indices(self):

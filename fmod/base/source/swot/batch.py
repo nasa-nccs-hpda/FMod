@@ -68,8 +68,8 @@ class SWOTDataLoader(SRDataLoader):
 		self.loader = SWOTRawDataLoader(task_config,  **kwargs)
 		self.shape = None
 
-	def load_tile_batch(self, tile_index: int, time_index: int, tset: TSet ) -> xa.DataArray:
-		tile_batch: xa.DataArray = self.loader.load_batch( tile_index, time_index, tset )
+	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int, tset: TSet ) -> xa.DataArray:
+		tile_batch: xa.DataArray = self.loader.load_batch( tile_range, time_index, tset )
 		return tile_batch
 
 	def get_batch_time_indices(self):

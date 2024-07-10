@@ -256,31 +256,32 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
-	def load_batch(self, origin: Dict[str,int], start_coord: Union[datetime,int]) -> xa.DataArray:
+	def load_batch(self, ctile: Dict[str,int], ctime: Union[datetime,int]) -> xa.DataArray:
 		if self.batch_domain == batchDomain.Time:
-			if type(start_coord) == datetime:
-				dates: Tuple[datetime,datetime] = date_bounds(start_coord, self.days_per_batch)
-				darray: xa.DataArray = self.data_loader.load_temporal_batch( origin, dates )
-				lgm().debug( f"load_batch[{start_coord.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
-			elif type(start_coord) == int:
-				index_range: Tuple[int,int] = (start_coord, start_coord + self.batch_size[self.tset.value] )
-				darray: xa.DataArray = self.data_loader.load_index_batch( origin, index_range )
-				lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, origin={list(origin.values())}")
-			else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(start_coord)}")
+			if type(ctime) == datetime:
+				dates: Tuple[datetime,datetime] = date_bounds(ctime, self.days_per_batch)
+				darray: xa.DataArray = self.data_loader.load_temporal_batch( ctile, dates )
+				lgm().debug( f"load_batch[{ctime.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
+			elif type(ctime) == int:
+				index_range: Tuple[int,int] = (ctime, ctime + self.batch_size[self.tset.value] )
+				darray: xa.DataArray = self.data_loader.load_index_batch( ctile, index_range )
+				lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, ctile={list(ctile.values())}")
+			else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(ctime)}")
 		elif self.batch_domain == batchDomain.Tiles:
-			darray: xa.DataArray = self.data_loader.load_tile_batch( origin['tile'], start_coord, self.tset.value)
+			tile_range = (ctile['start'],ctile['end'])
+			darray: xa.DataArray = self.data_loader.load_tile_batch( tile_range, ctime, self.tset.value)
 		else:
 			raise Exception(f"Unknown 'batch_domain' in load_batch: {self.batch_domain}")
 		if self.channels is None:
 			self.channels = darray.coords["channel"].values.tolist()
 		return  darray
 
-	def load(self, origin: Dict[str,int], start_coord: Union[datetime,int] ) -> xa.DataArray:
+	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> xa.DataArray:
 		t0 = time.time()
-		self.current_batch: xa.DataArray = self.load_batch( origin, start_coord )
-		self.current_start_idx = start_coord
-		self.current_origin = origin
-		lgm().log( f" -----> load {self.vres}-res batch[{origin}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
+		self.current_batch: xa.DataArray = self.load_batch( ctile, ctime )
+		self.current_start_idx = ctime
+		self.current_origin = ctile
+		lgm().log( f" -----> load {self.vres}-res batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
 		return self.current_batch
 
 
