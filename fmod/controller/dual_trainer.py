@@ -319,6 +319,7 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(ctimes):
+			print( f" @Evaluating ctime[{itime}]: {ctime}")
 			for ctile in iter(ctiles):
 				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, TSet.Train)
 				if batch_data is None: break
