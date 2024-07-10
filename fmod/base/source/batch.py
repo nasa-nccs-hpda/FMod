@@ -269,7 +269,7 @@ class SRBatch:
 			else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(ctime)}")
 		elif self.batch_domain == batchDomain.Tiles:
 			tile_range = (ctile['start'],ctile['end'])
-			darray: xa.DataArray = self.data_loader.load_tile_batch( tile_range, ctime, self.tset.value)
+			darray: xa.DataArray = self.data_loader.load_tile_batch( tile_range, ctime, self.tset )
 		else:
 			raise Exception(f"Unknown 'batch_domain' in load_batch: {self.batch_domain}")
 		if self.channels is None:
