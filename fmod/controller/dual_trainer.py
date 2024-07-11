@@ -119,6 +119,7 @@ class ModelTrainer(object):
 		self.product: MLTensors = {}
 		self.interp: MLTensors = {}
 		self.upsampled: Tensor = None
+		self.sample_input: xa.DataArray = None
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
@@ -140,7 +141,7 @@ class ModelTrainer(object):
 		return self.model_manager.get_dataset(srRes.High, tset )
 
 	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
-		return self.model_manager.get_sample_input( tset, targets_only )
+		return self.sample_input if (self.sample_input is not None) else self.model_manager.get_sample_input( tset, targets_only )
 
 	def get_sample_target(self, tset: TSet) -> xa.DataArray:
 		return self.model_manager.get_sample_target(tset)
@@ -341,6 +342,8 @@ class ModelTrainer(object):
 			for ctile in iter(ctiles):
 				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, TSet.Train)
 				if batch_data is None: break
+				if self.sample_input is None:
+					self.sample_input = batch_data
 				binput, boutput, btarget = self.apply_network( batch_data )
 				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
