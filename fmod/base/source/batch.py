@@ -279,6 +279,7 @@ class SRBatch:
 	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> Optional[xa.DataArray]:
 		t0 = time.time()
 		cbatch = self.load_batch(ctile, ctime)
+		print( f"\n SRBatch: load batch: {cbatch is not None}")
 		if cbatch is not None:
 			self.current_batch = cbatch
 			self.current_start_idx = ctime
