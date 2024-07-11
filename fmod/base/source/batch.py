@@ -278,11 +278,12 @@ class SRBatch:
 
 	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> Optional[xa.DataArray]:
 		t0 = time.time()
-		self.current_batch: Optional[xa.DataArray] = self.load_batch( ctile, ctime )
-		self.current_start_idx = ctime
-		self.current_origin = ctile
-		if self.current_batch is not None:
+		cbatch = self.load_batch(ctile, ctime)
+		if cbatch is not None:
+			self.current_batch = cbatch
+			self.current_start_idx = ctime
+			self.current_origin = ctile
 			lgm().log( f" -----> load {self.vres}-res batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
-		return self.current_batch
+		return cbatch
 
 
