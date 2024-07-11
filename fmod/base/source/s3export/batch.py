@@ -56,8 +56,8 @@ def tcoord( ** kwargs ) :
 
 class S3ExportDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet,  **kwargs):
-		SRDataLoader.__init__(self, task_config, vres)
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet,  **kwargs):
+		SRDataLoader.__init__( self, task_config )
 		self.version = get_version( task_config )
 		self.tset: TSet = tset
 		self.coords_dataset: xa.Dataset = xa.open_dataset(coords_filepath(), **kwargs)
@@ -76,18 +76,18 @@ class S3ExportDataLoader(SRDataLoader):
 		if date is not None:
 			dindx = dateindex(date,self.task)
 		self.dindxs.append(dindx)
-		dset_params = dict( res=self.vres.value, index=f"{dindx:04}", varname=varname, tset=self.tset.value, usf=usf )
+		dset_params = dict( index=f"{dindx:04}", varname=varname, tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		subpath: str = cfg().dataset.dataset_files[self.vres.value]
+		subpath: str = cfg().dataset.dataset_files['raw']
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
 
 	def dataset_glob(self, varname: str) -> str:
 		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
-		dset_params = dict( res=self.vres.value, varname=varname, index=f"*", tset=self.tset.value, usf=usf )
+		dset_params = dict( varname=varname, index=f"*", tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		subpath: str = cfg().dataset.dataset_files[self.vres.value]
+		subpath: str = cfg().dataset.dataset_files['raw']
 		fglob = f"{root}/{subpath}"
 		return fglob
 
@@ -156,13 +156,13 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, date=date ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
+		lgm().log( f" ** load-batch [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
 		return result
 
 	def load_index_batch( self, origin: CoordIdx, index_range: Tuple[int,int] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, index=idx ) for idx in range( *index_range ) ]
 		result = xa.concat(timeslices, "time")
-		lgm().log( f" ** load-batch-{self.vres.value} [{index_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
+		lgm().log( f" ** load-batch [{index_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:

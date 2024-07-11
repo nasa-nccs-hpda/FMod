@@ -11,7 +11,7 @@ from omegaconf import DictConfig
 import importlib, pandas as pd
 from datetime import datetime
 from fmod.base.io.loader import TSet, srRes
-from fmod.base.io.loader import srRes
+from fmod.base.util.array import xa_downsample
 from fmod.data.batch import BatchDataset
 from collections.abc import Iterable
 
@@ -44,28 +44,34 @@ class SRModels:
 	def __init__(self,  device: torch.device):
 		self.model_name = cfg().model.name
 		self.device = device
+		self._sample_input = None
+		self._sample_target = None
 		self.target_variables = cfg().task.target_variables
-		self.datasets: Dict[Tuple[srRes,TSet],BatchDataset] = {}
-		self.cids: List[int] = self.get_channel_idxs( self.target_variables, srRes.High, TSet.Train )
+		self.datasets: Dict[TSet,BatchDataset] = {}
+		self.cids: List[int] = self.get_channel_idxs( self.target_variables, TSet.Train )
 		self.model_config = dict( nchannels_in = len(cfg().task.input_variables), nchannels_out = len(cfg().task.target_variables), device = device )
 		if cfg().model.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features()
 
 	def sample_input( self, tset: TSet ) -> xa.DataArray:
-		return self.get_batch_array( srRes.Low, tset )
+		if self._sample_input is None:
+			batch: xa.DataArray = self.sample_target( tset )
+			self._sample_input = xa_downsample( batch )
+		return self._sample_input
 
 	def sample_target( self, tset: TSet ) -> xa.DataArray:
-		rv = self.get_batch_array( srRes.High, tset )
-		return rv
+		if self._sample_target is None:
+			self._sample_target = self.get_batch_array( tset )
+		return self._sample_target
 
-	def get_batch_array(self, sres: srRes, tset: TSet) -> xa.DataArray:
-		return self.get_dataset(sres, tset).get_current_batch_array()
+	def get_batch_array(self,  tset: TSet) -> xa.DataArray:
+		return self.get_dataset(tset).get_current_batch_array()
 
-	def get_dataset(self, sres: srRes, tset: TSet) -> BatchDataset:
-		return self.datasets.setdefault( (sres, tset), BatchDataset(cfg().task, vres=sres, tset=tset) )
+	def get_dataset(self, tset: TSet) -> BatchDataset:
+		return self.datasets.setdefault( tset, BatchDataset(cfg().task,tset) )
 
-	def get_channel_idxs(self, channels: List[str], sres: srRes, tset: TSet ) -> List[int]:
-		return self.get_dataset(sres, tset).get_channel_idxs(channels)
+	def get_channel_idxs(self, channels: List[str], tset: TSet ) -> List[int]:
+		return self.get_dataset(tset).get_channel_idxs(channels)
 
 	def get_sample_target(self, tset: TSet ) -> xa.DataArray:
 		result = self.sample_target(tset)

@@ -63,8 +63,8 @@ CoordIdx = Union[ Dict[str,int], Tuple[int,int] ]
 
 class SWOTDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, vres: srRes,  **kwargs):
-		SRDataLoader.__init__(self, task_config, vres)
+	def __init__(self, task_config: DictConfig, **kwargs):
+		SRDataLoader.__init__(self, task_config)
 		self.loader = SWOTRawDataLoader(task_config,  **kwargs)
 		self.shape = None
 

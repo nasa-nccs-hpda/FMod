@@ -14,8 +14,7 @@ from fmod.base.io.loader import TSet, srRes
 
 class SRDataLoader(object):
 
-	def __init__(self, task_config: DictConfig, vres: srRes ):
-		self.vres: srRes = vres
+	def __init__(self, task_config: DictConfig ):
 		self.task = task_config
 		self.dindxs = []
 
@@ -49,14 +48,14 @@ class SRDataLoader(object):
 		return '[' + ','.join([f"{k}:{c[k].size}" for k in c.keys()]) + ']'
 
 	@classmethod
-	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet, **kwargs) -> 'SRDataLoader':
+	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet, **kwargs) -> 'SRDataLoader':
 		dset: str = task_config.dataset
 		if dset.startswith("LLC4320"):
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
-			return S3ExportDataLoader( task_config, tile_size, vres, tset, **kwargs )
+			return S3ExportDataLoader( task_config, tile_size, tset, **kwargs )
 		elif dset.startswith("swot"):
 			from fmod.base.source.swot.batch import SWOTDataLoader
-			return SWOTDataLoader( task_config, vres, **kwargs )
+			return SWOTDataLoader( task_config, **kwargs )
 		elif dset.startswith("merra2"):
 			return None
 

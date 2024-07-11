@@ -220,12 +220,11 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], vres: srRes, tset: TSet, **kwargs):
-		self.vres = vres
-		self.name = "input" if self.vres == "low" else "target"
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet, **kwargs):
+		self.name = "target"
 		self.tile_size: Dict[str, int] = tile_size
 		self.tset: TSet = tset
-		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, vres, tset, **kwargs )
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, tset, **kwargs )
 		self.current_batch: xa.DataArray = None
 		self.current_start_idx: Optional[Union[datetime,int]] = None
 		self.current_origin = None
@@ -284,7 +283,7 @@ class SRBatch:
 			self.current_batch = cbatch
 			self.current_start_idx = ctime
 			self.current_origin = ctile
-			lgm().log( f" -----> load {self.vres}-res batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
+			lgm().log( f" -----> load batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
 		return cbatch
 
 

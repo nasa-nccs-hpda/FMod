@@ -72,14 +72,12 @@ class MetaData(DatapipeMetaData):
 
 class BatchDataset(object):
 
-    def __init__(self, task_config: DictConfig, vres: srRes, tset: TSet, **kwargs):
-        self.vres: srRes = vres
+    def __init__(self, task_config: DictConfig, tset: TSet, **kwargs):
         self.tset: TSet = tset
-        self.srtype = 'input' if self.vres == srRes.High else 'target'
+        self.srtype = 'target'
         self.task_config: DictConfig = task_config
         self.tile_grid = TileGrid(tset)
-        self.load_inputs: bool = kwargs.pop('load_inputs', (vres=="low"))
-        self.load_targets: bool = kwargs.pop('load_targets', (vres=="high"))
+        self.load_targets: bool = kwargs.pop('load_targets', True)
         self.load_base: bool = kwargs.pop('load_base', False)
         self.train_dates: List[datetime] = batches_date_range(task_config,tset)
         self.days_per_batch: int = task_config.get('days_per_batch',0)
@@ -95,7 +93,7 @@ class BatchDataset(object):
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
         self.batch_domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
 
-        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, vres, tset, **kwargs )
+        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, tset, **kwargs )
         self._norms: Dict[str, xa.Dataset] = None
         self._mu: xa.Dataset  = None
         self._sd: xa.Dataset  = None
@@ -171,11 +169,7 @@ class BatchDataset(object):
         return xa.DataArray( global_timeslice, dims=['y','x'] )
 
     def scale_coords(self, c: Dict[str, int]) -> Dict[str, int]:
-        if self.vres == srRes.Low:  return c
-        else:                       return {k: v * self.scalefactor for k, v in c.items()}
-
-    def normalize(self, vdata: xa.Dataset) -> xa.Dataset:
-        return dsnorm( vdata, self.sd, self.mu )
+        return {k: v * self.scalefactor for k, v in c.items()}
 
     def in_batch_idx(self, target_coord: int, dindex: int) -> bool:
         di = (target_coord - dindex)
@@ -206,128 +200,6 @@ class BatchDataset(object):
         for k,v in batch_inputs.items():
             lgm().log(f" --->> {k}{v.dims}: {v.shape}")
 
-    def extract_input_target_times(self, dataset: xa.Dataset) -> Tuple[xa.Dataset, xa.Dataset]:
-        """Extracts inputs and targets for prediction, from a Dataset with a time dim.
-
-        The input period is assumed to be contiguous (specified by a duration), but
-        the targets can be a list of arbitrary lead times.
-
-        Returns:
-          inputs:
-          targets:
-            Two datasets with the same shape as the input dataset except that a
-            selection has been made from the time axis, and the origin of the
-            time coordinate will be shifted to refer to lead times relative to the
-            final input timestep. So for inputs the times will end at lead time 0,
-            for targets the time coordinates will refer to the lead times requested.
-        """
-
-        (target_lead_times, target_duration) = self._process_target_lead_times_and_get_duration()
-
-        # Shift the coordinates for the time axis so that a timedelta of zero
-        # corresponds to the forecast reference time. That is, the final timestep
-        # that's available as input to the forecast, with all following timesteps
-        # forming the target period which needs to be predicted.
-        # This means the time coordinates are now forecast lead times.
-        time: xa.DataArray = dataset.coords["time"]
-        dataset = dataset.assign_coords(time=time + target_duration - time[-1])
-        lgm().debug(f"extract_input_target_times: initial input-times={dataset.coords['time'].values.tolist()}")
-        targets: xa.Dataset = dataset.sel({"time": target_lead_times})
-        zero_index = -1-self.train_steps[-1]
-        input_bounds = [ zero_index-(self.nsteps_input-1), (zero_index+1 if zero_index<-2 else None) ]
-        inputs: xa.Dataset = dataset.isel( {"time": slice(*input_bounds) } )
-        lgm().debug(f" --> Input bounds={input_bounds}, input-sizes={inputs.sizes}, final input-times={inputs.coords['time'].values.tolist()}")
-        return inputs, targets
-
-    def _process_target_lead_times_and_get_duration( self ) -> TimedeltaLike:
-        if not isinstance(self.target_lead_times, (list, tuple, set)):
-            self.target_lead_times = [self.target_lead_times]
-        target_lead_times = [pd.Timedelta(x) for x in self.target_lead_times]
-        target_lead_times.sort()
-        target_duration = target_lead_times[-1]
-        return target_lead_times, target_duration
-
-    def extract_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...],
-        levels: Tuple[int, ...], **kwargs) -> Dict[str,xa.DataArray]:
-        idataset = idataset.sel(level=list(levels))
-        nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
-        dvars = {}
-        for vname, varray in idataset.data_vars.items():
-            missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
-            dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
-        dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
-        inputs, targets = self.extract_input_target_times(dataset)
-        lgm().debug(f"Inputs & Targets: input times: {get_timedeltas(inputs)}, target times: {get_timedeltas(targets)}, base time: {pd.Timestamp(nptime[0])} (nt={len(nptime)})")
-
-        if set(forcing_variables) & set(target_variables):
-            raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
-        results = {}
-
-        if self.load_inputs:
-            input_varlist: List[str] = list(input_variables)+list(forcing_variables)
-            selected_inputs: xa.Dataset = inputs[input_varlist]
-            lgm().debug(f" >> >> {len(inputs.data_vars.keys())} model variables: {input_varlist}")
-            lgm().debug(f" >> >> dataset vars = {list(inputs.data_vars.keys())}")
-            lgm().debug(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
-            input_array: xa.DataArray = self.ds2array( self.normalize(selected_inputs) )
-            channels = input_array.attrs.get('channels', [])
-            lgm().debug(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}" )
-            #    print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, #channel-values={len(channels)}")
-            results['input'] = input_array
-
-        if self.load_base:
-            base_inputs: xa.Dataset = inputs[list(target_variables)]
-            base_input_array: xa.DataArray = self.ds2array( self.normalize(base_inputs.isel(time=-1)) )
-            lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
-            results['base'] = base_input_array
-
-        if self.load_targets:
-            lgm().debug(f" >> >> target variables: {target_variables}")
-            target_array: xa.DataArray = self.ds2array( self.normalize(targets[list(target_variables)]) )
-            lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
-            lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
-            results['target'] = target_array
-
-        return results
-
-    def extract_batch_inputs_targets(self,  idataset: xa.Dataset, *, input_variables: Tuple[str, ...], target_variables: Tuple[str, ...], forcing_variables: Tuple[str, ...], **kwargs) -> Dict[str,xa.DataArray]:
-        nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
-        dvars = {}
-        for vname, varray in idataset.data_vars.items():
-            missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
-            dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
-        dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
-
-        if set(forcing_variables) & set(target_variables):
-            raise ValueError(f"Forcing variables {forcing_variables} should not overlap with target variables {target_variables}.")
-        results = {}
-
-        if self.load_inputs:
-            input_varlist: List[str] = list(input_variables)+list(forcing_variables)
-            selected_inputs: xa.Dataset = dataset[input_varlist]
-            lgm().log(f" >> >> {len(dataset.data_vars.keys())} model variables: {input_varlist}")
-            lgm().log(f" >> >> dataset vars = {list(dataset.data_vars.keys())}")
-            lgm().log(f" >> >> {len(selected_inputs.data_vars.keys())} selected inputs: {list(selected_inputs.data_vars.keys())}")
-            input_array: xa.DataArray = self.batch2array( self.normalize(selected_inputs) )
-            channels = input_array.attrs.get('channels', [])
-            lgm().log(f" load_inputs-> merged training array{input_array.dims}{input_array.shape}" )
-            # print(f" >> merged training array: {input_array.dims}: {input_array.shape}, coords={list(input_array.coords.keys())}, channels={list(channels)}")
-            results['input'] = input_array
-
-        if self.load_base:
-            base_inputs: xa.Dataset = dataset[list(target_variables)]
-            base_input_array: xa.DataArray = self.batch2array( self.normalize(base_inputs.isel(time=-1)) )
-            lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
-            results['base'] = base_input_array
-
-        if self.load_targets:
-            lgm().debug(f" >> >> target variables: {target_variables}")
-            target_array: xa.DataArray = self.batch2array( self.normalize(dataset[list(target_variables)]) )
-            lgm().debug(f" >> targets{target_array.dims}: {target_array.shape}, channels={target_array.attrs['channels']}")
-            lgm().debug(f"Extract inputs: basetime= {pd.Timestamp(nptime[0])}, device={self.task_config.device}")
-            results['target'] = target_array
-
-        return results
     def ds2array(self, dset: xa.Dataset, **kwargs) -> xa.DataArray:
         coords = self.task_config.coords
         merge_dims = kwargs.get('merge_dims', [coords['z'], coords['t']])
