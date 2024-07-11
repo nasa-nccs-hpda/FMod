@@ -99,7 +99,7 @@ class ResultPlot(Plot):
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['batch','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['batch','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['batch','channels','y','x'] )
-		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice(index=0)
+		domain: xa.DataArray = self.trainer.get_dataset(self.tset).load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 
 		if prediction.ndim == 3:

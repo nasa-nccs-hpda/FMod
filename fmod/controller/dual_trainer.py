@@ -150,7 +150,7 @@ class ModelTrainer(object):
 
 	def conform_to_data_grid(self, **kwargs):
 		if cfg().task.conform_to_grid:
-			data: xarray.DataArray = self.input_dataset(TSet.Train).get_current_batch_array()
+			data: xarray.DataArray = self.get_dataset(TSet.Train).get_current_batch_array()
 			data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
 			dc = cdelta(data)
 			lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
@@ -202,7 +202,7 @@ class ModelTrainer(object):
 
 	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType, tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
-		btarget:  Optional[xarray.DataArray]  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
+		btarget:  Optional[xarray.DataArray]  = self.get_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
 		print( f"get_srbatch({tset.value}): {btarget is not None}")
 		if btarget is not None:
 			if shuffle:
