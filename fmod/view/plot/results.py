@@ -106,7 +106,7 @@ class ResultPlot(Plot):
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
 		else:
 			# coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			data: np.ndarray = upsample( self.trainer.input[self.tset] ).numpy()
+			data: np.ndarray = upsample( self.trainer.input[self.tset] ).cpu().numpy()
 			upsampled = xa.DataArray(data, dims=['time', 'channels', 'y', 'x'] ) # , coords=coords)
 
 		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
