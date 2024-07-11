@@ -1,7 +1,7 @@
 import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
-import matplotlib.pyplot as plt
+from fmod.base.util.array import array2tensor, downsample, upsample
 import ipywidgets as ipw
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
@@ -106,7 +106,7 @@ class ResultPlot(Plot):
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
 		else:
 			# coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			data: np.ndarray = self.trainer.get_ml_upsampled(self.tset)
+			data: np.ndarray = upsample( self.trainer.get_ml_input(self.tset) )
 			upsampled = xa.DataArray(data, dims=['time', 'channels', 'y', 'x'] ) # , coords=coords)
 
 		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
