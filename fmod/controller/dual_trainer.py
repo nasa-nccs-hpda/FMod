@@ -253,9 +253,7 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		ctimes: List[TimeType] = self.input_dataset(TSet.Train).get_batch_time_coords()
-		self.data_timestamps = ttsplit_times(ctimes)
-
+		self.init_data_timestamps()
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -313,6 +311,11 @@ class ModelTrainer(object):
 			self.results_accum.flush()
 		return eval_losses
 
+	def init_data_timestamps(self):
+		if len(self.data_timestamps) == 0:
+			ctimes: List[TimeType] = self.input_dataset(TSet.Train).get_batch_time_coords()
+			self.data_timestamps = ttsplit_times(ctimes)
+
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
@@ -325,6 +328,8 @@ class ModelTrainer(object):
 		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
+		self.init_data_timestamps()
+
 		proc_start = time.time()
 		ctiles = TileIterator(TSet.Train)
 		ctimes = self.data_timestamps[tset]
