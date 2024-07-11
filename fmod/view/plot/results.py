@@ -90,9 +90,15 @@ class ResultPlot(Plot):
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
 		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, upsample=True, **kwargs )
-		model_input: xa.DataArray = to_xa(self.sample_input, self.trainer.get_ml_input(self.tset))
-		target: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_target(self.tset))
-		prediction: xa.DataArray = to_xa(self.sample_target, self.trainer.get_ml_product(self.tset))
+		input_data = self.trainer.get_ml_input(self.tset)
+		target_data = self.trainer.get_ml_target(self.tset)
+		product_data =  self.trainer.get_ml_product(self.tset)
+		print( f"input_data shape = {input_data.shape}")
+		print( f"target_data shape = {target_data.shape}")
+		print(f"product_data shape = {product_data.shape}")
+		model_input: xa.DataArray = to_xa(self.sample_input, input_data)
+		target: xa.DataArray = to_xa(self.sample_target, target_data )
+		prediction: xa.DataArray = to_xa(self.sample_target, product_data)
 		domain: xa.DataArray = self.trainer.target_dataset(self.tset).load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 

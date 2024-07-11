@@ -119,7 +119,6 @@ class ModelTrainer(object):
 		self.product: MLTensors = {}
 		self.interp: MLTensors = {}
 		self.upsampled: Tensor = None
-		self.sample_input: xa.DataArray = None
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
@@ -141,7 +140,7 @@ class ModelTrainer(object):
 		return self.model_manager.get_dataset(srRes.High, tset )
 
 	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
-		return self.sample_input if (self.sample_input is not None) else self.model_manager.get_sample_input( tset, targets_only )
+		return self.model_manager.get_sample_input( tset, targets_only )
 
 	def get_sample_target(self, tset: TSet) -> xa.DataArray:
 		return self.model_manager.get_sample_target(tset)
