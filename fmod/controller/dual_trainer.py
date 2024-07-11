@@ -130,14 +130,8 @@ class ModelTrainer(object):
 	def model_name(self):
 		return self.model_manager.model_name
 
-	def raw_dataset(self, tset: TSet)-> BatchDataset:
-		return self.model_manager.get_dataset( srRes.Raw, tset )
-
-	def input_dataset(self, tset: TSet)-> BatchDataset:
-		return self.model_manager.get_dataset( srRes.Low, tset )
-
-	def target_dataset(self, tset: TSet)-> BatchDataset:
-		return self.model_manager.get_dataset(srRes.High, tset )
+	def get_dataset(self, tset: TSet)-> BatchDataset:
+		return self.model_manager.get_dataset( tset )
 
 	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
 		return self.model_manager.get_sample_input( tset, targets_only )
@@ -314,7 +308,7 @@ class ModelTrainer(object):
 
 	def init_data_timestamps(self):
 		if len(self.data_timestamps) == 0:
-			ctimes: List[TimeType] = self.input_dataset(TSet.Train).get_batch_time_coords()
+			ctimes: List[TimeType] = self.get_dataset(TSet.Train).get_batch_time_coords()
 			self.data_timestamps = ttsplit_times(ctimes)
 
 
