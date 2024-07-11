@@ -209,6 +209,7 @@ class ModelTrainer(object):
 	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType, tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
 		btarget:  Optional[xarray.DataArray]  = self.target_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
+		print( f"get_srbatch({tset.value}): {btarget is not None}")
 		if btarget is not None:
 			if shuffle:
 				batch_perm: Tensor = torch.randperm(btarget.shape[0])
