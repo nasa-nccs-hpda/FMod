@@ -36,6 +36,11 @@ DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 UPSAMPLE_COORDS = {}
 
+def torch_interp_mode():
+    mode = cfg().task.downsample_mode
+    if   mode == "linear": return "bilinear"
+    elif mode == "cubic": return "bicubic"
+    return mode
 def get_timedeltas( dset: xa.Dataset ):
     return format_timedeltas( dset.coords["time"] )
 Tensor = torch.Tensor
@@ -69,7 +74,7 @@ def downsample( target_data: xa.DataArray) -> Tensor:
     for cn in ['x','y']: UPSAMPLE_COORDS[cn] = target_data.coords[cn].values
     target_tensor: Tensor = array2tensor(target_data)
     scale_factor = math.prod(cfg().model.downscale_factors)
-    downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0/scale_factor, mode=cfg().task.downsample_mode)
+    downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0/scale_factor, mode=torch_interp_mode())
     return downsampled
 
 def xa_downsample(input_array: xa.DataArray) -> xa.DataArray:

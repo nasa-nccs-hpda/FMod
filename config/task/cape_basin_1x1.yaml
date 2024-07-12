@@ -17,8 +17,8 @@ tile_grid: { train: { x: 1, y: 1 }, valid: { x: 1, y: 1 }, test: { x: 1, y: 1 } 
 tile_size: { x: 48, y: 48 }
 batch_domain:  'time'
 conform_to_grid: false
-upsample_mode: bicubic
-downsample_mode: bicubic
+upsample_mode: cubic
+downsample_mode: cubic
 
 coords: { x: XC, y: YC, z: '' }
 input_variables: { sst: sea_surface_temperature }  # , 'sss': sea_surface_salinity, 'ssh': sea_surface_humidity }

@@ -17,8 +17,8 @@ tile_grid: { train: { x: -1, y: -1 }, valid: { x: -1, y: -1 }, test: { x: -1, y:
 tile_size: { x: 48, y: 48 }
 batch_domain:  'tiles'
 conform_to_grid: false
-upsample_mode: bicubic
-downsample_mode: bicubic
+upsample_mode: cubic
+downsample_mode: cubic
 
 input_variables: { SST: sea_surface_temperature }
 variable_ranges: { SST: { min: 3.0, max: 24.0 } }
