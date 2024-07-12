@@ -4,6 +4,6 @@ tset: ???
 usf: ???
 index: ???
 
-dataset_root:  "/explore/nobackup/people/jli30/share/data/"
+dataset_root:  "/explore/nobackup/projects/ilab/data/CapeBasin"
 dataset_files: { raw: "${dataset.varname}_192x192/hr_${dataset.varname}_${dataset.index}.npy" }
 # dataset_files: { raw: "${dataset.varname}_192x192/${dataset.tset}/${dataset.res}_${dataset.varname}/${dataset.res}_${dataset.varname}_${dataset.index}.npy" }
