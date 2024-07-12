@@ -89,7 +89,7 @@ class ResultPlot(Plot):
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
-		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, upsample=True, **kwargs )
+		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs )
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
 		product_data =  self.trainer.get_ml_product(self.tset)
