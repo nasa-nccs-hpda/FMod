@@ -212,6 +212,7 @@ class ModelTrainer(object):
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> np.ndarray:
+		print( f"get_ml_input({tset}): avail={list(self.input.keys())}")
 		ml_input: Tensor =  self.input[tset]
 		result = npa( ml_input ).astype(np.float32)
 		return  result
