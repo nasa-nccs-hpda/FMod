@@ -324,21 +324,20 @@ class ModelTrainer(object):
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps(tset)
-		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index} ##### ")
+
 
 		proc_start = time.time()
 		ctiles = TileIterator(TSet.Train)
-		ctimes = self.data_timestamps[tset]
+		ctimes: List[TimeType] = self.get_dataset(tset).get_batch_time_coords( self.time_index )
+		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index}, ctimes={ctimes} ##### ")
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(ctimes):
-			if self.time_index in [-1,itime]:
 				for itile, ctile in enumerate(iter(ctiles)):
 					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 					if batch_data is None: break
-					lgm().log(f"  ->batch_data{batch_data.shape}")
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 					[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
