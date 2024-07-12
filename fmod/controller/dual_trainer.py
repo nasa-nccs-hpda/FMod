@@ -11,7 +11,7 @@ from fmod.base.gpu import set_device
 from fmod.base.util.array import array2tensor, downsample, upsample
 from fmod.model.sres.mscnn.network import Upsampler
 from fmod.data.batch import BatchDataset
-from fmod.data.tiles import TileGrid
+from fmod.base.util.dates import TimeType
 from fmod.model.sres.manager import SRModels, ResultsAccumulator
 from fmod.base.util.logging import lgm
 from fmod.base.util.ops import pctnan, pctnant
@@ -24,7 +24,6 @@ import time, csv
 Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ TSet, torch.Tensor]
-TimeType = Union[datetime, int]
 
 def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
 	ttsplit = cfg().task.ttsplit

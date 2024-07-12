@@ -3,7 +3,7 @@ import torch, time, random, math
 from omegaconf import DictConfig
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from fmod.controller.dual_trainer import TimeType
+from fmod.base.util.dates import TimeType
 from fmod.data.tiles import TileGrid
 from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm

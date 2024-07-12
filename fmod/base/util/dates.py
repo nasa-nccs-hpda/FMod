@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from datetime import date, datetime, timedelta
 import random
+TimeType = Union[datetime, int]
 
 def kw(d: datetime) -> Dict[str,int]:
 	return dict( day=d.day, month=d.month, year=d.year )
