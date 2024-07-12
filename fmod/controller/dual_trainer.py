@@ -334,7 +334,7 @@ class ModelTrainer(object):
 		for itime, ctime in enumerate(ctimes):
 			if self.time_index in [-1,itime]:
 				for itile, ctile in enumerate(iter(ctiles)):
-					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, ctile[{itile}]={ctile}", display=True)
+					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
