@@ -332,6 +332,7 @@ class ModelTrainer(object):
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
+		lgm().log( f"evaluate[{tset.name}]: ctimes={ctimes}, ctiles={ctiles}",display=True)
 		for itime, ctime in enumerate(ctimes):
 			print( f" @Evaluating ctime[{itime}]: {ctime}")
 			for ctile in iter(ctiles):
