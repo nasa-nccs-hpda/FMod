@@ -84,7 +84,6 @@ def upsample( input_tensor: Tensor ) -> Tensor:
     return upsampled
 
 def xa_upsample(input_array: xa.DataArray) -> xa.DataArray:
-    scale_factor = math.prod(cfg().model.downscale_factors)
     return input_array.interp( coords=UPSAMPLE_COORDS, method=cfg().task.downsample_mode, assume_sorted=True)
 
     #target_channels = cfg().task.target_variables
