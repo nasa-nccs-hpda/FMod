@@ -338,6 +338,7 @@ class ModelTrainer(object):
 					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 					if batch_data is None: break
+					lgm().log(f"  ->batch_data{batch_data.shape}")
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 					[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
