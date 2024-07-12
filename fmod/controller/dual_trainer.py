@@ -246,7 +246,7 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		self.init_data_timestamps()
+		self.init_data_timestamps(TSet.Train)
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
