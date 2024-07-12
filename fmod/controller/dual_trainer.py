@@ -331,9 +331,9 @@ class ModelTrainer(object):
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
-		lgm().log( f"evaluate[{tset.name}]: ctimes={ctimes}, ctiles={ctiles}",display=True)
 		for itime, ctime in enumerate(ctimes):
-			for ctile in iter(ctiles):
+			for itile, ctile in enumerate(iter(ctiles)):
+				lgm().log(f"evaluate[{tset.name}]: ctime[{itime}]={ctime}, ctile[{itile}]={ctile}", display=True)
 				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 				if batch_data is None: break
 				binput, boutput, btarget = self.apply_network( batch_data )
