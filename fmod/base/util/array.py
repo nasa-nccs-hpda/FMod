@@ -75,7 +75,6 @@ def downsample( target_data: xa.DataArray) -> Tensor:
     target_tensor: Tensor = array2tensor(target_data)
     scale_factor = math.prod(cfg().model.downscale_factors)
     downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0/scale_factor, mode=torch_interp_mode(True))
-    print( f"downsampled shapes: {target_data.shape} -> {downsampled.shape}")
     return downsampled
 
 def xa_downsample(input_array: xa.DataArray) -> xa.DataArray:
@@ -83,18 +82,15 @@ def xa_downsample(input_array: xa.DataArray) -> xa.DataArray:
     scale_factor = math.prod(cfg().model.downscale_factors)
     coords = { cn: input_array.coords[cn][::scale_factor] for cn in ['x', 'y'] }
     downsampled =  input_array.interp(coords=coords, method=cfg().task.downsample_mode, assume_sorted=True)
-    print(f"downsampled shapes: {input_array.shape} -> {downsampled.shape}")
     return downsampled
 
 def upsample( input_tensor: Tensor ) -> Tensor:
     scale_factor = math.prod(cfg().model.downscale_factors)
     upsampled = torch.nn.functional.interpolate(input_tensor, scale_factor=scale_factor, mode=torch_interp_mode(False))
-    print(f"upsample shapes: {input_tensor.shape} -> {upsampled.shape}")
     return upsampled
 
 def xa_upsample(input_array: xa.DataArray) -> xa.DataArray:
     upsampled =  input_array.interp( coords=UPSAMPLE_COORDS, method=cfg().task.downsample_mode, assume_sorted=True)
-    print(f"upsample shapes: {input_array.shape} -> {upsampled.shape}")
     return upsampled
 
     #target_channels = cfg().task.target_variables
