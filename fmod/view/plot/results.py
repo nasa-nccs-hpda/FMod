@@ -208,6 +208,8 @@ class ResultPlot(Plot):
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
-		image = image.assign_coords( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
+		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
+		print( f"get_subplot_image: image{image.shape}: coords = {coords}")
+		image = image.assign_coords( coords )
 		return image
 
