@@ -337,7 +337,7 @@ class ModelTrainer(object):
 		for itime, ctime in enumerate(ctimes):
 			print( f" @Evaluating ctime[{itime}]: {ctime}")
 			for ctile in iter(ctiles):
-				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, TSet.Train)
+				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 				if batch_data is None: break
 				binput, boutput, btarget = self.apply_network( batch_data )
 				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
