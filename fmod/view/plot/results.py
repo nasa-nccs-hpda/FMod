@@ -194,6 +194,7 @@ class ResultPlot(Plot):
 		label = self.plot_titles[irow][icol]
 		rmserror = ""
 		if irow == 1:
+			print( f"get_subplot_title, loss labels = {list(self.losses.keys())}")
 			loss: float = self.losses[label]
 			rmserror = f"{loss*1000:.3f}"
 		title = f"{label} {rmserror}"
