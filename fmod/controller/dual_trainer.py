@@ -332,20 +332,21 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(ctimes):
-			for itile, ctile in enumerate(iter(ctiles)):
-				lgm().log(f"evaluate[{tset.name}]: ctime[{itime}]={ctime}, ctile[{itile}]={ctile}", display=True)
-				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
-				if batch_data is None: break
-				binput, boutput, btarget = self.apply_network( batch_data )
-				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
-				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
-				batch_model_losses.append( model_sloss.item() )
-				if interp_loss:
-					binterp = upsample(binput)
-					[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-					batch_interp_losses.append( interp_sloss.item() )
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch}]: Loss= {batch_model_losses[-1]:.5f}", display=True )
-				ibatch = ibatch + 1
+			if self.time_index in [-1,itime]:
+				for itile, ctile in enumerate(iter(ctiles)):
+					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, ctile[{itile}]={ctile}", display=True)
+					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
+					if batch_data is None: break
+					binput, boutput, btarget = self.apply_network( batch_data )
+					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
+					[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
+					batch_model_losses.append( model_sloss.item() )
+					if interp_loss:
+						binterp = upsample(binput)
+						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+						batch_interp_losses.append( interp_sloss.item() )
+					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch}]: Loss= {batch_model_losses[-1]:.5f}", display=True )
+					ibatch = ibatch + 1
 		if binput is not None:  self.input[tset] = binput
 		if btarget is not None: self.target[tset] = btarget
 		if boutput is not None: self.product[tset] = boutput
