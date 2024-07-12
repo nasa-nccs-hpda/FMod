@@ -64,7 +64,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
     darray.attrs['channels'] = channels
-    return darray.transpose( "batch", "channels", coords['y'], coords['x'] )
+    return darray.transpose( "time", "channels", coords['y'], coords['x'] )
 
 def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )

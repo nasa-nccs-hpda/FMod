@@ -207,8 +207,8 @@ class ResultPlot(Plot):
 			batch_time_index = self.time_index % self.trainer.input_dataset(self.tset).batch_size
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
-		dx, dy = ts['x']/image.shape[1], ts['y']/image.shape[0]
-		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[0] ) )
+		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
+		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
 		cs = { cn:cv.shape for cn,cv in coords.items()}
 		print( f"get_subplot_image: image{image.shape}, coords = {cs}, ts={ts}")
 		image = image.assign_coords( coords )
