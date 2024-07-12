@@ -205,7 +205,7 @@ class ResultPlot(Plot):
 		if 'channel' in image.dims:
 			image = image.isel(channels=self.channel)
 		if 'time' in image.dims:
-			batch_time_index = self.time_index % self.trainer.get_ml_input().shape[0]
+			batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(time=batch_time_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
