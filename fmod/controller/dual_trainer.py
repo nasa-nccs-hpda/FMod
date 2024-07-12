@@ -307,9 +307,10 @@ class ModelTrainer(object):
 			self.results_accum.flush()
 		return eval_losses
 
-	def init_data_timestamps(self):
+	def init_data_timestamps(self, tset: TSet):
 		if len(self.data_timestamps) == 0:
-			ctimes: List[TimeType] = self.get_dataset(TSet.Train).get_batch_time_coords()
+			ctimes: List[TimeType] = self.get_dataset(tset).get_batch_time_coords()
+			lgm().log( f"init_data_timestamps[{tset.value}]: {ctimes}", display=True)
 			self.data_timestamps = ttsplit_times(ctimes)
 
 
@@ -324,7 +325,7 @@ class ModelTrainer(object):
 		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
-		self.init_data_timestamps()
+		self.init_data_timestamps(tset)
 
 		proc_start = time.time()
 		ctiles = TileIterator(TSet.Train)
