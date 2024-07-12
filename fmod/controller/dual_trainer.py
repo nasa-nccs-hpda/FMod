@@ -352,6 +352,8 @@ class ModelTrainer(object):
 		if boutput is not None: self.product[tset] = boutput
 
 		proc_time = time.time() - proc_start
+		print(f" batch_model_losses = {batch_model_losses}")
+		print(f" batch_interp_losses = {batch_interp_losses}")
 		model_loss: float = np.array(batch_model_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
