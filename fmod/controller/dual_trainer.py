@@ -212,7 +212,7 @@ class ModelTrainer(object):
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> np.ndarray:
-		print( f"get_ml_input({tset}): avail={list(self.input.keys())}")
+		print( f"get_ml_input({tset}): avail={list(self.input.items())}")
 		ml_input: Tensor =  self.input[tset]
 		result = npa( ml_input ).astype(np.float32)
 		return  result
@@ -274,9 +274,9 @@ class ModelTrainer(object):
 					batch_losses += sloss
 					ibatch += 1
 
-			self.input[tset] = binput
-			self.target[tset] = btarget
-			self.product[tset] = boutput
+			if binput is not None:   self.input[tset] = binput
+			if btarget is not None:  self.target[tset] = btarget
+			if boutput is not None:  self.product[tset] = boutput
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -347,10 +347,9 @@ class ModelTrainer(object):
 					batch_interp_losses.append( interp_sloss.item() )
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch}]: Loss= {batch_model_losses[-1]:.5f}", display=True )
 				ibatch = ibatch + 1
-		if binput is None: lgm().log( " ---------->> No tiles processed!", display=True)
-		self.input[tset] = binput
-		self.target[tset] = btarget
-		self.product[tset] = boutput
+		if binput is not None:  self.input[tset] = binput
+		if btarget is not None: self.target[tset] = btarget
+		if boutput is not None: self.product[tset] = boutput
 
 		proc_time = time.time() - proc_start
 		model_loss: float = np.array(batch_model_losses).mean()
