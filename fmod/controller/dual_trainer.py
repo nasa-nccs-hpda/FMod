@@ -308,7 +308,7 @@ class ModelTrainer(object):
 	def init_data_timestamps(self, tset: TSet):
 		if len(self.data_timestamps) == 0:
 			ctimes: List[TimeType] = self.get_dataset(tset).get_batch_time_coords()
-			lgm().log( f"init_data_timestamps[{tset.value}]: {ctimes}", display=True)
+			lgm().log( f"init_data_timestamps[{tset.value}]: {len(ctimes)} times", display=True)
 			self.data_timestamps = ttsplit_times(ctimes)
 
 
@@ -333,7 +333,6 @@ class ModelTrainer(object):
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		lgm().log( f"evaluate[{tset.name}]: ctimes={ctimes}, ctiles={ctiles}",display=True)
 		for itime, ctime in enumerate(ctimes):
-			print( f" @Evaluating ctime[{itime}]: {ctime}")
 			for ctile in iter(ctiles):
 				batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
 				if batch_data is None: break

@@ -93,9 +93,6 @@ class ResultPlot(Plot):
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
 		product_data =  self.trainer.get_ml_product(self.tset)
-		print( f"input_data shape = {input_data.shape}")
-		print( f"target_data shape = {target_data.shape}")
-		print(f"product_data shape = {product_data.shape}")
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['time','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['time','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['time','channels','y','x'] )
@@ -194,7 +191,6 @@ class ResultPlot(Plot):
 		label = self.plot_titles[irow][icol]
 		rmserror = ""
 		if irow == 1:
-			print( f"get_subplot_title, loss labels = {list(self.losses.keys())}")
 			loss: float = self.losses[label]
 			rmserror = f"{loss*1000:.3f}"
 		title = f"{label} {rmserror}"
@@ -202,7 +198,6 @@ class ResultPlot(Plot):
 
 	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
-		print(f"get_subplot_image: image{image.dims}")
 		if 'channel' in image.dims:
 			image = image.isel(channels=self.channel)
 		if 'time' in image.dims:
@@ -212,7 +207,6 @@ class ResultPlot(Plot):
 		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
 		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
 		cs = { cn:cv.shape for cn,cv in coords.items()}
-		print( f"get_subplot_image: image{image.shape}, coords = {cs}, ts={ts}")
 		image = image.assign_coords( coords )
 		return image
 
