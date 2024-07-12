@@ -34,6 +34,7 @@ AVG_SEC_PER_YEAR = SEC_PER_DAY * _AVG_DAY_PER_YEAR
 
 DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
+UPSAMPLE_COORDS = {}
 
 def get_timedeltas( dset: xa.Dataset ):
     return format_timedeltas( dset.coords["time"] )
@@ -65,14 +66,17 @@ def array2tensor( darray: xa.DataArray ) -> Tensor:
     return torch.tensor( array_data, device=get_device(), requires_grad=True, dtype=torch.float32 )
 
 def downsample( target_data: xa.DataArray) -> Tensor:
+    for cn in ['x','y']: UPSAMPLE_COORDS[cn] = target_data.coords[cn].values
     target_tensor: Tensor = array2tensor(target_data)
     scale_factor = math.prod(cfg().model.downscale_factors)
     downsampled = torch.nn.functional.interpolate(target_tensor, scale_factor=1.0/scale_factor, mode=cfg().task.downsample_mode)
     return downsampled
 
 def xa_downsample(input_array: xa.DataArray) -> xa.DataArray:
+    for cn in ['x', 'y']: UPSAMPLE_COORDS[cn] = input_array.coords[cn].values
     scale_factor = math.prod(cfg().model.downscale_factors)
-    return input_array.interp(scale_factor=1.0/scale_factor, method=cfg().task.downsample_mode, assume_sorted=True)
+    coords = { cn: input_array.coords[cn][::scale_factor] for cn in ['x', 'y'] }
+    return input_array.interp(coords=coords, method=cfg().task.downsample_mode, assume_sorted=True)
 
 def upsample( input_tensor: Tensor ) -> Tensor:
     scale_factor = math.prod(cfg().model.downscale_factors)
@@ -81,7 +85,7 @@ def upsample( input_tensor: Tensor ) -> Tensor:
 
 def xa_upsample(input_array: xa.DataArray) -> xa.DataArray:
     scale_factor = math.prod(cfg().model.downscale_factors)
-    return input_array.interp(scale_factor=scale_factor, method=cfg().task.downsample_mode, assume_sorted=True)
+    return input_array.interp( coords=UPSAMPLE_COORDS, method=cfg().task.downsample_mode, assume_sorted=True)
 
     #target_channels = cfg().task.target_variables
     # target_tensor: Tensor = array2tensor(target_data.sel(channel=target_channels))
