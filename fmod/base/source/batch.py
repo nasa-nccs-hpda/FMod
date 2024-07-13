@@ -57,7 +57,7 @@ def furbish( dset: xa.Dataset ) -> xa.Dataset:
 	return xa.Dataset( dvars, coords, attrs )
 
 # def merge_batch( slices: List[xa.Dataset], constants: xa.Dataset ) -> xa.Dataset:
-# 	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
+# 	dynamics: xa.Dataset = xa.concat( slices, dim="tiles", coords = "minimal" )
 # 	return xa.merge( [dynamics, constants], compat='override' )
 
 def get_target_steps(btype: BatchType):
@@ -81,15 +81,15 @@ def get_days_per_batch(btype: BatchType):
 
 def merge_temporal_batch( self, slices: List[xa.Dataset], constants: xa.Dataset) -> xa.Dataset:
 	constant_vars: List[str] = self.task_config.get('constants',[])
-	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "time" not in vdata.dims]
-	dynamics: xa.Dataset = xa.concat( slices, dim="time", coords = "minimal" )
+	cvars = [vname for vname, vdata in slices[0].data_vars.items() if "tiles" not in vdata.dims]
+	dynamics: xa.Dataset = xa.concat( slices, dim="tiles", coords = "minimal" )
 	dynamics = dynamics.drop_vars(cvars)
 	sample: xa.Dataset = slices[0].drop_dims( 'time', errors='ignore' )
 	for vname, dvar in sample.data_vars.items():
 		if vname not in dynamics.data_vars.keys():
 			constants[vname] = dvar
-		elif (vname in constant_vars) and ("time" in dvar.dims):
-			dvar = dvar.mean(dim="time", skipna=True, keep_attrs=True)
+		elif (vname in constant_vars) and ("tiles" in dvar.dims):
+			dvar = dvar.mean(dim="tiles", skipna=True, keep_attrs=True)
 			constants[vname] = dvar
 	dynamics = dynamics.drop_vars(constant_vars, errors='ignore')
 	return xa.merge( [dynamics, constants], compat='override' )
@@ -206,10 +206,10 @@ class FMBatch:
 		self.current_batch: xa.Dataset = merge_temporal_batch(time_slices, self.constants)
 
 	def get_train_data(self,  day_offset: int ) -> xa.Dataset:
-		return self.current_batch.isel( time=slice(day_offset, day_offset+self.batch_steps) )
+		return self.current_batch.isel( tiles=slice(day_offset, day_offset+self.batch_steps) )
 
 	def get_time_slice(self,  day_offset: int) -> xa.Dataset:
-		return self.current_batch.isel( time=day_offset )
+		return self.current_batch.isel( tiles=day_offset )
 
 	@classmethod
 	def to_feature_array( cls, data_batch: xa.Dataset) -> xa.DataArray:
@@ -250,7 +250,7 @@ class SRBatch:
 		return self._constants
 
 	def merge_batch(self, slices: List[xa.Dataset]) -> xa.Dataset:
-		dynamics: xa.Dataset = xa.concat(slices, dim="time", coords="minimal")
+		dynamics: xa.Dataset = xa.concat(slices, dim="tiles", coords="minimal")
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 

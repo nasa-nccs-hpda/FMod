@@ -43,7 +43,7 @@ DAY_PROGRESS = "day_progress"
 YEAR_PROGRESS = "year_progress"
 
 def get_timedeltas( dset: xa.Dataset ):
-    return format_timedeltas( dset.coords["time"] )
+    return format_timedeltas( dset.coords["tiles"] )
 Tensor = torch.Tensor
 
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
@@ -237,7 +237,7 @@ class BatchDataset(object):
         darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
         # print( f" @@@STACKED ARRAY: {darray.dims}{darray.shape}, coords={list(darray.coords.keys())}, channels={channels}", flush=True)
         darray.attrs['channels'] = channels
-        result = darray.transpose( "time", "channels", darray.dims[1], darray.dims[2] )
+        result = darray.transpose( "tiles", "channels", darray.dims[1], darray.dims[2] )
         return result
 
     def get_device(self):

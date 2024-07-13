@@ -19,7 +19,7 @@ def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	return np.sqrt( np.mean( np.square( varray ) ) )
 
 def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
-	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
+	rms_error = np.array( [ rms(diff, tiles=iT, **kw) for iT in range(diff.shape[0]) ] )
 	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
 
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
@@ -45,9 +45,9 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 	levels: xa.DataArray = target.coords['level']
 	lunits : str = levels.attrs.get('units','')
 	dayf = 24/task_spec['data_timestep']
-	target.assign_coords( time=time )
+	target.assign_coords( tiles=time )
 	if forecast is not None:
-		forecast.assign_coords(time=time)
+		forecast.assign_coords(tiles=time)
 		ptypes = ['target', 'forecast', 'difference']
 	ncols =  len( ptypes )
 	lslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=levels.size-1, description='Level Index:', )
@@ -71,7 +71,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			ax = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 			ax.set_aspect(0.5)
 			if it != 1: vrange = cscale( pvar, 2.0 )
-			tslice: xa.DataArray = pvar.isel(time=tslider.value)
+			tslice: xa.DataArray = pvar.isel(tiles=tslider.value)
 			if "level" in tslice.dims:
 				tslice = tslice.isel(level=lslider.value)
 			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
@@ -89,8 +89,8 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
+				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, tiles={sindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex, tiles=sindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
 
@@ -106,8 +106,8 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
+				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, tiles=={tindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex,tiles=tindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
 		fig.canvas.draw_idle()
@@ -125,9 +125,9 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 	levels: xa.DataArray = target.coords['level']
 	lunits : str = levels.attrs.get('units','')
 	dayf = 24/task_spec['data_timestep']
-	target.assign_coords( time=time )
+	target.assign_coords( tiles=time )
 	if forecast is not None:
-		forecast.assign_coords(time=time)
+		forecast.assign_coords(tiles=time)
 		ptypes = ['target', 'forecast', 'difference']
 	ncols =  len( ptypes )
 	lslider: ipw.IntSlider = ipw.IntSlider( value=0, min=0, max=levels.size-1, description='Level Index:', )
@@ -151,7 +151,7 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			ax = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 			ax.set_aspect(0.5)
 			if it != 1: vrange = cscale( pvar, 2.0 )
-			tslice: xa.DataArray = pvar.isel(time=tslider.value)
+			tslice: xa.DataArray = pvar.isel(tiles=tslider.value)
 			if "level" in tslice.dims:
 				tslice = tslice.isel(level=lslider.value)
 			ims[(iv,it)] =  tslice.plot.imshow( ax=ax, x="lon", y="lat", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1]  )
@@ -169,8 +169,8 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, time={sindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex, time=sindex, drop=True, missing_dims="ignore")
+				lgm().log(f" >> Time-update {vname1} {ptypes[it1]}: level={lindex}, tiles={sindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex, tiles=sindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
 
@@ -186,8 +186,8 @@ def mplplot( target: xa.Dataset, vnames: List[str],  task_spec: Dict, **kwargs )
 			for it1 in range(ncols):
 				ax1 = axs[ iv ] if ncols == 1 else axs[ iv, it ]
 				im1, dvar1 = ims[ (iv1, it1) ], pvars[ (iv1, it1) ]
-				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, time={tindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
-				tslice1: xa.DataArray =  dvar1.isel( level=lindex,time=tindex, drop=True, missing_dims="ignore")
+				lgm().log(f" >> Level-update {vname1} {ptypes[it1]}: level={lindex}, tiles={tindex}, shape={dvar1.shape}, nnan={nnan(dvar1.values)}")
+				tslice1: xa.DataArray =  dvar1.isel( level=lindex,tiles=tindex, drop=True, missing_dims="ignore")
 				im1.set_data( tslice1.values )
 				ax1.set_title(f"{vname1} {ptypes[it1]}")
 		fig.canvas.draw_idle()
@@ -207,7 +207,7 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 	for iv, vname in enumerate(vnames):
 		tvar: xa.DataArray = normalize(target,vname,**kwargs)
 		fvar: xa.DataArray = normalize(forecast,vname,**kwargs)
-		error: xa.DataArray = rmse(tvar-fvar).assign_coords(time=ftime).rename( time = "time (days)")
+		error: xa.DataArray = rmse(tvar-fvar).assign_coords(tiles=ftime).rename( time = "time (days)")
 		error.plot.line( ax=ax, color=colors[iv], label=vname )
 
 	ax.set_title(f"  Forecast Error  ")

@@ -47,7 +47,7 @@ class DataLoader(object):
 	def get_dataset(self, vres: str,  d: date, **kwargs ) -> xa.Dataset:
 		time_index = kwargs.pop('time_index',-1)
 		dset: xa.Dataset = load_dataset( vres, d ).squeeze( drop=True )
-		if time_index >= 0: dset=dset.isel( time=time_index, drop=True )
+		if time_index >= 0: dset=dset.isel( tiles=time_index, drop=True )
 		merged: xa.Dataset = merge_batch( [ dset ], self.constant_data(vres) )
 		return merged
 
@@ -88,7 +88,7 @@ class DataLoader(object):
 		sizes.pop('datetime',None)
 		darray: xa.DataArray = dataset_to_stacked(dset, sizes=sizes, preserved_dims=tuple(sizes.keys()))
 		darray.attrs['channels'] = channels
-		if self.c['t'] not in darray.dims: aux_dims.remove( "time" )
+		if self.c['t'] not in darray.dims: aux_dims.remove( "tiles" )
 		return darray.transpose( *aux_dims )
 
 	def interp_axis(self, dvar: xa.DataArray, coords: Dict[str, Any], axis: str):
@@ -125,11 +125,11 @@ class DataLoader(object):
 
 	def upscale(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> Dict[str, List[xa.DataArray]]:
 		vhires = self.process_attrs( variable, global_attrs )
-		if isconst and ("time" in variable.dims):
-			vhires = vhires.isel(time=0, drop=True)
-		if 'time' in vhires.dims:
+		if isconst and ("tiles" in variable.dims):
+			vhires = vhires.isel(tiles=0, drop=True)
+		if 'tiles' in vhires.dims:
 			lgm().log( f" @@Resample {variable.name}{variable.dims}: shape={variable.shape}, tstep={self.tstep}")
-			resampled: DataArrayResample = vhires.resample( dict(time=self.tstep), offset='0h' )
+			resampled: DataArrayResample = vhires.resample( dict(tiles=self.tstep), offset='0h' )
 			vhires: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		redop = np.mean if qtype == QType.Intensive else np.sum
 		vlores: xa.DataArray = vhires
@@ -160,8 +160,8 @@ class DataLoader(object):
 		cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
 		print( f"Subsample input: cmap={cmap}, vdims={variable.dims}, vshape={variable.shape}")
 		variable: xa.DataArray = variable.rename(**cmap)
-		if isconst and ("time" in variable.dims):
-			variable = variable.isel(time=0, drop=True)
+		if isconst and ("tiles" in variable.dims):
+			variable = variable.isel(tiles=0, drop=True)
 		sscoords: Dict[str, Dict[str, np.ndarray]] = self.subsample_coords(variable)
 		for vres, vcoord in sscoords.items():
 			svars = ssvars.setdefault(vres, [])
@@ -175,7 +175,7 @@ class DataLoader(object):
 		varray =   varray.interp( y=vcoord['y'], assume_sorted=True,  method=self.interp_method ) if 'y' in vcoord else varray
 		varray =   varray.interp( z=vcoord['z'], assume_sorted=False, method=self.interp_method ) if 'z' in vcoord else varray
 		if 'time' in varray.dims:
-			resampled: DataArrayResample = varray.resample(time=self.tstep)
+			resampled: DataArrayResample = varray.resample(tiles=self.tstep)
 			varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
 		varray.attrs.update(global_attrs)
 		varray.attrs.update(varray.attrs)

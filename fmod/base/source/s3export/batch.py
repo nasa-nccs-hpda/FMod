@@ -149,18 +149,18 @@ class S3ExportDataLoader(SRDataLoader):
 	def load_timeslice( self, idx: int, origin: CoordIdx, **kwargs ) -> xa.DataArray:
 		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, **kwargs ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channels" )
-		result = result.expand_dims(axis=0, dim=dict(time=[tcoord(**kwargs)]))
+		result = result.expand_dims(axis=0, dim=dict(tiles=[tcoord(**kwargs)]))
 		return result
 
 	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, date=date ) for idx, date in enumerate( datelist( date_range ) ) ]
-		result = xa.concat(timeslices, "time")
+		result = xa.concat(timeslices, "tiles")
 		lgm().log( f" ** load-batch [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
 		return result
 
 	def load_index_batch( self, origin: CoordIdx, index_range: Tuple[int,int] ) -> xa.DataArray:
 		timeslices = [ self.load_timeslice( idx, origin, index=idx ) for idx in range( *index_range ) ]
-		result = xa.concat(timeslices, "time")
+		result = xa.concat(timeslices, "tiles")
 		lgm().log( f" ** load-batch [{index_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
 		return result
 

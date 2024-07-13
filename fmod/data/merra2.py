@@ -110,14 +110,14 @@ class MERRA2Dataset(BaseDataset):
         # that's available as input to the forecast, with all following timesteps
         # forming the target period which needs to be predicted.
         # This means the time coordinates are now forecast lead times.
-        time: xa.DataArray = dataset.coords["time"]
-        dataset = dataset.assign_coords(time=time + target_duration - time[-1])
-        lgm().debug(f"extract_input_target_times: initial input-times={dataset.coords['time'].values.tolist()}")
-        targets: xa.Dataset = dataset.sel({"time": target_lead_times})
+        time: xa.DataArray = dataset.coords["tiles"]
+        dataset = dataset.assign_coords(tiles=time + target_duration - time[-1])
+        lgm().debug(f"extract_input_target_times: initial input-times={dataset.coords['tiles'].values.tolist()}")
+        targets: xa.Dataset = dataset.sel({"tiles": target_lead_times})
         zero_index = -1-self.train_steps[-1]
         input_bounds = [ zero_index-(self.nsteps_input-1), (zero_index+1 if zero_index<-2 else None) ]
-        inputs: xa.Dataset = dataset.isel( {"time": slice(*input_bounds) } )
-        lgm().debug(f" --> Input bounds={input_bounds}, input-sizes={inputs.sizes}, final input-times={inputs.coords['time'].values.tolist()}")
+        inputs: xa.Dataset = dataset.isel( {"tiles": slice(*input_bounds) } )
+        lgm().debug(f" --> Input bounds={input_bounds}, input-sizes={inputs.sizes}, final input-times={inputs.coords['tiles'].values.tolist()}")
         return inputs, targets
 
     def _process_target_lead_times_and_get_duration( self ) -> TimedeltaLike:
@@ -134,7 +134,7 @@ class MERRA2Dataset(BaseDataset):
         nptime: List[np.datetime64] = idataset.coords['time'].values.tolist()
         dvars = {}
         for vname, varray in idataset.data_vars.items():
-            missing_batch = ("time" in varray.dims) and ("batch" not in varray.dims)
+            missing_batch = ("tiles" in varray.dims) and ("batch" not in varray.dims)
             dvars[vname] = varray.expand_dims("batch") if missing_batch else varray
         dataset = xa.Dataset(dvars, coords=idataset.coords, attrs=idataset.attrs)
         inputs, targets = self.extract_input_target_times(dataset)
@@ -158,7 +158,7 @@ class MERRA2Dataset(BaseDataset):
 
         if self.load_base:
             base_inputs: xa.Dataset = inputs[list(target_variables)]
-            base_input_array: xa.DataArray = ds2array( self.normalize(base_inputs.isel(time=-1)) )
+            base_input_array: xa.DataArray = ds2array( self.normalize(base_inputs.isel(tiles=-1)) )
             lgm().debug(f" >> merged base_input array: {base_input_array.dims}: {base_input_array.shape}, channels={base_input_array.attrs['channels']}")
             results.append(base_input_array)
 

@@ -47,9 +47,9 @@ class StatsAccumulator:
         return self._entries.keys()
 
     def add_entry(self, varname: str, mvar: xa.DataArray):
-        istemporal = "time" in mvar.dims
+        istemporal = "tiles" in mvar.dims
         first_entry = varname not in self._entries
-        dims = ['time', 'y', 'x'] if istemporal else ['y', 'x']
+        dims = ['tiles', 'y', 'x'] if istemporal else ['y', 'x']
         weight =  mvar.shape[0] if istemporal else 1
         if istemporal or first_entry:
             mean: xa.DataArray = mvar.mean(dim=dims, skipna=True, keep_attrs=True)
@@ -58,7 +58,7 @@ class StatsAccumulator:
             entry.add( "mean", mean, weight )
             entry.add("std",  std, weight )
             if istemporal:
-                mvar_diff: xa.DataArray = mvar.diff("time")
+                mvar_diff: xa.DataArray = mvar.diff("tiles")
                 weight = mvar.shape[0]
                 mean_diff: xa.DataArray = mvar_diff.mean( dim=dims, skipna=True, keep_attrs=True )
                 std_diff: xa.DataArray  = mvar_diff.std(  dim=dims, skipna=True, keep_attrs=True )

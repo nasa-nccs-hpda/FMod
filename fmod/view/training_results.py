@@ -20,7 +20,7 @@ def rms( dvar: xa.DataArray, **kwargs ) -> float:
 	return np.sqrt( np.mean( np.square( varray ) ) )
 
 def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
-	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
+	rms_error = np.array( [ rms(diff, tiles=iT, **kw) for iT in range(diff.shape[0]) ] )
 	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
 
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
@@ -48,7 +48,7 @@ def mplplot_error( target: xa.Dataset, forecast: xa.Dataset, vnames: List[str], 
 	for iv, vname in enumerate(vnames):
 		tvar: xa.DataArray = normalize(target,vname,**kwargs)
 		fvar: xa.DataArray = normalize(forecast,vname,**kwargs)
-		error: xa.DataArray = rmse(tvar-fvar).assign_coords(time=ftime).rename( time = "time (days)")
+		error: xa.DataArray = rmse(tvar-fvar).assign_coords(tiles=ftime).rename( time = "time (days)")
 		error.plot.line( ax=ax, color=colors[iv], label=vname )
 
 	ax.set_title(f"  Forecast Error  ")

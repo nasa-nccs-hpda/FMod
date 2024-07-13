@@ -25,7 +25,7 @@ def tensor( dvar: xa.DataArray ) -> torch.Tensor:
 	return torch.from_numpy( dvar.values.squeeze() )
 
 def rmse( diff: xa.DataArray, **kw ) -> xa.DataArray:
-	rms_error = np.array( [ rms(diff, time=iT, **kw) for iT in range(diff.shape[0]) ] )
+	rms_error = np.array( [ rms(diff, tiles=iT, **kw) for iT in range(diff.shape[0]) ] )
 	return xa.DataArray( rms_error, dims=['time'], coords={'time': diff.time} )
 
 def cscale( pvar: xa.DataArray, stretch: float = 2.0 ) -> Tuple[float,float]:
@@ -102,7 +102,7 @@ class ResultPlot(Plot):
 		if prediction.ndim == 3:
 			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
 		else:
-			# coords: Dict[str, DataArrayCoordinates] = dict(time=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
+			# coords: Dict[str, DataArrayCoordinates] = dict(tiles=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
 			data: np.ndarray = upsample( self.trainer.input[self.tset] ).cpu().detach().numpy()
 			upsampled = xa.DataArray(data, dims=['time', 'channels', 'y', 'x'] ) # , coords=coords)
 
@@ -203,7 +203,7 @@ class ResultPlot(Plot):
 		if 'time' in image.dims:
 			batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
-			image = image.isel(time=batch_time_index).squeeze(drop=True)
+			image = image.isel(tiles=batch_time_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
 		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
 		cs = { cn:cv.shape for cn,cv in coords.items()}

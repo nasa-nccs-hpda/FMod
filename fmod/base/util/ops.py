@@ -85,7 +85,7 @@ def format_float_list(nval: List[float]) -> List[str]:
 def print_data_column( target: xa.Dataset, vname: str, **kwargs):
 	ptype = kwargs.get("type", "")
 	ttest_array: xa.DataArray = target.data_vars[vname]
-	iargs = dict( lon=kwargs.get('lon',100), lat=kwargs.get('lat',100), time=kwargs.get('time',0))
+	iargs = dict( lon=kwargs.get('lon',100), lat=kwargs.get('lat',100), tiles=kwargs.get('tiles',0))
 	tdata = ttest_array.isel(**iargs).squeeze().values.tolist()
 	print(f" ** {ptype} data column=> {vname}{ttest_array.dims}{ttest_array.shape}: {format_float_list(tdata)}")
 

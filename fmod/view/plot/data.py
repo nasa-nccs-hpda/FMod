@@ -68,7 +68,7 @@ class DataPlot(object):
 			ax = self.axs[ icol ]
 			dset: BatchDataset = self.get_dset(icol)
 			batch: xa.DataArray = dset.get_batch_array( self.origin, start_time=self.start_date )
-			image: xa.DataArray = norm( batch.isel( channels=self.channel_index, time=self.time_index ).squeeze() )
+			image: xa.DataArray = norm( batch.isel( channels=self.channel_index, tiles=self.time_index ).squeeze() )
 			if icol in self.ims:
 				self.ims[icol].set_data(image.values)
 			else:

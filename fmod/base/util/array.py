@@ -42,7 +42,7 @@ def torch_interp_mode( downsample: bool ):
     elif mode == "cubic": return "bicubic"
     return mode
 def get_timedeltas( dset: xa.Dataset ):
-    return format_timedeltas( dset.coords["time"] )
+    return format_timedeltas( dset.coords["tiles"] )
 Tensor = torch.Tensor
 
 def d2xa( dvals: Dict[str,float] ) -> xa.Dataset:
@@ -64,7 +64,7 @@ def ds2array( dset: xa.Dataset, **kwargs ) -> xa.DataArray:
                 sizes[ cname ] = coord.size
     darray: xa.DataArray = dataset_to_stacked( dset, sizes=sizes, preserved_dims=tuple(sizes.keys()) )
     darray.attrs['channels'] = channels
-    return darray.transpose( "time", "channels", coords['y'], coords['x'] )
+    return darray.transpose( "tiles", "channels", coords['y'], coords['x'] )
 
 def array2tensor( darray: xa.DataArray ) -> Tensor:
     array_data: np.ndarray = np.ravel(darray.values).reshape( darray.shape )

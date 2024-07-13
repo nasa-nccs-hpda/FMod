@@ -258,13 +258,13 @@ class MERRA2DataProcessor:
     def add_derived_vars(cls, data: xa.Dataset) -> None:
     #    if 'datetime' not in data.coords:
      #       data.coords['datetime'] = data.coords['time'].expand_dims("batch")
-        seconds_since_epoch = (data.coords["time"].data.astype("datetime64[s]").astype(np.int64))
+        seconds_since_epoch = (data.coords["tiles"].data.astype("datetime64[s]").astype(np.int64))
         batch_dim = ("batch",) if "batch" in data.dims else ()
         year_progress = cls.get_year_progress(seconds_since_epoch)
-        data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("time",), progress=year_progress))
+        data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("tiles",), progress=year_progress))
         longitude_coord = data.coords["x"]
         day_progress = cls.get_day_progress(seconds_since_epoch, longitude_coord.data)
-        data.update(cls.featurize_progress(name=cfg().preprocess.day_progress, dims=batch_dim + ("time",) + longitude_coord.dims, progress=day_progress))
+        data.update(cls.featurize_progress(name=cfg().preprocess.day_progress, dims=batch_dim + ("tiles",) + longitude_coord.dims, progress=day_progress))
 
     @classmethod
     def get_varnames(cls, dset_file: str) -> List[str]:

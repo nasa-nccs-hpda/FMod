@@ -82,9 +82,9 @@ class StatsAccumulator:
         return self._entries.keys()
 
     def add_entry(self, varname: str, mvar: xa.DataArray):
-        istemporal = "time" in mvar.dims
+        istemporal = "tiles" in mvar.dims
         first_entry = varname not in self._entries
-        dims = ['time', 'y', 'x'] if istemporal else ['y', 'x']
+        dims = ['tiles', 'y', 'x'] if istemporal else ['y', 'x']
         weight =  mvar.shape[0] if istemporal else 1
         if istemporal or first_entry:
             mean: xa.DataArray = mvar.mean(dim=dims, skipna=True, keep_attrs=True)
@@ -93,7 +93,7 @@ class StatsAccumulator:
             entry.add( "mean", mean, weight )
             entry.add("std",  std, weight )
             if istemporal:
-                mvar_diff: xa.DataArray = mvar.diff("time")
+                mvar_diff: xa.DataArray = mvar.diff("tiles")
                 weight = mvar.shape[0]
                 mean_diff: xa.DataArray = mvar_diff.mean( dim=dims, skipna=True, keep_attrs=True )
                 std_diff: xa.DataArray  = mvar_diff.std(  dim=dims, skipna=True, keep_attrs=True )
@@ -252,10 +252,10 @@ class MERRA2DataProcessor:
         seconds_since_epoch = (data.coords["datetime"].data.astype("datetime64[s]").astype(np.int64))
         batch_dim = ("batch",) if "batch" in data.dims else ()
         year_progress = cls.get_year_progress(seconds_since_epoch)
-        data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("time",), progress=year_progress))
+        data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("tiles",), progress=year_progress))
         longitude_coord = data.coords["x"]
         day_progress = cls.get_day_progress(seconds_since_epoch, longitude_coord.data)
-        data.update(cls.featurize_progress(name=cfg().preprocess.day_progress, dims=batch_dim + ("time",) + longitude_coord.dims, progress=day_progress))
+        data.update(cls.featurize_progress(name=cfg().preprocess.day_progress, dims=batch_dim + ("tiles",) + longitude_coord.dims, progress=day_progress))
 
     @classmethod
     def get_varnames(cls, dset_file: str) -> List[str]:
@@ -303,15 +303,15 @@ class MERRA2DataProcessor:
     def subsample(self, variable: xa.DataArray, global_attrs: Dict, qtype: QType, isconst: bool) -> xa.DataArray:
         cmap: Dict[str, str] = {cn0: cn1 for (cn0, cn1) in self.dmap.items() if cn0 in list(variable.coords.keys())}
         varray: xa.DataArray = variable.rename(**cmap)
-        if isconst and ("time" in varray.dims):
-            varray = varray.isel( time=0, drop=True )
+        if isconst and ("tiles" in varray.dims):
+            varray = varray.isel( tiles=0, drop=True )
         scoords: Dict[str, np.ndarray] = self.subsample_coords(varray)
         lgm().log(f" **** subsample {variable.name}, dims={varray.dims}, shape={varray.shape}, new sizes: { {cn:cv.size for cn,cv in scoords.items()} }")
         varray = varray.interp( x=scoords['x'], y=scoords['y'], assume_sorted=True)
         if 'z' in scoords:
             varray = varray.interp( z=scoords['z'], assume_sorted=False )
         if 'time' in varray.dims:
-            resampled: DataArrayResample = varray.resample(time=self.tstep)
+            resampled: DataArrayResample = varray.resample(tiles=self.tstep)
             varray: xa.DataArray = resampled.mean() if qtype == QType.Intensive else resampled.sum()
         varray.attrs.update(global_attrs)
         varray.attrs.update(varray.attrs)
