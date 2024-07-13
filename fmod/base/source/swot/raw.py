@@ -18,6 +18,9 @@ import numpy as np
 def filepath() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
 
+def template() -> str:
+	return f"{cfg().dataset.dataset_root}/{cfg().dataset.template}"
+
 class SWOTRawDataLoader(SRRawDataLoader):
 
 	def __init__(self, task_config: DictConfig, **kwargs ):
@@ -31,20 +34,20 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
 		cfg().dataset['varname'] = list(self.varnames.keys())[0]
-		files = [ fpath.split("/")[-1] for fpath in  glob( filepath('raw') ) ]
-		template = filepath('raw').replace("*",'{}').split("/")[-1]
+		files = [ fpath.split("/")[-1] for fpath in  glob( filepath() ) ]
+		template = filepath().replace("*",'{}').split("/")[-1]
 		indices = [ int(parse(template,f)[0]) for f in files ]
 		return indices
 
 	def load_file( self,  varname: str, time_index: int ) -> np.ndarray:
 		for cparm, value in dict(varname=varname, index=time_index).items():
 			cfg().dataset[cparm] = value
-		var_template: np.ndarray = np.fromfile( filepath('template'), '>f4' )
-		var_data: np.ndarray = np.fromfile( filepath('raw'), '>f4' )
+		var_template: np.ndarray = np.fromfile(template(), '>f4')
+		var_data: np.ndarray = np.fromfile(filepath(), '>f4')
 		mask = (var_template != 0)
-		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, file={filepath('raw')}")
-		print(f"   >>> data file={filepath('raw')}")
-		print(f"   >>> template file={filepath('template')}")
+		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, file={filepath()}")
+		print(f"   >>> data file={filepath()}")
+		print(f"   >>> template file={template()}")
 		var_template[mask] = var_data
 		var_template[~mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)

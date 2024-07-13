@@ -253,14 +253,14 @@ class ModelTrainer(object):
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
 
-			ctiles = TileIterator(TSet.Train)
+			ctiles = TileIterator()
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 
 			batch_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
 			binput, boutput, btarget, ibatch = None, None, None, 0
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
 				for ctile in iter(ctiles):
-					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime,TSet.Train)
+					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
@@ -325,16 +325,16 @@ class ModelTrainer(object):
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
 		proc_start = time.time()
-		ctiles = TileIterator(TSet.Train)
+		ctiles = TileIterator()
 		self.init_data_timestamps()
-		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index}, ctimes={ctimes} ##### ")
+		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index} ##### ")
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
 				for itile, ctile in enumerate(iter(ctiles)):
 					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
-					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)
+					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
 					if batch_data is None: break
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )

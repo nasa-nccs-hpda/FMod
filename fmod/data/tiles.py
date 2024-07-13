@@ -5,12 +5,12 @@ from fmod.base.util.config import cfg
 
 class TileIterator(object):
 
-    def __init__(self, tset: TSet = TSet.Train, **kwargs ):
+    def __init__(self, **kwargs ):
         self.grid = TileGrid()
         self.randomize: bool = kwargs.get('randomize', False)
         self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
         self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
-        self.batch_size: int = cfg().task.batch_size[tset.value]
+        self.batch_size: int = cfg().task.batch_size
         self.ntiles = kwargs.get('ntiles', 0)
         self.index: int = 0
 
