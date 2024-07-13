@@ -52,7 +52,7 @@ def mse( data: xarray.DataArray, target: xarray.DataArray, dims: List[str] ) -> 
 	return np.sqrt( sdiff.mean(dim=dims) )
 
 def batch( members: List[xarray.DataArray] ) -> xarray.DataArray:
-	return xarray.concat( members, dim="batch" )
+	return xarray.concat( members, dim="tiles" )
 
 def npa( ts: TensorOrTensors ) -> np.ndarray:
 	t = ts if type(ts) == Tensor else ts[-1]

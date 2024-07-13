@@ -259,7 +259,7 @@ class MERRA2DataProcessor:
     #    if 'datetime' not in data.coords:
      #       data.coords['datetime'] = data.coords['time'].expand_dims("batch")
         seconds_since_epoch = (data.coords["tiles"].data.astype("datetime64[s]").astype(np.int64))
-        batch_dim = ("batch",) if "batch" in data.dims else ()
+        batch_dim = ("tiles",) if "tiles" in data.dims else ()
         year_progress = cls.get_year_progress(seconds_since_epoch)
         data.update(cls.featurize_progress(name=cfg().preprocess.year_progress, dims=batch_dim + ("tiles",), progress=year_progress))
         longitude_coord = data.coords["x"]

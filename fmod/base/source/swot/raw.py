@@ -67,7 +67,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if tile_range[0] < ntiles:
 			slice_end = min(tile_range[1], ntiles)
 			lgm().log( f"select_batch[{self.time_index}]: tile_range= {(tile_range[0],slice_end)}")
-			return self.timeslice.isel( batch=slice(tile_range[0],slice_end) )
+			return self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()

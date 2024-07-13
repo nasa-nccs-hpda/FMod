@@ -144,7 +144,7 @@ def restore_leading_axes(grid_xarray: xarray.DataArray) -> xarray.DataArray:
 
     input_dims = list(grid_xarray.dims)
     output_dims = list(input_dims)
-    for leading_key in ["level", "tiles", "batch"]:  # reverse order for insert
+    for leading_key in ["level", "tiles"]:  # reverse order for insert
         if leading_key in input_dims:
             output_dims.remove(leading_key)
             output_dims.insert(0, leading_key)
@@ -575,7 +575,7 @@ def get_bipartite_relative_position_in_receiver_local_coordinates(
     return sender_pos_in_in_rotated_space - receiver_pos_in_rotated_space
 
 
-def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[str, int], preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"), ) -> xarray.Variable:
+def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[str, int], preserved_dims: Tuple[str, ...] = ("tiles", "lat", "lon"), ) -> xarray.Variable:
     """Converts an xarray.Variable to preserved_dims + ("channels",).
 
 	Any dimensions other than those included in preserved_dims get stacked into a
@@ -606,7 +606,7 @@ def variable_to_stacked( vname: str,  variable: xarray.Variable, sizes: Mapping[
     return result
 
 
-def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon") ) -> xarray.DataArray:
+def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, int]] = None, preserved_dims: Tuple[str, ...] = ("tiles", "lat", "lon") ) -> xarray.DataArray:
     """Converts an xarray.Dataset to a single stacked array.
 
 	This takes each consistuent data_var, converts it into BHWC layout
@@ -638,7 +638,7 @@ def dataset_to_stacked( dataset: xarray.Dataset, sizes: Optional[Mapping[str, in
 def stacked_to_dataset(
     stacked_array: xarray.Variable,
     template_dataset: xarray.Dataset,
-    preserved_dims: Tuple[str, ...] = ("batch", "lat", "lon"),
+    preserved_dims: Tuple[str, ...] = ("tiles", "lat", "lon"),
 ) -> xarray.Dataset:
     """The inverse of dataset_to_stacked.
 

@@ -248,7 +248,7 @@ class MERRA2DataProcessor:
     @classmethod
     def add_derived_vars(cls, data: xa.Dataset) -> None:
         if 'datetime' not in data.coords:
-            data.coords['datetime'] = data.coords['time'].expand_dims("batch")
+            data.coords['datetime'] = data.coords['tiles'].expand_dims("batch")
         seconds_since_epoch = (data.coords["datetime"].data.astype("datetime64[s]").astype(np.int64))
         batch_dim = ("batch",) if "batch" in data.dims else ()
         year_progress = cls.get_year_progress(seconds_since_epoch)
