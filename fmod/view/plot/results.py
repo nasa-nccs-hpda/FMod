@@ -50,7 +50,7 @@ class ResultPlot(Plot):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
 		super(ResultPlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
-		self.tile_grid: TileSelectionGrid = TileSelectionGrid(self.tset)
+		self.tile_grid: TileSelectionGrid = TileSelectionGrid()
 		self.tile_grid.create_tile_recs(**kwargs)
 		self.channelx: int = kwargs.get('channel', 0)
 		self.time_index: int = kwargs.get( 'time_id', 0 )

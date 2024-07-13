@@ -29,8 +29,8 @@ def onpick_test(event):
 
 class TileSelectionGrid(object):
 
-	def __init__(self, lcontext: TSet):
-		self.tile_grid: TileGrid = TileGrid(lcontext)
+	def __init__(self):
+		self.tile_grid: TileGrid = TileGrid()
 		self.tiles: Dict[Tuple[int, int], Rectangle] = None
 		self._selection_callback = default_selection_callabck
 
