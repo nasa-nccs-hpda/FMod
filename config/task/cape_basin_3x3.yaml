@@ -12,8 +12,8 @@ ttsplit: { train: 0.9, valid: 0.05, test: 0.05 }
 nepochs: 30
 lr: 1e-4
 
-origin: { train: { x: 0, y: 0 }, valid: { x: 0, y: 0 }, test: { x: 0, y: 0 } }
-tile_grid: { train: { x: 3, y: 3 }, valid: { x: 3, y: 3 }, test: { x: 3, y: 3 } }
+origin:  { x: 0, y: 0 }
+tile_grid: { x: 3, y: 3 }
 tile_size: { x: 16, y: 16 }
 batch_domain:  'time'
 conform_to_grid: false

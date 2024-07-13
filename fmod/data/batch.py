@@ -72,14 +72,13 @@ class MetaData(DatapipeMetaData):
 
 class BatchDataset(object):
 
-    def __init__(self, task_config: DictConfig, tset: TSet, **kwargs):
-        self.tset: TSet = tset
+    def __init__(self, task_config: DictConfig, **kwargs):
         self.srtype = 'target'
         self.task_config: DictConfig = task_config
-        self.tile_grid = TileGrid(tset)
+        self.tile_grid = TileGrid()
         self.load_targets: bool = kwargs.pop('load_targets', True)
         self.load_base: bool = kwargs.pop('load_base', False)
-        self.train_dates: List[datetime] = batches_date_range(task_config,tset)
+        self.train_dates: List[datetime] = batches_date_range(task_config)
         self.days_per_batch: int = task_config.get('days_per_batch',0)
         self.hours_per_step: int = task_config.get('hours_per_step',0)
         self.batch_size: int = task_config.batch_size[self.tset.value]
@@ -93,7 +92,7 @@ class BatchDataset(object):
         self.tile_size: Dict[str, int] = self.scale_coords(task_config.tile_size)
         self.batch_domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
 
-        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, tset, **kwargs )
+        self.srbatch: SRBatch = SRBatch( task_config, self.tile_size, **kwargs )
         self._norms: Dict[str, xa.Dataset] = None
         self._mu: xa.Dataset  = None
         self._sd: xa.Dataset  = None
@@ -135,7 +134,7 @@ class BatchDataset(object):
 
     @property
     def ntbatches(self):
-        return  nbatches( self.task_config, self.tset )
+        return  nbatches( self.task_config )
 
     def __len__(self):
         return self.steps_per_batch
@@ -189,7 +188,7 @@ class BatchDataset(object):
                 for dindex in range(0, nidx, self.batch_size):
                     if (target_coord < 0) or self.in_batch_idx(target_coord,dindex):
                         start_coords.append( dindex )
-                lgm().log( f"  ------------- {self.tset.value} dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}, start_coords={start_coords}  ------------- ")
+                lgm().log( f"  ------------- dataset size = {nidx}, target_coord={target_coord}, batch_size={self.batch_size}, start_coords={start_coords}  ------------- ")
         elif self.batch_domain == batchDomain.Tiles:
             start_coords = self.srbatch.get_batch_time_indices()
         random.shuffle(start_coords)

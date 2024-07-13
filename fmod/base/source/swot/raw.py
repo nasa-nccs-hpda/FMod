@@ -15,8 +15,8 @@ from glob import glob
 from parse import parse
 import numpy as np
 
-def filepath(ftype: str) -> str:
-	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files[ftype]}"
+def filepath() -> str:
+	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
 
 class SWOTRawDataLoader(SRRawDataLoader):
 
@@ -36,8 +36,8 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		indices = [ int(parse(template,f)[0]) for f in files ]
 		return indices
 
-	def load_file( self,  varname: str, time_index: int, tset: TSet ) -> np.ndarray:
-		for cparm, value in dict(varname=varname, index=time_index, tset=tset.value).items():
+	def load_file( self,  varname: str, time_index: int ) -> np.ndarray:
+		for cparm, value in dict(varname=varname, index=time_index).items():
 			cfg().dataset[cparm] = value
 		var_template: np.ndarray = np.fromfile( filepath('template'), '>f4' )
 		var_data: np.ndarray = np.fromfile( filepath('raw'), '>f4' )
@@ -52,9 +52,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		lgm().log( f"load_file result = {result.shape}")
 		return result
 
-	def load_batch( self, tile_range: Tuple[int,int], time_index: int, tset: TSet  ) -> Optional[xa.DataArray]:
+	def load_batch( self, tile_range: Tuple[int,int], time_index: int  ) -> Optional[xa.DataArray]:
 		if time_index != self.time_index:
-			vardata: List[np.ndarray] = [ self.load_file( varname, time_index, tset ) for varname in self.varnames ]
+			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
 			self.time_index = time_index
 		return self.select_batch( tile_range )

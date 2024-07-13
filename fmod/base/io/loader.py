@@ -38,14 +38,14 @@ class batchDomain(Enum):
 		if sval == "time": return cls.Time
 		if sval == "tiles": return cls.Tiles
 
-def nbatches( task_config, tset: TSet ) -> int:
+def nbatches( task_config ) -> int:
 	nbs: Dict[str,int] = task_config.get('nbatches', None)
 	if nbs is not None: return nbs[tset.value]
 	return 0
 
-def batches_date_range( task_config, tset: TSet )-> List[datetime]:
+def batches_date_range( task_config )-> List[datetime]:
 	days_per_batch: int = task_config.get( 'days_per_batch', 0 )
-	return date_list( start_date( task_config ), days_per_batch * nbatches( task_config, tset ) )
+	return date_list( start_date( task_config ), days_per_batch * nbatches( task_config ) )
 
 def path_suffix(vres: str="high") -> str:
 	ncformat: ncFormat = ncFormat(cfg().task.nc_format)

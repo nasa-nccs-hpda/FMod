@@ -78,7 +78,7 @@ class S3ExportDataLoader(SRDataLoader):
 		self.dindxs.append(dindx)
 		dset_params = dict( index=f"{dindx:04}", varname=varname, tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		subpath: str = cfg().dataset.dataset_files['raw']
+		subpath: str = cfg().dataset.dataset_files
 		fpath = f"{root}/{subpath}"
 		return fpath, dindx
 
@@ -87,7 +87,7 @@ class S3ExportDataLoader(SRDataLoader):
 		usf: int = math.prod(cfg().model.downscale_factors)
 		dset_params = dict( varname=varname, index=f"*", tset=self.tset.value, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
-		subpath: str = cfg().dataset.dataset_files['raw']
+		subpath: str = cfg().dataset.dataset_files
 		fglob = f"{root}/{subpath}"
 		return fglob
 

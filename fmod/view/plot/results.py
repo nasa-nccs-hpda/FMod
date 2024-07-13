@@ -81,7 +81,7 @@ class ResultPlot(Plot):
 
 	@property
 	def sample_input(self) -> xa.DataArray:
-		return self.trainer.get_sample_input(self.tset)
+		return self.trainer.get_sample_input()
 
 	@property
 	def icoords(self) -> DataArrayCoordinates:
@@ -96,7 +96,7 @@ class ResultPlot(Plot):
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['time','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['time','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['time','channels','y','x'] )
-		domain: xa.DataArray = self.trainer.get_dataset(self.tset).load_global_timeslice(index=0)
+		domain: xa.DataArray = self.trainer.get_dataset().load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 
 		if prediction.ndim == 3:

@@ -31,6 +31,7 @@ def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
 	for tset, tset_fraction in ttsplit.items():
 		end = start + int(tset_fraction * nt)
 		result[TSet(tset)] = times[start:end]
+		print( f"Batch times[{tset}]: {result[TSet(tset)]}")
 		start = end
 	return result
 
@@ -129,14 +130,14 @@ class ModelTrainer(object):
 	def model_name(self):
 		return self.model_manager.model_name
 
-	def get_dataset(self, tset: TSet)-> BatchDataset:
-		return self.model_manager.get_dataset( tset )
+	def get_dataset(self)-> BatchDataset:
+		return self.model_manager.get_dataset()
 
-	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
-		return self.model_manager.get_sample_input( tset, targets_only )
+	def get_sample_input(self, targets_only: bool = True) -> xa.DataArray:
+		return self.model_manager.get_sample_input(targets_only)
 
-	def get_sample_target(self, tset: TSet) -> xa.DataArray:
-		return self.model_manager.get_sample_target(tset)
+	def get_sample_target(self) -> xa.DataArray:
+		return self.model_manager.get_sample_target()
 
 
 	# def configure_grid(self, tset: TSet ):
@@ -149,7 +150,7 @@ class ModelTrainer(object):
 
 	def conform_to_data_grid(self, **kwargs):
 		if cfg().task.conform_to_grid:
-			data: xarray.DataArray = self.get_dataset(TSet.Train).get_current_batch_array()
+			data: xarray.DataArray = self.get_dataset().get_current_batch_array()
 			data_origin: Dict[str, float] = get_data_coords(data, cfg().task['origin'])
 			dc = cdelta(data)
 			lgm().log(f"  ** snap_origin_to_data_grid: {cfg().task['origin']} -> {data_origin}", **kwargs)
@@ -199,9 +200,9 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss, mloss
 
-	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType, tset: TSet,  **kwargs  ) -> Optional[xarray.DataArray]:
+	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
-		btarget:  Optional[xarray.DataArray]  = self.get_dataset(tset).get_batch_array(ctile,ctime,**kwargs)
+		btarget:  Optional[xarray.DataArray]  = self.get_dataset().get_batch_array(ctile,ctime,**kwargs)
 		if btarget is not None:
 			if shuffle:
 				batch_perm: Tensor = torch.randperm(btarget.shape[0])
@@ -246,7 +247,7 @@ class ModelTrainer(object):
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
-		self.init_data_timestamps(TSet.Train)
+		self.init_data_timestamps()
 		for epoch in range(epoch0+1,nepochs+1):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
@@ -304,10 +305,10 @@ class ModelTrainer(object):
 			self.results_accum.flush()
 		return eval_losses
 
-	def init_data_timestamps(self, tset: TSet):
+	def init_data_timestamps(self):
 		if len(self.data_timestamps) == 0:
-			ctimes: List[TimeType] = self.get_dataset(tset).get_batch_time_coords()
-			lgm().log( f"init_data_timestamps[{tset.value}]: {len(ctimes)} times", display=True)
+			ctimes: List[TimeType] = self.get_dataset().get_batch_time_coords()
+			lgm().log( f"init_data_timestamps: {len(ctimes)} times", display=True)
 			self.data_timestamps = ttsplit_times(ctimes)
 
 
@@ -322,17 +323,15 @@ class ModelTrainer(object):
 		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
-		self.init_data_timestamps(tset)
-
-
+		self.init_data_timestamps()
 		proc_start = time.time()
 		ctiles = TileIterator(TSet.Train)
-		ctimes: List[TimeType] = self.get_dataset(tset).get_batch_time_coords( self.time_index )
+		self.init_data_timestamps()
 		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index}, ctimes={ctimes} ##### ")
 
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
-		for itime, ctime in enumerate(ctimes):
+		for itime, ctime in enumerate(self.data_timestamps[tset]):
 				for itile, ctile in enumerate(iter(ctiles)):
 					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, tset)

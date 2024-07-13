@@ -47,39 +47,41 @@ class SRModels:
 		self._sample_input = None
 		self._sample_target = None
 		self.target_variables = cfg().task.target_variables
-		self.datasets: Dict[TSet,BatchDataset] = {}
-		self.cids: List[int] = self.get_channel_idxs( self.target_variables, TSet.Train )
+		self._dataset: BatchDataset = None
+		self.cids: List[int] = self.get_channel_idxs( self.target_variables )
 		self.model_config = dict( nchannels_in = len(cfg().task.input_variables), nchannels_out = len(cfg().task.target_variables), device = device )
 		if cfg().model.get('use_temporal_features', False ):
 			self.model_config['temporal_features'] = get_temporal_features()
 
-	def sample_input( self, tset: TSet ) -> xa.DataArray:
+	def sample_input( self ) -> xa.DataArray:
 		if self._sample_input is None:
-			batch: xa.DataArray = self.sample_target( tset )
+			batch: xa.DataArray = self.sample_target( )
 			self._sample_input = xa_downsample( batch )
 		return self._sample_input
 
-	def sample_target( self, tset: TSet ) -> xa.DataArray:
+	def sample_target( self ) -> xa.DataArray:
 		if self._sample_target is None:
-			self._sample_target = self.get_batch_array( tset )
+			self._sample_target = self.get_batch_array()
 		return self._sample_target
 
-	def get_batch_array(self,  tset: TSet) -> xa.DataArray:
-		return self.get_dataset(tset).get_current_batch_array()
+	def get_batch_array(self) -> xa.DataArray:
+		return self.get_dataset().get_current_batch_array()
 
-	def get_dataset(self, tset: TSet) -> BatchDataset:
-		return self.datasets.setdefault( tset, BatchDataset(cfg().task,tset) )
+	def get_dataset(self) -> BatchDataset:
+		if self._dataset is None:
+			self._dataset = BatchDataset(cfg().task)
+		return self._dataset
 
-	def get_channel_idxs(self, channels: List[str], tset: TSet ) -> List[int]:
-		return self.get_dataset(tset).get_channel_idxs(channels)
+	def get_channel_idxs(self, channels: List[str] ) -> List[int]:
+		return self.get_dataset().get_channel_idxs(channels)
 
-	def get_sample_target(self, tset: TSet ) -> xa.DataArray:
-		result = self.sample_target(tset)
+	def get_sample_target(self ) -> xa.DataArray:
+		result = self.sample_target()
 	#	result = ( result.isel(channel=self.cids)) if (len(self.cids) < self.sample_target().sizes['channel']) else self.sample_target
 		return result
 
-	def get_sample_input(self, tset: TSet, targets_only: bool = True) -> xa.DataArray:
-		result: xa.DataArray = self.sample_input(tset)
+	def get_sample_input(self, targets_only=True ) -> xa.DataArray:
+		result: xa.DataArray = self.sample_input()
 		# if targets_only and (len(self.cids) < self.sample_input().sizes['channel']):
 		#	result =  self.sample_input().isel(channel=self.cids)
 		return result

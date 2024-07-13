@@ -33,7 +33,7 @@ class SRDataLoader(object):
 	def load_index_batch(self, ctile: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
-	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int, tset: TSet ) -> Optional[xa.DataArray]:
+	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int ) -> Optional[xa.DataArray]:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
 	def load_const_dataset(self, ctile: Dict[str,int] ):
