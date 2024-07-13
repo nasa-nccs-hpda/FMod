@@ -220,11 +220,10 @@ class FMBatch:
 
 class SRBatch:
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet, **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], **kwargs):
 		self.name = "target"
 		self.tile_size: Dict[str, int] = tile_size
-		self.tset: TSet = tset
-		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, tset, **kwargs )
+		self.data_loader: SRDataLoader = SRDataLoader.get_loader( task_config, tile_size, **kwargs )
 		self.current_batch: xa.DataArray = None
 		self.current_start_idx: Optional[Union[datetime,int]] = None
 		self.current_origin = None
@@ -262,7 +261,7 @@ class SRBatch:
 				darray: xa.DataArray = self.data_loader.load_temporal_batch( ctile, dates )
 				lgm().debug( f"load_batch[{ctime.strftime('%m/%d:%H/%Y')}]: {dates[0].strftime('%m/%d:%H/%Y')} -> {dates[1].strftime('%m/%d:%H/%Y')}, ndates={darray.sizes['time']}")
 			elif type(ctime) == int:
-				index_range: Tuple[int,int] = (ctime, ctime + self.batch_size[self.tset.value] )
+				index_range: Tuple[int,int] = (ctime, ctime + self.batch_size )
 				darray: xa.DataArray = self.data_loader.load_index_batch( ctile, index_range )
 				lgm().log(f"load_batch: {index_range[0]} -> {index_range[1]}, data{darray.dims} shape={darray.shape}, ctile={list(ctile.values())}")
 			else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(ctime)}")

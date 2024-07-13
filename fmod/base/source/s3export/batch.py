@@ -56,10 +56,9 @@ def tcoord( ** kwargs ) :
 
 class S3ExportDataLoader(SRDataLoader):
 
-	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet,  **kwargs):
+	def __init__(self, task_config: DictConfig, tile_size: Dict[str, int],  **kwargs):
 		SRDataLoader.__init__( self, task_config )
 		self.version = get_version( task_config )
-		self.tset: TSet = tset
 		self.coords_dataset: xa.Dataset = xa.open_dataset(coords_filepath(), **kwargs)
 		#		self.xyc: Dict[str,xa.DataArray] = { c: self.coords_dataset.data_vars[ self.task.coords[c] ] for c in ['x','y'] }
 		#		self.ijc: Dict[str,np.ndarray]   = { c: self.coords_dataset.coords['i'].values.astype(np.int64) for c in ['i','j'] }
@@ -76,7 +75,7 @@ class S3ExportDataLoader(SRDataLoader):
 		if date is not None:
 			dindx = dateindex(date,self.task)
 		self.dindxs.append(dindx)
-		dset_params = dict( index=f"{dindx:04}", varname=varname, tset=self.tset.value, usf=usf )
+		dset_params = dict( index=f"{dindx:04}", varname=varname, usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
 		subpath: str = cfg().dataset.dataset_files
 		fpath = f"{root}/{subpath}"
@@ -85,7 +84,7 @@ class S3ExportDataLoader(SRDataLoader):
 	def dataset_glob(self, varname: str) -> str:
 		root: str = cfg().dataset.dataset_root
 		usf: int = math.prod(cfg().model.downscale_factors)
-		dset_params = dict( varname=varname, index=f"*", tset=self.tset.value, usf=usf )
+		dset_params = dict( varname=varname, index=f"*", usf=usf )
 		for k,v in dset_params.items(): cfg().dataset[k] = v
 		subpath: str = cfg().dataset.dataset_files
 		fglob = f"{root}/{subpath}"
@@ -109,8 +108,8 @@ class S3ExportDataLoader(SRDataLoader):
 		return result
 
 	def cut_domain( self, timeslice_data: np.ndarray ):
-		origin: Dict[str,int] = cfg().task.origin[self.tset.value]
-		tile_grid: Dict[str,int] = cfg().task.tile_grid[self.tset.value]
+		origin: Dict[str,int] = cfg().task.origin
+		tile_grid: Dict[str,int] = cfg().task.tile_grid
 		tile_bnds = { c:  [origin[c], origin[c]+self.tile_size[c]*tile_grid[c]] for c in ['x','y'] }
 		lgm().debug( f"     ------------------>> cut_domain: origin={origin}, tile_bnds = {tile_bnds}")
 		return timeslice_data[ tile_bnds['y'][0]:tile_bnds['y'][1], tile_bnds['x'][0]:tile_bnds['x'][1] ]

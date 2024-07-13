@@ -48,11 +48,11 @@ class SRDataLoader(object):
 		return '[' + ','.join([f"{k}:{c[k].size}" for k in c.keys()]) + ']'
 
 	@classmethod
-	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], tset: TSet, **kwargs) -> 'SRDataLoader':
+	def get_loader(cls, task_config: DictConfig, tile_size: Dict[str, int], **kwargs) -> 'SRDataLoader':
 		dset: str = task_config.dataset
 		if dset.startswith("LLC4320"):
 			from fmod.base.source.s3export.batch import S3ExportDataLoader
-			return S3ExportDataLoader( task_config, tile_size, tset, **kwargs )
+			return S3ExportDataLoader( task_config, tile_size, **kwargs )
 		elif dset.startswith("swot"):
 			from fmod.base.source.swot.batch import SWOTDataLoader
 			return SWOTDataLoader( task_config, **kwargs )
