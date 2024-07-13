@@ -60,7 +60,7 @@ class ResultPlot(Plot):
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.losses: Dict[str,float] = {}
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
-		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['time'] )
+		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['tiles'] )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
 		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
 		self.ims = {}
@@ -73,7 +73,7 @@ class ResultPlot(Plot):
 
 	@property
 	def sample_target(self) -> xa.DataArray:
-		return self.trainer.get_sample_target(self.tset)
+		return self.trainer.get_sample_target()
 
 	@property
 	def tcoords(self) -> DataArrayCoordinates:
@@ -93,9 +93,9 @@ class ResultPlot(Plot):
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
 		product_data =  self.trainer.get_ml_product(self.tset)
-		model_input: xa.DataArray = xa.DataArray( input_data, dims=['time','channels','y','x'] )
-		target: xa.DataArray = xa.DataArray( target_data, dims=['time','channels','y','x'] )
-		prediction: xa.DataArray = xa.DataArray( product_data, dims=['time','channels','y','x'] )
+		model_input: xa.DataArray = xa.DataArray( input_data, dims=['tiles','channels','y','x'] )
+		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
+		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
 		domain: xa.DataArray = self.trainer.get_dataset().load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 
@@ -104,7 +104,7 @@ class ResultPlot(Plot):
 		else:
 			# coords: Dict[str, DataArrayCoordinates] = dict(tiles=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
 			data: np.ndarray = upsample( self.trainer.input[self.tset] ).cpu().detach().numpy()
-			upsampled = xa.DataArray(data, dims=['time', 'channels', 'y', 'x'] ) # , coords=coords)
+			upsampled = xa.DataArray(data, dims=['tiles', 'channels', 'y', 'x'] ) # , coords=coords)
 
 		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
@@ -200,7 +200,7 @@ class ResultPlot(Plot):
 		image: xa.DataArray = self.image(irow, icol)
 		if 'channel' in image.dims:
 			image = image.isel(channels=self.channel)
-		if 'time' in image.dims:
+		if 'tiles' in image.dims:
 			batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
 			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
 			image = image.isel(tiles=batch_time_index).squeeze(drop=True)
