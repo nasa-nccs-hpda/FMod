@@ -272,9 +272,9 @@ class ModelTrainer(object):
 					batch_losses += sloss
 					ibatch += 1
 
-			if binput is not None:   self.input[tset] = binput
-			if btarget is not None:  self.target[tset] = btarget
-			if boutput is not None:  self.product[tset] = boutput
+			if binput is not None:   self.input[tset] = binput.detach()
+			if btarget is not None:  self.target[tset] = btarget.detach()
+			if boutput is not None:  self.product[tset] = boutput.detach()
 
 			if self.scheduler is not None:
 				self.scheduler.step()

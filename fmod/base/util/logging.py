@@ -98,8 +98,11 @@ class LogManager(object):
             self.log( msg )
 
     def exception(self,  msg ):
-        self._log_stream.write(f"\n{msg}\n{traceback.format_exc()}\n")
+        error_msg = f"\n{msg}\n{traceback.format_exc()}\n"
+        self._log_stream.write(error_msg)
         self._log_stream.flush()
+        print( error_msg, flush=True )
+
 
     def trace(self,  msg ):
         strace = "".join(traceback.format_stack())

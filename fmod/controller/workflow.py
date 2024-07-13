@@ -1,6 +1,7 @@
 import time
 from fmod.base.util.config import ConfigContext
 from fmod.controller.dual_trainer import ModelTrainer
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.io.loader import TSet, srRes
 from typing import Any, Dict, List
 from fmod.view.plot.results import ResultPlot
@@ -22,9 +23,13 @@ class WorkflowController(object):
 	def train(self, models: List[str], **kwargs):
 		for model in models:
 			with ConfigContext(self.cname, model=model, **kwargs) as cc:
-				self.config = cc
-				self.trainer = ModelTrainer(cc)
-				self.trainer.train(refresh_state=self.refresh_state, seed=self.seed)
+				try:
+					self.config = cc
+					self.trainer = ModelTrainer(cc)
+					self.trainer.train(refresh_state=self.refresh_state, seed=self.seed)
+				except Exception as e:
+					lgm().exception( "Exception while training model: %s" % str(e) )
+				lgm().log(f"Completed training model: {model}")
 
 	def init_plotting(self, cname, model, **kwargs ):
 		self.model = model
