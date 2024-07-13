@@ -265,7 +265,7 @@ class ModelTrainer(object):
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 					[sloss, mloss] = self.loss(boutput,btarget)
-					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{ibatch}] TIME[{itime}:{ctime}] TILE[{ctile}]-> Loss= {sloss.item():.5f}", display=True, end="")
+					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch}/{nepochs})-BATCH[{ibatch}] TIME[{itime}:{ctime}] TILE{list(ctile.values())}-> Loss= {sloss.item():.5f}", display=True, end="")
 					self.optimizer.zero_grad(set_to_none=True)
 					mloss.backward()
 					self.optimizer.step()
