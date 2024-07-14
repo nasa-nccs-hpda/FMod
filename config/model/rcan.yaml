@@ -1,9 +1,9 @@
 name: rcan
 
 nfeatures: 64
-nlayers: 10
+nlayers: 8 # 10
 cbottleneck: 2
-nblocks: 10 # 20
+nblocks: 8 # 20
 
 usmethod: replicate # replicate # transpose
 loss_fn: l2
