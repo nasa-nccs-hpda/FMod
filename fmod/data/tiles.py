@@ -17,9 +17,8 @@ class TileIterator(object):
         self.index: int = 0
 
     def register_loss(self, loss: float ):
-        key = dict(start=self.index, end=self.index + self.batch_size)
         self.batch_losses.append( loss )
-        self.refinement_losses[key] = loss
+        self.refinement_losses[self.index] = loss
 
     def epoch_loss(self):
         epoch_loss = np.array(self.batch_losses).mean()
