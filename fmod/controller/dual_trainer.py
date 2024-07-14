@@ -272,7 +272,6 @@ class ModelTrainer(object):
 				epoch_loss = np.array( batch_losses ).mean()
 				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss )
-				save_memory_snapshot()
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -280,6 +279,7 @@ class ModelTrainer(object):
 			epoch_time = (time.time() - epoch_start)/60.0
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
 			self.record_eval( epoch, {TSet.Train: epoch_loss}, TSet.Validation )
+			save_memory_snapshot()
 
 		train_time = time.time() - train_start
 		ntotal_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
