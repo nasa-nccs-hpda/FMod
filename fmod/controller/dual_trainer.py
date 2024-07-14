@@ -247,29 +247,29 @@ class ModelTrainer(object):
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
 
-			ctiles = TileIterator()
+
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 
-			binput, boutput, btarget, ibatch, nts = None, None, None, 0, len(self.data_timestamps[TSet.Train])
+			binput, boutput, btarget, nts = None, None, None, 0, len(self.data_timestamps[TSet.Train])
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
-				batch_losses = []
-				for ctile in iter(ctiles):
-					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
-					if batch_data is None: break
-					binput, boutput, btarget = self.apply_network( batch_data )
-					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
-					[sloss, mloss] = self.loss(boutput,btarget)
-					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs})-BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
-					self.optimizer.zero_grad(set_to_none=True)
-					mloss.backward()
-					self.optimizer.step()
-					batch_losses.append( sloss )
-					ibatch += 1
+				ctiles = TileIterator()
+				for irefine in range(cfg().task.get('nrefinements',1)):
+					for ctile in iter(ctiles):
+						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
+						if batch_data is None: break
+						binput, boutput, btarget = self.apply_network( batch_data )
+						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
+						[sloss, mloss] = self.loss(boutput,btarget)
+						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
+						self.optimizer.zero_grad(set_to_none=True)
+						mloss.backward()
+						self.optimizer.step()
+						ctiles.register_loss( sloss )
 
 				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-				epoch_loss = np.array( batch_losses ).mean()
+				epoch_loss = ctiles.epoch_loss()
 				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss )
 

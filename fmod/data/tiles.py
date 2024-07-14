@@ -1,4 +1,4 @@
-import math, random
+import math, random, numpy as np
 from typing import Dict, Tuple, List, Optional
 from fmod.base.io.loader import TSet, batchDomain
 from fmod.base.util.config import cfg
@@ -11,10 +11,23 @@ class TileIterator(object):
         self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
         self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
         self.batch_size: int = cfg().task.batch_size
+        self.batch_losses = []
+        self.refinement_losses = {}
         self.ntiles = kwargs.get('ntiles', 0)
         self.index: int = 0
 
+    def register_loss(self, loss: float ):
+        key = dict(start=self.index, end=self.index + self.batch_size)
+        self.batch_losses.append( loss )
+        self.refinement_losses[key] = loss
+
+    def epoch_loss(self):
+        epoch_loss = np.array(self.batch_losses).mean()
+        return epoch_loss
+
     def __iter__(self):
+        if len( self.refinement_losses ) > 0:
+            self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
         self.index = 0
         return self
