@@ -114,11 +114,9 @@ class ModelTrainer(object):
 		self.scale_factor = math.prod(self.downscale_factors)
 		self.conform_to_data_grid()
 	#	self.grid_shape, self.gridops, self.lmax = self.configure_grid()
-		self.input: MLTensors = {}
-		self.target: MLTensors = {}
-		self.product: MLTensors = {}
-		self.interp: MLTensors = {}
-		self.upsampled: Tensor = None
+		self.input: np.ndarray = {}
+		self.target: np.ndarray = {}
+		self.product: np.ndarray = {}
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
 		self.tile_index: Optional[Tuple[int,int]] = None
@@ -211,18 +209,13 @@ class ModelTrainer(object):
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> np.ndarray:
-		ml_input: Tensor =  self.input[tset]
-		result = npa( ml_input ).astype(np.float32)
-		return  result
-
-	def get_ml_upsampled(self, tset: TSet) -> np.ndarray:
-		return self.upsampled[tset].numpy()
+		return  self.input[tset].astype(np.float32)
 
 	def get_ml_target(self, tset: TSet) -> np.ndarray:
-		return npa( self.target[tset] )
+		return self.target[tset].astype(np.float32)
 
 	def get_ml_product(self, tset: TSet) -> np.ndarray:
-		return npa(self.product[tset])
+		return self.product[tset].astype(np.float32)
 
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
@@ -272,9 +265,9 @@ class ModelTrainer(object):
 					batch_losses += sloss
 					ibatch += 1
 
-			if binput is not None:   self.input[tset] = binput.detach()
-			if btarget is not None:  self.target[tset] = btarget.detach()
-			if boutput is not None:  self.product[tset] = boutput.detach()
+			if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
+			if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
+			if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -346,9 +339,9 @@ class ModelTrainer(object):
 						batch_interp_losses.append( interp_sloss.item() )
 					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
 					ibatch = ibatch + 1
-		if binput is not None:  self.input[tset] = binput
-		if btarget is not None: self.target[tset] = btarget
-		if boutput is not None: self.product[tset] = boutput
+		if binput is not None:  self.input[tset] = binput.detach().cpu().numpy()
+		if btarget is not None: self.target[tset] = btarget.detach().cpu().numpy()
+		if boutput is not None: self.product[tset] = boutput.detach().cpu().numpy()
 
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
