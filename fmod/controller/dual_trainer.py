@@ -19,6 +19,7 @@ from fmod.controller.checkpoints import CheckpointManager
 import numpy as np, xarray as xa
 from fmod.controller.stats import l2loss
 import torch.nn as nn
+from fmod.base.gpu import save_memory_snapshot
 import time, csv
 
 Tensors = Sequence[Tensor]
@@ -249,9 +250,9 @@ class ModelTrainer(object):
 			ctiles = TileIterator()
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 
-			batch_losses = torch.tensor(0.0, device=self.device, dtype=torch.float32)
-			binput, boutput, btarget, ibatch = None, None, None, 0
+			binput, boutput, btarget, ibatch, nts = None, None, None, 0, len(self.data_timestamps[TSet.Train])
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
+				batch_losses = []
 				for ctile in iter(ctiles):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 					if batch_data is None: break
@@ -262,19 +263,21 @@ class ModelTrainer(object):
 					self.optimizer.zero_grad(set_to_none=True)
 					mloss.backward()
 					self.optimizer.step()
-					batch_losses += sloss
+					batch_losses.append( sloss )
 					ibatch += 1
 
-			if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
-			if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
-			if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
+				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
+				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
+				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
+				epoch_loss = np.array( batch_losses ).mean()
+				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
+				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss )
 
+			save_memory_snapshot()
 			if self.scheduler is not None:
 				self.scheduler.step()
 
-			epoch_loss: float = batch_losses.item() / ibatch
 			epoch_time = (time.time() - epoch_start)/60.0
-			self.checkpoint_manager.save_checkpoint( epoch, TSet.Train, epoch_loss )
 			lgm().log(f'Epoch Execution time: {epoch_time:.1f} min, train-loss: {epoch_loss:.4f}', display=True)
 			self.record_eval( epoch, {TSet.Train: epoch_loss}, TSet.Validation )
 

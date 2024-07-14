@@ -1,6 +1,7 @@
 auto_device: true
 cuda_graphs: true
 ddp_sharding: true
+memory_debug: true
 
 num_workers: 1
 device:  "cuda"

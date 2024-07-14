@@ -102,16 +102,16 @@ def rrkey( tset: TSet, **kwargs ) -> str:
 
 class ResultRecord(object):
 
-	def __init__(self, tset: TSet, epoch: int, loss: float ):
+	def __init__(self, tset: TSet, epoch: float, loss: float ):
 		self.loss: float = loss
-		self.epoch: int = epoch
+		self.epoch: float = epoch
 		self.tset: TSet = tset
 
 	def serialize(self) -> List[str]:
-		return [ self.tset.value, str(self.epoch), f"{self.loss:.6f}" ]
+		return [ self.tset.value, f"{self.epoch:.3f}", f"{self.loss:.6f}" ]
 
 	def __str__(self):
-		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch},  Loss: {self.loss:.6f}"
+		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch:.3f},  Loss: {self.loss:.6f}"
 
 class ResultFileWriter:
 
@@ -226,13 +226,13 @@ class ResultsAccumulator(object):
 
 	@classmethod
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
-		return ResultRecord( TSet(rec[0]), int(rec[1]), float(rec[2]) )
+		return ResultRecord( TSet(rec[0]), float(rec[1]), float(rec[2]) )
 
-	def record_losses(self, tset: TSet, epoch, loss: float ):
+	def record_losses(self, tset: TSet, epoch: float, loss: float ):
 		rr: ResultRecord = ResultRecord(tset, epoch, loss )
 		self.results.append( rr )
 
-	def serialize(self)-> Dict[ str, Tuple[float,float,int] ]:
+	def serialize(self)-> Dict[ str, Tuple[str,float,float] ]:
 		sr =  { k: rr.serialize() for k, rr in self.results }
 		return sr
 
