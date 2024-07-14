@@ -250,7 +250,7 @@ class ModelTrainer(object):
 
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 
-			binput, boutput, btarget, nts = None, None, None, 0, len(self.data_timestamps[TSet.Train])
+			binput, boutput, btarget, nts = None, None, None, len(self.data_timestamps[TSet.Train])
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
 				ctiles = TileIterator()
 				for irefine in range(cfg().task.get('nrefinements',1)):
