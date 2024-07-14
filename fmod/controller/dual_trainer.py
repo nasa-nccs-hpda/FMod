@@ -184,7 +184,7 @@ class ModelTrainer(object):
 		targets.reverse()
 		return targets
 
-	def loss(self, products: TensorOrTensors, target: Tensor ) -> Tuple[torch.Tensor,torch.Tensor]:
+	def loss(self, products: TensorOrTensors, target: Tensor ) -> Tuple[float,torch.Tensor]:
 		sloss, mloss, ptype, self.layer_losses = None, None, type(products), []
 		if ptype == torch.Tensor:
 			sloss = self.single_product_loss( products, target)
@@ -197,7 +197,7 @@ class ModelTrainer(object):
 				#		print( f"Layer-{iL}: Output{list(layer_output.shape)}, Target{list(layer_target.shape)}, loss={layer_loss.item():.5f}")
 				mloss = layer_loss if (mloss is None) else (mloss + layer_loss)
 				self.layer_losses.append( layer_loss.item() )
-		return sloss, mloss
+		return sloss.item(), mloss
 
 	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
@@ -259,7 +259,7 @@ class ModelTrainer(object):
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 					[sloss, mloss] = self.loss(boutput,btarget)
-					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs})-BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss.item():.5f}", display=True, end="")
+					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs})-BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
 					self.optimizer.zero_grad(set_to_none=True)
 					mloss.backward()
 					self.optimizer.step()
