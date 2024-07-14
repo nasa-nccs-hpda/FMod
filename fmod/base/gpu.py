@@ -19,9 +19,11 @@ def get_device() -> torch.device:
 	device = torch.device(f'cuda:{gpu_index}' if torch.cuda.is_available() else 'cpu')
 	return device
 
+def memory_snapshot_path( ) -> str:
+	cpath = f"{cfg().platform.results}/memory/snapshot.{cfg().task.training_version}.pkl"
+	os.makedirs(os.path.dirname(cpath), 0o777, exist_ok=True)
+	return cpath
+
 def save_memory_snapshot():
 	if cfg().pipeline.memory_debug:
-		ssdir = f"{cfg().dataset.dataset_root}/cuda/memory_snapshots"
-		os.makedirs(ssdir, exist_ok=True)
-		ssfile = f"{ssdir}/{cfg().task.training_version}.pkl"
-		cuda.memory._dump_snapshot(ssfile)
+		cuda.memory._dump_snapshot( memory_snapshot_path() )
