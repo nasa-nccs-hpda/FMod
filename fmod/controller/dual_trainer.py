@@ -272,8 +272,8 @@ class ModelTrainer(object):
 				epoch_loss = np.array( batch_losses ).mean()
 				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss )
+				save_memory_snapshot()
 
-			save_memory_snapshot()
 			if self.scheduler is not None:
 				self.scheduler.step()
 
