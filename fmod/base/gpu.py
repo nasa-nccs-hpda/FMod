@@ -1,6 +1,7 @@
 from fmod.base.util.config import cfg
+from fmod.base.util.logging import lgm, exception_handled, log_timing
 from torch import cuda
-import torch, os
+import torch, os, time
 
 def set_device() -> torch.device:
 	gpu_index = cfg().pipeline.gpu
@@ -26,4 +27,7 @@ def memory_snapshot_path( ) -> str:
 
 def save_memory_snapshot():
 	if cfg().pipeline.memory_debug:
-		cuda.memory._dump_snapshot( memory_snapshot_path() )
+		t0 = time.time()
+		mspath = memory_snapshot_path()
+		cuda.memory._dump_snapshot( mspath )
+		lgm().log(f" *** SAVE memory snapshot to {mspath}, dt={time.time()-t0:.4f} sec", display=True)

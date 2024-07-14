@@ -1,4 +1,4 @@
-import torch
+import torch, time
 from typing import Any, Dict, List
 from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
@@ -16,10 +16,11 @@ class CheckpointManager(object):
 		self.optimizer = optimizer
 
 	def save_checkpoint(self, epoch: int, tset: TSet, loss: float ) -> str:
+		t0 = time.time()
 		checkpoint = dict( epoch=epoch, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
 		cpath = self.checkpoint_path(tset)
-		print(f"\n ---> SAVE {tset.name} checkpoint (loss={loss:.5f}) to {cpath}")
 		torch.save( checkpoint, cpath )
+		lgm().log(f" *** SAVE {tset.name} checkpoint (loss={loss:.5f}) to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
 		return cpath
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
