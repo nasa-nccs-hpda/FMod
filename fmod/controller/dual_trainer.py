@@ -315,7 +315,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		train_state = self.checkpoint_manager.load_checkpoint( TSet.Train, **kwargs )
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
