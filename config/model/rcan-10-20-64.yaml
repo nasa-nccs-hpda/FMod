@@ -1,0 +1,14 @@
+name: rcan
+nlayers: 10
+nblocks:  20
+nfeatures: 64
+
+cbottleneck: 2
+usmethod: replicate # replicate # transpose
+loss_fn: l2
+kernel_size: 3
+res_scale: 1.0
+batch_norm: False
+bias: True
+downscale_factors: [2,2]
+ups_mode: bicubic
