@@ -45,8 +45,8 @@ class TileIterator(object):
         elif self.domain == batchDomain.Tiles:
             if self.refinement_batches is None:
                 return (self.ntiles == 0) or (self.next_index < self.ntiles)
-            else:
-                return self.next_index != list(self.refinement_batches.keys())[-1]
+        return True
+
 
     def __next__(self) ->  Dict[str,int]:
         if not self.active: raise StopIteration()
@@ -60,9 +60,11 @@ class TileIterator(object):
                 result = dict( start=self.index, end=self.index + self.batch_size )
                 self.next_index = self.index + self.batch_size
             else:
-                start = list(self.refinement_batches.keys())[self.index]
-                result = dict( start=start, end=start + self.batch_size )
-                self.next_index = self.index + 1
+                try:
+                    start = list(self.refinement_batches.keys())[self.index]
+                    result = dict( start=start, end=start + self.batch_size )
+                    self.next_index = self.index + 1
+                except IndexError: raise StopIteration()
             return result
 
 class TileGrid(object):
