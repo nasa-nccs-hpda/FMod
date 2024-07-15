@@ -32,7 +32,7 @@ class TileIterator(object):
             self.refinement_losses =  sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True )
             self.ntiles = int( len(self.refinement_losses) * cfg().task.refine_fraction * self.batch_size )
             self.refinement_batches = dict(self.refinement_losses[:self.ntiles])
-            lgm().log( f"refinement_batches--> {self.refinement_batches}", display=True)
+            lgm().log( f"\n ***** refinement_batches--> {self.refinement_batches}", display=True)
             self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
         self.next_index = 0
