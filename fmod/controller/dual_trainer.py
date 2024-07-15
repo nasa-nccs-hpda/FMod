@@ -258,7 +258,7 @@ class ModelTrainer(object):
 						binput, boutput, btarget = self.apply_network( batch_data )
 						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 						[sloss, mloss] = self.loss(boutput,btarget)
-						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
+						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
 						self.optimizer.zero_grad(set_to_none=True)
 						mloss.backward()
 						self.optimizer.step()
@@ -338,7 +338,7 @@ class ModelTrainer(object):
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 						batch_interp_losses.append( interp_sloss.item() )
-					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
+					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
 					ibatch = ibatch + 1
 		if binput is not None:  self.input[tset] = binput.detach().cpu().numpy()
 		if btarget is not None: self.target[tset] = btarget.detach().cpu().numpy()
