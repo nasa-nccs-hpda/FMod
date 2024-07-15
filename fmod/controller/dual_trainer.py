@@ -222,6 +222,7 @@ class ModelTrainer(object):
 		if cfg().task['nepochs'] == 0: return {}
 		refresh_state = kwargs.get('refresh_state', False)
 		seed = kwargs.get('seed', 4456)
+		lossrec_flush_period = 32
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -269,7 +270,7 @@ class ModelTrainer(object):
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
 				epoch_loss = ctiles.epoch_loss()
 				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
-				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % 64 == 0) )
+				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
 			if self.scheduler is not None:
 				self.scheduler.step()
