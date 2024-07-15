@@ -13,6 +13,7 @@ class TileIterator(object):
         self.batch_size: int = cfg().task.batch_size
         self.batch_losses = []
         self.refinement_losses = {}
+        self.refinement_batches = None
         self.ntiles = kwargs.get('ntiles', 0)
         self.index: int = 0
 
@@ -26,6 +27,9 @@ class TileIterator(object):
 
     def __iter__(self):
         if len( self.refinement_losses ) > 0:
+            self.refinement_losses = dict( sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True ) )
+            self.ntiles = int( len(self.refinement_losses) * cfg().task.refine_fraction )
+            self.refinement_batches = list(self.refinement_losses.keys())[:self.ntiles]
             self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
         self.index = 0
@@ -45,8 +49,13 @@ class TileIterator(object):
             self.index = self.index + 1
             return result
         elif self.domain == batchDomain.Tiles:
-            result = dict( start=self.index, end=self.index + self.batch_size )
-            self.index = self.index + self.batch_size
+            if self.refinement_batches is None:
+                result = dict( start=self.index, end=self.index + self.batch_size )
+                self.index = self.index + self.batch_size
+            else:
+                start = self.refinement_batches[self.index]
+                result = dict( start=start, end=start + self.batch_size )
+                self.index = self.index + 1
             return result
 
 class TileGrid(object):

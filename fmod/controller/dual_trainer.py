@@ -253,14 +253,14 @@ class ModelTrainer(object):
 			binput, boutput, btarget, nts = None, None, None, len(self.data_timestamps[TSet.Train])
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
 				ctiles = TileIterator()
-				for irefine in range(cfg().task.get('nrefinements',1)):
+				for irefine in range(1+cfg().task.get('nrefinements',0)):
 					for ctile in iter(ctiles):
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 						if batch_data is None: break
 						binput, boutput, btarget = self.apply_network( batch_data )
 						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 						[sloss, mloss] = self.loss(boutput,btarget)
-						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
+						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILE{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
 						self.optimizer.zero_grad(set_to_none=True)
 						mloss.backward()
 						self.optimizer.step()
