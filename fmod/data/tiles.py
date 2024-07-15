@@ -30,8 +30,8 @@ class TileIterator(object):
     def __iter__(self):
         if len( self.refinement_losses ) > 0:
             self.refinement_losses =  sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True )
-            self.ntiles = int( len(self.refinement_losses) * cfg().task.refine_fraction * self.batch_size )
-            self.refinement_batches = dict(self.refinement_losses[:self.ntiles])
+            nr = int( len(self.refinement_losses) * cfg().task.refine_fraction  )
+            self.refinement_batches = dict(self.refinement_losses[:nr])
             lgm().log( f"\n ***** refinement_batches--> {self.refinement_batches}", display=True)
             self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
@@ -43,7 +43,10 @@ class TileIterator(object):
         if self.domain == batchDomain.Time:
             return self.next_index < len(self.regular_grid)
         elif self.domain == batchDomain.Tiles:
-            return (self.ntiles == 0) or (self.next_index < self.ntiles)
+            if self.refinement_batches is None:
+                return (self.ntiles == 0) or (self.next_index < self.ntiles)
+            else:
+                return self.next_index != list(self.refinement_batches.keys())[-1]
 
     def __next__(self) ->  Dict[str,int]:
         if not self.active: raise StopIteration()
