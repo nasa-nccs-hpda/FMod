@@ -1,6 +1,7 @@
 import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
+from fmod.base.util.config import cfg
 from fmod.base.util.array import array2tensor, downsample, upsample
 import ipywidgets as ipw
 from matplotlib.axes import Axes
@@ -50,15 +51,15 @@ class ResultPlot(Plot):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
 		super(ResultPlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
+		self.time_index: int = kwargs.get( 'time_id', 0 )
+		self.tile_index: Tuple[int, int] = tuple([ cfg().task.origin[cn] for cn in ['y','x'] ])
+		self.losses: Dict[str,float] = self.trainer.evaluate(self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs)
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tile_grid.create_tile_recs(**kwargs)
 		self.channelx: int = kwargs.get('channel', 0)
-		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
 		self.channel: int = kwargs.get( 'channel', 0 )
-		self.tile_index: Tuple[int,int] = self.tile_grid.get_tile_coords( self.tileId )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
-		self.losses: Dict[str,float] = {}
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['tiles'] )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
