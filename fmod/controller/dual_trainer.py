@@ -338,7 +338,7 @@ class ModelTrainer(object):
 					if interp_loss:
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-						batch_interp_losses.append( interp_sloss.item() )
+						batch_interp_losses.append( interp_sloss )
 					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
 					ibatch = ibatch + 1
 		if binput is not None:  self.input[tset] = binput.detach().cpu().numpy()
