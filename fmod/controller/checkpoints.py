@@ -20,7 +20,7 @@ class CheckpointManager(object):
 		checkpoint = dict( epoch=epoch, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
 		cpath = self.checkpoint_path(tset)
 		torch.save( checkpoint, cpath )
-		lgm().log(f" *** SAVE {tset.name} checkpoint (loss={loss:.5f}) to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
+		lgm().log(f"\n *** SAVE {tset.name} checkpoint (loss={loss:.5f}) to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
 		return cpath
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
