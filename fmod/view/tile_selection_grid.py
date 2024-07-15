@@ -30,6 +30,7 @@ def onpick_test(event):
 class TileSelectionGrid(object):
 
 	def __init__(self, sample_data: Optional[xa.DataArray] = None ):
+		print( f"TileSelectionGrid: {sample_data} ****")
 		self.sample_data: Optional[xa.DataArray] = sample_data
 		self.tile_grid: TileGrid = TileGrid()
 		self.tiles: Dict[Tuple[int, int], Rectangle] = None
