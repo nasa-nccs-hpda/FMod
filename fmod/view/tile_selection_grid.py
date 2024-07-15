@@ -58,6 +58,7 @@ class TileSelectionGrid(object):
 				xy = (tloc['x'], tloc['y'])
 				r = Rectangle(xy, ts['x'], ts['y'], fill=False, picker=True, linewidth=kwargs.get('lw', 1), edgecolor=kwargs.get('color', 'white'))
 				self.tiles[xyi] = r
+		print( f" **** create_tile_recs: tiles={list(self.tiles.keys())} ****")
 
 	def set_selection_callabck(self, selection_callabck: Callable):
 		self._selection_callback = selection_callabck
