@@ -228,9 +228,10 @@ class ResultsAccumulator(object):
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
 		return ResultRecord( TSet(rec[0]), float(rec[1]), float(rec[2]) )
 
-	def record_losses(self, tset: TSet, epoch: float, loss: float ):
+	def record_losses(self, tset: TSet, epoch: float, loss: float, flush=False):
 		rr: ResultRecord = ResultRecord(tset, epoch, loss )
 		self.results.append( rr )
+		if flush: self.flush()
 
 	def serialize(self)-> Dict[ str, Tuple[str,float,float] ]:
 		sr =  { k: rr.serialize() for k, rr in self.results }
@@ -239,7 +240,6 @@ class ResultsAccumulator(object):
 	def flush(self):
 		self.save()
 		self.close()
-
 
 	@exception_handled
 	def save(self):

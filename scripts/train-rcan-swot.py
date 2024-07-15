@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
 
 cname: str = "sres"
-models: List[str] = [ 'rcan-10-10-64' ]
+models: List[str] = [ 'rcan-10-16-64' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 100, 'task.lr': 1e-4 }
 refresh =  False
 

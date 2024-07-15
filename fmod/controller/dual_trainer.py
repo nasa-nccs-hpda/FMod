@@ -269,7 +269,7 @@ class ModelTrainer(object):
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
 				epoch_loss = ctiles.epoch_loss()
 				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
-				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss )
+				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % 64 == 0) )
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -314,7 +314,7 @@ class ModelTrainer(object):
 		torch.cuda.manual_seed(seed)
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Train, **kwargs )
 		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
@@ -333,7 +333,7 @@ class ModelTrainer(object):
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 					[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
-					batch_model_losses.append( model_sloss.item() )
+					batch_model_losses.append( model_sloss )
 					if interp_loss:
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
