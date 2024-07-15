@@ -10,8 +10,8 @@ num_workers: 4
 batch_size: 32
 ttsplit: { train: 0.9, valid: 0.05, test: 0.05 }
 nepochs: 30
-nrefinements: 2
-refine_fraction: 0.25
+nrefinements: 1
+refine_fraction: 0.15
 lr: 1e-4
 
 origin:  { x: 0, y: 0 }
