@@ -2,6 +2,7 @@ import math, random, numpy as np
 from typing import Dict, Tuple, List, Optional
 from fmod.base.io.loader import TSet, batchDomain
 from fmod.base.util.config import cfg
+from fmod.base.util.logging import lgm, log_timing
 
 class TileIterator(object):
 
@@ -27,9 +28,10 @@ class TileIterator(object):
 
     def __iter__(self):
         if len( self.refinement_losses ) > 0:
-            self.refinement_losses = dict( sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True ) )
+            self.refinement_losses =  sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True )
             self.ntiles = int( len(self.refinement_losses) * cfg().task.refine_fraction )
-            self.refinement_batches = list(self.refinement_losses.keys())[:self.ntiles]
+            self.refinement_batches = dict(self.refinement_losses[:self.ntiles])
+            lgm().log( f"refinement_batches--> {self.refinement_batches}", display=True)
             self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
         self.index = 0
@@ -53,7 +55,7 @@ class TileIterator(object):
                 result = dict( start=self.index, end=self.index + self.batch_size )
                 self.index = self.index + self.batch_size
             else:
-                start = self.refinement_batches[self.index]
+                start = list(self.refinement_batches.keys())[self.index]
                 result = dict( start=start, end=start + self.batch_size )
                 self.index = self.index + 1
             return result

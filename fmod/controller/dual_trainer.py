@@ -247,9 +247,7 @@ class ModelTrainer(object):
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
 
-
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
-
 			binput, boutput, btarget, nts = None, None, None, len(self.data_timestamps[TSet.Train])
 			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
 				ctiles = TileIterator()
