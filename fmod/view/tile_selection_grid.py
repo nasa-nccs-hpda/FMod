@@ -29,7 +29,8 @@ def onpick_test(event):
 
 class TileSelectionGrid(object):
 
-	def __init__(self):
+	def __init__(self, sample_data: Optional[xa.DataArray] = None ):
+		self.sample_data: Optional[xa.DataArray] = sample_data
 		self.tile_grid: TileGrid = TileGrid()
 		self.tiles: Dict[Tuple[int, int], Rectangle] = None
 		self._selection_callback = default_selection_callabck
@@ -49,11 +50,12 @@ class TileSelectionGrid(object):
 				return xyi
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
-		downscaled = kwargs.get('downscaled', True)
-		ts: Dict[str, int] = self.tile_grid.get_tile_size(downscaled)
+		highres = kwargs.get('highres', True)
+		ts: Dict[str, int] = self.tile_grid.get_tile_size(highres)
 		if (self.tiles is None) or refresh:
 			self.tiles = {}
-			tile_locs: Dict[Tuple[int, int], Dict[str, int]] = self.tile_grid.get_tile_locations(downscaled=downscaled)
+			ishape: Dict[str, int]  = { cn: self.sample_data.sizes[cn] for cn in ['x','y'] }
+			tile_locs: Dict[Tuple[int, int], Dict[str, int]] = self.tile_grid.get_tile_locations( image_shape=ishape, highres=highres )
 			for xyi, tloc in tile_locs.items():
 				xy = (tloc['x'], tloc['y'])
 				r = Rectangle(xy, ts['x'], ts['y'], fill=False, picker=True, linewidth=kwargs.get('lw', 1), edgecolor=kwargs.get('color', 'white'))

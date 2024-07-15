@@ -88,7 +88,7 @@ def normalize( tensor: Tensor ) -> Tensor:
 	return tensor / tensor.std(dim=[2,3], keepdim=True)
 
 def downscale(self, origin: Dict[str,int] ):
-	return { d: v*self.downscale_factor for d,v in origin.items() }
+	return { d: v*self.upsample_factor for d,v in origin.items()}
 
 class ModelTrainer(object):
 

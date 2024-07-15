@@ -75,49 +75,51 @@ class TileGrid(object):
         self.tile_grid: Dict[str, int] = None
         self.tile_size: Dict[str,int] = cfg().task.tile_size
         self.tlocs: Dict[Tuple[int,int],Dict[str,int]] = {}
-        downscale_factors: List[int] = cfg().model.downscale_factors
-        self.downscale_factor = math.prod(downscale_factors)
+        upsample_factors: List[int] = cfg().model.downscale_factors
+        self.upsample_factor = math.prod(upsample_factors)
 
-    def get_global_grid_shape(self, image_shape: Dict[str, int]):
+    def get_global_grid_shape(self, **kwargs ) -> Dict[str,int]:
+        image_shape: Optional[Dict[str, int]] = kwargs.get( 'image_shape', cfg().task.get('image_shape', None ) )
+        if image_shape is None: return dict(x=1,y=1)
         ts = self.get_full_tile_size()
         global_shape = {dim: image_shape[dim] // ts[dim] for dim in ['x', 'y']}
         return global_shape
 
-    def get_grid_shape(self, image_shape: Dict[str, int]) -> Dict[str, int]:
-        global_grid_shape = self.get_global_grid_shape(image_shape)
+    def get_grid_shape(self, **kwargs) -> Dict[str, int]:
+        global_grid_shape = self.get_global_grid_shape(**kwargs)
         cfg_grid_shape = cfg().task.tile_grid
         self.tile_grid = { dim: (cfg_grid_shape[dim] if (cfg_grid_shape[dim]>=0) else global_grid_shape[dim]) for dim in ['x', 'y'] }
         return self.tile_grid
 
-    def get_active_region(self, image_shape: Dict[str, int] ) -> Dict[str, Tuple[int,int]]:
+    def get_active_region(self, **kwargs ) -> Dict[str, Tuple[int,int]]:
         ts = self.get_full_tile_size()
-        gs = self.get_grid_shape( image_shape )
+        gs = self.get_grid_shape( **kwargs )
         print( f"get_active_region: gs={gs}, ts={ts}" )
         region = { d: (self.origin[d],self.origin[d]+ts[d]*gs[d]) for d in ['x', 'y'] }
         return region
 
-    def get_tile_size(self, downscaled: bool = False ) -> Dict[str, int]:
-        sf = self.downscale_factor if downscaled else 1
+    def get_tile_size(self, highres: bool = False ) -> Dict[str, int]:
+        sf = self.upsample_factor if highres else 1
         rv = { d: self.tile_size[d] * sf for d in ['x', 'y'] }
         return  rv
 
     def get_full_tile_size(self) -> Dict[str, int]:
-        return { d: self.tile_size[d] * self.downscale_factor for d in ['x', 'y'] }
+        return { d: self.tile_size[d] * self.upsample_factor for d in ['x', 'y']}
 
-    def get_tile_origin( self, ix: int, iy: int, downscaled: bool = False ) -> Dict[str, int]:
-        sf = self.downscale_factor if downscaled else 1
+    def get_tile_origin( self, ix: int, iy: int, highres: bool = False ) -> Dict[str, int]:
+        sf = self.upsample_factor if highres else 1
         return { d: self.origin[d] + self.cdim(ix, iy, d) * self.tile_size[d] * sf for d in ['x', 'y'] }
 
     def get_tile_locations(self, **kwargs ) -> Dict[ Tuple[int,int], Dict[str,int] ]:
-        downscaled: bool = kwargs.get('downscaled', False)
+        highres: bool = kwargs.get('highres', False)
         selected_tile: Optional[Tuple[int,int]] = kwargs.get('selected_tile', None)
         if len(self.tlocs) == 0:
             if self.tile_grid is None:
-                self.tile_grid = cfg().task.tile_grid
+                self.get_grid_shape( **kwargs )
             for ix in range(self.tile_grid['x']):
                 for iy in range(self.tile_grid['y']):
                     if (selected_tile is None) or ((ix,iy) == selected_tile):
-                        self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,downscaled)
+                        self.tlocs[(ix,iy)] = self.get_tile_origin(ix,iy,highres)
         return self.tlocs
 
 

@@ -73,8 +73,8 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
-		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( ishape )
-		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(ishape)
+		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
+		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(image_shape=ishape)
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
