@@ -35,7 +35,9 @@ class TileSelectionGrid(object):
 		self._selection_callback = default_selection_callabck
 
 	def get_tile_coords(self, tile_index: int) -> Tuple[int, int]:
-		return list(self.tiles.keys())[tile_index]
+		tile_keys = list(self.tiles.keys())
+		print( f" **** get_tile_coords: {tile_index}, tile_keys: {tile_keys} ****")
+		return tile_keys[tile_index]
 
 	@property
 	def ntiles(self):
