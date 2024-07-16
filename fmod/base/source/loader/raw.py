@@ -27,3 +27,6 @@ class SRRawDataLoader(object):
 
 	def get_batch_time_indices(self, **kwargs) -> xa.DataArray:
 		raise NotImplementedError("SRRawDataLoader:get_batch_time_indices")
+
+	def compute_normalization(self):
+		raise NotImplementedError("SRRawDataLoader:get_batch_time_indices")

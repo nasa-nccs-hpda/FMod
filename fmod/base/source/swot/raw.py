@@ -31,6 +31,13 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.time_index: int = -1
 		self.timeslice: xa.DataArray = None
 
+	def compute_normalization(self):
+		time_indices = self.get_batch_time_indices()
+		for varname in self.varnames:
+			for tidx in time_indices:
+				file_data = self.load_file( varname, tidx )
+				print( f" {varname} File data[{tidx}]: {file_data.shape}")
+
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
 		cfg().dataset['varname'] = list(self.varnames.keys())[0]
