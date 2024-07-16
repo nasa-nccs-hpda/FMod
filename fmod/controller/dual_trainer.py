@@ -240,7 +240,7 @@ class ModelTrainer(object):
 			if self.results_accum is not None:
 				self.results_accum.load_results()
 			epoch0 = train_state.get('epoch', 1)
-			itime0 = train_state.get( 'itime', itime0 )
+		#	itime0 = train_state.get( 'itime', itime0 )
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
