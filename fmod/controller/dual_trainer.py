@@ -227,7 +227,7 @@ class ModelTrainer(object):
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get('scheduler', None)
-		epoch0, epoch_loss, nepochs, loss_history, eval_losses, tset = 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train
+		epoch0, itime0, epoch_loss, nepochs, loss_history, eval_losses, tset = 1, 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
 			self.checkpoint_manager.clear_checkpoints()
@@ -238,19 +238,21 @@ class ModelTrainer(object):
 			train_state = self.checkpoint_manager.load_checkpoint( update_model=True )
 			if self.results_accum is not None:
 				self.results_accum.load_results()
-			epoch0 = train_state.get('epoch', 0)
+			epoch0 = train_state.get('epoch', 1)
+			itime0 = train_state.get('itime', 0)
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
 		self.init_data_timestamps()
-		for epoch in range(epoch0+1,nepochs+1):
+		for epoch in range(epoch0,nepochs):
 			epoch_start = time.time()
 			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
 
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
 			binput, boutput, btarget, nts = None, None, None, len(self.data_timestamps[TSet.Train])
-			for itime, ctime in enumerate(self.data_timestamps[TSet.Train]):
+			for itime in range (itime0,nts):
+				ctime  = self.data_timestamps[TSet.Train][itime]
 				ctiles = TileIterator()
 				for irefine in range(1+cfg().task.get('nrefinements',0)):
 					for ctile in iter(ctiles):
@@ -269,7 +271,7 @@ class ModelTrainer(object):
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
 				epoch_loss = ctiles.epoch_loss()
-				self.checkpoint_manager.save_checkpoint(epoch, TSet.Train, epoch_loss)
+				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss)
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
 			if self.scheduler is not None:
@@ -352,7 +354,7 @@ class ModelTrainer(object):
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
-			self.checkpoint_manager.save_checkpoint( epoch, TSet.Validation, self.validation_loss )
+			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		result = dict( model=model_loss )
 		if interp_loss:
