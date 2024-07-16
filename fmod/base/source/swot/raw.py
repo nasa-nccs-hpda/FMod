@@ -1,7 +1,6 @@
 from fmod.base.source.loader.raw import SRRawDataLoader
-import xarray as xa, math, os
+import xarray as xa, math, os, pickle
 from fmod.base.util.config import cfg, dateindex
-from fmod.data.tiles import TileGrid
 from fmod.base.io.loader import ncFormat, TSet
 from omegaconf import DictConfig, OmegaConf
 from nvidia.dali import fn
@@ -21,6 +20,21 @@ def filepath() -> str:
 def template() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.template}"
 
+class NormData:
+
+	def __init__(self, itile: int):
+		self.itile = itile
+		self.means: List[float] = []
+		self.stds: List[float] = []
+
+	def add_entry(self, tiles_data: xa.DataArray ):
+		tdata: np.ndarray = tiles_data.isel(tiles=self.itile).values.squeeze()
+		self.means.append(tdata.mean())
+		self.stds.append(tdata.std())
+
+	def get_norm_stats(self) -> Tuple[float,float]:
+		return  np.array(self.means).mean(), np.array(self.stds).mean()
+
 class SWOTRawDataLoader(SRRawDataLoader):
 
 	def __init__(self, task_config: DictConfig, **kwargs ):
@@ -30,14 +44,54 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.tset: TSet = None
 		self.time_index: int = -1
 		self.timeslice: xa.DataArray = None
+		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{cfg().task.training_version}.pkl"
+		self._norm_stats: Dict[Tuple[str,int], Tuple[float,float]]  = None
+		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
-	def compute_normalization(self):
+	def _write_norm_stats(self, norm_stats: Dict[Tuple[str,int],Tuple[float,float]] ):
+		with open(self.norm_data_file, 'wb') as file_handle:
+			pickle.dump(list(norm_stats.items()), file_handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+	def _read_norm_stats(self) -> Optional[Dict[Tuple[str,int],Tuple[float,float]]]:
+		if os.path.isfile(self.norm_data_file):
+			with open(self.norm_data_file, 'rb') as file_handle:
+				norm_data = pickle.load(file_handle)
+				return dict(norm_data)
+
+	def _compute_normalization(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
 		time_indices = self.get_batch_time_indices()
+		norm_data: Dict[Tuple[str,int], NormData] = {}
 		for varname in self.varnames:
 			for tidx in time_indices:
 				file_data: np.ndarray = self.load_file( varname, tidx )
-				tile_data: xa.DataArray = self.get_tiles(file_data)
-				print( f" {varname} Tile data[{tidx}][{tile_data.dims}]: {tile_data.shape}")
+				tiles_data: xa.DataArray = self.get_tiles(file_data)
+				for itile in range(tiles_data.sizes['tiles']):
+					norm_entry: NormData = norm_data.setdefault((varname,itile), NormData(itile))
+					norm_entry.add_entry( tiles_data )
+		vtstats: Dict[str,Dict[int,Tuple[float,float]]] = {}
+		for (varname,itile), nd in norm_data.items():
+			tmean, tstd = nd.get_norm_stats()
+			ns = vtstats.setdefault(varname,{})
+			ns[itile] = (tmean, tstd)
+		for varname in self.varnames:
+			vs = vtstats[varname]
+			idxs = list(vs.keys())
+			nstats = np.array( list(vs.values()) )
+			print( f"idxs={idxs}" )
+			print( f"nstats.shape={nstats.shape}" )
+		return vtstats
+
+	def _get_norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
+		norm_stats: Dict[Tuple[str,int], Tuple[float,float]] = self._read_norm_stats()
+		if norm_stats is None:
+			norm_stats = self._compute_normalization()
+			self._write_norm_stats(norm_stats)
+		return norm_stats
+
+	def norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
+		if self._norm_stats is None:
+			self._norm_stats = self._get_norm_stats()
+		return self._norm_stats
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"

@@ -97,6 +97,7 @@ class ModelTrainer(object):
 	def __init__(self, cc: ConfigContext ):
 		super(ModelTrainer, self).__init__()
 		self.model_manager: SRModels = SRModels( set_device() )
+		self.context: ConfigContext = cc
 		self.device: torch.device = self.model_manager.device
 		self.results_accum: ResultsAccumulator = ResultsAccumulator(cc)
 		self.domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
