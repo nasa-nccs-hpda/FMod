@@ -35,8 +35,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		time_indices = self.get_batch_time_indices()
 		for varname in self.varnames:
 			for tidx in time_indices:
-				file_data = self.load_file( varname, tidx )
-				print( f" {varname} File data[{tidx}]: {file_data.shape}")
+				file_data: np.ndarray = self.load_file( varname, tidx )
+				tile_data: xa.DataArray = self.get_tiles(file_data)
+				print( f" {varname} Tile data[{tidx}][{tile_data.dims}]: {tile_data.shape}")
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
