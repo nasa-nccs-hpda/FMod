@@ -12,7 +12,6 @@ ttsplit: { train: 0.9, valid: 0.05, test: 0.05 }
 nepochs: 30
 nrefinements: 0
 refine_fraction: 0.15
-istarttime: 0
 lr: 5e-5
 
 origin:  { x: 0, y: 0 }

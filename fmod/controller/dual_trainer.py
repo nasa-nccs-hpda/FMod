@@ -223,13 +223,11 @@ class ModelTrainer(object):
 		refresh_state = kwargs.get('refresh_state', False)
 		seed = kwargs.get('seed', 4456)
 		lossrec_flush_period = 32
-		itime0 = cfg().task.get( 'istarttime',0 )
-		epoch0 = cfg().task.get( 'startepoch', 1 )
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get('scheduler', None)
-		epoch_loss, nepochs, loss_history, eval_losses, tset = 0.0, cfg().task.nepochs,  [], {}, TSet.Train
+		epoch0, itime0, epoch_loss, nepochs, loss_history, eval_losses, tset = 1, 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train
 		train_start = time.time()
 		if refresh_state:
 			self.checkpoint_manager.clear_checkpoints()
@@ -240,8 +238,8 @@ class ModelTrainer(object):
 			train_state = self.checkpoint_manager.load_checkpoint( update_model=True )
 			if self.results_accum is not None:
 				self.results_accum.load_results()
-			epoch0 = train_state.get('epoch', epoch0 )
-			itime0 = train_state.get( 'itime', itime0 )
+			epoch0 = train_state.get('epoch', 1 )
+			itime0 = train_state.get( 'itime', 0 )
 			epoch_loss = train_state.get('loss', float('inf'))
 			nepochs += epoch0
 
