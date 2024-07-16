@@ -59,7 +59,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
-			print( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}")
+			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}", display=True)
 			self.time_index = time_index
 		return self.select_batch( tile_range )
 
@@ -70,7 +70,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			bmean, bstd = batch.mean( dim=["x", "y"], skipna=True, keep_attrs=True ), batch.std( dim=["x", "y"], skipna=True, keep_attrs=True )
 			batch = (batch-bmean)/bstd
-			lgm().log(f"\nselect_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}, mean={batch.values.mean():.2f}, std={batch.values.std():.2f}",display=True)
+			lgm().log(f"select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
 			return batch
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
