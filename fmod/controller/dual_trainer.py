@@ -358,7 +358,7 @@ class ModelTrainer(object):
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
 			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss )
-		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset, model loss = {model_loss:.4f}')
+		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset, model loss = {model_loss:.4f}', display=True)
 		result = dict( model=model_loss )
 		if interp_loss:
 			result['upsample'] = np.array(batch_interp_losses).mean()
