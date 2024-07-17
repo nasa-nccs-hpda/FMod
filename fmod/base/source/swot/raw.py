@@ -93,6 +93,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		return norm_stats
 
 	def norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
+		print(f"norm_stats: compute={self._norm_stats is None}")
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
 		return self._norm_stats
