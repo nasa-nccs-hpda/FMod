@@ -21,12 +21,11 @@ class TrainingPlot(Plot):
 			xp, yp = x[tset], y[tset]
 			self.min_loss[tset] = yp.min() if (yp.size > 0) else 0.0
 			self.axs.plot(xp, yp, self.fmt[tset], label=tset.name)
-			lgm().log( f"Plotting {xp.size} {tset.name} points", display=True )
+			print( f"Plotting {xp.size} {tset.name} points"  )
 		self.axs.set_xlabel("Epoch")
 		self.axs.set_ylabel("Loss")
 		self.axs.set_yscale(self.yscale)
 		self.axs.set_title(f"Model '{self.model}':  Validation Loss = {self.min_loss[TSet.Validation]:.4f} ")
 		self.axs.legend()
-		# self.fig.canvas.draw_idle()
-		return self.fig.canvas
-		# return ipw.VBox( [self.fig.canvas] )
+		self.fig.canvas.draw_idle()
+		return ipw.VBox( [self.fig.canvas] )
