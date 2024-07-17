@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
 from fmod.view.plot.base import Plot
-import ipywidgets as ipw
+import ipywidgets as ipw, numpy as np
 from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.io.loader import ncFormat, TSet
 from fmod.controller.dual_trainer import ModelTrainer
+
+def subsample( data: np.ndarray, step: int):
+	end = step * int(len(data) / step )
+	return np.mean(data[:end].reshape(-1, step), 1)
 
 class TrainingPlot(Plot):
 
@@ -12,13 +16,21 @@ class TrainingPlot(Plot):
 		self.fmt = {TSet.Train: 'b', TSet.Validation: 'g'}
 		self.trainer.results_accum.load_results()
 		self.min_loss = {}
+		self.max_points = kwargs.get("max_points", 200)
 		self.create_figure( title='Training Loss' )
+
+
 
 	@exception_handled
 	def plot(self) -> ipw.Box:
 		(x, y) = self.trainer.results_accum.get_plot_data()
 		for tset in [TSet.Train, TSet.Validation]:
 			xp, yp = x[tset], y[tset]
+			npts = xp.size
+			if npts > self.max_points:
+				step = round(npts/self.max_points)
+				xp = xp[::step]
+				yp = subsample(yp,step)
 			self.min_loss[tset] = yp.min() if (yp.size > 0) else 0.0
 			self.axs.plot(xp, yp, self.fmt[tset], label=tset.name)
 			print( f"Plotting {xp.size} {tset.name} points"  )
