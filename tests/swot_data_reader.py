@@ -12,7 +12,7 @@ file_index  =  1425024
 ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
-	loader.get_norm_stats()
+	ns = loader.norm_stats
 
 
 
