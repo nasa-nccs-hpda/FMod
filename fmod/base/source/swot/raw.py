@@ -137,7 +137,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			bmean, bstd = batch.mean( dim=["x", "y"], skipna=True, keep_attrs=True ), batch.std( dim=["x", "y"], skipna=True, keep_attrs=True )
 			batch = (batch-bmean)/bstd
-			lgm().log(f"select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
+			lgm().log(f"select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}, bmean{bmean.shape}", display=True )
 			return batch
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
