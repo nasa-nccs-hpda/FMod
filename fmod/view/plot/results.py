@@ -151,6 +151,7 @@ class ResultPlot(Plot):
 	def plot( self ) -> ipw.Box:
 		# self.tile_grid.overlay_grid( self.axs[1,0] )
 		self.update_subplots()
+		print( f"Creating widget...")
 		return ipw.VBox(self.panels)
 
 	@property
