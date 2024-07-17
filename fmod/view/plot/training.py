@@ -29,7 +29,7 @@ class TrainingPlot(Plot):
 			npts = xp.size
 			if npts > self.max_points:
 				step = round(npts/self.max_points)
-				xp = xp[::step]
+				xp = subsample(xp,step)
 				yp = subsample(yp,step)
 			self.min_loss[tset] = yp.min() if (yp.size > 0) else 0.0
 			self.axs.plot(xp, yp, self.fmt[tset], label=tset.name)
