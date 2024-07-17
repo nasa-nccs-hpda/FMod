@@ -49,16 +49,19 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
 	def _write_norm_stats(self, norm_stats: Dict[Tuple[str,int],Tuple[float,float]] ):
+		print("_write_norm_stats")
 		with open(self.norm_data_file, 'wb') as file_handle:
 			pickle.dump(list(norm_stats.items()), file_handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 	def _read_norm_stats(self) -> Optional[Dict[Tuple[str,int],Tuple[float,float]]]:
+		print("_read_norm_stats")
 		if os.path.isfile(self.norm_data_file):
 			with open(self.norm_data_file, 'rb') as file_handle:
 				norm_data = pickle.load(file_handle)
 				return dict(norm_data)
 
 	def _compute_normalization(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
+		print("_compute_normalization")
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		for varname in self.varnames:
@@ -82,6 +85,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		return vtstats
 
 	def _get_norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
+		print("_get_norm_stats")
 		norm_stats: Dict[Tuple[str,int], Tuple[float,float]] = self._read_norm_stats()
 		if norm_stats is None:
 			norm_stats = self._compute_normalization()
