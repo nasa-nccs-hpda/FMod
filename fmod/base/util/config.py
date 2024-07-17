@@ -71,7 +71,7 @@ class ConfigContext(initialize):
     def activate(self):
         assert ConfigContext.cfg is None, "Context already activated"
         cfg = ConfigContext.cfg = self.load()
-        gpu = int(os.getenv('FMOD_GPU', cfg.pipeline.gpu))
+        gpu = self.configuration.get( 'gpu', int(os.getenv('FMOD_GPU',cfg.pipeline.gpu)) )
         cfg.pipeline.gpu = gpu
         print( f"Activating {self.name}: '{self.cfg_file}', gpu={gpu}, keys = {list(self.cfg.keys())}")
         cfg.task.name = self.task
