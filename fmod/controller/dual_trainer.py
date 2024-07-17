@@ -347,13 +347,13 @@ class ModelTrainer(object):
 						lgm().log(f"\n ** <{self.model_manager.model_name}> TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
 
 
+		lgm().log(f" --- batch_model_losses = {batch_model_losses}", display=True)
 		if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 		if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 		if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-		if binterp is not None:  self.interp[tset] = binterp.detach().cpu().numpy()
-
-		lgm().log(f" --- batch_model_losses = {batch_model_losses}", display=True)
-		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}", display=True)
+		if binterp is not None:
+			self.interp[tset] = binterp.detach().cpu().numpy()
+			lgm().log(f" --- batch_interp_losses = {batch_interp_losses}", display=True)
 		model_loss: float = np.array(batch_model_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
