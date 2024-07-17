@@ -333,6 +333,7 @@ class ModelTrainer(object):
 			if (self.time_index < 0) or (itime == self.time_index):
 				ctiles = TileIterator()
 				for itile, ctile in enumerate(iter(ctiles)):
+					print( (itime,itile) )
 					if (self.tile_index < 0) or (itile == self.tile_index):
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 						if batch_data is None: break
