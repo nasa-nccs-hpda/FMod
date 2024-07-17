@@ -52,7 +52,7 @@ class ResultPlot(Plot):
 		super(ResultPlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
 		self.time_index: int = kwargs.get( 'time_id', 0 )
-		self.tile_index: Tuple[int, int] = tuple([ cfg().task.origin[cn] for cn in ['y','x'] ])
+		self.tile_index: int = kwargs.get( 'tile_id', 0 )
 		self.losses: Dict[str,float] = self.trainer.evaluate(self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs)
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tile_grid.create_tile_recs(**kwargs)
@@ -61,8 +61,8 @@ class ResultPlot(Plot):
 		self.channel: int = kwargs.get( 'channel', 0 )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
-		self.tslider: StepSlider = StepSlider('Time:', self.time_index, self.sample_input.sizes['tiles'] )
-		self.sslider: StepSlider = StepSlider('Tile:', self.tileId, self.tile_grid.ntiles )
+		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
+		self.sslider: StepSlider = StepSlider('Tile:', self.tile_index, self.sample_input.sizes['tiles'] )
 		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
 		self.ims = {}
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
@@ -94,19 +94,13 @@ class ResultPlot(Plot):
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
 		product_data =  self.trainer.get_ml_product(self.tset)
+		interp_data = self.trainer.get_ml_interp(self.tset)
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['tiles','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
+		upsampled = xa.DataArray( interp_data, dims=['tiles','channels','y','x'] )
 		domain: xa.DataArray = self.trainer.get_dataset().load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
-
-		if prediction.ndim == 3:
-			upsampled = to_xa(self.sample_target, self.trainer.get_ml_upsampled(self.tset))
-		else:
-			# coords: Dict[str, DataArrayCoordinates] = dict(tiles=self.tcoords['time'], channels=self.icoords['channel'], y=self.tcoords['y'], x=self.tcoords['x'])
-			data: np.ndarray = upsample( self.trainer.input[self.tset] ).cpu().detach().numpy()
-			upsampled = xa.DataArray(data, dims=['tiles', 'channels', 'y', 'x'] ) # , coords=coords)
-
 		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
 		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
@@ -149,7 +143,7 @@ class ResultPlot(Plot):
 	@exception_handled
 	def tile_update(self, sindex: int):
 		lgm().log( f"\n tile_update ---> sindex = {sindex}" )
-		self.tileId = sindex
+		self.tile_index = sindex
 		self.images_data = self.update_tile_data()
 		self.update_subplots()
 
@@ -167,11 +161,9 @@ class ResultPlot(Plot):
 
 	def update_subplots(self):
 		self.fig.suptitle(f'Time: {self.display_time}, Tile: {self.tile_index}', fontsize=10, va="top", y=1.0)
-
 		for irow in [0, 1]:
 			for icol in [0, 1]:
 				self.generate_subplot(irow, icol)
-
 		self.fig.canvas.draw_idle()
 
 	def generate_subplot(self, irow: int, icol: int):
