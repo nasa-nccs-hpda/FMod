@@ -220,16 +220,13 @@ class ModelTrainer(object):
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> xa.DataArray:
-		return  to_xa( self.input[tset] )
+		return  to_xa( self.input[tset], True )
 
 	def get_ml_target(self, tset: TSet) -> xa.DataArray:
 		return to_xa( self.target[tset] )
 
 	def get_ml_product(self, tset: TSet) -> xa.DataArray:
 		return to_xa( self.product[tset] )
-
-	def get_ml_interp(self, tset: TSet) -> xa.DataArray:
-		return  to_xa( self.interp[tset], True )
 
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
