@@ -44,10 +44,10 @@ class TileSelectionGrid(object):
 	def ntiles(self):
 		return len(self.tiles)
 
-	def get_selected(self, x: float, y: float ) -> Optional[Tuple[int,int]]:
-		for xyi, r in self.tiles.items():
+	def get_selected(self, x: float, y: float ) -> Optional[int]:
+		for iT, (xyi, r) in enumerate(self.tiles.items()):
 			if r.contains_point( (x,y) ):
-				return xyi
+				return iT
 	def create_tile_recs(self, **kwargs):
 		refresh = kwargs.get('refresh', False)
 		highres = kwargs.get('highres', True)

@@ -89,7 +89,7 @@ class ResultPlot(Plot):
 		return self.sample_input.coords
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
-		self.tile_index = self.tile_grid.get_tile_coords( self.tileId )
+		self.tile_index = self.tileId
 		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs )
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
@@ -108,10 +108,10 @@ class ResultPlot(Plot):
 
 	def select_point(self,event):
 		lgm().log(f'Mouse click: button={event.button}, dbl={event.dblclick}, x={event.xdata:.2f}, y={event.ydata:.2f}')
-		selected_tile: Optional[Tuple[int, int]] = self.tile_grid.get_selected(event.xdata, event.ydata)
+		selected_tile: Optional[int] = self.tile_grid.get_selected(event.xdata, event.ydata)
 		self.select_tile( selected_tile )
 
-	def select_tile(self, selected_tile: Tuple[int,int]):
+	def select_tile(self, selected_tile: int):
 		print(f" ---> selected_tile: {selected_tile}")
 		if selected_tile is not None:
 			self.tile_index = selected_tile
