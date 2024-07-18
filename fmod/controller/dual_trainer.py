@@ -267,7 +267,6 @@ class ModelTrainer(object):
 						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 						[sloss, mloss] = self.loss(boutput,btarget)
 						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
-						self.optimizer.zero_grad(set_to_none=True)
 						mloss.backward()
 						self.optimizer.step()
 						ctiles.register_loss( sloss )
@@ -295,7 +294,7 @@ class ModelTrainer(object):
 		return self.current_losses
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, **kwargs ):
-		eval_losses = self.evaluate( tset, interp_loss=(epoch==0), **kwargs )
+		eval_losses = self.evaluate( tset, update_model=False, **kwargs )
 		if self.results_accum is not None:
 			print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
@@ -313,62 +312,9 @@ class ModelTrainer(object):
 			lgm().log( f"init_data_timestamps: {len(ctimes)} times", display=True)
 			self.data_timestamps = ttsplit_times(ctimes)
 
-
-	def evaluate1(self, tset: TSet, **kwargs) -> Dict[str, float]:
-		if cfg().task['nepochs'] == 0: return {}
-		seed = kwargs.get('seed', 4456)
-		interp_loss = kwargs.get('interp_loss', False)
-		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
-		torch.manual_seed(seed)
-		torch.cuda.manual_seed(seed)
-		self.time_index = kwargs.get('time_index', self.time_index)
-		self.tile_index = kwargs.get('tile_index', self.tile_index)
-		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
-		epoch = train_state.get('epoch', 1)
-		self.init_data_timestamps()
-
-		batch_model_losses, batch_interp_losses = [], []
-		binput, boutput, btarget, binterp, nts = None, None, None, None, len(self.data_timestamps[TSet.Train])
-		for itime, ctime in enumerate(self.data_timestamps[tset]):
-			if (self.time_index < 0) or (itime == self.time_index):
-				ctiles = TileIterator()
-				for itile, ctile in enumerate(iter(ctiles)):
-					if (self.tile_index < 0) or (itile == self.tile_index):
-						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
-						if batch_data is None: break
-						binput, boutput, btarget = self.apply_network( batch_data )
-						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
-						[sloss, mloss] = self.loss(boutput,btarget)
-						batch_model_losses.append(sloss)
-						if interp_loss:
-							binterp = upsample(binput)
-							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-							batch_interp_losses.append(interp_sloss)
-						lgm().log(f"\n ** <{self.model_manager.model_name}> TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
-						if self.tile_index >= 0: break
-				if self.time_index >= 0: break
-
-		lgm().log(f" --- batch_model_losses = {batch_model_losses}", display=True)
-		if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
-		if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
-		if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-		if binterp is not None:
-			self.interp[tset] = binterp.detach().cpu().numpy()
-			lgm().log(f" --- batch_interp_losses = {batch_interp_losses}", display=True)
-		model_loss: float = np.array(batch_model_losses).mean()
-		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
-			self.validation_loss = model_loss
-			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss )
-		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset, model loss = {model_loss:.4f}', display=True)
-		result = dict( model=model_loss )
-		if interp_loss:
-			result['upsample'] = np.array(batch_interp_losses).mean()
-		return result
-
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
-		interp_loss = kwargs.get('interp_loss', False)
+		interp_loss = kwargs.get('interp_loss', True)
 		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -382,7 +328,7 @@ class ModelTrainer(object):
 		ctiles = TileIterator()
 		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index} ##### ")
 
-		batch_model_losses, batch_interp_losses = [], []
+		batch_model_losses, batch_interp_losses, interp_sloss = [], [], 0.0
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
 			if (self.time_index < 0) or (itime == self.time_index):
@@ -399,7 +345,7 @@ class ModelTrainer(object):
 							binterp = upsample(binput)
 							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 							batch_interp_losses.append( interp_sloss )
-						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
+						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f} ({interp_sloss:.5f})", display=True )
 						ibatch = ibatch + 1
 						if self.tile_index >= 0: break
 				if self.time_index >= 0: break
