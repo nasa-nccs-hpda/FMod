@@ -26,6 +26,14 @@ Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ TSet, torch.Tensor]
 
+def to_xa( data: np.ndarray, upscaled: bool = False ) -> xarray.DataArray:
+	ustep: int = math.prod(cfg().model.downscale_factors)
+	cstep = ustep if upscaled else 1
+	coords = dict(tiles=np.arange(data.shape[0]), channels=np.arange(data.shape[1]))
+	coords['y'] = np.arange(0, data.shape[2], cstep)
+	coords['x'] = np.arange(0, data.shape[3], cstep)
+	result = xa.DataArray( data.astype(np.float32), dims=['tiles', 'channels', 'y', 'x'], coords=coords )
+	return result
 def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
 	ttsplit = cfg().task.ttsplit
 	start, result, nt = 0, {}, len(times)
@@ -211,17 +219,17 @@ class ModelTrainer(object):
 			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
 		return btarget
 
-	def get_ml_input(self, tset: TSet) -> np.ndarray:
-		return  self.input[tset].astype(np.float32)
+	def get_ml_input(self, tset: TSet) -> xa.DataArray:
+		return  to_xa( self.input[tset] )
 
-	def get_ml_target(self, tset: TSet) -> np.ndarray:
-		return self.target[tset].astype(np.float32)
+	def get_ml_target(self, tset: TSet) -> xa.DataArray:
+		return to_xa( self.target[tset] )
 
-	def get_ml_product(self, tset: TSet) -> np.ndarray:
-		return self.product[tset].astype(np.float32)
+	def get_ml_product(self, tset: TSet) -> xa.DataArray:
+		return to_xa( self.product[tset] )
 
-	def get_ml_interp(self, tset: TSet) -> np.ndarray:
-		return self.interp[tset].astype(np.float32)
+	def get_ml_interp(self, tset: TSet) -> xa.DataArray:
+		return  to_xa( self.interp[tset], True )
 
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
