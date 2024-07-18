@@ -89,8 +89,9 @@ def upsample( input_tensor: Tensor ) -> Tensor:
     upsampled = torch.nn.functional.interpolate(input_tensor, scale_factor=scale_factor, mode=torch_interp_mode(False))
     return upsampled
 
-def xa_upsample(input_array: xa.DataArray) -> xa.DataArray:
-    upsampled =  input_array.interp( coords=UPSAMPLE_COORDS, method=cfg().task.downsample_mode, assume_sorted=True)
+def xa_upsample(input_array: xa.DataArray, **kwargs) -> xa.DataArray:
+    coords = kwargs.get( 'coords', UPSAMPLE_COORDS )
+    upsampled =  input_array.interp( coords=coords, method=cfg().task.downsample_mode, assume_sorted=True)
     return upsampled
 
     #target_channels = cfg().task.target_variables
