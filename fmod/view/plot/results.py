@@ -172,8 +172,9 @@ class ResultPlot(Plot):
 		ax.set_xlim([0, ts['x']])
 		ax.set_ylim([0, ts['y']])
 		image: xa.DataArray = self.get_subplot_image(irow, icol, ts)
-
 		vrange = cscale(image, 2.0)
+
+		print( f"subplot_image[{irow}, {icol}]: image{image.dims}{image.shape}, vrange={vrange}")
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,icol) )

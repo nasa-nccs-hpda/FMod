@@ -13,28 +13,17 @@ class TileIterator(object):
         self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
         self.batch_size: int = cfg().task.batch_size
         self.batch_losses = []
-        self.refinement_losses = {}
-        self.refinement_batches = None
-        self.ntiles = kwargs.get('ntiles', 0)
         self.index: int = 0
         self.next_index = 0
 
     def register_loss(self, loss: float ):
         self.batch_losses.append( loss )
-        start = self.index if (self.refinement_batches is None) else list(self.refinement_batches.keys())[self.index]
-        self.refinement_losses[start] = loss
 
     def epoch_loss(self):
         epoch_loss = np.array(self.batch_losses).mean()
         return epoch_loss
 
     def __iter__(self):
-        if len( self.refinement_losses ) > 0:
-            self.refinement_losses =  sorted( self.refinement_losses.items(), key=lambda x:x[1], reverse=True )
-            nr = int( len(self.refinement_losses) * cfg().task.refine_fraction  )
-            self.refinement_batches = dict(self.refinement_losses[:nr])
-            lgm().log( f"\n ***** refinement_batches--> {self.refinement_batches}", display=True)
-            self.refinement_losses = {}
         if self.randomize: random.shuffle( self.regular_grid )
         self.next_index = 0
         return self
@@ -44,8 +33,7 @@ class TileIterator(object):
         if self.domain == batchDomain.Time:
             return self.next_index < len(self.regular_grid)
         elif self.domain == batchDomain.Tiles:
-            if self.refinement_batches is None:
-                return (self.ntiles == 0) or (self.next_index < self.ntiles)
+            return (self.ntiles == 0) or (self.next_index < self.ntiles)
         return True
 
 
@@ -57,15 +45,8 @@ class TileIterator(object):
             self.next_index = self.index + 1
             return result
         elif self.domain == batchDomain.Tiles:
-            if self.refinement_batches is None:
-                result = dict( start=self.index, end=self.index + self.batch_size )
-                self.next_index = self.index + self.batch_size
-            else:
-                try:
-                    start = list(self.refinement_batches.keys())[self.index]
-                    result = dict( start=start, end=start + self.batch_size )
-                    self.next_index = self.index + 1
-                except IndexError: raise StopIteration()
+            result = dict( start=self.index, end=self.index + self.batch_size )
+            self.next_index = self.index + self.batch_size
             return result
 
 class TileGrid(object):

@@ -13,7 +13,7 @@ configuration = dict(
 	platform = "explore"
 )
 
-controller = WorkflowController( cname, configuration, refresh_state=refresh )
+controller = WorkflowController( cname, configuration, refresh_state=refresh, interp_loss=True )
 controller.train( models, **ccustom )
 
 
