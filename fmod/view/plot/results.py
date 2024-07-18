@@ -97,7 +97,7 @@ class ResultPlot(Plot):
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['tiles','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
-		interpolated: xa.DataArray =  xa_upsample( model_input, coords=target.coords )
+		interpolated: xa.DataArray =  xa_upsample( model_input, coords=dict(y=target.sizes['y'], x=target.sizes['x']) )
 		lgm().log( f"update_tile_data{self.tile_index}: prediction{prediction.shape}, target{target.shape}, input{model_input.shape}, interp{interpolated.shape}", display=True)
 		images_data: Dict[str, xa.DataArray] = dict(interpolated=interpolated, input=model_input, target=target)
 		images_data[self.result_plot_label] = prediction
