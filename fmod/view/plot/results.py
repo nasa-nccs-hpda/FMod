@@ -98,9 +98,8 @@ class ResultPlot(Plot):
 		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
 		downsampled: xa.DataArray =  xa_downsample( model_input )
-		domain: xa.DataArray = self.trainer.get_dataset().load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
-		images_data: Dict[str, xa.DataArray] = dict(downsample=downsampled, input=model_input, target=target, domain=domain)
+		images_data: Dict[str, xa.DataArray] = dict(downsample=downsampled, input=model_input, target=target)
 		images_data[self.result_plot_label] = prediction
 		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
 		return images_data
