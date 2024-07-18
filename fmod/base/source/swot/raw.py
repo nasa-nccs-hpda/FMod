@@ -113,8 +113,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_data: np.ndarray = np.fromfile(filepath(), '>f4')
 		mask = (var_template != 0)
 		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, file={filepath()}")
-		print(f"   >>> data file={filepath()}")
-		print(f"   >>> template file={template()}")
 		var_template[mask] = var_data
 		var_template[~mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
@@ -126,7 +124,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
-			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}", display=True)
+			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}")
 			self.time_index = time_index
 		return self.timeslice
 
@@ -150,7 +148,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(image_shape=ishape)
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
-		print( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}")
+		lgm().log( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}")
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
