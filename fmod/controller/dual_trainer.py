@@ -121,7 +121,7 @@ class ModelTrainer(object):
 		self.product: np.ndarray = {}
 		self.current_losses: Dict[str,float] = {}
 		self.time_index: int = -1
-		self.tile_index: Optional[Tuple[int,int]] = None
+		self.tile_index: int = -1
 		self.validation_loss: float = float('inf')
 		self.upsampled_loss: float = float('inf')
 		self.data_timestamps: Dict[TSet,List[Union[datetime, int]]] = {}
@@ -330,20 +330,25 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses = [], []
 		binput, boutput, btarget, ibatch = None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
+			if (self.time_index < 0) or (itime == self.time_index):
 				for itile, ctile in enumerate(iter(ctiles)):
-					lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
-					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
-					if batch_data is None: break
-					binput, boutput, btarget = self.apply_network( batch_data )
-					lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
-					[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
-					batch_model_losses.append( model_sloss )
-					if interp_loss:
-						binterp = upsample(binput)
-						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-						batch_interp_losses.append( interp_sloss )
-					lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
-					ibatch = ibatch + 1
+					if (self.tile_index < 0) or (itile == self.tile_index):
+						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
+						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
+						if batch_data is None: break
+						binput, boutput, btarget = self.apply_network( batch_data )
+						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
+						[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
+						batch_model_losses.append( model_sloss )
+						if interp_loss:
+							binterp = upsample(binput)
+							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+							batch_interp_losses.append( interp_sloss )
+						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f}", display=True )
+						ibatch = ibatch + 1
+						if self.tile_index >= 0: break
+				if self.time_index >= 0: break
+
 		if binput is not None:  self.input[tset] = binput.detach().cpu().numpy()
 		if btarget is not None: self.target[tset] = btarget.detach().cpu().numpy()
 		if boutput is not None: self.product[tset] = boutput.detach().cpu().numpy()
