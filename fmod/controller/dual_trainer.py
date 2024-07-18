@@ -333,7 +333,6 @@ class ModelTrainer(object):
 			if (self.time_index < 0) or (itime == self.time_index):
 				ctiles = TileIterator()
 				for itile, ctile in enumerate(iter(ctiles)):
-					print( (itime,itile) )
 					if (self.tile_index < 0) or (itile == self.tile_index):
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 						if batch_data is None: break
@@ -346,7 +345,8 @@ class ModelTrainer(object):
 							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 							batch_interp_losses.append(interp_sloss)
 						lgm().log(f"\n ** <{self.model_manager.model_name}> TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
-
+						if self.tile_index >= 0: break
+				if self.time_index >= 0: break
 
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}", display=True)
 		if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
