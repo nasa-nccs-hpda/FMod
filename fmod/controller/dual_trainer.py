@@ -270,8 +270,8 @@ class ModelTrainer(object):
 			for itime in range (itime0,nts):
 				ctime  = self.data_timestamps[TSet.Train][itime]
 				timeslice: xa.DataArray = self.load_timeslice(ctime)
-				ctiles = TileIterator( timeslice.sizes['tiles'] )
-				for ctile in iter(ctiles):
+				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'], randomize=True )
+				for ctile in iter(tile_iter):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 					if batch_data is None: break
 					self.optimizer.zero_grad()
@@ -284,12 +284,12 @@ class ModelTrainer(object):
 					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True, end="")
 					mloss.backward()
 					self.optimizer.step()
-					ctiles.register_loss( sloss )
+					tile_iter.register_loss( sloss )
 
 				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-				epoch_loss = ctiles.epoch_loss()
+				epoch_loss = tile_iter.epoch_loss()
 				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss)
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
@@ -346,7 +346,7 @@ class ModelTrainer(object):
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
 			if (self.time_index < 0) or (itime == self.time_index):
 				timeslice: xa.DataArray = self.load_timeslice(ctime)
-				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'], randomize=True )
+				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
 				for itile, ctile in enumerate(iter(tile_iter)):
 					if (self.tile_index < 0) or (itile == self.tile_index):
 						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
