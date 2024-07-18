@@ -2,7 +2,7 @@ import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
 from fmod.base.util.config import cfg
-from fmod.base.util.array import array2tensor, downsample, upsample
+from fmod.base.util.array import array2tensor, downsample, upsample, xa_downsample
 import ipywidgets as ipw
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
@@ -94,14 +94,13 @@ class ResultPlot(Plot):
 		input_data = self.trainer.get_ml_input(self.tset)
 		target_data = self.trainer.get_ml_target(self.tset)
 		product_data =  self.trainer.get_ml_product(self.tset)
-		interp_data = self.trainer.get_ml_interp(self.tset)
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['tiles','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
-		upsampled = xa.DataArray( interp_data, dims=['tiles','channels','y','x'] )
+		downsampled: xa.DataArray =  xa_downsample( model_input )
 		domain: xa.DataArray = self.trainer.get_dataset().load_global_timeslice(index=0)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
-		images_data: Dict[str, xa.DataArray] = dict(upsample=upsampled, input=model_input, target=target, domain=domain)
+		images_data: Dict[str, xa.DataArray] = dict(downsample=downsampled, input=model_input, target=target, domain=domain)
 		images_data[self.result_plot_label] = prediction
 		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
 		return images_data
@@ -121,7 +120,7 @@ class ResultPlot(Plot):
 
 	@property
 	def upscale_plot_label(self) -> str:
-		return "upsample"
+		return "downsample"
 
 	@property
 	def result_plot_label(self) -> str:
