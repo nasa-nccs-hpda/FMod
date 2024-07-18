@@ -15,6 +15,7 @@ class WorkflowController(object):
 		self.cname = cname
 		self.seed = kwargs.get('seed', int( time.time()/60 ) )
 		self.refresh_state = kwargs.get('refresh_state', False )
+		self.interp_loss = kwargs.get('interp_loss', False)
 		self.config: ConfigContext = None
 		self.trainer: ModelTrainer = None
 		self.plot: Plot = None
@@ -27,7 +28,7 @@ class WorkflowController(object):
 				try:
 					self.config = cc
 					self.trainer = ModelTrainer(cc)
-					self.trainer.train(refresh_state=self.refresh_state, seed=self.seed)
+					self.trainer.train(refresh_state=self.refresh_state, seed=self.seed, interp_loss=self.interp_loss)
 				except Exception as e:
 					lgm().exception( "Exception while training model: %s" % str(e) )
 					save_memory_snapshot()

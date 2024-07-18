@@ -226,13 +226,14 @@ class ModelTrainer(object):
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
 		refresh_state = kwargs.get('refresh_state', False)
+		interp_loss = kwargs.get('interp_loss', False)
 		seed = kwargs.get('seed', 4456)
 		lossrec_flush_period = 32
 
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
 		self.scheduler = kwargs.get('scheduler', None)
-		epoch0, itime0, epoch_loss, nepochs, loss_history, eval_losses, tset = 1, 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train
+		epoch0, itime0, epoch_loss, nepochs, loss_history, eval_losses, tset, interp_sloss = 1, 0, 0.0, cfg().task.nepochs,  [], {}, TSet.Train, 0.0
 		train_start = time.time()
 		if refresh_state:
 			self.checkpoint_manager.clear_checkpoints()
@@ -266,7 +267,10 @@ class ModelTrainer(object):
 						binput, boutput, btarget = self.apply_network( batch_data )
 						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 						[sloss, mloss] = self.loss(boutput,btarget)
-						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f}", display=True, end="")
+						if interp_loss:
+							binterp = upsample(binput)
+							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True, end="")
 						mloss.backward()
 						self.optimizer.step()
 						ctiles.register_loss( sloss )

@@ -8,7 +8,7 @@ device: "gpu"
 num_workers: 4
 
 batch_size: 32
-ttsplit: { train: 0.9, valid: 0.05, test: 0.05 }
+ttsplit: { train: 0.95, valid: 0.025, test: 0.025 }
 nepochs: 30
 nrefinements: 0
 refine_fraction: 0.15
