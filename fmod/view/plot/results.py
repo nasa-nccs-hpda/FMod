@@ -63,7 +63,7 @@ class ResultPlot(Plot):
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
 		self.sslider: StepSlider = StepSlider('Tile:', self.tile_index, self.sample_input.sizes['tiles'] )
-		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['upsample', 'model'] ]
+		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['interp', 'model'] ]
 		self.ims = {}
 		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		self.callbacks = dict(button_press_event=self.select_point)
