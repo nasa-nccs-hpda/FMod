@@ -115,7 +115,6 @@ class TileGrid(object):
     def get_active_region(self, **kwargs ) -> Dict[str, Tuple[int,int]]:
         ts = self.get_full_tile_size()
         gs = self.get_grid_shape( **kwargs )
-        print( f"get_active_region: gs={gs}, ts={ts}" )
         region = { d: (self.origin[d],self.origin[d]+ts[d]*gs[d]) for d in ['x', 'y'] }
         return region
 
