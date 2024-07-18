@@ -252,7 +252,6 @@ class ModelTrainer(object):
 		self.init_data_timestamps()
 		for epoch in range(epoch0,nepochs):
 			epoch_start = time.time()
-			self.optimizer.zero_grad(set_to_none=True)
 			self.model.train()
 
 			lgm().log(f"  ----------- Epoch {epoch}/{nepochs}   ----------- ", display=True )
@@ -264,6 +263,7 @@ class ModelTrainer(object):
 					for ctile in iter(ctiles):
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 						if batch_data is None: break
+						self.optimizer.zero_grad()
 						binput, boutput, btarget = self.apply_network( batch_data )
 						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 						[sloss, mloss] = self.loss(boutput,btarget)
