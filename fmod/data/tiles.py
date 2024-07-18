@@ -12,6 +12,7 @@ class TileIterator(object):
         self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
         self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
         self.batch_size: int = cfg().task.batch_size
+        self.ntiles = 0
         self.batch_losses = []
         self.index: int = 0
         self.next_index = 0
