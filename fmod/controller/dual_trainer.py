@@ -270,8 +270,7 @@ class ModelTrainer(object):
 			for itime in range (itime0,nts):
 				ctime  = self.data_timestamps[TSet.Train][itime]
 				timeslice: xa.DataArray = self.load_timeslice(ctime)
-				print( f"  {ctime}: timeslice{timeslice.dims}{timeslice.shape}" )
-				ctiles = TileIterator()
+				ctiles = TileIterator( timeslice.sizes['tiles'] )
 				for ctile in iter(ctiles):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
 					if batch_data is None: break
@@ -340,14 +339,15 @@ class ModelTrainer(object):
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
 		proc_start = time.time()
-		ctiles = TileIterator()
 		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index} ##### ")
 
 		batch_model_losses, batch_interp_losses, interp_sloss = [], [], 0.0
 		binput, boutput, btarget, binterp, ibatch = None, None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
 			if (self.time_index < 0) or (itime == self.time_index):
-				for itile, ctile in enumerate(iter(ctiles)):
+				timeslice: xa.DataArray = self.load_timeslice(ctime)
+				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'], randomize=True )
+				for itile, ctile in enumerate(iter(tile_iter)):
 					if (self.tile_index < 0) or (itile == self.tile_index):
 						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)

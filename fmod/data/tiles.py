@@ -7,12 +7,7 @@ from fmod.base.util.logging import lgm, log_timing
 class TileIterator(object):
 
     def __init__(self, **kwargs ):
-        self.grid = TileGrid()
         self.randomize: bool = kwargs.get('randomize', False)
-        self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
-        self.domain: batchDomain = batchDomain.from_config( cfg().task.get('batch_domain', 'tiles'))
-        self.batch_size: int = cfg().task.batch_size
-        self.ntiles = 0
         self.batch_losses = []
         self.index: int = 0
         self.next_index = 0
@@ -25,30 +20,74 @@ class TileIterator(object):
         return epoch_loss
 
     def __iter__(self):
+        raise NotImplementedError("TileIterator:__iter__")
+
+    @property
+    def active(self):
+        raise NotImplementedError("TileIterator:active")
+
+
+    def __next__(self) ->  Dict[str,int]:
+        raise NotImplementedError("TileIterator:__next__")
+
+    @classmethod
+    def get_iterator(cls, **kwargs ):
+        domain: batchDomain = batchDomain.from_config(cfg().task.get('batch_domain', 'tiles'))
+        if domain == batchDomain.Tiles: return TileBatchIterator(**kwargs)
+        if domain == batchDomain.Time:  return TileGridIterator(**kwargs)
+
+
+class TileBatchIterator(TileIterator):
+
+    def __init__(self, **kwargs ):
+        super(TileBatchIterator, self).__init__(**kwargs)
+        self.batch_size: int = cfg().task.batch_size
+        self.ntiles: int = kwargs.get('ntiles',0)
+        assert self.ntiles > 0, "Must provide ntiles for TileBatchIterator"
+        self.batch_start_idxs: List[int] = list(range(0,self.ntiles,self.batch_size))
+        if self.randomize: random.shuffle( self.batch_start_idxs )
+
+
+    def __iter__(self):
+        self.next_index = 0
+        return self
+
+    @property
+    def active(self):
+        return (self.ntiles == 0) or (self.next_index < len(self.batch_start_idxs))
+
+
+    def __next__(self) ->  Dict[str,int]:
+        if not self.active: raise StopIteration()
+        self.index = self.next_index
+        bstart = self.batch_start_idxs[self.index]
+        result = dict( start=bstart, end=bstart + self.batch_size )
+        self.next_index = self.index + 1
+        return result
+
+class TileGridIterator(TileIterator):
+
+    def __init__(self,  **kwargs ):
+        super(TileGridIterator, self).__init__(**kwargs)
+        self.grid = TileGrid()
+        self.regular_grid: List[  Dict[str,int]  ] = list( self.grid.get_tile_locations(**kwargs).values() )
+
+
+    def __iter__(self):
         if self.randomize: random.shuffle( self.regular_grid )
         self.next_index = 0
         return self
 
     @property
     def active(self):
-        if self.domain == batchDomain.Time:
-            return self.next_index < len(self.regular_grid)
-        elif self.domain == batchDomain.Tiles:
-            return (self.ntiles == 0) or (self.next_index < self.ntiles)
-        return True
-
+        return self.next_index < len(self.regular_grid)
 
     def __next__(self) ->  Dict[str,int]:
         if not self.active: raise StopIteration()
         self.index = self.next_index
-        if self.domain == batchDomain.Time:
-            result = self.regular_grid[self.index]
-            self.next_index = self.index + 1
-            return result
-        elif self.domain == batchDomain.Tiles:
-            result = dict( start=self.index, end=self.index + self.batch_size )
-            self.next_index = self.index + self.batch_size
-            return result
+        result = self.regular_grid[self.index]
+        self.next_index = self.index + 1
+        return result
 
 class TileGrid(object):
 
