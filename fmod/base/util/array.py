@@ -91,7 +91,9 @@ def upsample( input_tensor: Tensor ) -> Tensor:
 
 def xa_upsample(input_array: xa.DataArray, **kwargs) -> xa.DataArray:
     coords = kwargs.get( 'coords', UPSAMPLE_COORDS )
-    upsampled =  input_array.interp( coords=coords, method=cfg().task.downsample_mode, assume_sorted=True)
+    upsampled =  input_array.interp( coords=coords, method=cfg().task.upsample_mode, assume_sorted=True)
+    csize = { cn:cv.shape for cn,cv in coords.items() }
+    print( f"xa_upsample, input{input_array.shape}, upsampled{upsampled.shape}, coords{csize}")
     return upsampled
 
     #target_channels = cfg().task.target_variables
