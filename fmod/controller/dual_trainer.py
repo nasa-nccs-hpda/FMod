@@ -28,10 +28,10 @@ MLTensors = Dict[ TSet, torch.Tensor]
 
 def to_xa( data: np.ndarray, upscaled: bool = False ) -> xarray.DataArray:
 	ustep: int = math.prod(cfg().model.downscale_factors)
-	cstep = ustep if upscaled else 1
+	cscale = ustep if upscaled else 1
 	coords = dict(tiles=np.arange(data.shape[0]), channels=np.arange(data.shape[1]))
-	coords['y'] = np.arange(0, data.shape[2], cstep)
-	coords['x'] = np.arange(0, data.shape[3], cstep)
+	coords['y'] = np.arange(0, data.shape[2]*cscale, cscale)
+	coords['x'] = np.arange(0, data.shape[3]*cscale, cscale)
 	result = xa.DataArray( data.astype(np.float32), dims=['tiles', 'channels', 'y', 'x'], coords=coords )
 	return result
 def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
