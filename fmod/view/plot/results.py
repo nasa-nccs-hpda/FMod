@@ -94,7 +94,7 @@ class ResultPlot(Plot):
 		model_input: xa.DataArray = self.trainer.get_ml_input(self.tset)
 		target: xa.DataArray = self.trainer.get_ml_target(self.tset)
 		prediction: xa.DataArray =  self.trainer.get_ml_product(self.tset)
-		interpolated: xa.DataArray =  xa_upsample( model_input, coords=target.coords )
+		interpolated: xa.DataArray =  self.trainer.get_ml_interp(self.tset)
 		lgm().log( f"update_tile_data{self.tile_index}: prediction{prediction.shape}, target{target.shape}, input{model_input.shape}, interp{interpolated.shape}", display=True)
 		images_data: Dict[str, xa.DataArray] = dict(interpolated=interpolated, input=model_input, target=target)
 		images_data[self.result_plot_label] = prediction

@@ -228,6 +228,9 @@ class ModelTrainer(object):
 	def get_ml_product(self, tset: TSet) -> xa.DataArray:
 		return to_xa( self.product[tset] )
 
+	def get_ml_interp(self, tset: TSet) -> xa.DataArray:
+		return to_xa( self.interp[tset] )
+
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
 		refresh_state = kwargs.get('refresh_state', False)
@@ -246,7 +249,7 @@ class ModelTrainer(object):
 				self.results_accum.refresh_state()
 			print(" *** No checkpoint loaded: training from scratch *** ")
 		else:
-			train_state = self.checkpoint_manager.load_checkpoint( update_model=True )
+			train_state = self.checkpoint_manager.load_checkpoint( TSet.Train, update_model=True )
 			if self.results_accum is not None:
 				self.results_accum.load_results()
 			epoch0 = train_state.get('epoch', 1 )
@@ -264,21 +267,20 @@ class ModelTrainer(object):
 			for itime in range (itime0,nts):
 				ctime  = self.data_timestamps[TSet.Train][itime]
 				ctiles = TileIterator()
-				for irefine in range(1+cfg().task.get('nrefinements',0)):
-					for ctile in iter(ctiles):
-						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
-						if batch_data is None: break
-						self.optimizer.zero_grad()
-						binput, boutput, btarget = self.apply_network( batch_data )
-						lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
-						[sloss, mloss] = self.loss(boutput,btarget)
-						if interp_loss:
-							binterp = upsample(binput)
-							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-						lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}).R{irefine} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True, end="")
-						mloss.backward()
-						self.optimizer.step()
-						ctiles.register_loss( sloss )
+				for ctile in iter(ctiles):
+					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)
+					if batch_data is None: break
+					self.optimizer.zero_grad()
+					binput, boutput, btarget = self.apply_network( batch_data )
+					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
+					[sloss, mloss] = self.loss(boutput,btarget)
+					if interp_loss:
+						binterp = upsample(binput)
+						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True, end="")
+					mloss.backward()
+					self.optimizer.step()
+					ctiles.register_loss( sloss )
 
 				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
@@ -307,8 +309,8 @@ class ModelTrainer(object):
 		if self.results_accum is not None:
 			print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
 			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
-			if 'upsample' in eval_losses:
-				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['upsample'])
+			if 'interp' in eval_losses:
+				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['interp'])
 			for etset, loss in losses.items():
 				self.results_accum.record_losses( etset, epoch, loss )
 		if kwargs.get('flush',True):
@@ -323,7 +325,6 @@ class ModelTrainer(object):
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
-		interp_loss = kwargs.get('interp_loss', True)
 		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -338,7 +339,7 @@ class ModelTrainer(object):
 		lgm().log(f" ##### evaluate({tset.value}): time_index={self.time_index}, tile_index={self.tile_index} ##### ")
 
 		batch_model_losses, batch_interp_losses, interp_sloss = [], [], 0.0
-		binput, boutput, btarget, ibatch = None, None, None, 0
+		binput, boutput, btarget, binterp, ibatch = None, None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
 			if (self.time_index < 0) or (itime == self.time_index):
 				for itile, ctile in enumerate(iter(ctiles)):
@@ -350,10 +351,9 @@ class ModelTrainer(object):
 						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
 						[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 						batch_model_losses.append( model_sloss )
-						if interp_loss:
-							binterp = upsample(binput)
-							[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-							batch_interp_losses.append( interp_sloss )
+						binterp = upsample(binput)
+						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+						batch_interp_losses.append( interp_sloss )
 						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f} ({interp_sloss:.5f})", display=True )
 						ibatch = ibatch + 1
 						if self.tile_index >= 0: break
@@ -362,6 +362,7 @@ class ModelTrainer(object):
 		if binput is not None:  self.input[tset] = binput.detach().cpu().numpy()
 		if btarget is not None: self.target[tset] = btarget.detach().cpu().numpy()
 		if boutput is not None: self.product[tset] = boutput.detach().cpu().numpy()
+		if binterp is not None: self.interp[tset] = binterp.detach().cpu().numpy()
 
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
@@ -372,9 +373,7 @@ class ModelTrainer(object):
 			self.validation_loss = model_loss
 			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
-		result = dict( model=model_loss )
-		if interp_loss:
-			result['upsample'] = np.array(batch_interp_losses).mean()
+		result = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return result
 
 	def apply_network(self, target_data: xa.DataArray ) -> Tuple[Tensor,TensorOrTensors,Tensor]:
