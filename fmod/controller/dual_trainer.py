@@ -281,7 +281,8 @@ class ModelTrainer(object):
 					if interp_loss:
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
-					lgm().log(f"\n ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True, end="")
+					stile = list(ctile.values())
+					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True)
 					mloss.backward()
 					self.optimizer.step()
 					tile_iter.register_loss( sloss )
