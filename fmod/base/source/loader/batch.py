@@ -21,6 +21,12 @@ class SRDataLoader(object):
 	def load_global_timeslice(self, vid: str, **kwargs) -> np.ndarray:
 		raise NotImplementedError("SRDataLoader:load_global_timeslice")
 
+	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
+		raise NotImplementedError("SRDataLoader:load_timeslice")
+
+	def load_tile_batch(self, tile_range: Tuple[int,int] ) -> Optional[xa.DataArray]:
+		raise NotImplementedError("SRDataLoader:load_tile_batch")
+
 	def get_dset_size(self) -> int:
 		raise NotImplementedError("SRDataLoader:get_dset_size")
 
@@ -31,9 +37,6 @@ class SRDataLoader(object):
 		raise NotImplementedError("SRDataLoader:load_temporal_batch")
 
 	def load_index_batch(self, ctile: Dict[str,int], index_range: Tuple[int,int] ) -> xa.DataArray:
-		raise NotImplementedError("SRDataLoader:load_index_batch")
-
-	def load_tile_batch(self, tile_range: Tuple[int,int], time_index: int ) -> Optional[xa.DataArray]:
 		raise NotImplementedError("SRDataLoader:load_index_batch")
 
 	def load_const_dataset(self, ctile: Dict[str,int] ):

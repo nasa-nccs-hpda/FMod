@@ -142,12 +142,15 @@ class BatchDataset(object):
     def get_channel_idxs(self, channels):
         return [0]
 
-    def get_batch_array(self, ctile: Dict[str,int], ctime: Union[datetime,int], **kwargs ) -> Optional[xa.DataArray]:
+    def get_batch_array(self, ctile: Dict[str,int], ctime: TimeType, **kwargs ) -> Optional[xa.DataArray]:
         if self.batch_domain == batchDomain.Time:
             rescale = kwargs.get( 'rescale', True )
             ctile = self.scale_coords(ctile) if rescale else ctile
         batch_data: xa.DataArray = self.srbatch.load( ctile, ctime)
         return batch_data
+
+    def load_timeslice(self, ctime: TimeType, **kwargs) -> Optional[xa.DataArray]:
+        return self.srbatch.load_timeslice( ctime, **kwargs )
 
     def get_current_batch_array(self) -> xa.DataArray:
         return self.srbatch.current_batch

@@ -209,6 +209,9 @@ class ModelTrainer(object):
 				self.layer_losses.append( layer_loss.item() )
 		return sloss.item(), mloss
 
+	def load_timeslice(self, ctime: TimeType, **kwargs) -> Optional[xarray.DataArray]:
+		return self.get_dataset().load_timeslice( ctime, **kwargs )
+
 	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
 		btarget:  Optional[xarray.DataArray]  = self.get_dataset().get_batch_array(ctile,ctime,**kwargs)
@@ -266,6 +269,8 @@ class ModelTrainer(object):
 			binput, boutput, btarget, nts = None, None, None, len(self.data_timestamps[TSet.Train])
 			for itime in range (itime0,nts):
 				ctime  = self.data_timestamps[TSet.Train][itime]
+				timeslice: xa.DataArray = self.load_timeslice(ctime)
+				print( f"  {ctime}: timeslice{timeslice.dims}{timeslice.shape}" )
 				ctiles = TileIterator()
 				for ctile in iter(ctiles):
 					batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile,ctime)

@@ -122,12 +122,15 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		lgm().log( f"load_file result = {result.shape}")
 		return result
 
-	def load_batch( self, tile_range: Tuple[int,int], time_index: int  ) -> Optional[xa.DataArray]:
+	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
 			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}", display=True)
 			self.time_index = time_index
+		return self.timeslice
+
+	def load_batch( self, tile_range: Tuple[int,int] ) -> Optional[xa.DataArray]:
 		return self.select_batch( tile_range )
 
 	def select_batch( self, tile_range: Tuple[int,int]  ) -> Optional[xa.DataArray]:
@@ -137,7 +140,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			bmean, bstd = batch.mean( dim=["x", "y"], skipna=True, keep_attrs=True ), batch.std( dim=["x", "y"], skipna=True, keep_attrs=True )
 			batch = (batch-bmean)/bstd
-			lgm().log(f"\n select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
+			lgm().log(f"\n select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}", display=True )
 			return batch
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:

@@ -254,6 +254,9 @@ class SRBatch:
 		merged: xa.Dataset =  xa.merge([dynamics, self.constants], compat='override')
 		return merged
 
+	def load_timeslice(self, ctime: Union[datetime, int], **kwargs) -> xa.DataArray:
+		return self.data_loader.load_timeslice(ctime, **kwargs)
+
 	def load_batch(self, ctile: Dict[str,int], ctime: Union[datetime,int]) -> Optional[xa.DataArray]:
 		if self.batch_domain == batchDomain.Time:
 			if type(ctime) == datetime:
@@ -267,7 +270,7 @@ class SRBatch:
 			else: raise Exception( f"'start_coord' in load_batch must be either int or datetime, not {type(ctime)}")
 		elif self.batch_domain == batchDomain.Tiles:
 			tile_range = (ctile['start'],ctile['end'])
-			darray: xa.DataArray = self.data_loader.load_tile_batch( tile_range, ctime  )
+			darray: xa.DataArray = self.data_loader.load_tile_batch( tile_range  )
 		else:
 			raise Exception(f"Unknown 'batch_domain' in load_batch: {self.batch_domain}")
 		if self.channels is None:
