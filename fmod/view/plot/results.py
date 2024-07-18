@@ -2,7 +2,7 @@ import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
 from fmod.base.util.config import cfg
-from fmod.base.util.array import array2tensor, downsample, upsample, xa_downsample
+from fmod.base.util.array import array2tensor, downsample, upsample, xa_downsample, xa_upsample
 import ipywidgets as ipw
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
@@ -97,7 +97,7 @@ class ResultPlot(Plot):
 		model_input: xa.DataArray = xa.DataArray( input_data, dims=['tiles','channels','y','x'] )
 		target: xa.DataArray = xa.DataArray( target_data, dims=['tiles','channels','y','x'] )
 		prediction: xa.DataArray = xa.DataArray( product_data, dims=['tiles','channels','y','x'] )
-		downsampled: xa.DataArray =  xa_downsample( model_input )
+		downsampled: xa.DataArray =  xa_upsample( model_input )
 		lgm().log( f"update_tile_data{self.tile_index}: prediction shape = {prediction.shape}, target shape = {target.shape}")
 		images_data: Dict[str, xa.DataArray] = dict(downsample=downsampled, input=model_input, target=target)
 		images_data[self.result_plot_label] = prediction
