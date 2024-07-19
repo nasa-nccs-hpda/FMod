@@ -40,7 +40,7 @@ def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
 	for tset, tset_fraction in ttsplit.items():
 		end = start + int(tset_fraction * nt)
 		result[TSet(tset)] = times[start:end]
-		print( f"Batch times[{tset}]: {result[TSet(tset)]}")
+		print( f"Batch times[{tset}]: {len(result[TSet(tset)])}")
 		start = end
 	return result
 
@@ -282,7 +282,7 @@ class ModelTrainer(object):
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 					stile = list(ctile.values())
-					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss:.5f} ({interp_sloss:.5f})", display=True)
+					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:6.1f} ({interp_sloss*1000:6.1f})", display=True)
 					mloss.backward()
 					self.optimizer.step()
 					tile_iter.register_loss( sloss )
