@@ -282,7 +282,7 @@ class ModelTrainer(object):
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 					stile = list(ctile.values())
-					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:6.1f} ({interp_sloss*1000:6.1f})", display=True)
+					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True)
 					mloss.backward()
 					self.optimizer.step()
 					tile_iter.register_loss( sloss )
@@ -360,7 +360,7 @@ class ModelTrainer(object):
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 						batch_interp_losses.append( interp_sloss )
-						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]:.5f} ({interp_sloss:.5f})", display=True )
+						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
 						ibatch = ibatch + 1
 						if self.tile_index >= 0: break
 				if self.time_index >= 0: break
