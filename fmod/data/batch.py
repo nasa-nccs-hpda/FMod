@@ -9,7 +9,6 @@ from fmod.base.util.logging import lgm
 from fmod.base.util.model  import normalize as dsnorm
 from fmod.base.util.ops import format_timedeltas
 from typing import List, Tuple, Union, Dict, Any, Sequence, Optional
-from modulus.datapipes.meta import DatapipeMetaData
 from fmod.base.util.model import dataset_to_stacked
 from fmod.base.io.loader import TSet, srRes, batches_date_range, nbatches, batchDomain
 from fmod.base.source.batch import SRBatch
@@ -61,14 +60,6 @@ def rshuffle(a: Dict[Tuple[int,int],Any] ) -> Dict[Tuple[int,int],Any]:
     random.shuffle(a1)
     return dict( a1 )
 
-@dataclass
-class MetaData(DatapipeMetaData):
-    name: str = "MERRA2NC"
-    # Optimization
-    auto_device: bool = True
-    cuda_graphs: bool = True
-    # Parallel
-    ddp_sharding: bool = True
 
 class BatchDataset(object):
 
