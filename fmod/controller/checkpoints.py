@@ -15,12 +15,12 @@ class CheckpointManager(object):
 		self.model = model
 		self.optimizer = optimizer
 
-	def save_checkpoint(self, epoch: int, itime: int, tset: TSet, loss: float ) -> str:
+	def save_checkpoint(self, epoch: int, itime: int, tset: TSet, loss: float, interp_loss: float  ) -> str:
 		t0 = time.time()
 		checkpoint = dict( epoch=epoch, itime=itime, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
 		cpath = self.checkpoint_path(tset)
 		torch.save( checkpoint, cpath )
-		lgm().log(f"\n *** SAVE {tset.name} checkpoint (loss={loss:.5f}) to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
+		lgm().log(f"\n *** SAVE {tset.name} checkpoint, loss={loss:.5f} ({interp_loss:.5f}), to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
 		return cpath
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:

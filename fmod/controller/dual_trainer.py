@@ -278,20 +278,22 @@ class ModelTrainer(object):
 					binput, boutput, btarget = self.apply_network( batch_data )
 					lgm().log(f"  ->apply_network: inp{binput.shape} target{ts(btarget)} prd{ts(boutput)}" )
 					[sloss, mloss] = self.loss(boutput,btarget)
+					tile_iter.register_loss( 'model', sloss )
 					if interp_loss:
 						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+						tile_iter.register_loss('interp', interp_sloss)
 					stile = list(ctile.values())
 					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True)
 					mloss.backward()
 					self.optimizer.step()
-					tile_iter.register_loss( sloss )
+
 
 				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-				epoch_loss = tile_iter.epoch_loss()
-				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss)
+				[epoch_loss, interp_loss] = [ tile_iter.epoch_loss(ltype) for ltype in ['model', 'interp'] ]
+				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss, interp_loss )
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
 			if self.scheduler is not None:
@@ -377,7 +379,8 @@ class ModelTrainer(object):
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
 			self.validation_loss = model_loss
-			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss )
+			interp_loss: float = np.array(batch_interp_losses).mean()
+			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss, interp_loss )
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		result = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return result

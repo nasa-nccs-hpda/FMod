@@ -8,15 +8,18 @@ class TileIterator(object):
 
     def __init__(self, **kwargs ):
         self.randomize: bool = kwargs.get('randomize', False)
-        self.batch_losses = []
+        self._batch_losses = {}
         self.index: int = 0
         self.next_index = 0
 
-    def register_loss(self, loss: float ):
-        self.batch_losses.append( loss )
+    def batch_losses(self, ltype) -> List[float]:
+        return self._batch_losses.setdefault(ltype, [])
 
-    def epoch_loss(self):
-        epoch_loss = np.array(self.batch_losses).mean()
+    def register_loss(self, ltype: str, loss: float ):
+        self.batch_losses(ltype).append( loss )
+
+    def epoch_loss(self, ltype: str):
+        epoch_loss = np.array(self.batch_losses(ltype)).mean()
         return epoch_loss
 
     def __iter__(self):
