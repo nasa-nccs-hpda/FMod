@@ -89,6 +89,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			self._write_norm_stats(norm_stats)
 		return norm_stats
 
+	@property
 	def norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
