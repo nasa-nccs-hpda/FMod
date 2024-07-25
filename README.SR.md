@@ -5,11 +5,11 @@ Super Resolution Test and Development Framework.
 
 ## Conda environment
 
-    >   * conda create -n sres mamba
+    >   * conda create -n sres mamba python=3.11
     >   * conda activate sres
-    >   * mamba install pytorch torchvision torchaudio pytorch-cuda cuda-python -c pytorch -c nvidia
-    >   * pip install parse nvidia-dali-cuda120 
-    >   * mamba install scipy ipykernel xarray netCDF4 ipympl 
+    >   * mamba install -c conda-forge scipy xarray netCDF4  ipywidgets=7.8 jupyterlab=4.0 jupyterlab_widgets ipykernel=6.29 ipympl=0.9 ipython=8.26
+    >   * mamba install -c pytorch -c nvidia pytorch torchvision torchaudio pytorch-cuda cuda-python
+    >   * pip install parse nvidia-dali-cuda120
     >   * pip install hydra-core --upgrade
     >   * ipython kernel install --user --name=sres
 
