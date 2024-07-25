@@ -26,14 +26,18 @@ class NormData:
 		self.itile = itile
 		self.means: List[float] = []
 		self.stds: List[float] = []
+		self.max: float = -float("inf")
+		self.min: float = float("inf")
 
 	def add_entry(self, tiles_data: xa.DataArray ):
 		tdata: np.ndarray = tiles_data.isel(tiles=self.itile).values.squeeze()
 		self.means.append(tdata.mean())
 		self.stds.append(tdata.std())
+		self.max = max( self.max, tdata.max() )
+		self.min = min( self.min, tdata.min() )
 
-	def get_norm_stats(self) -> Tuple[float,float]:
-		return  np.array(self.means).mean(), np.array(self.stds).mean()
+	def get_norm_stats(self) -> Dict[str,float]:
+		return  dict( mean=np.array(self.means).mean(), std=np.array(self.stds).mean(), max= np.array(self.max).max(), min=np.array(self.min).min() )
 
 class SWOTRawDataLoader(SRRawDataLoader):
 
@@ -45,23 +49,20 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.time_index: int = -1
 		self.timeslice: xa.DataArray = None
 		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{cfg().task.training_version}.pkl"
-		self._norm_stats: Dict[Tuple[str,int], Tuple[float,float]]  = None
+		self._norm_stats: Dict[str,Dict[int,Dict[str,float]]]  = None
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
-	def _write_norm_stats(self, norm_stats: Dict[Tuple[str,int],Tuple[float,float]] ):
-		print("_write_norm_stats")
+	def _write_norm_stats(self, norm_stats: Dict[str,Dict[int,Dict[str,float]]] ):
 		with open(self.norm_data_file, 'wb') as file_handle:
-			pickle.dump(list(norm_stats.items()), file_handle, protocol=pickle.HIGHEST_PROTOCOL)
+			pickle.dump( norm_stats, file_handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-	def _read_norm_stats(self) -> Optional[Dict[Tuple[str,int],Tuple[float,float]]]:
-		print("_read_norm_stats")
+	def _read_norm_stats(self) -> Optional[Dict[str,Dict[int,Dict[str,float]]]]:
 		if os.path.isfile(self.norm_data_file):
 			with open(self.norm_data_file, 'rb') as file_handle:
 				norm_data = pickle.load(file_handle)
-				return dict(norm_data)
+				return norm_data
 
-	def _compute_normalization(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
-		print("_compute_normalization")
+	def _compute_normalization(self) -> Dict[str,Dict[int,Dict[str,float]]]:
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		for varname in self.varnames:
@@ -71,29 +72,21 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				for itile in range(tiles_data.sizes['tiles']):
 					norm_entry: NormData = norm_data.setdefault((varname,itile), NormData(itile))
 					norm_entry.add_entry( tiles_data )
-		vtstats: Dict[str,Dict[int,Tuple[float,float]]] = {}
+		vtstats: Dict[str,Dict[int,Dict[str,float]]] = {}
 		for (varname,itile), nd in norm_data.items():
-			tmean, tstd = nd.get_norm_stats()
+			nstats = nd.get_norm_stats()
 			ns = vtstats.setdefault(varname,{})
-			ns[itile] = (tmean, tstd)
-		for varname in self.varnames:
-			vs = vtstats[varname]
-			idxs = list(vs.keys())
-			nstats = np.array( list(vs.values()) )
-			print( f"idxs={idxs}" )
-			print( f"nstats.shape={nstats.shape}" )
+			ns[itile] = nstats
 		return vtstats
 
-	def _get_norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
-		print("_get_norm_stats")
-		norm_stats: Dict[Tuple[str,int], Tuple[float,float]] = self._read_norm_stats()
+	def _get_norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
+		norm_stats: Dict[str,Dict[int,Dict[str,float]]] = self._read_norm_stats()
 		if norm_stats is None:
 			norm_stats = self._compute_normalization()
 			self._write_norm_stats(norm_stats)
 		return norm_stats
 
-	def norm_stats(self) -> Dict[Tuple[str,int], Tuple[float,float]]:
-		print(f"norm_stats: compute={self._norm_stats is None}")
+	def norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
 		return self._norm_stats
