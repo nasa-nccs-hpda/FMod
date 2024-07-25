@@ -54,17 +54,20 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	def _write_norm_stats(self, norm_stats: Dict[str,Dict[int,Dict[str,float]]] ):
 		with open(self.norm_data_file, 'wb') as file_handle:
+			print( f"Writing norm stats to file: {self.norm_data_file}")
 			pickle.dump( norm_stats, file_handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 	def _read_norm_stats(self) -> Optional[Dict[str,Dict[int,Dict[str,float]]]]:
 		if os.path.isfile(self.norm_data_file):
 			with open(self.norm_data_file, 'rb') as file_handle:
+				print(f"Reading norm stats from file: {self.norm_data_file}")
 				norm_data = pickle.load(file_handle)
 				return norm_data
 
 	def _compute_normalization(self) -> Dict[str,Dict[int,Dict[str,float]]]:
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
+		print( f"Computing norm stats")
 		for varname in self.varnames:
 			for tidx in time_indices:
 				file_data: np.ndarray = self.load_file( varname, tidx )
