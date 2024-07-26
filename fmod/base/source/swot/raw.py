@@ -159,29 +159,36 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			lgm().log(f"\n select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
 			return self.norm( batch )
 
-	def norm(self, batch: xa.DataArray ) -> xa.DataArray:
-		print( f"norm({batch.name}): batch{batch.dims}{batch.shape}, channels={batch.coords['channels'].values.tolist()}")
+	def norm(self, batch_data: xa.DataArray ) -> xa.DataArray:
+		channel_data = []
 		ntype: str = cfg().task.norm
-		if ntype == 'lnorm':
-			bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
-			nbatch = (batch - bmean) / bstd
-		elif ntype == 'lscale':
-			bmax, bmin = batch.max(dim=["x", "y"], skipna=True, keep_attrs=True), batch.min(dim=["x", "y"], skipna=True, keep_attrs=True)
-			nbatch = (batch - bmin) / (bmax-bmin)
-		elif ntype == 'gnorm':
-			gstats: DataVariables = self.global_norm_stats.data_vars
-			nbatch = (batch - gstats['mean']) / gstats['var'].sqrt()
-		elif ntype == 'gscale':
-			gstats: DataVariables = self.global_norm_stats.data_vars
-			nbatch = (batch - gstats['min']) / (gstats['max'] - gstats['min'])
-		elif ntype == 'tnorm':
-			tstats: DataVariables = self.norm_stats.data_vars
-			nbatch = (batch - tstats['mean']) / tstats['var'].sqrt()
-		elif ntype == 'tscale':
-			tstats: DataVariables = self.norm_stats.data_vars
-			nbatch = (batch - tstats['min']) / (tstats['max'] - tstats['min'])
-		else: raise Exception( f"Unknown norm: {ntype}")
-		return nbatch
+		channels: xa.DataArray = batch_data.coords['channels']
+		for channel in channels.values:
+			batch = batch_data.sel(channel=channel)
+			if ntype == 'lnorm':
+				bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
+				channel_data.append( (batch - bmean) / bstd )
+			elif ntype == 'lscale':
+				bmax, bmin = batch.max(dim=["x", "y"], skipna=True, keep_attrs=True), batch.min(dim=["x", "y"], skipna=True, keep_attrs=True)
+				channel_data.append(  (batch - bmin) / (bmax-bmin) )
+			elif ntype == 'gnorm':
+				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
+				channel_data.append(  (batch - gstats.sel(stat='mean')) / gstats.sel(stat='var').sqrt() )
+			elif ntype == 'gscale':
+				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
+				vmin, vmax = gstats.sel(stat='min'), gstats.sel(stat='max')
+				channel_data.append(  (batch - vmin) / (vmax - vmin) )
+			elif ntype == 'tnorm':
+				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
+				channel_data.append(  (batch - tstats.sel(stat='mean')) / tstats.sel(stat='var').sqrt() )
+			elif ntype == 'tscale':
+				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
+				vmin, vmax = tstats.sel(stat='min'), tstats.sel(stat='max')
+				channel_data.append(  (batch - vmin) / (vmax - vmin) )
+			else: raise Exception( f"Unknown norm: {ntype}")
+		result = xa.concat( channel_data, channels )
+		print( f"NORM: result{result.dims}{result.shape}")
+		return result
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
@@ -198,4 +205,4 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ntiles = np.count_nonzero(msk)
 		result = np.compress( msk, tiles, 0)
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
-		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs, channels=np.array(self.varnames) ) )
+		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=xa.DataArray(tile_idxs,name="tiles"), channels=xa.DataArray(self.varnames,name="channels") ) )
