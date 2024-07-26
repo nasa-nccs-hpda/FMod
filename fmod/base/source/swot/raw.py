@@ -83,7 +83,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		print( f"Computing norm stats")
 		for varname in self.varnames:
-			for tidx in time_indices[:3]:
+			for tidx in time_indices:
 				file_data: np.ndarray = self.load_file( varname, tidx )
 				tiles_data: xa.DataArray = self.get_tiles(file_data)
 				for itile in range(tiles_data.sizes['tiles']):
