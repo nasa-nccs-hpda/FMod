@@ -163,9 +163,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		channel_data = []
 		ntype: str = cfg().task.norm
 		channels: xa.DataArray = batch_data.coords['channels']
-		print(f"NORM: channels-{channels.name}{type(channels)}{channels.shape}")
+		print(f"NORM: channels={channels.values.tolist()}")
 		for channel in channels.values:
-			batch = batch_data.sel(channel=channel)
+			batch = batch_data.sel(channels=channel)
 			if ntype == 'lnorm':
 				bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
 				channel_data.append( (batch - bmean) / bstd )
