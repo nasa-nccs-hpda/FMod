@@ -18,7 +18,7 @@ def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
 	tile, stat = list(ndata.keys()), ['mean', 'var', 'max', 'min']
 	npdata = np.stack( list(ndata.values()), axis=0 )
 	print( f"xanorm: {npdata.shape}, {len(ndata)}")
-	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tile, stat=stat))
+	return xa.DataArray( npdata, dims=['tiles','stat'], coords=dict(tile=tile, stat=stat))
 
 def globalize_norm( data, dim ):
 	print( f"globalize_norm[{dim}]: {type(data)}{data.shape}")
@@ -106,7 +106,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	@property
 	def global_norm_stats(self) -> xa.Dataset:
-		return self.norm_stats.reduce( globalize_norm, axis=0)
+		return self.norm_stats.reduce( globalize_norm, dim='tiles')
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
