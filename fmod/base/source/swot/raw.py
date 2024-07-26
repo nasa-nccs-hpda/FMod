@@ -89,11 +89,21 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			self._write_norm_stats(norm_stats)
 		return norm_stats
 
+	def condense_tile_stats(self, tstats: Dict[int,Dict[str,float]] ) -> Dict[str,float]:
+		pass
+
+	def globalize_stats(self, tile_stats: Dict[str,Dict[int,Dict[str,float]]] ) -> Dict[str,Dict[str,float]]:
+		return { vname: self.condense_tile_stats( tstats ) for vname, tstats in tile_stats.items() }
+
 	@property
 	def norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
 		return self._norm_stats
+
+	@property
+	def global_norm_stats(self) -> Dict[str,Dict[str,float]]:
+		return self.globalize_stats( self.norm_stats )
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
