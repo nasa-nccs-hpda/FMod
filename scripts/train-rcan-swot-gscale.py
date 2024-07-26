@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
 
-cname: str = "sres"
+cname: str = "sres-gscale"
 models: List[str] = [ 'rcan-10-20-64' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 100, 'task.lr': 1e-4, 'task.norm': 'gscale' }
 refresh =  False

@@ -43,7 +43,7 @@ class ConfigContext(initialize):
         self.task: str = self.get_config('task')
         self.dataset: str = self.get_config('dataset')
         self.config_path: str = self.get_config('config_path', "../../../config")
-        self.cid = '-'.join( [self.model, self.dataset, self.task] )
+        self.cid = '-'.join( [self.name, self.model, self.dataset, self.task] )
         super(ConfigContext, self).__init__(version_base=None, config_path=self.config_path)
 
     def get_config(self,name: str, default: Any = None ):
