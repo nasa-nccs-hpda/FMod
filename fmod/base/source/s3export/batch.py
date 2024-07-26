@@ -17,7 +17,7 @@ from fmod.base.source.loader.batch import SRDataLoader, FMDataLoader
 import numpy as np
 
 S = 'x'
-CoordIdx = Union[ Dict[str,int], Tuple[int,int] ]
+CoordIdx = Union[ Dict[str,int], Tuple[int,int], None ]
 
 def cTup2Dict( c: CoordIdx ) -> Dict[str,int]:
 	if type(c) is tuple: c = dict(x=c[0], y=c[1])
@@ -138,30 +138,31 @@ class S3ExportDataLoader(SRDataLoader):
 		timeslice: np.memmap = np.load(fpath, allow_pickle=True, mmap_mode=mmap_mode)
 		return self.cut_domain(timeslice)
 
-	def load_channel( self, idx: int, origin: CoordIdx, vid: Tuple[str,str], **kwargs ) -> xa.DataArray:
+	def load_channel( self, idx: int, vid: Tuple[str,str], **kwargs ) -> xa.DataArray:
+		origin: CoordIdx = kwargs.get('origin', None)
 		raw_data: np.memmap = self.open_timeslice(vid[0], **kwargs)
-		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) )
+		tile_data: np.ndarray = self.cut_tile( idx, raw_data, cTup2Dict(origin) ) if (origin is not None) else raw_data
 		result = xa.DataArray( scale( vid[0], tile_data ), dims=['y', 'x'],  attrs=dict( fullname=vid[1] ) ) # coords=dict(**tc, **tc['x'].coords, **tc['y'].coords),
 		result = result.expand_dims( axis=0, dim=dict(channels=[vid[0]]) )
 		# print( f"load_channel: shape = {result.shape}, raw_data shape = {raw_data.shape}, tile_data shape = {tile_data.shape}")
 		return result
 
-	def load_timeslice( self, idx: int, origin: CoordIdx, **kwargs ) -> xa.DataArray:
-		arrays: List[xa.DataArray] = [ self.load_channel( idx, origin, vid, **kwargs ) for vid in self.varnames.items() ]
+	def load_timeslice( self, idx: int,  **kwargs ) -> xa.DataArray:
+		arrays: List[xa.DataArray] = [ self.load_channel( idx, vid, **kwargs ) for vid in self.varnames.items() ]
 		result = xa.concat( arrays, "channels" )
 		result = result.expand_dims(axis=0, dim=dict(tiles=[tcoord(**kwargs)]))
 		return result
 
-	def load_temporal_batch( self, origin: CoordIdx, date_range: Tuple[datetime,datetime] ) -> xa.DataArray:
-		timeslices = [ self.load_timeslice( idx, origin, date=date ) for idx, date in enumerate( datelist( date_range ) ) ]
+	def load_temporal_batch( self, date_range: Tuple[datetime,datetime], **kwargs ) -> xa.DataArray:
+		timeslices = [ self.load_timeslice( idx, date=date, **kwargs ) for idx, date in enumerate( datelist( date_range ) ) ]
 		result = xa.concat(timeslices, "tiles")
-		lgm().log( f" ** load-batch [{date_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
+		lgm().log( f" ** load-batch [{date_range[0]}]:{result.dims}:{result.shape}, tilesize = {self.tile_size}" )
 		return result
 
-	def load_index_batch( self, origin: CoordIdx, index_range: Tuple[int,int] ) -> xa.DataArray:
-		timeslices = [ self.load_timeslice( idx, origin, index=idx ) for idx in range( *index_range ) ]
+	def load_index_batch( self, index_range: Tuple[int,int], **kwargs ) -> xa.DataArray:
+		timeslices = [ self.load_timeslice( idx, index=idx, **kwargs ) for idx in range( *index_range ) ]
 		result = xa.concat(timeslices, "tiles")
-		lgm().log( f" ** load-batch [{index_range[0]}]:{result.dims}:{result.shape}, origin={origin}, tilesize = {self.tile_size}" )
+		lgm().log( f" ** load-batch [{index_range[0]}]:{result.dims}:{result.shape}, tilesize = {self.tile_size}" )
 		return result
 
 	def load_norm_data(self) -> Dict[str,xa.DataArray]:
