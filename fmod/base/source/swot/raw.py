@@ -14,11 +14,15 @@ from glob import glob
 from parse import parse
 import numpy as np
 
-def xanorm(ndata: Dict[int, Tuple[float, float, float, float]]) -> xa.DataArray:
-	tile, stat = list(ndata.keys()), ['mean', 'std', 'max', 'min']
-	npdata = np.array( list(ndata.values()) )
+def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
+	tile, stat = list(ndata.keys()), ['mean', 'var', 'max', 'min']
+	npdata = np.stack( list(ndata.values()), axis=0 )
 	print( f"xanorm: {npdata.shape}, {len(ndata)}")
 	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tile, stat=stat))
+
+def globalize_norm( data, dim ):
+	print( f"globalize_norm[{dim}]: {type(data)}{data.shape}")
+	return data
 
 def filepath() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
@@ -31,19 +35,19 @@ class NormData:
 	def __init__(self, itile: int):
 		self.itile = itile
 		self.means: List[float] = []
-		self.stds: List[float] = []
+		self.vars: List[float] = []
 		self.max: float = -float("inf")
 		self.min: float = float("inf")
 
 	def add_entry(self, tiles_data: xa.DataArray ):
 		tdata: np.ndarray = tiles_data.isel(tiles=self.itile).values.squeeze()
 		self.means.append(tdata.mean())
-		self.stds.append(tdata.std())
+		self.vars.append(tdata.var())
 		self.max = max( self.max, tdata.max() )
 		self.min = min( self.min, tdata.min() )
 
-	def get_norm_stats(self) -> Tuple[float,float,float,float]:
-		return  np.array(self.means).mean(), np.array(self.stds).mean(), np.array(self.max).max(), np.array(self.min).min()
+	def get_norm_stats(self) -> np.ndarray:
+		return  np.array( [ np.array(self.means).mean(), np.array(self.vars).mean(), np.array(self.max).max(), np.array(self.min).min() ] ).reshape(1,4)
 
 class SWOTRawDataLoader(SRRawDataLoader):
 
@@ -51,28 +55,21 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		super(SWOTRawDataLoader, self).__init__(task_config)
 		self.parms = kwargs
 		self.dataset = DictConfig.copy( cfg().dataset )
-		self.tset: TSet = None
+		self.tset: Optional[TSet] = None
 		self.time_index: int = -1
-		self.timeslice: xa.DataArray = None
-		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{cfg().task.training_version}.pkl"
-		self._norm_stats: Dict[str,Dict[int,Dict[str,float]]]  = None
+		self.timeslice: Optional[xa.DataArray] = None
+		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{cfg().task.training_version}.nc"
+		self._norm_stats: Optional[xa.Dataset]  = None
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
-	def _write_norm_stats(self, norm_stats: Dict[str,Dict[int,Tuple[float,float,float,float]]] ):
-		with open(self.norm_data_file, 'wb') as file_handle:
-			print( f"Writing norm stats to file: {self.norm_data_file}")
-			pickle.dump( norm_stats, file_handle, protocol=pickle.HIGHEST_PROTOCOL)
+	def _write_norm_stats(self, norm_stats: xa.Dataset ):
+		norm_stats.to_netcdf( self.norm_data_file, format="NETCDF4", mode="w" )
 
-	def _read_norm_stats(self) -> Optional[Dict[str,Dict[int,Tuple[float,float,float,float]]]]:
-		if os.path.isfile(self.norm_data_file):
-			with open(self.norm_data_file, 'rb') as file_handle:
-				print(f"Reading norm stats from file: {self.norm_data_file}")
-				norm_data = pickle.load(file_handle)
-				return norm_data
+	def _read_norm_stats(self) -> Optional[xa.Dataset]:
+		if os.path.exists(self.norm_data_file):
+			return xa.open_dataset(self.norm_data_file, engine='netcdf4')
 
-
-
-	def _compute_normalization(self) -> Dict[str,Dict[int,Tuple[float,float,float,float]]]:
+	def _compute_normalization(self) -> xa.Dataset:
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		print( f"Computing norm stats")
@@ -83,36 +80,35 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				for itile in range(tiles_data.sizes['tiles']):
 					norm_entry: NormData = norm_data.setdefault((varname,itile), NormData(itile))
 					norm_entry.add_entry( tiles_data )
-		vtstats: Dict[str,Dict[int,Tuple[float,float,float,float]]] = {}
+		vtstats: Dict[str,Dict[int,np.ndarray]] = {}
 		for (varname,itile), nd in norm_data.items():
-			nstats: Tuple[float,float,float,float] = nd.get_norm_stats()
+			nstats: np.ndarray = nd.get_norm_stats()
 			ns = vtstats.setdefault(varname,{})
 			ns[itile] = nstats
-		return vtstats
+		return xa.Dataset( { vn: xanorm(ndata) for vn, ndata in vtstats.items() } )
 
-	def _get_norm_stats(self) -> Dict[str,xa.DataArray]:
-		norm_stats: Dict[str,Dict[int,Tuple[float,float,float,float]]] = self._read_norm_stats()
+	def _get_norm_stats(self) -> xa.Dataset:
+		norm_stats: xa.Dataset = self._read_norm_stats()
 		if norm_stats is None:
-			norm_stats = self._compute_normalization()
+			norm_stats: xa.Dataset = self._compute_normalization()
 			self._write_norm_stats(norm_stats)
-		return { vn: xanorm( ndata ) for vn,ndata in norm_stats.items() }
+		return norm_stats
 
 	def condense_tile_stats(self, tile_stats: xa.DataArray ) -> xa.DataArray:
 		print( f"Condensing tile stats: {tile_stats.dims}{tile_stats.shape}")
 		return tile_stats
 
-	def globalize_stats(self, tile_stats: Dict[str,xa.DataArray] ) -> Dict[str,xa.DataArray]:
-		return { vname: self.condense_tile_stats( tstats ) for vname, tstats in tile_stats.items() }
+
 
 	@property
-	def norm_stats(self) -> Dict[str,xa.DataArray]:
+	def norm_stats(self) -> xa.Dataset:
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
 		return self._norm_stats
 
 	@property
-	def global_norm_stats(self) -> Dict[str,xa.DataArray]:
-		return self.globalize_stats( self.norm_stats )
+	def global_norm_stats(self) -> xa.Dataset:
+		return self.norm_stats.reduce( globalize_norm, axis=0)
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
