@@ -14,6 +14,11 @@ from glob import glob
 from parse import parse
 import numpy as np
 
+def xanorm(ndata: Dict[int, Tuple[float, float, float, float]]) -> xa.DataArray:
+	tile, stat = list(ndata.keys()), ['mean', 'std', 'max', 'min']
+	ndata = np.array( list(ndata.values()) )
+	return xa.DataArray( ndata, dims=['tile','stat'], coords=dict(tile=tile, stat=stat))
+
 def filepath() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
 
@@ -36,8 +41,8 @@ class NormData:
 		self.max = max( self.max, tdata.max() )
 		self.min = min( self.min, tdata.min() )
 
-	def get_norm_stats(self) -> Dict[str,float]:
-		return  dict( mean=np.array(self.means).mean(), std=np.array(self.stds).mean(), max= np.array(self.max).max(), min=np.array(self.min).min() )
+	def get_norm_stats(self) -> Tuple[float,float,float,float]:
+		return  np.array(self.means).mean(), np.array(self.stds).mean(), np.array(self.max).max(), np.array(self.min).min()
 
 class SWOTRawDataLoader(SRRawDataLoader):
 
@@ -52,19 +57,21 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self._norm_stats: Dict[str,Dict[int,Dict[str,float]]]  = None
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
-	def _write_norm_stats(self, norm_stats: Dict[str,Dict[int,Dict[str,float]]] ):
+	def _write_norm_stats(self, norm_stats: Dict[str,Dict[int,Tuple[float,float,float,float]]] ):
 		with open(self.norm_data_file, 'wb') as file_handle:
 			print( f"Writing norm stats to file: {self.norm_data_file}")
 			pickle.dump( norm_stats, file_handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-	def _read_norm_stats(self) -> Optional[Dict[str,Dict[int,Dict[str,float]]]]:
+	def _read_norm_stats(self) -> Optional[Dict[str,Dict[int,Tuple[float,float,float,float]]]]:
 		if os.path.isfile(self.norm_data_file):
 			with open(self.norm_data_file, 'rb') as file_handle:
 				print(f"Reading norm stats from file: {self.norm_data_file}")
 				norm_data = pickle.load(file_handle)
 				return norm_data
 
-	def _compute_normalization(self) -> Dict[str,Dict[int,Dict[str,float]]]:
+
+
+	def _compute_normalization(self) -> Dict[str,Dict[int,Tuple[float,float,float,float]]]:
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		print( f"Computing norm stats")
@@ -75,34 +82,35 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				for itile in range(tiles_data.sizes['tiles']):
 					norm_entry: NormData = norm_data.setdefault((varname,itile), NormData(itile))
 					norm_entry.add_entry( tiles_data )
-		vtstats: Dict[str,Dict[int,Dict[str,float]]] = {}
+		vtstats: Dict[str,Dict[int,Tuple[float,float,float,float]]] = {}
 		for (varname,itile), nd in norm_data.items():
-			nstats = nd.get_norm_stats()
+			nstats: Tuple[float,float,float,float] = nd.get_norm_stats()
 			ns = vtstats.setdefault(varname,{})
 			ns[itile] = nstats
 		return vtstats
 
-	def _get_norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
-		norm_stats: Dict[str,Dict[int,Dict[str,float]]] = self._read_norm_stats()
+	def _get_norm_stats(self) -> Dict[str,xa.DataArray]:
+		norm_stats: Dict[str,Dict[int,Tuple[float,float,float,float]]] = self._read_norm_stats()
 		if norm_stats is None:
 			norm_stats = self._compute_normalization()
 			self._write_norm_stats(norm_stats)
-		return norm_stats
+		return { vn: xanorm( ndata ) for vn,ndata in norm_stats.items() }
 
-	def condense_tile_stats(self, tstats: Dict[int,Dict[str,float]] ) -> Dict[str,float]:
-		pass
+	def condense_tile_stats(self, tile_stats: xa.DataArray ) -> xa.DataArray:
+		print( f"Condensing tile stats: {tile_stats.dims}{tile_stats.shape}")
+		return tile_stats
 
-	def globalize_stats(self, tile_stats: Dict[str,Dict[int,Dict[str,float]]] ) -> Dict[str,Dict[str,float]]:
+	def globalize_stats(self, tile_stats: Dict[str,xa.DataArray] ) -> Dict[str,xa.DataArray]:
 		return { vname: self.condense_tile_stats( tstats ) for vname, tstats in tile_stats.items() }
 
 	@property
-	def norm_stats(self) -> Dict[str,Dict[int,Dict[str,float]]]:
+	def norm_stats(self) -> Dict[str,xa.DataArray]:
 		if self._norm_stats is None:
 			self._norm_stats = self._get_norm_stats()
 		return self._norm_stats
 
 	@property
-	def global_norm_stats(self) -> Dict[str,Dict[str,float]]:
+	def global_norm_stats(self) -> Dict[str,xa.DataArray]:
 		return self.globalize_stats( self.norm_stats )
 
 	def get_batch_time_indices(self):
