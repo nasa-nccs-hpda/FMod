@@ -21,6 +21,9 @@ DataCoordinates = Union[DataArrayCoordinates,DatasetCoordinates]
 def cfg() -> DictConfig:
     return ConfigContext.cfg
 
+def config() -> Dict:
+    return ConfigContext.configuration
+
 def cid() -> str:
     return '-'.join([ cfg().model.name, cfg().task.dataset, cfg().task.name ])
 
@@ -32,11 +35,12 @@ def cfgdir() -> str:
 class ConfigContext(initialize):
     cfg: Optional[DictConfig] = None
     defaults: Dict = {}
+    configuration: Dict = {}
 
     def __init__(self, name: str, **kwargs ):
         assert self.cfg is None, "Only one ConfigContext instance is allowed at a time"
         self.name = name
-        self.configuration = dict(**self.defaults, **kwargs)
+        ConfigContext.configuration = dict(**self.defaults, **kwargs)
         self.model: str = self.get_config('model')
         self.pipeline: str = self.get_config('pipeline')
         self.platform: str = self.get_config('platform')

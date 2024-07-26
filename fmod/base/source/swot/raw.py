@@ -1,6 +1,6 @@
 from fmod.base.source.loader.raw import SRRawDataLoader
 import xarray as xa, math, os, pickle
-from fmod.base.util.config import cfg, dateindex
+from fmod.base.util.config import cfg, config
 from fmod.base.io.loader import ncFormat, TSet
 from omegaconf import DictConfig, OmegaConf
 from xarray.core.dataset import DataVariables
@@ -66,7 +66,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		self.tset: Optional[TSet] = None
 		self.time_index: int = -1
 		self.timeslice: Optional[xa.DataArray] = None
-		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{cfg().task.training_version}.nc"
+		self.norm_data_file = f"{cfg().platform.cache}/norm_data/norms/norms.{config()['dataset']}.nc"
 		self._norm_stats: Optional[xa.Dataset]  = None
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
@@ -82,7 +82,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def _compute_normalization(self) -> xa.Dataset:
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
-		print( f"Computing norm stats")
+		print( f"Computing norm stats (no stats file found at {self.norm_data_file})")
 		for varname in self.varnames:
 			for tidx in time_indices:
 				file_data: np.ndarray = self.load_file( varname, tidx )
