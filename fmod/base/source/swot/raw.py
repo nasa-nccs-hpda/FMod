@@ -20,8 +20,8 @@ def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
 	print( f"xanorm: {npdata.shape}, {len(ndata)}")
 	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tiles, stat=stat))
 
-def globalize_norm( data, dim ):
-	print( f"globalize_norm[{dim}]: {type(data)}{data.shape}")
+def globalize_norm( data: xa.DataArray ) -> xa.DataArray:
+	print( f"globalize_norm: array{data.dims}{data.shape}")
 	return data
 
 def filepath() -> str:
@@ -106,7 +106,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	@property
 	def global_norm_stats(self) -> xa.Dataset:
-		return self.norm_stats.reduce( globalize_norm, dim='tile')
+		return self.norm_stats.map( globalize_norm )
 
 	def get_batch_time_indices(self):
 		cfg().dataset.index = "*"
