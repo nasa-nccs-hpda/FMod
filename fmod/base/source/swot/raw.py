@@ -16,9 +16,9 @@ import numpy as np
 
 def xanorm(ndata: Dict[int, Tuple[float, float, float, float]]) -> xa.DataArray:
 	tile, stat = list(ndata.keys()), ['mean', 'std', 'max', 'min']
-	ndata = np.array( list(ndata.values()) )
-	print( f"xanorm: {ndata.shape}")
-	return xa.DataArray( ndata, dims=['tile','stat'], coords=dict(tile=tile, stat=stat))
+	npdata = np.array( list(ndata.values()) )
+	print( f"xanorm: {npdata.shape}, {len(ndata)}")
+	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tile, stat=stat))
 
 def filepath() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
