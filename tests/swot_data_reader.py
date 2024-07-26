@@ -12,7 +12,7 @@ ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
 	ns = loader.norm_stats
-	print( ns )
+	print( {vn: nv.shape for vn,nv in ns.items()} )
 
 
 
