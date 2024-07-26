@@ -28,5 +28,9 @@ class SRRawDataLoader(object):
 	def get_batch_time_indices(self, **kwargs) -> xa.DataArray:
 		raise NotImplementedError("SRRawDataLoader:get_batch_time_indices")
 	@property
-	def norm_stats(self) -> Dict[str,xa.DataArray]:
-		raise NotImplementedError("SRRawDataLoader:get_batch_time_indices")
+	def norm_stats(self) -> xa.Dataset:
+		raise NotImplementedError("SRRawDataLoader:norm_stats")
+
+	@property
+	def global_norm_stats(self) -> xa.Dataset:
+		raise NotImplementedError("SRRawDataLoader:global_norm_stats")

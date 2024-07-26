@@ -47,7 +47,7 @@ class NormData:
 		self.min = min( self.min, tdata.min() )
 
 	def get_norm_stats(self) -> np.ndarray:
-		return  np.array( [ np.array(self.means).mean(), np.array(self.vars).mean(), np.array(self.max).max(), np.array(self.min).min() ] ).reshape(1,4)
+		return  np.array( [ np.array(self.means).mean(), np.array(self.vars).mean(), np.array(self.max).max(), np.array(self.min).min() ] )
 
 class SWOTRawDataLoader(SRRawDataLoader):
 
@@ -97,8 +97,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def condense_tile_stats(self, tile_stats: xa.DataArray ) -> xa.DataArray:
 		print( f"Condensing tile stats: {tile_stats.dims}{tile_stats.shape}")
 		return tile_stats
-
-
 
 	@property
 	def norm_stats(self) -> xa.Dataset:
