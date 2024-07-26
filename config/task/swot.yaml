@@ -18,6 +18,7 @@ origin:  { x: 0, y: 0 }
 tile_grid:  { x: -1, y: -1 }
 tile_size: { x: 48, y: 48 }
 batch_domain:  'tiles'
+norm: 'gscale'
 conform_to_grid: false
 upsample_mode: cubic
 downsample_mode: cubic

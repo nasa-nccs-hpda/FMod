@@ -3,6 +3,7 @@ import xarray as xa, math, os, pickle
 from fmod.base.util.config import cfg, dateindex
 from fmod.base.io.loader import ncFormat, TSet
 from omegaconf import DictConfig, OmegaConf
+from xarray.core.dataset import DataVariables
 from nvidia.dali import fn
 from enum import Enum
 from glob import glob
@@ -155,10 +156,31 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if tile_range[0] < ntiles:
 			slice_end = min(tile_range[1], ntiles)
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
-			bmean, bstd = batch.mean( dim=["x", "y"], skipna=True, keep_attrs=True ), batch.std( dim=["x", "y"], skipna=True, keep_attrs=True )
-			batch = (batch-bmean)/bstd
 			lgm().log(f"\n select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
-			return batch
+			return self.norm( batch )
+
+	def norm(self, batch: xa.DataArray ) -> xa.DataArray:
+		ntype: str = cfg().task.norm
+		if ntype == 'lnorm':
+			bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
+			nbatch = (batch - bmean) / bstd
+		elif ntype == 'lscale':
+			bmax, bmin = batch.max(dim=["x", "y"], skipna=True, keep_attrs=True), batch.min(dim=["x", "y"], skipna=True, keep_attrs=True)
+			nbatch = (batch - bmin) / (bmax-bmin)
+		elif ntype == 'gnorm':
+			gstats: DataVariables = self.global_norm_stats.data_vars
+			nbatch = (batch - gstats['mean']) / gstats['var'].sqrt()
+		elif ntype == 'gscale':
+			gstats: DataVariables = self.global_norm_stats.data_vars
+			nbatch = (batch - gstats['min']) / (gstats['max'] - gstats['min'])
+		elif ntype == 'tnorm':
+			tstats: DataVariables = self.norm_stats.data_vars
+			nbatch = (batch - tstats['mean']) / tstats['var'].sqrt()
+		elif ntype == 'tscale':
+			tstats: DataVariables = self.norm_stats.data_vars
+			nbatch = (batch - tstats['min']) / (tstats['max'] - tstats['min'])
+		else: raise Exception( f"Unknown norm: {ntype}")
+		return nbatch
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
