@@ -160,6 +160,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			return self.norm( batch )
 
 	def norm(self, batch: xa.DataArray ) -> xa.DataArray:
+		print( f"norm({batch.name}): batch{batch.dims}{batch.shape}")
 		ntype: str = cfg().task.norm
 		if ntype == 'lnorm':
 			bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
