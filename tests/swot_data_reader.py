@@ -11,8 +11,9 @@ platform = "explore"
 ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
 with ConfigContext(cname, model=model ) as cc:
 	loader: SRRawDataLoader = SRRawDataLoader.get_loader( cfg().task )
-	ns = loader.global_norm_stats
-	print( "Result: ", {vn: nv.shape for vn,nv in ns.items()} )
+	ns: xa.Dataset = loader.global_norm_stats
+	for vn, vdata in ns.data_vars.items():
+		print( f" {vn}: {vdata.values.tolist()}")
 
 
 

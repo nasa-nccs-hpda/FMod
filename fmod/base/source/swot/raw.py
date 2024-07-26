@@ -70,10 +70,12 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		os.makedirs( os.path.dirname(self.norm_data_file), 0o777, exist_ok=True )
 
 	def _write_norm_stats(self, norm_stats: xa.Dataset ):
+		print(f"Writing norm data to {self.norm_data_file}")
 		norm_stats.to_netcdf( self.norm_data_file, format="NETCDF4", mode="w" )
 
 	def _read_norm_stats(self) -> Optional[xa.Dataset]:
 		if os.path.exists(self.norm_data_file):
+			print( f"Reading norm data from {self.norm_data_file}")
 			return xa.open_dataset(self.norm_data_file, engine='netcdf4')
 
 	def _compute_normalization(self) -> xa.Dataset:
