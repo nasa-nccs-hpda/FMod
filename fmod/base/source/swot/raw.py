@@ -15,10 +15,10 @@ from parse import parse
 import numpy as np
 
 def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
-	tile, stat = list(ndata.keys()), ['mean', 'var', 'max', 'min']
+	tiles, stat = list(ndata.keys()), ['mean', 'var', 'max', 'min']
 	npdata = np.stack( list(ndata.values()), axis=0 )
 	print( f"xanorm: {npdata.shape}, {len(ndata)}")
-	return xa.DataArray( npdata, dims=['tiles','stat'], coords=dict(tile=tile, stat=stat))
+	return xa.DataArray( npdata, dims=['tiles','stat'], coords=dict(tiles=tiles, stat=stat))
 
 def globalize_norm( data, dim ):
 	print( f"globalize_norm[{dim}]: {type(data)}{data.shape}")
