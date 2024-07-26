@@ -1,0 +1,34 @@
+name: ???
+scenario: ???
+dataset: ???
+training_version: ???
+
+tensor_type: "torch"
+device: "gpu"
+num_workers: 4
+
+batch_size: 32
+ttsplit: { train: 0.95, valid: 0.025, test: 0.025 }
+nepochs: 30
+nrefinements: 0
+refine_fraction: 0.15
+lr: 5e-5
+
+origin:  { x: 0, y: 0 }
+tile_grid:  { x: -1, y: -1 }
+tile_size: { x: 48, y: 48 }
+batch_domain:  'tiles'
+norm: 'lnorm'
+conform_to_grid: false
+upsample_mode: cubic
+downsample_mode: cubic
+
+input_variables: { SST: sea_surface_temperature }
+variable_ranges: { SST: { min: 3.0, max: 24.0 } }
+target_variables: [ SST ]
+forcing_variables: []
+
+
+
+
+

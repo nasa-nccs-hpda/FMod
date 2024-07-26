@@ -1,13 +1,13 @@
 from typing import Any, Dict, List, Tuple, Type, Optional, Union
 from fmod.controller.workflow import WorkflowController
 
-cname: str = "sres-gscale"
+cname: str = "sres"
 models: List[str] = [ 'rcan-10-20-64' ]
-ccustom: Dict[str,Any] = { 'task.nepochs': 100, 'task.lr': 1e-4, 'task.norm': 'gscale' }
+ccustom: Dict[str,Any] = { 'task.nepochs': 100, 'task.lr': 1e-4 }
 refresh =  False
 
 configuration = dict(
-	task = "swot",
+	task = "swot-gscale",
 	dataset = "swot",
 	pipeline = "sres",
 	platform = "explore"
