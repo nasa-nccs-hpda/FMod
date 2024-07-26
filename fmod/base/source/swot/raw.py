@@ -14,15 +14,22 @@ from glob import glob
 from parse import parse
 import numpy as np
 
+STATS = ['mean', 'var', 'max', 'min']
 def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
-	tiles, stat = list(ndata.keys()), ['mean', 'var', 'max', 'min']
+	tiles = list(ndata.keys())
 	npdata = np.stack( list(ndata.values()), axis=0 )
 	print( f"xanorm: {npdata.shape}, {len(ndata)}")
-	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tiles, stat=stat))
+	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tiles, stat=STATS))
 
 def globalize_norm( data: xa.DataArray ) -> xa.DataArray:
 	print( f"globalize_norm: array{data.dims}{data.shape}")
-	return data
+	results = []
+	for stat in STATS:
+		dslice = data.sel(stat=stat)
+		if   stat == 'max': results.append(dslice.max())
+		elif stat == 'min': results.append(dslice.min())
+		else:               results.append(dslice.mean())
+	return xa.DataArray( results, dims=['stat'], coords=dict(stat=STATS))
 
 def filepath() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.dataset_files}"
