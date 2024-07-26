@@ -163,6 +163,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		channel_data = []
 		ntype: str = cfg().task.norm
 		channels: xa.DataArray = batch_data.coords['channels']
+		print(f"NORM: channels-{channels.name}{type(channels)}{channels.shape}")
 		for channel in channels.values:
 			batch = batch_data.sel(channel=channel)
 			if ntype == 'lnorm':
@@ -205,4 +206,4 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ntiles = np.count_nonzero(msk)
 		result = np.compress( msk, tiles, 0)
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
-		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=xa.DataArray(tile_idxs,name="tiles"), channels=xa.DataArray(self.varnames,name="channels") ) )
+		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs, channels=self.varnames) )
