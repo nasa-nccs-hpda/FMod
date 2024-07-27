@@ -258,13 +258,13 @@ class ResultsAccumulator(object):
 				self.load_row(row)
 		print(f" ** Loading training stats ({len(self.results)} recs) from {self.result_file_path()}")
 
-	def get_plot_data(self, estart: int = 1 ) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
+	def get_plot_data(self) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
 		plot_data, model_data = {}, {}
 		for tset in [TSet.Train, TSet.Validation]:
 			result_data = model_data.setdefault(tset, {})
 			print( f"get_plot_data({tset.value}): {len(self.results)} results")
 			for result in self.results:
-				if (result.tset == tset) and (result.epoch >= estart):
+				if result.tset == tset:
 					result_data[ result.epoch ] = result.loss
 
 		x, y = {}, {}
