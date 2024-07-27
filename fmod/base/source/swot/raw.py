@@ -19,11 +19,9 @@ STATS = ['mean', 'var', 'max', 'min']
 def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
 	tiles = list(ndata.keys())
 	npdata = np.stack( list(ndata.values()), axis=0 )
-	print( f"xanorm: {npdata.shape}, {len(ndata)}")
 	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tiles, stat=STATS))
 
 def globalize_norm( data: xa.DataArray ) -> xa.DataArray:
-	print( f"globalize_norm: array{data.dims}{data.shape}")
 	results = []
 	for stat in STATS:
 		dslice = data.sel(stat=stat)
@@ -104,10 +102,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			self._write_norm_stats(norm_stats)
 		return norm_stats
 
-	def condense_tile_stats(self, tile_stats: xa.DataArray ) -> xa.DataArray:
-		print( f"Condensing tile stats: {tile_stats.dims}{tile_stats.shape}")
-		return tile_stats
-
 	@property
 	def norm_stats(self) -> xa.Dataset:
 		if self._norm_stats is None:
@@ -163,7 +157,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		channel_data = []
 		ntype: str = cfg().task.norm
 		channels: xa.DataArray = batch_data.coords['channels']
-		print(f"NORM: channels={channels.values.tolist()}")
 		for channel in channels.values:
 			batch = batch_data.sel(channels=channel)
 			if ntype == 'lnorm':
@@ -188,7 +181,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				channel_data.append(  (batch - vmin) / (vmax - vmin) )
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
-		print( f"NORM: result{result.dims}{result.shape}")
 		return result
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
