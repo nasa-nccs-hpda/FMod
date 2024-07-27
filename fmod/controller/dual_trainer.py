@@ -284,7 +284,7 @@ class ModelTrainer(object):
 						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
 						tile_iter.register_loss('interp', interp_sloss)
 					stile = list(ctile.values())
-					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True)
+					lgm().log(f" ** <{self.model_manager.model_name}> E({epoch:3}/{nepochs}) TIME[{itime:3}:{ctime:4}] TILES[{stile[0]:4}:{stile[1]:4}]-> Loss= {sloss*1000:6.2f} ({interp_sloss*1000:6.2f})", display=True)
 					mloss.backward()
 					self.optimizer.step()
 
@@ -294,7 +294,7 @@ class ModelTrainer(object):
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
 				[epoch_loss, interp_loss] = [ tile_iter.epoch_loss(ltype) for ltype in ['model', 'interp'] ]
 				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss, interp_loss )
-				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, flush=((itime+1) % lossrec_flush_period == 0) )
+				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, interp_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
 			if self.scheduler is not None:
 				self.scheduler.step()
@@ -315,11 +315,7 @@ class ModelTrainer(object):
 		eval_losses = self.evaluate( tset, update_model=False, **kwargs )
 		if self.results_accum is not None:
 			print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
-			self.results_accum.record_losses( tset, epoch, eval_losses['model'] )
-			if 'interp' in eval_losses:
-				self.results_accum.record_losses( TSet.Upsample, epoch, eval_losses['interp'])
-			for etset, loss in losses.items():
-				self.results_accum.record_losses( etset, epoch, loss )
+			self.results_accum.record_losses( tset, epoch, eval_losses['model'], eval_losses['interp'] )
 		if kwargs.get('flush',True):
 			self.results_accum.flush()
 		return eval_losses

@@ -102,16 +102,17 @@ def rrkey( tset: TSet, **kwargs ) -> str:
 
 class ResultRecord(object):
 
-	def __init__(self, tset: TSet, epoch: float, loss: float ):
+	def __init__(self, tset: TSet, epoch: float, loss: float, ref_loss: float):
 		self.loss: float = loss
+		self.ref_loss: float = ref_loss
 		self.epoch: float = epoch
 		self.tset: TSet = tset
 
 	def serialize(self) -> List[str]:
-		return [ self.tset.value, f"{self.epoch:.3f}", f"{self.loss:.6f}" ]
+		return [ self.tset.value, f"{self.epoch:.3f}", f"{self.loss:.6f}", f"{self.ref_loss:.6f}" ]
 
 	def __str__(self):
-		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch:.3f},  Loss: {self.loss:.6f}"
+		return f" --- TSet: {self.tset.value}, Epoch: {self.epoch:.3f},  Loss: {self.loss:.6f},  Ref Loss: {self.ref_loss:.6f}"
 
 class ResultFileWriter:
 
@@ -228,8 +229,8 @@ class ResultsAccumulator(object):
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
 		return ResultRecord( TSet(rec[0]), float(rec[1]), float(rec[2]) )
 
-	def record_losses(self, tset: TSet, epoch: float, loss: float, flush=False):
-		rr: ResultRecord = ResultRecord(tset, epoch, loss )
+	def record_losses(self, tset: TSet, epoch: float, loss: float, ref_loss: float, flush=False):
+		rr: ResultRecord = ResultRecord(tset, epoch, loss, ref_loss )
 		self.results.append( rr )
 		if flush: self.flush()
 
