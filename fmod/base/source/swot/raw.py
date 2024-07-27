@@ -187,7 +187,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				vmin, vmax = tstats.sel(stat='min'), tstats.sel(stat='max')
 				channel_data.append(  (batch - vmin) / (vmax - vmin) )
 			else: raise Exception( f"Unknown norm: {ntype}")
-		result = xa.concat( channel_data, channels )
+		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
 		print( f"NORM: result{result.dims}{result.shape}")
 		return result
 
