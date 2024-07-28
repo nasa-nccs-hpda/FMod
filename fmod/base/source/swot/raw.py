@@ -156,6 +156,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def norm(self, batch_data: xa.DataArray ) -> xa.DataArray:
 		channel_data = []
 		ntype: str = cfg().task.norm
+		print(f" *** norm: ntype={ntype}")
 		channels: xa.DataArray = batch_data.coords['channels']
 		for channel in channels.values:
 			batch = batch_data.sel(channels=channel)
