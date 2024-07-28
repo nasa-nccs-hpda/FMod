@@ -169,7 +169,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'gnorm':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
 				bmean, bstd = gstats.sel(stat='mean'), np.sqrt( gstats.sel(stat='var') )
-				print( f"gnorm: gmean = {bmean.values}, gstd = {bstd.values}, batch mean = {batch.values.tolist()}, gstd = {bstd.values.tolist()}")
+				print( f"gnorm: gmean = {bmean.values}, gstd = {bstd.values}, batch mean = {batch.values.mean()}, std = {bstd.values.std()}")
 				channel_data.append(  (batch - bmean) / bstd )
 			elif ntype == 'gscale':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
