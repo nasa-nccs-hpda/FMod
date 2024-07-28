@@ -227,7 +227,8 @@ class ResultsAccumulator(object):
 
 	@classmethod
 	def create_record( cls, rec: List[str] ) -> ResultRecord:
-		return ResultRecord( TSet(rec[0]), float(rec[1]), float(rec[2]) )
+		ref_loss: float = float(rec[3]) if len(rec) > 3 else float('nan')
+		return ResultRecord( TSet(rec[0]), float(rec[1]), float(rec[2]), ref_loss )
 
 	def record_losses(self, tset: TSet, epoch: float, loss: float, ref_loss: float, flush=False):
 		rr: ResultRecord = ResultRecord(tset, epoch, loss, ref_loss )
