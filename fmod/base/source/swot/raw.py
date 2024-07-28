@@ -150,7 +150,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if tile_range[0] < ntiles:
 			slice_end = min(tile_range[1], ntiles)
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
-			lgm().log(f"\n select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
+			lgm().log(f" select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
 			return self.norm( batch )
 
 	def norm(self, batch_data: xa.DataArray ) -> xa.DataArray:
@@ -167,7 +167,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				channel_data.append(  (batch - bmin) / (bmax-bmin) )
 			elif ntype == 'gnorm':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
-				channel_data.append(  (batch - gstats.sel(stat='mean')) / gstats.sel(stat='var').sqrt() )
+				bmean, bstd = gstats.sel(stat='mean'), gstats.sel(stat='var').sqrt()
+				print( f"gnorm: bmean = {bmean.values}, bstd = {bstd.values}")
+				channel_data.append(  (batch - bmean) / bstd )
 			elif ntype == 'gscale':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
 				vmin, vmax = gstats.sel(stat='min'), gstats.sel(stat='max')
@@ -181,6 +183,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				channel_data.append(  (batch - vmin) / (vmax - vmin) )
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
+		lgm().log(f" norm_batch[{self.time_index}]: mean={result.values.mean():.2f}, std={result.values.std():.2f}", display = True)
 		return result
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
