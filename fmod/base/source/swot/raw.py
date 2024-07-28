@@ -169,7 +169,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'gnorm':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
 				gmean, gstd = gstats.sel(stat='mean'), np.sqrt( gstats.sel(stat='var') )
-				print( f"gnorm: gmean = {gmean.values}, gstd = {gstd.values}, batch mean = {batch.values.mean()}, std = {batch.values.std()}")
+				print( f"gnorm: gmean = {gmean.values}, gstd = {gstd.values}, batch mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
 				channel_data.append(  (batch - gmean) / gstd )
 			elif ntype == 'gscale':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
@@ -178,7 +178,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'tnorm':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				tmean, tstd = tstats.sel(stat='mean'), np.sqrt( tstats.sel(stat='var') )
-				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch mean = {batch.values.mean()}, std = {batch.values.std()}")
+				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
 				channel_data.append(  (batch - tmean) / tstd )
 			elif ntype == 'tscale':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
