@@ -17,9 +17,8 @@ import numpy as np
 
 STATS = ['mean', 'var', 'max', 'min']
 def xanorm( ndata: Dict[int, np.ndarray] ) -> xa.DataArray:
-	tiles = list(ndata.keys())
 	npdata = np.stack( list(ndata.values()), axis=0 )
-	return xa.DataArray( npdata, dims=['tile','stat'], coords=dict(tile=tiles, stat=STATS))
+	return xa.DataArray( npdata, dims=['tiles','stat'], coords=dict(tiles=list(ndata.keys()), stat=STATS))
 
 def globalize_norm( data: xa.DataArray ) -> xa.DataArray:
 	results = []
