@@ -156,10 +156,10 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def norm(self, batch_data: xa.DataArray ) -> xa.DataArray:
 		channel_data = []
 		ntype: str = cfg().task.norm
-		print(f" *** norm: ntype={ntype}")
 		channels: xa.DataArray = batch_data.coords['channels']
 		for channel in channels.values:
-			batch = batch_data.sel(channels=channel)
+			batch: xa.DataArray = batch_data.sel(channels=channel)
+			lgm().log(f" norm_batch[{channel}][{self.time_index}{batch.dims}{batch.shape}: ntype={ntype}")
 			if ntype == 'lnorm':
 				bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
 				channel_data.append( (batch - bmean) / bstd )
@@ -169,7 +169,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'gnorm':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
 				bmean, bstd = gstats.sel(stat='mean'), np.sqrt( gstats.sel(stat='var') )
-				print( f"gnorm: bmean = {bmean.values}, bstd = {bstd.values}")
+				print( f"gnorm: gmean = {bmean.values}, gstd = {bstd.values}, batch mean = {batch.values.tolist()}, gstd = {bstd.values.tolist()}")
 				channel_data.append(  (batch - bmean) / bstd )
 			elif ntype == 'gscale':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
