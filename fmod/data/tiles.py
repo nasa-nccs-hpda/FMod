@@ -15,12 +15,16 @@ class TileIterator(object):
     def batch_losses(self, ltype) -> List[float]:
         return self._batch_losses.setdefault(ltype, [])
 
+    def clear_batch_losses(self, ltype):
+        self._batch_losses[ltype] = []
+
     def register_loss(self, ltype: str, loss: float ):
         self.batch_losses(ltype).append( loss )
 
-    def epoch_loss(self, ltype: str):
-        epoch_loss = np.array(self.batch_losses(ltype)).mean()
-        return epoch_loss
+    def accumulate_loss(self, ltype: str):
+        accum_loss = np.array(self.batch_losses(ltype)).mean()
+        self.clear_batch_losses(ltype)
+        return accum_loss
 
     def __iter__(self):
         raise NotImplementedError("TileIterator:__iter__")

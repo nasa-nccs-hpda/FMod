@@ -292,7 +292,7 @@ class ModelTrainer(object):
 				if binput is not None:   self.input[tset] = binput.detach().cpu().numpy()
 				if btarget is not None:  self.target[tset] = btarget.detach().cpu().numpy()
 				if boutput is not None:  self.product[tset] = boutput.detach().cpu().numpy()
-				[epoch_loss, interp_loss] = [ tile_iter.epoch_loss(ltype) for ltype in ['model', 'interp'] ]
+				[epoch_loss, interp_loss] = [ tile_iter.accumulate_loss(ltype) for ltype in ['model', 'interp']]
 				self.checkpoint_manager.save_checkpoint(epoch, itime, TSet.Train, epoch_loss, interp_loss )
 				self.results_accum.record_losses( TSet.Train, epoch-1+itime/nts, epoch_loss, interp_loss, flush=((itime+1) % lossrec_flush_period == 0) )
 
