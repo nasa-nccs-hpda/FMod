@@ -150,7 +150,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			slice_end = min(tile_range[1], ntiles)
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			lgm().log(f" select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
-			return self.norm( batch, [tile_range[0],slice_end] )
+			return self.norm( batch, (tile_range[0],slice_end) )
 
 	def norm(self, batch_data: xa.DataArray, tile_range: Tuple[int,int] ) -> xa.DataArray:
 		channel_data = []
@@ -178,7 +178,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				tmean, tstd = tstats.sel(stat='mean').isel( tiles=slice(*tile_range) ), np.sqrt( tstats.sel(stat='var').isel( tiles=slice(*tile_range) ) )
 				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch{batch.dims}{batch.shape} mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
-				channel_data.append(  (batch - tmean) / tstd )
+				cbatch: xa.DataArray = batch - tmean
+				nbatch: xa.DataArray = cbatch / tstd
+				channel_data.append( nbatch )
 			elif ntype == 'tscale':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				vmin, vmax = tstats.sel(stat='min'), tstats.sel(stat='max')
