@@ -177,7 +177,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'tnorm':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				tmean, tstd = tstats.sel(stat='mean'), np.sqrt( tstats.sel(stat='var') )
-				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
+				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch{batch.dims}{batch.shape} mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
 				channel_data.append(  (batch - tmean) / tstd )
 			elif ntype == 'tscale':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
