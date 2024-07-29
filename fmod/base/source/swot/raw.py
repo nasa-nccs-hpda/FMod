@@ -150,9 +150,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			slice_end = min(tile_range[1], ntiles)
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			lgm().log(f" select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
-			return self.norm( batch )
+			return self.norm( batch, [tile_range[0],slice_end] )
 
-	def norm(self, batch_data: xa.DataArray ) -> xa.DataArray:
+	def norm(self, batch_data: xa.DataArray, tile_range: Tuple[int,int] ) -> xa.DataArray:
 		channel_data = []
 		ntype: str = cfg().task.norm
 		channels: xa.DataArray = batch_data.coords['channels']
@@ -176,7 +176,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				channel_data.append(  (batch - vmin) / (vmax - vmin) )
 			elif ntype == 'tnorm':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
-				tmean, tstd = tstats.sel(stat='mean'), np.sqrt( tstats.sel(stat='var') )
+				tmean, tstd = tstats.sel(stat='mean').isel( tiles=slice(*tile_range) ), np.sqrt( tstats.sel(stat='var').isel( tiles=slice(*tile_range) ) )
 				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch{batch.dims}{batch.shape} mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
 				channel_data.append(  (batch - tmean) / tstd )
 			elif ntype == 'tscale':
