@@ -158,7 +158,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		channels: xa.DataArray = batch_data.coords['channels']
 		for channel in channels.values:
 			batch: xa.DataArray = batch_data.sel(channels=channel)
-			lgm().log(f" norm_batch[{channel}][{self.time_index}{batch.dims}{batch.shape}: ntype={ntype}")
 			if ntype == 'lnorm':
 				bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
 				channel_data.append( (batch - bmean) / bstd )
@@ -177,7 +176,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			elif ntype == 'tnorm':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				tmean, tstd = tstats.sel(stat='mean').isel( tiles=slice(*tile_range) ), np.sqrt( tstats.sel(stat='var').isel( tiles=slice(*tile_range) ) )
-				print( f"gnorm: gmean{tmean.dims}{tmean.shape}, tstd{tstd.dims}{tstd.shape}, batch{batch.dims}{batch.shape} mean = {batch.values.mean():.2f}, std = {batch.values.std():.2f}")
 				cbatch: np.ndarray = batch.values - tmean.values.reshape(-1,1,1)
 				nbatch: np.ndarray = cbatch / tstd.values.reshape(-1,1,1)
 				channel_data.append( batch.copy( data=nbatch) )
@@ -187,7 +185,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				channel_data.append(  (batch - vmin) / (vmax - vmin) )
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
-		lgm().log(f" norm_batch[{self.time_index}]: mean={result.values.mean():.2f}, std={result.values.std():.2f}", display = True)
 		return result
 
 	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
