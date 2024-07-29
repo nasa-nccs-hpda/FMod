@@ -53,5 +53,5 @@ class WorkflowController(object):
 			self.config = cc
 			self.trainer = ModelTrainer(cc)
 			if test_name == "load_raw_dataset":
-				self.trainer.model_manager.get_raw_dataset()
+				self.trainer.model_manager.sample_input()
 

@@ -260,20 +260,23 @@ class ResultsAccumulator(object):
 				self.load_row(row)
 		print(f" ** Loading training stats ({len(self.results)} recs) from {self.result_file_path()}")
 
-	def get_plot_data(self) -> Tuple[Dict[TSet,np.ndarray],Dict[TSet,np.ndarray]]:
-		plot_data, model_data = {}, {}
-		for tset in [TSet.Train, TSet.Validation]:
-			result_data = model_data.setdefault(tset, {})
-			print( f"get_plot_data({tset.value}): {len(self.results)} results")
-			for result in self.results:
-				if result.tset == tset:
-					result_data[ result.epoch ] = result.loss
+	def get_plot_data(self) -> Tuple[Dict[str,np.ndarray],Dict[str,np.ndarray]]:
+		model_data = {}
+		print(f"get_plot_data: {len(self.results)} results")
+		for dset in ['model', 'ref']:
+			for tset in [TSet.Train, TSet.Validation]:
+				result_data = model_data.setdefault( f"{dset}-{tset.value}", {} )
+				for result in self.results:
+					if result.tset == tset:
+						loss = result.loss if (dset == "model") else result.ref_loss
+						result_data[ result.epoch ] = loss
 
 		x, y = {}, {}
-		for tset in [TSet.Train, TSet.Validation]:
-			result_data = model_data[ tset ]
-			x[tset] = np.array(list(result_data.keys()))
-			y[tset] = np.array(list(result_data.values()))
+		for pid in model_data.keys():
+			result_data = model_data[ pid ]
+			x[pid] = np.array(list(result_data.keys()))
+			y[pid] = np.array(list(result_data.values()))
+
 		return x, y
 
 	def rprint(self):
