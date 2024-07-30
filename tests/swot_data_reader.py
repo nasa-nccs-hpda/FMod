@@ -5,7 +5,7 @@ from fmod.base.source.loader.raw import SRRawDataLoader
 cname: str = "sres"
 model: str =  'rcan-10-20-64'
 task = "swot"
-dataset = "swot_southpacific_1200"
+dataset = "swot"
 platform = "explore"
 
 ConfigContext.set_defaults( platform=platform, task=task, dataset=dataset )
