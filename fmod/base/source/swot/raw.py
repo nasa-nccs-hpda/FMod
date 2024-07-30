@@ -35,6 +35,11 @@ def filepath() -> str:
 def template() -> str:
 	return f"{cfg().dataset.dataset_root}/{cfg().dataset.template}"
 
+def subset_roi( global_data: np.ndarray ) -> np.ndarray:
+	roi = cfg().dataset.get('roi',None)
+	if roi is None: return global_data
+	xr, yr = (roi['x0'],roi['x0']+roi['xs']), (roi['y0'],roi['y0']+roi['ys'])
+	return global_data[..., yr[0]:yr[1], xr[0]:xr[1]]
 class NormData:
 
 	def __init__(self, itile: int):
@@ -130,8 +135,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_template[~mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
-		lgm().log( f"load_file result = {result.shape}")
-		return result
+		roi_data = subset_roi(result)
+		lgm().log( f"load_file result = {roi_data.shape}")
+		return roi_data
 
 	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
 		if time_index != self.time_index:
