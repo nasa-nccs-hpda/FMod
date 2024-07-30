@@ -9,7 +9,7 @@ norm = "tnorm"
 
 configuration = dict(
 	task = f"swot-{norm}",
-	dataset = "swot",
+	dataset = "swot_southpacific_1200",
 	pipeline = "sres",
 	platform = "explore"
 )
