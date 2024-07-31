@@ -7,7 +7,7 @@ tensor_type: "torch"
 device: "gpu"
 num_workers: 4
 
-batch_size: 32
+batch_size: 36
 ttsplit: { train: 0.95, valid: 0.025, test: 0.025 }
 nepochs: 30
 nrefinements: 0
