@@ -79,7 +79,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def _read_norm_stats(self) -> Optional[xa.Dataset]:
 		if os.path.exists(self.norm_data_file):
 			print( f"Reading norm data from {self.norm_data_file}")
-			return xa.open_dataset(self.norm_data_file, engine='netcdf4').rename( dict(tile="tiles") )
+			norm_stats: xa.Dataset = xa.open_dataset(self.norm_data_file, engine='netcdf4')
+			if 'tile' in norm_stats.coords: norm_stats = norm_stats.rename( dict(tile="tiles") )
+			return norm_stats
 
 	def _compute_normalization(self) -> xa.Dataset:
 		time_indices = self.get_batch_time_indices()
