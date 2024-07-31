@@ -356,7 +356,7 @@ class ModelTrainer(object):
 						[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 						batch_model_losses.append( model_sloss )
 						binterp = upsample(binput)
-						[interp_sloss, interp_multilevel_mloss] = self.loss(boutput, binterp)
+						[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
 						batch_interp_losses.append( interp_sloss )
 						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
 						ibatch = ibatch + 1

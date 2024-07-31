@@ -5,9 +5,10 @@ cname: str = "sres"
 models: List[str] = [ 'rcan-10-20-64' ]
 ccustom: Dict[str,Any] = { 'task.nepochs': 100, 'task.lr': 1e-4 }
 refresh =  False
+norm = "lnorm"
 
 configuration = dict(
-	task = "swot-lnorm",
+	task = f"swot-{norm}",
 	dataset = "swot_southpacific_1200",
 	pipeline = "sres",
 	platform = "explore"
