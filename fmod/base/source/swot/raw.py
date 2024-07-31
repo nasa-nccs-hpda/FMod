@@ -132,13 +132,12 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		var_template: np.ndarray = np.fromfile(template(), '>f4')
 		var_data: np.ndarray = np.fromfile(filepath(), '>f4')
 		mask = (var_template != 0)
-		print( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, file={filepath()}")
 		var_template[mask] = var_data
 		var_template[~mask] = np.nan
 		sss_east, sss_west = mds2d(var_template)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
 		roi_data = subset_roi(result)
-		lgm().log( f"load_file result = {roi_data.shape}")
+		lgm().log( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, result{roi_data.shape}, file={filepath()}")
 		return roi_data
 
 	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
