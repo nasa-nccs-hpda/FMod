@@ -343,10 +343,12 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses, interp_sloss = [], [], 0.0
 		binput, boutput, btarget, binterp, ibatch = None, None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
+			lgm().log(f" --------------- itime {itime} {ctime} ({self.time_index})")
 			if (self.time_index < 0) or (itime == self.time_index):
 				timeslice: xa.DataArray = self.load_timeslice(ctime)
 				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
 				for itile, ctile in enumerate(iter(tile_iter)):
+					lgm().log(f" --------------- --------- itime {itile} {ctile} ({self.tile_index})")
 					if (self.tile_index < 0) or (itile == self.tile_index):
 						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
