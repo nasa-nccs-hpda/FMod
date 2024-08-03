@@ -23,8 +23,8 @@ conform_to_grid: false
 upsample_mode: cubic
 downsample_mode: cubic
 
-input_variables: { SST: sea_surface_temperature, SSS: sea_surface_salinity }
-target_variables: [ SST, SSS ]
+input_variables: { SSS: sea_surface_salinity, SST: sea_surface_temperature }
+target_variables: [ SSS, SST ]
 forcing_variables: []
 
 
