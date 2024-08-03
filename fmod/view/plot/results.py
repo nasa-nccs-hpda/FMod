@@ -203,7 +203,6 @@ class ResultPlot(Plot):
 				image = image.isel(tiles=self.tile_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
 		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
-		cs = { cn:cv.shape for cn,cv in coords.items()}
 		image = image.assign_coords( coords )
 		return image
 

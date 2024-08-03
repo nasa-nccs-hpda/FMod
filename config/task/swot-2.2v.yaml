@@ -18,14 +18,13 @@ origin:  { x: 0, y: 0 }
 tile_grid:  { x: -1, y: -1 }
 tile_size: { x: 48, y: 48 }
 batch_domain:  'tiles'
-norm: 'gscale'
+norm: 'lnorm'
 conform_to_grid: false
 upsample_mode: cubic
 downsample_mode: cubic
 
-input_variables: { SST: sea_surface_temperature }
-variable_ranges: { SST: { min: 3.0, max: 24.0 } }
-target_variables: [ SST ]
+input_variables: { SST: sea_surface_temperature, SSS: sea_surface_salinity }
+target_variables: [ SST, SSS ]
 forcing_variables: []
 
 
