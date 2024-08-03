@@ -137,8 +137,8 @@ class ResultPlot(Plot):
 
 	@exception_handled
 	def tile_update(self, sindex: int):
-		lgm().log( f"\n tile_update ---> sindex = {sindex}" )
-		self.tile_index = sindex
+		lgm().log( f" <-------------------------- tile_update ---> sindex = {sindex}" )
+		self.tileId = sindex
 		self.images_data = self.update_tile_data()
 		self.update_subplots()
 
