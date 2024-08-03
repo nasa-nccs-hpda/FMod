@@ -1,6 +1,7 @@
 import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
+from fmod.base.io.loader import TSet, batchDomain
 from fmod.base.util.config import cfg
 from fmod.base.util.array import array2tensor, downsample, upsample, xa_downsample, xa_upsample
 import ipywidgets as ipw
@@ -87,6 +88,10 @@ class ResultPlot(Plot):
 	@property
 	def icoords(self) -> DataArrayCoordinates:
 		return self.sample_input.coords
+
+	@property
+	def batch_domain(self) -> batchDomain:
+		return self.trainer.batch_domain
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tileId
@@ -191,9 +196,11 @@ class ResultPlot(Plot):
 		if 'channel' in image.dims:
 			image = image.isel(channels=self.channel)
 		if 'tiles' in image.dims:
-			batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
-			# lgm().log( f"get_subplot_image: time_index={self.time_index}, batch_time_index={batch_time_index} --> image{image.dims}{list(image.shape)}")
-			image = image.isel(tiles=batch_time_index).squeeze(drop=True)
+			if self.batch_domain == batchDomain.Time:
+				batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
+				image = image.isel(tiles=batch_time_index).squeeze(drop=True)
+			elif self.batch_domain == batchDomain.Tiles:
+				image = image.isel(tiles=self.tile_index).squeeze(drop=True)
 		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
 		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
 		cs = { cn:cv.shape for cn,cv in coords.items()}

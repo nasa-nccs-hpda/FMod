@@ -212,6 +212,10 @@ class ModelTrainer(object):
 	def load_timeslice(self, ctime: TimeType, **kwargs) -> Optional[xarray.DataArray]:
 		return self.get_dataset().load_timeslice( ctime, **kwargs )
 
+	@property
+	def batch_domain(self) -> batchDomain:
+		return self.get_dataset().batch_domain
+
 	def get_srbatch(self, ctile: Dict[str,int], ctime: TimeType,  **kwargs  ) -> Optional[xarray.DataArray]:
 		shuffle: bool = kwargs.pop('shuffle',False)
 		btarget:  Optional[xarray.DataArray]  = self.get_dataset().get_batch_array(ctile,ctime,**kwargs)
@@ -328,7 +332,11 @@ class ModelTrainer(object):
 
 	def tile_in_batch(self, itile, ctile ):
 		if self.tile_index < 0: return True
-		return self.get_dataset().tile_in_batch( self.tile_index, itile, ctile )
+		if self.batch_domain == batchDomain.Time:
+			return self.tile_index == itile
+		elif self.batch_domain == batchDomain.Tiles:
+			tile_range = range(ctile['start'], ctile['end'])
+			return self.tile_index in tile_range
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
