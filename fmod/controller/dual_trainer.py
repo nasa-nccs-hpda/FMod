@@ -326,6 +326,10 @@ class ModelTrainer(object):
 			lgm().log( f"init_data_timestamps: {len(ctimes)} times", display=True)
 			self.data_timestamps = ttsplit_times(ctimes)
 
+	def tile_in_batch(self, itile, ctile ):
+		if self.tile_index < 0: return True
+		return self.get_dataset().tile_in_batch( self.tile_index, itile, ctile )
+
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
@@ -343,13 +347,11 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses, interp_sloss = [], [], 0.0
 		binput, boutput, btarget, binterp, ibatch = None, None, None, None, 0
 		for itime, ctime in enumerate(self.data_timestamps[tset]):
-			lgm().log(f" --------------- itime {itime} {ctime} ({self.time_index})")
 			if (self.time_index < 0) or (itime == self.time_index):
 				timeslice: xa.DataArray = self.load_timeslice(ctime)
 				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
 				for itile, ctile in enumerate(iter(tile_iter)):
-					lgm().log(f" --------------- --------- itime {itile} {ctile} ({self.tile_index})")
-					if (self.tile_index < 0) or (itile == self.tile_index):
+					if self.tile_in_batch(itile, ctile):
 						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
 						if batch_data is None: break

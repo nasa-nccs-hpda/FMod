@@ -140,6 +140,13 @@ class BatchDataset(object):
         batch_data: xa.DataArray = self.srbatch.load( ctile, ctime)
         return batch_data
 
+    def tile_in_batch(self, tile_index: int, itile: int, ctile: Dict[str,int]):
+        if self.batch_domain == batchDomain.Time:
+            return tile_index == itile
+        elif self.batch_domain == batchDomain.Tiles:
+            tile_range = range(ctile['start'], ctile['end'])
+            return tile_index in tile_range
+
     def load_timeslice(self, ctime: TimeType, **kwargs) -> Optional[xa.DataArray]:
         return self.srbatch.load_timeslice( ctime, **kwargs )
 
