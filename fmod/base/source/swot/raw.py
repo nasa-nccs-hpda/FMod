@@ -196,19 +196,20 @@ class SWOTRawDataLoader(SRRawDataLoader):
 
 	def get_tiles(self, var_data: List[np.ndarray]) -> xa.DataArray:
 		raw_data = np.concatenate(var_data, axis=0)
-		print( f"get_tiles: vdata{raw_data.shape}")
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
-		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
+		print( f"get_tiles: vdata{raw_data.shape}, ishape={ishape}")
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(image_shape=ishape)
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
-		lgm().log( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}")
+		lgm().log( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}", display=True)
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
 		tile_idxs = np.arange(tiles.shape[0])[msk]
 		ntiles = np.count_nonzero(msk)
 		result = np.compress( msk, tiles, 0)
+		print(f" *----> result0{result.shape}")
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		print(f" *----> result1{result.shape}")
 		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs, channels=self.varnames) )
