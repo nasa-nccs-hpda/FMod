@@ -26,14 +26,6 @@ Tensors = Sequence[Tensor]
 TensorOrTensors = Union[Tensor, Tensors]
 MLTensors = Dict[ TSet, torch.Tensor]
 
-def to_xa( data: np.ndarray, upscaled: bool = False ) -> xarray.DataArray:
-	ustep: int = math.prod(cfg().model.downscale_factors)
-	cscale = ustep if upscaled else 1
-	coords = dict(tiles=np.arange(data.shape[0]), channels=np.arange(data.shape[1]))
-	coords['y'] = np.arange(0, data.shape[2]*cscale, cscale)
-	coords['x'] = np.arange(0, data.shape[3]*cscale, cscale)
-	result = xa.DataArray( data.astype(np.float32), dims=['tiles', 'channels', 'y', 'x'], coords=coords )
-	return result
 def ttsplit_times( times: List[TimeType]) -> Dict[TSet, List[TimeType]]:
 	ttsplit = cfg().task.ttsplit
 	start, result, nt = 0, {}, len(times)
@@ -135,6 +127,15 @@ class ModelTrainer(object):
 		self.upsampled_loss: float = float('inf')
 		self.data_timestamps: Dict[TSet,List[Union[datetime, int]]] = {}
 
+	def to_xa(self, data: np.ndarray, upscaled: bool = False) -> xarray.DataArray:
+		ustep: int = math.prod(cfg().model.downscale_factors)
+		cscale = ustep if upscaled else 1
+		coords = dict(tiles=np.arange(data.shape[0]), channels=np.array(self.target_variables))
+		coords['y'] = np.arange(0, data.shape[2] * cscale, cscale)
+		coords['x'] = np.arange(0, data.shape[3] * cscale, cscale)
+		result = xa.DataArray(data.astype(np.float32), dims=['tiles', 'channels', 'y', 'x'], coords=coords)
+		return result
+
 	@property
 	def model_name(self):
 		return self.model_manager.model_name
@@ -227,16 +228,16 @@ class ModelTrainer(object):
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> xa.DataArray:
-		return  to_xa( self.input[tset], True )
+		return  self.to_xa( self.input[tset], True )
 
 	def get_ml_target(self, tset: TSet) -> xa.DataArray:
-		return to_xa( self.target[tset] )
+		return self.to_xa( self.target[tset] )
 
 	def get_ml_product(self, tset: TSet) -> xa.DataArray:
-		return to_xa( self.product[tset] )
+		return self.to_xa( self.product[tset] )
 
 	def get_ml_interp(self, tset: TSet) -> xa.DataArray:
-		return to_xa( self.interp[tset] )
+		return self.to_xa( self.interp[tset] )
 
 	def train(self, **kwargs) -> Dict[str, float]:
 		if cfg().task['nepochs'] == 0: return {}
