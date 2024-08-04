@@ -143,7 +143,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
-			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=0) )
+			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=-3) )
 			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}")
 			self.time_index = time_index
 		return self.timeslice
