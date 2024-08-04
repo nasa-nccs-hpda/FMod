@@ -193,6 +193,7 @@ class ResultPlot(Plot):
 	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
 		if 'channels' in image.dims:
+			print( f" get_subplot_image: image.dims={image.dims}, channel={self.channel}, image.channels={image.coords['channels'].values.tolist()}")
 			image = image.sel( channels=self.channel, drop=True )
 		if 'tiles' in image.dims:
 			if self.batch_domain == batchDomain.Time:
