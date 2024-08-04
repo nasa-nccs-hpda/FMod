@@ -87,13 +87,14 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		time_indices = self.get_batch_time_indices()
 		norm_data: Dict[Tuple[str,int], NormData] = {}
 		print( f"Computing norm stats (no stats file found at {self.norm_data_file})")
-		for varname in self.varnames:
-			for tidx in time_indices:
-				file_data: np.ndarray = self.load_file( varname, tidx )
-				tiles_data: xa.DataArray = self.get_tiles(file_data)
-				for itile in range(tiles_data.sizes['tiles']):
+		for tidx in time_indices:
+			vardata: List[np.ndarray] = [ self.load_file( varname, tidx ) for varname in self.varnames ]
+			tiles_data: xa.DataArray = self.get_tiles( vardata )
+			for itile in range(tiles_data.sizes['tiles']):
+				for varname in self.varnames:
+					var_ndata = tiles_data.sel(channels=varname)
 					norm_entry: NormData = norm_data.setdefault((varname,itile), NormData(itile))
-					norm_entry.add_entry( tiles_data )
+					norm_entry.add_entry( var_ndata )
 		vtstats: Dict[str,Dict[int,np.ndarray]] = {}
 		for (varname,itile), nd in norm_data.items():
 			nstats: np.ndarray = nd.get_norm_stats()
