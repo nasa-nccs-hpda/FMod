@@ -143,7 +143,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
-			self.timeslice = self.get_tiles( np.concatenate(vardata,axis=-3) )
+			self.timeslice = self.get_tiles( vardata )
 			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}")
 			self.time_index = time_index
 		return self.timeslice
@@ -194,8 +194,11 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
 		return result
 
-	def get_tiles(self, raw_data: np.ndarray) -> xa.DataArray:
+	def get_tiles(self, var_data: List[np.ndarray]) -> xa.DataArray:
+		for vdata in var_data:
+			print( f"get_tiles: vdata{vdata.shape}")
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
+		raw_data = var_data
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
