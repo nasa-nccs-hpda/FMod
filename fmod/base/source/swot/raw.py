@@ -206,10 +206,10 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
-		tile_idxs = np.arange(tiles.shape[0])[msk]
 		ntiles = np.count_nonzero(msk)
 		result = np.compress( msk, tiles, 0)
 		print(f" *----> result0{result.shape}")
 		result = result.reshape( ntiles//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		tile_idxs = np.arange(result.shape[0])
 		print(f" *----> result1{result.shape}")
 		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs, channels=self.varnames) )
