@@ -40,8 +40,8 @@ class WorkflowController(object):
 		self.config = ConfigContext.activate_global( cname, model=model, **kwargs )
 		self.trainer = ModelTrainer( self.config )
 
-	def get_result_view(self, tset: TSet, **kwargs ):
-		self.plot = ResultPlot(self.trainer, tset, **kwargs)
+	def get_result_view(self, varname: str, tset: TSet, **kwargs ):
+		self.plot = ResultPlot( self.trainer, tset, channel=varname, **kwargs)
 		return self.plot.plot()
 
 	def get_training_view(self, **kwargs):

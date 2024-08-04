@@ -57,9 +57,8 @@ class ResultPlot(Plot):
 		self.losses: Dict[str,float] = self.trainer.evaluate(self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs)
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tile_grid.create_tile_recs(**kwargs)
-		self.channelx: int = kwargs.get('channel', 0)
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
-		self.channel: int = kwargs.get( 'channel', 0 )
+		self.channel: str = kwargs.get( 'channel', trainer.target_variables[0] )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
@@ -193,8 +192,8 @@ class ResultPlot(Plot):
 
 	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
 		image: xa.DataArray = self.image(irow, icol)
-		if 'channel' in image.dims:
-			image = image.isel(channels=self.channel)
+		if 'channels' in image.dims:
+			image = image.sel(channels=self.channel)
 		if 'tiles' in image.dims:
 			if self.batch_domain == batchDomain.Time:
 				batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
