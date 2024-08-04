@@ -195,10 +195,9 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		return result
 
 	def get_tiles(self, var_data: List[np.ndarray]) -> xa.DataArray:
-		for vdata in var_data:
-			print( f"get_tiles: vdata{vdata.shape}")
+		raw_data = np.concatenate(var_data, axis=0)
+		print( f"get_tiles: vdata{raw_data.shape}")
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
-		raw_data = var_data
 		if raw_data.ndim == 2: raw_data = np.expand_dims( raw_data, 0 )
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
