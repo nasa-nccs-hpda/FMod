@@ -18,8 +18,8 @@ class Plot(ABC):
 	def create_figure(self, **kwargs):
 		sharex = kwargs.get('sharex', False)
 		sharey = kwargs.get('sharey', False)
-		nrows  = kwargs.get('nrows', 2)
-		ncols  = kwargs.get('ncols', 2)
+		nrows  = kwargs.get('nrows', 1)
+		ncols  = kwargs.get('ncols', 1)
 		title  = kwargs.get('title', "")
 		callbacks: Dict[str,Callable] = kwargs.get( 'callbacks', {} )
 		with plt.ioff():
