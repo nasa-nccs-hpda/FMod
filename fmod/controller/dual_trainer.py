@@ -365,10 +365,10 @@ class ModelTrainer(object):
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
 						if batch_data is None: break
 						binput, boutput, btarget = self.apply_network( batch_data )
-						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)}" )
+						binterp = upsample(binput)
+						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}", display=True)
 						[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 						batch_model_losses.append( model_sloss )
-						binterp = upsample(binput)
 						[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
 						batch_interp_losses.append( interp_sloss )
 						lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )

@@ -65,9 +65,8 @@ class ResultPlot(Plot):
 		self.sslider: StepSlider = StepSlider('Tile:', self.tile_index, self.sample_input.sizes['tiles'] )
 		self.plot_titles: List[List[str]] = [ ['input', 'target'], ['interp', 'model'] ]
 		self.ims = {}
-		self.ncols = (self.sample_input.shape[1]+1) if (self.sample_input is not None) else 2
 		self.callbacks = dict(button_press_event=self.select_point)
-		self.create_figure( nrows=2, ncols=self.ncols, sharex=True, sharey=True, callbacks=self.callbacks, title='SRes Loss Over Training Epochs' )
+		self.create_figure( nrows=2, ncols=2, sharex=True, sharey=True, callbacks=self.callbacks, title='SRes Loss Over Training Epochs' )
 		self.panels = [ self.fig.canvas, self.tslider, self.sslider ]
 		self.tslider.set_callback( self.time_update )
 		self.sslider.set_callback( self.tile_update )

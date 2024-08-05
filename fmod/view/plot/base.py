@@ -15,11 +15,12 @@ class Plot(ABC):
 		self.axs = None
 		self.aspect = 1
 
-	def create_figure(self, title: str, **kwargs):
+	def create_figure(self, **kwargs):
 		sharex = kwargs.get('sharex', False)
 		sharey = kwargs.get('sharey', False)
-		nrows  = kwargs.get('nrows', 1)
-		ncols  = kwargs.get('ncols', 1)
+		nrows  = kwargs.get('nrows', 2)
+		ncols  = kwargs.get('ncols', 2)
+		title  = kwargs.get('title', "")
 		callbacks: Dict[str,Callable] = kwargs.get( 'callbacks', {} )
 		with plt.ioff():
 			self.fig, self.axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=[self.fsize*self.aspect, self.fsize], sharex=sharex, sharey=sharey, layout="tight")
