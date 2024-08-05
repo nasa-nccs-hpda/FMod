@@ -8,7 +8,7 @@ refresh =  False
 
 configuration = dict(
 	task = "swot-2.2v",
-	dataset = "swot",
+	dataset = "swot_southpacific_1200",
 	pipeline = "sres",
 	platform = "explore"
 )
