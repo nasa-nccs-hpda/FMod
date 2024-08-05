@@ -361,7 +361,7 @@ class ModelTrainer(object):
 				tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
 				for itile, ctile in enumerate(iter(tile_iter)):
 					if self.tile_in_batch(itile, ctile):
-						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}")
+						lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 						batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
 						if batch_data is None: break
 						binput, boutput, btarget = self.apply_network( batch_data )
