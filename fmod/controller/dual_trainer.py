@@ -347,7 +347,7 @@ class ModelTrainer(object):
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
 		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
-		self.validation_loss = train_state.get('loss', float('inf'))
+		self.validation_loss = train_state.get('loss', 0.0)
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
 		proc_start = time.time()
@@ -386,10 +386,12 @@ class ModelTrainer(object):
 		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
 		model_loss: float = np.array(batch_model_losses).mean()
 		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-		if (tset == TSet.Validation) and (model_loss < self.validation_loss):
-			self.validation_loss = model_loss
-			interp_loss: float = np.array(batch_interp_losses).mean()
-			self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, self.validation_loss, interp_loss )
+		if tset == TSet.Validation:
+			if (model_loss < self.validation_loss) or (self.validation_loss == 0.0):
+				if self.validation_loss > 0.0:
+					interp_loss: float = np.array(batch_interp_losses).mean()
+					self.checkpoint_manager.save_checkpoint( epoch, 0, TSet.Validation, model_loss, interp_loss )
+				self.validation_loss = model_loss
 		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
 		result = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return result
