@@ -1,4 +1,4 @@
-import torch, time
+import torch, time, traceback
 from typing import Any, Dict, List, Optional
 from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
@@ -41,6 +41,7 @@ class CheckpointManager(object):
 					self.optimizer.load_state_dict( train_state.pop('optimizer_state_dict') )
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
+				traceback.print_exc()
 				return None
 		else:
 			print( f"No checkpoint file found at '{cppath}': starting from scratch.")
