@@ -33,6 +33,7 @@ def xyflip(batch_data: xa.DataArray) -> xa.DataArray:
 	flip_index = random.randint(0, 3) if cfg().task.get('xyflip',False) else 0
 	if flip_index // 2 == 1: batch_data.reindex(x=batch_data.x[::-1])
 	if flip_index  % 2 == 1: batch_data.reindex(y=batch_data.y[::-1])
+	batch_data.attrs['xyflip'] = flip_index
 	return batch_data
 
 def idxarg( **kwargs ) -> Union[datetime,int]:
@@ -286,12 +287,13 @@ class SRBatch:
 
 	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> Optional[xa.DataArray]:
 		t0 = time.time()
-		cbatch = self.load_batch(ctile, ctime)
+		cbatch: xa.DataArray = self.load_batch(ctile, ctime)
 		if cbatch is not None:
 			self.current_batch = cbatch
 			self.current_start_idx = ctime
 			self.current_origin = ctile
-			lgm().log( f" -----> load batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}, time = {time.time() - t0:.3f} sec")
+			xf = cbatch.attrs.get('xyflip',0)
+			lgm().log( f" -----> load batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}[F{xf}], time = {time.time() - t0:.3f} sec")
 		return cbatch
 
 
