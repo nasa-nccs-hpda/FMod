@@ -13,6 +13,7 @@ nepochs: 30
 nrefinements: 0
 refine_fraction: 0.15
 lr: 5e-5
+xyflip: True
 
 origin:  { x: 0, y: 0 }
 tile_grid:  { x: -1, y: -1 }

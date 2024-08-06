@@ -1,4 +1,4 @@
-import xarray as xa, math, os
+import xarray as xa, math, os, random
 from enum import Enum
 from typing import Any, Mapping, Sequence, Tuple, Union, List, Dict, Literal
 from omegaconf import DictConfig, OmegaConf
@@ -28,6 +28,12 @@ class BatchType(Enum):
 class VarType(Enum):
 	Constant = 'constant'
 	Dynamic = 'dynamic'
+
+def xyflip(self, batch_data: xa.DataArray) -> xa.DataArray:
+	flip_index = random.randint(0, 3) if cfg().task.get('xyflip',False) else 0
+	if flip_index // 2 == 1: batch_data.reindex(x=batch_data.x[::-1])
+	if flip_index  % 2 == 1: batch_data.reindex(y=batch_data.y[::-1])
+	return batch_data
 
 def idxarg( **kwargs ) -> Union[datetime,int]:
 	if    'start_time' in kwargs: return kwargs['start_time']
@@ -275,7 +281,8 @@ class SRBatch:
 			raise Exception(f"Unknown 'batch_domain' in load_batch: {self.batch_domain}")
 		if self.channels is None:
 			self.channels = darray.coords["channels"].values.tolist()
-		return  darray
+		return xyflip( darray )
+
 
 	def load(self, ctile: Dict[str,int], ctime: Union[datetime,int] ) -> Optional[xa.DataArray]:
 		t0 = time.time()
