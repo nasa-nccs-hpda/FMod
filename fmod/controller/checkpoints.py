@@ -1,5 +1,5 @@
 import torch, time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
 from torch.optim.optimizer import Optimizer
@@ -28,7 +28,7 @@ class CheckpointManager(object):
 		checkpoint = torch.load(cpath)
 		return checkpoint
 
-	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Dict[str,Any]:
+	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Optional[Dict[str,Any]]:
 		update_model = kwargs.get('update_model', False)
 		cppath = self.checkpoint_path( tset )
 		train_state = {}
@@ -41,6 +41,7 @@ class CheckpointManager(object):
 					self.optimizer.load_state_dict( train_state.pop('optimizer_state_dict') )
 			except Exception as e:
 				lgm().log(f"Unable to load model from {cppath}: {e}", display=True)
+				return None
 		else:
 			print( f"No checkpoint file found at '{cppath}': starting from scratch.")
 		print( f" ------ Saving checkpoints to '{cppath}' ------ " )

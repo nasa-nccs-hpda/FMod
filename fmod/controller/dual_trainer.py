@@ -318,11 +318,12 @@ class ModelTrainer(object):
 
 	def record_eval(self, epoch: int, losses: Dict[TSet,float], tset: TSet, **kwargs ):
 		eval_losses = self.evaluate( tset, update_model=False, **kwargs )
-		if self.results_accum is not None:
-			print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
-			self.results_accum.record_losses( tset, epoch, eval_losses['model'], eval_losses['interp'] )
-		if kwargs.get('flush',True):
-			self.results_accum.flush()
+		if len(eval_losses) > 0:
+			if self.results_accum is not None:
+				print( f" --->> record {tset.name} eval[{epoch}]: eval_losses={eval_losses}, losses={losses}")
+				self.results_accum.record_losses( tset, epoch, eval_losses['model'], eval_losses['interp'] )
+			if kwargs.get('flush',True):
+				self.results_accum.flush()
 		return eval_losses
 
 	def init_data_timestamps(self):
@@ -347,7 +348,10 @@ class ModelTrainer(object):
 		self.time_index = kwargs.get('time_index', self.time_index)
 		self.tile_index = kwargs.get('tile_index', self.tile_index)
 		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
-		self.validation_loss = train_state.get('loss', 0.0)
+		if train_state is None:
+			print( "Error loading checkpoint file, skipping evaluation.")
+			return {}
+		self.validation_loss = train_state.get('loss', float('inf'))
 		epoch = train_state.get( 'epoch', 0 )
 		self.init_data_timestamps()
 		proc_start = time.time()

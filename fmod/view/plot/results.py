@@ -93,16 +93,18 @@ class ResultPlot(Plot):
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
 		self.tile_index = self.tileId
-		self.losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs )
-		model_input: xa.DataArray = self.trainer.get_ml_input(self.tset)
-		target: xa.DataArray = self.trainer.get_ml_target(self.tset)
-		prediction: xa.DataArray =  self.trainer.get_ml_product(self.tset)
-		interpolated: xa.DataArray =  self.trainer.get_ml_interp(self.tset)
-		lgm().log( f"update_tile_data{self.tile_index}: prediction{prediction.shape}, target{target.shape}, input{model_input.shape}, interp{interpolated.shape}", display=True)
-		images_data: Dict[str, xa.DataArray] = dict(interpolated=interpolated, input=model_input, target=target)
-		images_data[self.result_plot_label] = prediction
-		lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
-		return images_data
+		eval_losses = self.trainer.evaluate( self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs )
+		if len( eval_losses ) > 0:
+			self.losses = eval_losses
+			model_input: xa.DataArray = self.trainer.get_ml_input(self.tset)
+			target: xa.DataArray = self.trainer.get_ml_target(self.tset)
+			prediction: xa.DataArray =  self.trainer.get_ml_product(self.tset)
+			interpolated: xa.DataArray =  self.trainer.get_ml_interp(self.tset)
+			lgm().log( f"update_tile_data{self.tile_index}: prediction{prediction.shape}, target{target.shape}, input{model_input.shape}, interp{interpolated.shape}", display=True)
+			images_data: Dict[str, xa.DataArray] = dict(interpolated=interpolated, input=model_input, target=target)
+			images_data[self.result_plot_label] = prediction
+			lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
+			return images_data
 
 	def select_point(self,event):
 		lgm().log(f'Mouse click: button={event.button}, dbl={event.dblclick}, x={event.xdata:.2f}, y={event.ydata:.2f}')
@@ -184,7 +186,7 @@ class ResultPlot(Plot):
 		label = self.plot_titles[irow][icol]
 		rmserror = ""
 		if irow == 1:
-			loss: float = self.losses[label]
+			loss: float = self.losses.get(label,0.0)
 			rmserror = f"{loss*1000:.3f}"
 		title = f"{label} {rmserror}"
 		return title
