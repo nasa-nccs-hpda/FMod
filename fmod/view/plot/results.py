@@ -55,6 +55,7 @@ class ResultPlot(Plot):
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.tile_index: int = kwargs.get( 'tile_id', 0 )
 		self.losses: Dict[str,float] = self.trainer.evaluate(self.tset, tile_index=self.tile_index, time_index=self.time_index, interp_loss=True, **kwargs)
+		assert len(self.losses) > 0, "Aborting ResultPlot: Failed evaluation"
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tile_grid.create_tile_recs(**kwargs)
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
