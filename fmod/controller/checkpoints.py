@@ -1,4 +1,4 @@
-import torch, time, traceback
+import torch, time, traceback, pickle
 from typing import Any, Dict, List, Optional
 from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
@@ -25,7 +25,7 @@ class CheckpointManager(object):
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
 		cpath = self.checkpoint_path(tset)
-		checkpoint = torch.load(cpath)
+		checkpoint = pickle.load(cpath) # torch.load(cpath)
 		return checkpoint
 
 	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Optional[Dict[str,Any]]:
