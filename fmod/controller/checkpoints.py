@@ -25,7 +25,7 @@ class CheckpointManager(object):
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
 		cpath = self.checkpoint_path(tset)
-		checkpoint = pickle.load(cpath) # torch.load(cpath)
+		checkpoint = torch.load( cpath, map_location=torch.device('cpu') )
 		return checkpoint
 
 	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Optional[Dict[str,Any]]:
