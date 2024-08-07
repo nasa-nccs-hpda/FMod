@@ -49,11 +49,12 @@ def get_index_roi(dataset: xa.Dataset, vres: str) -> Optional[Dict[str,slice]]:
 	if roi is None: return None
 	cbounds: Dict = {}
 	for dim in ['x', 'y']:
-		croi: List[float] = roi[dim]
-		coord: List[float] = dataset.coords[dim].values.tolist()
-		iroi: int =  index_of_cval( dataset, dim, croi[0] )
-		crisize = round( (croi[1]-croi[0]) / (coord[1] - coord[0] ) )
-		cbounds[dim] = slice( iroi, iroi + crisize )
+		if dim in roi:
+			croi: List[float] = roi[dim]
+			coord: List[float] = dataset.coords[dim].values.tolist()
+			iroi: int =  index_of_cval( dataset, dim, croi[0] )
+			crisize = round( (croi[1]-croi[0]) / (coord[1] - coord[0] ) )
+			cbounds[dim] = slice( iroi, iroi + crisize )
 	return cbounds
 
 def furbish( dset: xa.Dataset ) -> xa.Dataset:

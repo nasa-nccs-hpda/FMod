@@ -38,8 +38,9 @@ def template() -> str:
 def subset_roi( global_data: np.ndarray ) -> np.ndarray:
 	roi = cfg().dataset.get('roi',None)
 	if roi is None: return global_data
-	xr, yr = (roi['x0'],roi['x0']+roi['xs']), (roi['y0'],roi['y0']+roi['ys'])
-	return global_data[..., yr[0]:yr[1], xr[0]:xr[1]]
+	x0, xs = roi.get('x0',0), roi.get( 'xs', global_data.shape[-1] )
+	y0, ys = roi.get('y0', 0), roi.get('ys', global_data.shape[-2])
+	return global_data[..., y0:y0+ys, x0:x0+xs]
 class NormData:
 
 	def __init__(self, itile: int):
