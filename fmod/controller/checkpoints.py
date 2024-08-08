@@ -26,7 +26,7 @@ class CheckpointManager(object):
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
 		sdevice = f'cuda:{cfg().pipeline.gpu}' if torch.cuda.is_available() else 'cpu'
 		cpath = self.checkpoint_path(tset)
-		checkpoint = torch.load( cpath, map_location=torch.device(sdevice) )
+		checkpoint = torch.load( cpath, map_location='cpu' ) # torch.device(sdevice) )
 		return checkpoint
 
 	def load_checkpoint( self, tset: TSet = TSet.Train, **kwargs ) -> Optional[Dict[str,Any]]:
