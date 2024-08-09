@@ -387,7 +387,9 @@ class ModelTrainer(object):
 		return images, losses
 
 	def assemble_images(self, batches: List[Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]]) -> List[xa.DataArray]:
-		pass
+		print( f"Assembling {len(batches)} batches:" )
+		for ib, bt in enumerate(batches[0]):
+			print( f" T{ib}: {bt.shape}")
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
