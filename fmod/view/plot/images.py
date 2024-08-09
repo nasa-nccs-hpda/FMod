@@ -53,7 +53,7 @@ class ResultImagePlot(Plot):
 		super(ResultImagePlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
 		self.time_index: int = kwargs.get( 'time_id', 0 )
-		assert len(self.losses) > 0, "Aborting ResultPlot: Failed evaluation"
+		self.losses = None
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tile_grid.create_tile_recs(**kwargs)
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
