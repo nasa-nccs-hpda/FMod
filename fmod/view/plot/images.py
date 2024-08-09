@@ -54,10 +54,8 @@ class ResultImagePlot(Plot):
 		self.tset: TSet = tset
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.losses = None
-		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
 		self.channel: str = kwargs.get( 'channel', trainer.target_variables[0] )
-		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
 		self.plot_titles: List[str] = [ 'input', 'target', 'interp', 'model' ]
@@ -102,9 +100,6 @@ class ResultImagePlot(Plot):
 
 	def select_point(self,event):
 		lgm().log(f'Mouse click: button={event.button}, dbl={event.dblclick}, x={event.xdata:.2f}, y={event.ydata:.2f}')
-		selected_tile: Optional[int] = self.tile_grid.get_selected(event.xdata, event.ydata)
-		self.select_tile( selected_tile )
-
 
 	@property
 	def upscale_plot_label(self) -> str:
@@ -113,12 +108,6 @@ class ResultImagePlot(Plot):
 	@property
 	def result_plot_label(self) -> str:
 		return "model"
-
-	def image(self, ir: int, ic: int) -> xa.DataArray:
-		itype = self.splabels[ic][ir]
-		image = self.images_data[itype]
-		image.attrs['itype'] = itype
-		return image
 
 	@exception_handled
 	def time_update(self, sindex: int):

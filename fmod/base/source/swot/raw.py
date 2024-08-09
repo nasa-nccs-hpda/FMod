@@ -158,7 +158,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		if tile_range[0] < ntiles:
 			slice_end = min(tile_range[1], ntiles)
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
-			lgm().log(f" select_batch[{self.time_index}]{batch.dims}{batch.shape}: tile_range= {(tile_range[0], slice_end)}" )
+			lgm().log(f" select_batch[{self.time_index}]{batch.dims}{batch.shape} from timeslice{self.timeslice.dims}{self.timeslice.shape}: tile_range= {(tile_range[0], slice_end)}", display=True )
 			return self.norm( batch, (tile_range[0],slice_end) )
 
 	def norm(self, batch_data: xa.DataArray, tile_range: Tuple[int,int] ) -> xa.DataArray:
