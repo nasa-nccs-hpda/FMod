@@ -1,4 +1,4 @@
-import torch, time, traceback, pickle
+import torch, time, traceback, pickle, shutil
 from typing import Any, Dict, List, Optional
 from fmod.base.util.config import cfg
 from fmod.base.util.logging import lgm
@@ -19,12 +19,14 @@ class CheckpointManager(object):
 		t0 = time.time()
 		checkpoint = dict( epoch=epoch, itime=itime, model_state_dict=self.model.state_dict(), optimizer_state_dict=self.optimizer.state_dict(), loss=loss )
 		cpath = self.checkpoint_path(tset)
+		if os.path.isfile(cpath):
+			shutil.copyfile( cpath, self.checkpoint_path(tset,backup=True) )
 		torch.save( checkpoint, cpath )
 		lgm().log(f"\n *** SAVE {tset.name} checkpoint, loss={loss:.5f} ({interp_loss:.5f}), to {cpath}, dt={time.time()-t0:.4f} sec", display=True )
 		return cpath
 
 	def _load_state(self, tset: TSet ) -> Dict[str,Any]:
-		sdevice = f'cuda:{cfg().pipeline.gpu}' if torch.cuda.is_available() else 'cpu'
+		# sdevice = f'cuda:{cfg().pipeline.gpu}' if torch.cuda.is_available() else 'cpu'
 		cpath = self.checkpoint_path(tset)
 		checkpoint = torch.load( cpath, map_location='cpu' ) # torch.device(sdevice) )
 		return checkpoint
@@ -57,9 +59,10 @@ class CheckpointManager(object):
 				os.remove(cppath)
 
 	@classmethod
-	def checkpoint_path( cls, tset: TSet ) -> str:
+	def checkpoint_path( cls, tset: TSet, backup=False ) -> str:
 		vtset: TSet = TSet.Validation if (tset == TSet.Test) else tset
-		cpath = f"{cfg().platform.results}/checkpoints/{cfg().task.training_version}.{vtset.value}.pt"
+		cpath = f"{cfg().platform.results}/checkpoints/{cfg().task.training_version}.{vtset.value}"
+		if backup: cpath = f"{cpath}.backup"
 		os.makedirs(os.path.dirname(cpath), 0o777, exist_ok=True)
-		return cpath
+		return cpath + '.pt'
 
