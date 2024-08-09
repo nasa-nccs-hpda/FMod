@@ -203,7 +203,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		grid_shape: Dict[str, int] = self.tile_grid.get_grid_shape( image_shape=ishape )
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(image_shape=ishape)
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
-		lgm().log( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}")
+		lgm().log( f"get_tiles: tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}",display=True)
 		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
 		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
 		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
