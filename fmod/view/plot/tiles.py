@@ -48,9 +48,9 @@ def normalize( target: xa.Dataset, vname: str, **kwargs ) -> xa.DataArray:
 def to_xa( template: xa.DataArray, data: np.ndarray ) -> xa.DataArray:
 	return template.copy(data=data.reshape(template.shape))
 
-class ResultPlot(Plot):
+class ResultTilePlot(Plot):
 	def __init__(self, trainer: ModelTrainer, tset: TSet, **kwargs):
-		super(ResultPlot, self).__init__(trainer, **kwargs)
+		super(ResultTilePlot, self).__init__(trainer, **kwargs)
 		self.tset: TSet = tset
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.tile_index: int = kwargs.get( 'tile_id', 0 )

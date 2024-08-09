@@ -5,7 +5,8 @@ from fmod.base.util.logging import lgm, exception_handled, log_timing
 from fmod.base.gpu import save_memory_snapshot
 from fmod.base.io.loader import TSet, srRes
 from typing import Any, Dict, List
-from fmod.view.plot.results import ResultPlot
+from fmod.view.plot.tiles  import ResultTilePlot
+from fmod.view.plot.images import ResultImagePlot
 from fmod.view.plot.training import TrainingPlot
 from fmod.view.plot.base import Plot
 
@@ -40,8 +41,12 @@ class WorkflowController(object):
 		self.config = ConfigContext.activate_global( cname, model=model, **kwargs )
 		self.trainer = ModelTrainer( self.config )
 
-	def get_result_view(self, tset: TSet, **kwargs ):
-		self.plot = ResultPlot( self.trainer, tset, **kwargs)
+	def get_result_tile_view(self, tset: TSet, **kwargs):
+		self.plot = ResultTilePlot( self.trainer, tset, **kwargs)
+		return self.plot.plot()
+
+	def get_result_image_view(self, tset: TSet, **kwargs):
+		self.plot = ResultImagePlot( self.trainer, tset, **kwargs)
 		return self.plot.plot()
 
 	def get_training_view(self, **kwargs):

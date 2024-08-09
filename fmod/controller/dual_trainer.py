@@ -341,6 +341,54 @@ class ModelTrainer(object):
 			tile_range = range(ctile['start'], ctile['end'])
 			return self.tile_index in tile_range
 
+	def process_image(self, tset: TSet, itime: int, **kwargs) -> Tuple[Dict[str,xa.DataArray], Dict[str,float]]:
+		seed = kwargs.get('seed', 333)
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+		self.time_index = itime
+		train_state = self.checkpoint_manager.load_checkpoint( TSet.Validation, **kwargs )
+		if train_state is None:
+			print( "Error loading checkpoint file, skipping evaluation.")
+			return {},{}
+		self.validation_loss = train_state.get('loss', float('inf'))
+		proc_start = time.time()
+		lgm().log(f" ##### process_image({tset.value}): time_index={self.time_index} ##### ")
+		self.init_data_timestamps()
+		batch_model_losses, batch_interp_losses, interp_sloss, ibatch, batches = [], [], 0.0, 0, []
+		ctime = self.data_timestamps[TSet.Train][itime]
+		timeslice: xa.DataArray = self.load_timeslice(ctime)
+		print( f"Loaded timeslice{timeslice.dims}{timeslice.shape}")
+		tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
+		for itile, ctile in enumerate(iter(tile_iter)):
+			lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
+			batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
+			if batch_data is None: break
+			binput, boutput, btarget = self.apply_network( batch_data )
+			if binput is not None:
+				binterp = upsample(binput)
+				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}", display=True)
+				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
+				batch_model_losses.append( model_sloss )
+				[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
+				batch_interp_losses.append( interp_sloss )
+				xyf = batch_data.attrs.get('xyflip', 0)
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}[F{xyf}]-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
+				ibatch = ibatch + 1
+				batches.append( tuple([ t.detach().cpu().numpy() for t in [binput,btarget,binterp,boutput] ]) )
+
+		images = self.assemble_images( batches )
+		proc_time = time.time() - proc_start
+		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
+		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
+		model_loss: float = np.array(batch_model_losses).mean()
+		ntotal_params: int = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+		lgm().log(f' -------> Exec {tset.value} model with {ntotal_params} wts on {tset.value} tset took {proc_time:.2f} sec, model loss = {model_loss:.4f}')
+		losses = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
+		return images, losses
+
+	def assemble_images(self, batches: List[Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]]) -> List[xa.DataArray]:
+		pass
+
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
 		assert tset in [ TSet.Validation, TSet.Test ], f"Invalid tset in training evaluation: {tset.name}"
