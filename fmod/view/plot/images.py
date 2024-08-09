@@ -55,7 +55,6 @@ class ResultImagePlot(Plot):
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.losses = None
 		self.tile_grid: TileSelectionGrid = TileSelectionGrid(trainer.get_sample_target())
-		self.tile_grid.create_tile_recs(**kwargs)
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
 		self.channel: str = kwargs.get( 'channel', trainer.target_variables[0] )
 		self.splabels = [['input', self.upscale_plot_label], ['target', self.result_plot_label]]
