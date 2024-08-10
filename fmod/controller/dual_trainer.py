@@ -391,11 +391,12 @@ class ModelTrainer(object):
 	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_idxs: np.ndarray) -> Dict[str,xa.DataArray]:
 		print( f"Assembling {len(batches)} batches with tile_idxs{tile_idxs.shape}:" )
 		assembled_images = {}
-		for image_type in batches[0].keys():
-			for it, tiles in enumerate(batches):
-				tile: np.ndarray = tiles[image_type]
-				print( f"  --- tiles[{image_type}][{it}]: {tile.shape}")
-				break
+		vbatches: Dict[str,np.ndarray]
+		itypes: List[str] = list(batches[0].keys())
+		for ii, image_type in enumerate(itypes):
+			for it, vbatches in enumerate(batches):
+				batches: np.ndarray = vbatches[image_type]
+				if ii == 0: print( f"  --- tile batch[{image_type}][{it}]: {batches.shape}")
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
