@@ -181,6 +181,7 @@ class ModelTrainer(object):
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		if cfg().model.loss_fn == 'l2':
+			print( f"LOSS: prd.mean={prd.mean()}, tar.mean={tar.mean()}")
 			loss = l2loss(prd, tar)
 		elif cfg().model.loss_fn == "charbonnier":
 			loss = self.charbonnier(prd, tar)
