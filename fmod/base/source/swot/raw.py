@@ -160,7 +160,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 			batch: xa.DataArray =  self.timeslice.isel( tiles=slice(tile_range[0],slice_end) )
 			lgm().log(f" *** select_batch[{self.time_index}]{batch.dims}{batch.shape} from timeslice{self.timeslice.dims}{self.timeslice.shape}: tile_range= {(tile_range[0], slice_end)}, mean={batch.values.mean():.2f}", display=True )
 			result = self.norm( batch, (tile_range[0],slice_end) )
-			lgm().log(f" >>>>>> norm mean={batch.values.mean():.2f}, std={batch.values.std():.2f}", display=True)
+			lgm().log(f" >>>>>> norm mean={result.values.mean():.2f}, std={result.values.std():.2f}", display=True)
 			return result
 
 	def norm(self, batch_data: xa.DataArray, tile_range: Tuple[int,int] ) -> xa.DataArray:
