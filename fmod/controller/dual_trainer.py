@@ -225,7 +225,7 @@ class ModelTrainer(object):
 			if shuffle:
 				batch_perm: Tensor = torch.randperm(btarget.shape[0])
 				btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
+			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}",display=True)
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> xa.DataArray:
@@ -358,7 +358,7 @@ class ModelTrainer(object):
 		batch_model_losses, batch_interp_losses, interp_sloss, ibatch, batches = [], [], 0.0, 0, []
 		ctime = self.data_timestamps[TSet.Train][itime]
 		timeslice: xa.DataArray = self.load_timeslice(ctime)
-		print( f"Loaded timeslice{timeslice.dims}{timeslice.shape}")
+		print( f"Loaded timeslice{timeslice.dims}{timeslice.shape}, mean={np.nanmean(timeslice.values)}:.3f")
 		tile_iter = TileIterator.get_iterator( ntiles=timeslice.sizes['tiles'] )
 		for itile, ctile in enumerate(iter(tile_iter)):
 			lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
