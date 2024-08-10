@@ -139,14 +139,14 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		sss_east, sss_west = mds2d(var_template)
 		result = np.expand_dims( np.c_[sss_east, sss_west.T[::-1, :]], 0)
 		roi_data = subset_roi(result)
-		lgm().log( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, result{roi_data.shape}, file={filepath()}")
+		lgm().log( f" *** load_file: var_template{var_template.shape} var_data{var_data.shape} mask nz={np.count_nonzero(mask)}, result{roi_data.shape}, file={filepath()}", display=True)
 		return roi_data
 
 	def load_timeslice(self, time_index: int, **kwargs) -> xa.DataArray:
 		if time_index != self.time_index:
 			vardata: List[np.ndarray] = [ self.load_file( varname, time_index ) for varname in self.varnames ]
 			self.timeslice = self.get_tiles( vardata )
-			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={self.timeslice.values.mean():.2f}, std={self.timeslice.values.std():.2f}")
+			lgm().log( f"\nLoaded timeslice{self.timeslice.dims} shape={self.timeslice.shape}, mean={np.nanmean(self.timeslice.values):.2f}, std={np.nanstd(self.timeslice.values):.2f}", display=True)
 			self.time_index = time_index
 		return self.timeslice
 
