@@ -395,10 +395,8 @@ class ModelTrainer(object):
 		itypes: List[str] = list(batches[0].keys())
 		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
 		for ii, image_type in enumerate(itypes):
-			print(f" --- imagetype{ii}: {image_type}:")
 			for ib in range(nb):
 				batch: np.ndarray = batches[ib][image_type]
-				print(f" --- batch{ib}: {batch.shape}:")
 				if ii == 0:
 					bsize = batch.shape[0]
 					tidx1 = tidx0 + bsize
