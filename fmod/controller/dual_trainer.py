@@ -391,20 +391,20 @@ class ModelTrainer(object):
 	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_ids: np.ndarray) -> Dict[str,xa.DataArray]:
 		assembled_images = {}
 		vbatches: Dict[str,np.ndarray]
-		bsize, tidx0, tidx1, tids = None, 0, 0, None
+		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
 		itypes: List[str] = list(batches[0].keys())
-		print(f"Assembling {len(batches)} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
+		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
 		for ii, image_type in enumerate(itypes):
 			print(f" --- imagetype{ii}: {image_type}:")
-			for it, vbatches in enumerate(batches):
-				print(f" --- batch{it}: {vbatches.__class__}:")
-				batches: np.ndarray = vbatches[image_type]
+			for ib in range(nb):
+				batch: np.ndarray = batches[ib][image_type]
+				print(f" --- batch{ib}: {batch.shape}:")
 				if ii == 0:
-					bsize = batches.shape[0]
+					bsize = batch.shape[0]
 					tidx1 = tidx0 + bsize
 					tids = tile_ids[tidx0:tidx1]
-					print( f"  --- tile batch[{image_type}][{it}]: {batches.shape}, bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
-					tcoords = self.get_tcoords( tids, list(batches.shape[-2:]) )
+					print( f"  --- tile batch[{image_type}][{ii}]: bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
+					tcoords = self.get_tcoords( tids, list(batch.shape[-2:]) )
 					tidx0 = tidx1
 
 	def get_tcoords( self, tids: np.ndarray, tiledims: List[int] ) -> np.ndarray:
