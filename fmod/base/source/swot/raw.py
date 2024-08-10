@@ -197,7 +197,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		return result
 
 	def get_tiles(self, var_data: List[np.ndarray]) -> xa.DataArray:
-		raw_data = np.concatenate(var_data, axis=0)
+		raw_data: np.ndarray = np.concatenate(var_data, axis=0)
 		print( f"get_tiles: raw_data{raw_data.shape} mean = {np.nanmean(raw_data):.2f}, std = {np.nanstd(raw_data):.2f}")
 		tsize: Dict[str, int] = self.tile_grid.get_full_tile_size()
 		ishape = dict(c=raw_data.shape[0], y=raw_data.shape[1], x=raw_data.shape[2])
@@ -205,11 +205,11 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		roi: Dict[str, Tuple[int,int]] = self.tile_grid.get_active_region(image_shape=ishape)
 		region_data: np.ndarray = raw_data[..., roi['y'][0]:roi['y'][1], roi['x'][0]:roi['x'][1]]
 		lgm().log( f" ---- tsize{tsize}, grid_shape{grid_shape}, roi{roi}, ishape{ishape}, region_data{region_data.shape}",display=True)
-		tile_data = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
-		tiles = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
-		msk = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
-		ctiles = np.compress( msk, tiles,0)
-		tile_idxs = np.compress(msk, np.arange(tiles.shape[0]), 0)
-		result = ctiles.reshape( ctiles.shape[0]//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
-		lgm().log(f" ---- tiles{tiles.shape}, tile_idxs{tile_idxs.shape}, ctiles{ctiles.shape} -> result{result.shape}",display=True)
+		tile_data: np.ndarray = region_data.reshape( ishape['c'], grid_shape['y'], tsize['y'], grid_shape['x'], tsize['x'] )
+		tiles: np.ndarray = np.swapaxes(tile_data, 2, 3).reshape( ishape['c'] * grid_shape['y'] * grid_shape['x'], tsize['y'], tsize['x'])
+		msk: np.ndarray = np.isfinite(tiles.mean(axis=-1).mean(axis=-1))
+		ctiles: np.ndarray = np.compress( msk, tiles,0)
+		tile_idxs: np.ndarray = np.compress(msk, np.arange(tiles.shape[0]), 0)
+		result: np.ndarray = ctiles.reshape( ctiles.shape[0]//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		lgm().log(f" ---- tiles{tiles.shape}, tile_idxs{tile_idxs.shape}, ctiles{ctiles.shape} -> result{result.shape}, mean={result.mean()}",display=True)
 		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs[0:result.shape[0]], channels=self.varnames) )
