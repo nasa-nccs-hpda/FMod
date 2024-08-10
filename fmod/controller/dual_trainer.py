@@ -389,13 +389,15 @@ class ModelTrainer(object):
 		return images, losses
 
 	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_ids: np.ndarray) -> Dict[str,xa.DataArray]:
-		print( f"Assembling {len(batches)} batches with tile_idxs{tile_ids.shape}:" )
 		assembled_images = {}
 		vbatches: Dict[str,np.ndarray]
 		bsize, tidx0, tidx1, tids = None, 0, 0, None
 		itypes: List[str] = list(batches[0].keys())
+		print(f"Assembling {len(batches)} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
 		for ii, image_type in enumerate(itypes):
+			print(f" --- imagetype{ii}: {image_type}:")
 			for it, vbatches in enumerate(batches):
+				print(f" --- batch{it}: {vbatches.__class__}:")
 				batches: np.ndarray = vbatches[image_type]
 				if ii == 0:
 					bsize = batches.shape[0]
