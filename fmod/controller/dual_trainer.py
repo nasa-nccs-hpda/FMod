@@ -181,7 +181,7 @@ class ModelTrainer(object):
 
 	def single_product_loss(self, prd: torch.Tensor, tar: torch.Tensor) -> torch.Tensor:
 		if cfg().model.loss_fn == 'l2':
-			print( f"LOSS: prd{list(prd.shape)}.mean={prd.mean()}, tar{list(tar.shape)}.mean={tar.mean()}")
+		#	print( f"LOSS: prd{list(prd.shape)}.mean={prd.mean()}, tar{list(tar.shape)}.mean={tar.mean()}")
 			loss = l2loss(prd, tar)
 		elif cfg().model.loss_fn == "charbonnier":
 			loss = self.charbonnier(prd, tar)
@@ -363,6 +363,7 @@ class ModelTrainer(object):
 		for itile, ctile in enumerate(iter(tile_iter)):
 			lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 			batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime)
+			print( f" --> batch_data{list(batch_data.shape)} mean={batch_data.values.mean()}")
 			if batch_data is None: break
 			binput, boutput, btarget = self.apply_network( batch_data )
 			if binput is not None:
