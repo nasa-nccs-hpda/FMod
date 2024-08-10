@@ -374,9 +374,9 @@ class ModelTrainer(object):
 				xyf = batch_data.attrs.get('xyflip', 0)
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}[F{xyf}]-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
 				ibatch = ibatch + 1
-				batches.append( tuple([ t.detach().cpu().numpy() for t in [binput,btarget,binterp,boutput] ]) )
+				batches.append( dict(input=npa(binput), target=npa(btarget), interp=npa(binterp), output=npa(boutput)) )
 
-		images = self.assemble_images( batches )
+		images = self.assemble_images( batches, timeslice.coords['tiles'] )
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
 		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
@@ -386,10 +386,14 @@ class ModelTrainer(object):
 		losses = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return images, losses
 
-	def assemble_images(self, batches: List[Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]]) -> List[xa.DataArray]:
-		print( f"Assembling {len(batches)} batches:" )
-		for ib, bt in enumerate(batches[0]):
-			print( f" T{ib}: {bt.shape}")
+	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_idxs: np.ndarray) -> Dict[str,xa.DataArray]:
+		print( f"Assembling {len(batches)} batches with tile_idxs{tile_idxs.shape}:" )
+		assembled_images = {}
+		for image_type in batches[0].keys():
+			for it, tiles in enumerate(batches):
+				tile: np.ndarray = tiles[image_type]
+				print( f"  --- tiles[{image_type}][{it}]: {tile.shape}")
+				break
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
