@@ -389,18 +389,16 @@ class ModelTrainer(object):
 		return images, losses
 
 	def assemble_images(self, batches: List[Dict[str,np.ndarray]], ivar: int, tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
-		assembled_images = {}
-		vbatches: Dict[str,np.ndarray]
-		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
+		assembled_images, nb = {}, len(batches)
 		itypes: List[str] = list(batches[0].keys())
 		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, grid_shape{grid_shape}, itypes={itypes}")
 
 		for ii, image_type in enumerate(itypes):
+			bsize, tidx0, tidx1 = None, 0, 0
 			block_grid = None
 			for ib in range(nb):
 				vbatch: np.ndarray = batches[ib][image_type]
-				batch: np.ndarray = vbatch[:,ivar,:,:] # .squeeze()
-				print(f"Loaded batch[{ib}]: shape={batch.shape}")
+				batch: np.ndarray = vbatch[:,ivar,:,:]
 				tile_shape = list(batch.shape[-2:])
 				bsize = batch.shape[0]
 				if block_grid is None:
@@ -408,6 +406,7 @@ class ModelTrainer(object):
 					block_grid: List[List[np.ndarray]] = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
 					print( f"Creating batch_grid[{len(block_grid)}][{len(block_grid[0])}]")
 				tidx1 = tidx0 + bsize
+				print(f"Loaded batch[{ib}]: shape={batch.shape}, size={bsize}, tids=[{tidx0},{tidx1}]")
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
 					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
