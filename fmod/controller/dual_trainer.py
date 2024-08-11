@@ -394,20 +394,30 @@ class ModelTrainer(object):
 		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
 		itypes: List[str] = list(batches[0].keys())
 		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
+
 		for ii, image_type in enumerate(itypes):
+			empty_tile, batch_grid = None, None
 			for ib in range(nb):
 				batch: np.ndarray = batches[ib][image_type]
-				if ii == 0:
-					bsize = batch.shape[0]
-					tidx1 = tidx0 + bsize
-					tids = tile_ids[tidx0:tidx1]
-					print( f"  --- tile batch[{image_type}][{ii}]: bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
-					tcoords = self.get_tcoords( tids, list(batch.shape[-2:]) )
-					tidx0 = tidx1
+				tile_shape = list(batch.shape[-2:])
+				bsize = batch.shape[0]
+				if empty_tile is None:
+					empty_tile = np.full(tile_shape, np.nan)
+					batch_grid = [ [empty_tile]*gs1 ]*gs0
 
-	def get_tcoords( self, tids: np.ndarray, tiledims: List[int] ) -> np.ndarray:
+
+				tidx1 = tidx0 + bsize
+				tids = tile_ids[tidx0:tidx1]
+				print( f"  --- tile batch[{image_type}][{ii}]: bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
+				tcoords = self.get_tcoords( tids, tile_shape )
+				batch_grid[tcoords[0]][tcoords[1]] = ...
+				tidx0 = tidx1
+
+			assembled_images[image_type] = np.block( batch_grid )
+
+	def get_tcoords( self, tids: np.ndarray, tiledims: List[int] ) -> Tuple[int,int]:
 		print( f"  --- get_tcoords: tids{tids.shape}: {tiledims}")
-		return tids
+		return ( tids//tiledims[0], tids%tiledims[1] )
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)
