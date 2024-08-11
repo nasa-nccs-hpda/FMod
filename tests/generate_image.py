@@ -4,7 +4,6 @@ from fmod.base.io.loader import ncFormat, TSet
 
 cname = "sres"
 model =  'rcan-10-20-64'
-ccustom: Dict[str,Any] = { 'pipeline.gpu': 3 }
 varnames = [ "SSS", "SST" ]
 regions = [ "", "_southpacific_1200", "_60-20s", "_20-20e", "_20-60n"]
 nvars = 2
@@ -17,6 +16,6 @@ configuration = dict(
 	platform = "explore"
 )
 controller = WorkflowController( cname, configuration )
-controller.init_plotting( cname, model, **ccustom )
+controller.init_plotting( cname, model )
 
 controller.get_result_image_view( TSet.Validation, channel=varnames[vid], fsize=8.0)
