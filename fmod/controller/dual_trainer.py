@@ -414,7 +414,10 @@ class ModelTrainer(object):
 					# print( f" ---> bidx={bidx} tidx={tidx} tid={tid} tc={tc} block{list(block.shape)}")
 					block_grid[tc['y']][tc['x']] = block
 				tidx0 = tidx1
-			assembled_images[image_type] = xa.DataArray( np.block( block_grid ), dims=['y','x'] )
+			image_data = np.block( block_grid )
+			dims, bnds = ['y', 'x'], [0.0,100.0]
+			coords = { cn: np.arange( bnds[0],bnds[1],(bnds[1]-bnds[0])/image_data.shape[ic]) for ic,cn in enumerate(dims) }
+			assembled_images[image_type] = xa.DataArray(  image_data, dims=dims, coords=coords )
 
 		return assembled_images
 
