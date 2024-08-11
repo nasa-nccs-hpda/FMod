@@ -378,7 +378,7 @@ class ModelTrainer(object):
 				ibatch = ibatch + 1
 				batches.append( dict(input=npa(binput), target=npa(btarget), interp=npa(binterp), output=npa(boutput)) )
 
-		images = self.assemble_images( batches, timeslice.coords['tiles'], timeslice.attrs['grid_shape'] )
+		images = self.assemble_images( batches, timeslice.coords['tiles'].values, timeslice.attrs['grid_shape'] )
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
 		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
