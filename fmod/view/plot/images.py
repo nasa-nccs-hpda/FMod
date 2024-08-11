@@ -58,10 +58,10 @@ class ResultImagePlot(Plot):
 		self.varId: int = kwargs.get( 'var_id', 0 )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
-		self.plot_titles: List[str] = [ 'input', 'target', 'interp', 'model' ]
+		self.plot_titles: List[str] = list(self.images_data.keys())
 		self.ims = {}
 		self.callbacks = dict(button_press_event=self.select_point)
-		self.create_figure( nrows=4, ncols=1, sharex=True, sharey=True, callbacks=self.callbacks, title='SRes Loss Over Training Epochs' )
+		self.create_figure( nrows=4, ncols=1, callbacks=self.callbacks, title='SRes Loss Over Training Epochs' )
 		self.tslider.set_callback( self.time_update )
 
 	@property
@@ -112,10 +112,7 @@ class ResultImagePlot(Plot):
 
 	def plot( self ) -> ipw.Box:
 		self.update_subplots()
-		tabs = ipw.Tab()
-		tabs.children = self.images
-		tabs.titles = self.plot_titles
-		panels = [tabs, self.tslider]
+		panels = [self.fig.canvas, self.tslider]
 		return ipw.VBox(panels)
 
 	@property
@@ -126,48 +123,27 @@ class ResultImagePlot(Plot):
 
 	def update_subplots(self):
 		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
-		for irow in [0, 1]:
-			for icol in [0, 1]:
-				self.generate_subplot(irow, icol)
+		for iplot in range(4):
+				self.generate_subplot(iplot)
 		self.fig.canvas.draw_idle()
 
-	def generate_subplot(self, irow: int, icol: int):
-		ax: Axes = self.axs[irow, icol]
+	def generate_subplot(self, iplot: int):
+		ax: Axes = self.axs[iplot]
 		ax.set_aspect(0.5)
-		ts: Dict[str, int] = self.tile_grid.tile_grid.get_full_tile_size()
-		ax.set_xlim([0, ts['x']])
-		ax.set_ylim([0, ts['y']])
-		image: xa.DataArray = self.get_subplot_image(irow, icol, ts)
+		ptype: str = self.plot_titles[iplot]
+		image: xa.DataArray = self.images_data[ptype]
 		vrange = cscale(image, 2.0)
-
-		print( f"subplot_image[{irow}, {icol}]: image{image.dims}{image.shape}, vrange={vrange}")
+		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}, vrange={vrange}")
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
 		iplot.colorbar.remove()
-		ax.set_title( self.get_subplot_title(irow,icol) )
-		self.ims[ (irow, icol) ] = iplot
+		ax.set_title( self.get_subplot_title(ptype) )
+		self.ims[ iplot ] = iplot
 
-	def get_subplot_title(self,irow,icol) -> str:
-		label = self.plot_titles[irow][icol]
-		rmserror = ""
-		if irow == 1:
-			loss: float = self.losses.get(label,0.0)
-			rmserror = f"{loss*1000:.3f}"
-		title = f"{label} {rmserror}"
+	def get_subplot_title(self, ptype: str) -> str:
+		loss: float = self.losses.get(ptype,0.0)
+		rmserror = f"{loss*1000:.3f}"
+		title = f"{ptype} {rmserror}"
 		return title
 
-	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
-		image: xa.DataArray = self.image(irow, icol)
-		if 'channels' in image.dims:
-			print( f" get_subplot_image: image.dims={image.dims}, channel={self.channel}, image.channels={image.coords['channels'].values.tolist()}")
-			image = image.sel( channels=self.channel, drop=True )
-		if 'tiles' in image.dims:
-			if self.batch_domain == batchDomain.Time:
-				batch_time_index = self.time_index % self.trainer.get_ml_input(self.tset).shape[0]
-				image = image.isel(tiles=batch_time_index).squeeze(drop=True)
-			elif self.batch_domain == batchDomain.Tiles:
-				image = image.isel(tiles=self.tile_index).squeeze(drop=True)
-		dx, dy = ts['x']/image.shape[-1], ts['y']/image.shape[-2]
-		coords = dict( x=np.linspace(-dx/2, ts['x']+dx/2, image.shape[-1] ), y=np.linspace(-dy/2, ts['y']+dy/2, image.shape[-2] ) )
-		image = image.assign_coords( coords )
-		return image
+
 

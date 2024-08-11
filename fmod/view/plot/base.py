@@ -13,11 +13,11 @@ class Plot(ABC):
 		self.yscale = kwargs.get('yscale', 'log' )
 		self.fig = None
 		self.axs = None
-		self.aspect = 1
+		self.aspect = kwargs.get('aspect', 1.0 )
 
 	def create_figure(self, **kwargs):
-		sharex = kwargs.get('sharex', False)
-		sharey = kwargs.get('sharey', False)
+		sharex = kwargs.get('sharex', True)
+		sharey = kwargs.get('sharey', True)
 		nrows  = kwargs.get('nrows', 1)
 		ncols  = kwargs.get('ncols', 1)
 		title  = kwargs.get('title', "")
