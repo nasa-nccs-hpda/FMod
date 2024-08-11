@@ -408,7 +408,7 @@ class ModelTrainer(object):
 				tidx1 = tidx0 + bsize
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
-					tc = dict( y=tid//grid_shape['y'], x=tid%grid_shape['x'] )
+					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
 					print( f" ---> bidx={bidx} tidx={tidx} tid={tid} tc={tc} batch{list(batch.shape)}")
 					batch_grid[tc['y']][tc['x']] = batch[bidx]
 				tidx0 = tidx1
