@@ -55,7 +55,7 @@ class ResultImagePlot(Plot):
 		self.time_index: int = kwargs.get( 'time_id', 0 )
 		self.losses = None
 		self.tileId: int = kwargs.get( 'tile_id', 0 )
-		self.channel: str = kwargs.get( 'channel', trainer.target_variables[0] )
+		self.varId: int = kwargs.get( 'var_id', 0 )
 		self.images_data: Dict[str, xa.DataArray] = self.update_tile_data(update_model=True)
 		self.tslider: StepSlider = StepSlider('Time:', self.time_index, len(self.trainer.data_timestamps[tset]) )
 		self.plot_titles: List[str] = [ 'input', 'target', 'interp', 'model' ]
@@ -85,7 +85,7 @@ class ResultImagePlot(Plot):
 		return self.trainer.batch_domain
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
-		image_data, eval_losses = self.trainer.process_image( self.tset, self.time_index, interp_loss=True, **kwargs )
+		image_data, eval_losses = self.trainer.process_image( self.tset, self.varId, self.time_index, interp_loss=True, **kwargs )
 		if len( eval_losses ) > 0:
 			self.losses = eval_losses
 			model_input: xa.DataArray = self.trainer.get_ml_input(self.tset)

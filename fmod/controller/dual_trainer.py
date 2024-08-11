@@ -342,7 +342,7 @@ class ModelTrainer(object):
 			tile_range = range(ctile['start'], ctile['end'])
 			return self.tile_index in tile_range
 
-	def process_image(self, tset: TSet, itime: int, **kwargs) -> Tuple[Dict[str,xa.DataArray], Dict[str,float]]:
+	def process_image(self, tset: TSet, ivar: int, itime: int, **kwargs) -> Tuple[Dict[str,xa.DataArray], Dict[str,float]]:
 		seed = kwargs.get('seed', 333)
 		torch.manual_seed(seed)
 		torch.cuda.manual_seed(seed)
@@ -378,7 +378,7 @@ class ModelTrainer(object):
 				ibatch = ibatch + 1
 				batches.append( dict(input=npa(binput), target=npa(btarget), interp=npa(binterp), output=npa(boutput)) )
 
-		images = self.assemble_images( batches, timeslice.coords['tiles'].values, timeslice.attrs['grid_shape'] )
+		images = self.assemble_images( batches, ivar, timeslice.coords['tiles'].values, timeslice.attrs['grid_shape'] )
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
 		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
@@ -388,7 +388,7 @@ class ModelTrainer(object):
 		losses = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return images, losses
 
-	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
+	def assemble_images(self, batches: List[Dict[str,np.ndarray]], varid: int, tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
 		assembled_images = {}
 		vbatches: Dict[str,np.ndarray]
 		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
@@ -399,6 +399,7 @@ class ModelTrainer(object):
 			block_grid = None
 			for ib in range(nb):
 				batch: np.ndarray = batches[ib][image_type]
+				print(f"Loaded batch[{ib}]: shape={batch.shape}")
 				tile_shape = list(batch.shape[-2:])
 				bsize = batch.shape[0]
 				if block_grid is None:
