@@ -85,16 +85,9 @@ class ResultImagePlot(Plot):
 		return self.trainer.batch_domain
 
 	def update_tile_data( self, **kwargs ) -> Dict[str, xa.DataArray]:
-		image_data, eval_losses = self.trainer.process_image( self.tset, self.varId, self.time_index, interp_loss=True, **kwargs )
+		images_data, eval_losses = self.trainer.process_image( self.tset, self.varId, self.time_index, interp_loss=True, **kwargs )
 		if len( eval_losses ) > 0:
 			self.losses = eval_losses
-			model_input: xa.DataArray = self.trainer.get_ml_input(self.tset)
-			target: xa.DataArray = self.trainer.get_ml_target(self.tset)
-			prediction: xa.DataArray =  self.trainer.get_ml_product(self.tset)
-			interpolated: xa.DataArray =  self.trainer.get_ml_interp(self.tset)
-			lgm().log( f"update_tile_data: prediction{prediction.shape}, target{target.shape}, input{model_input.shape}, interp{interpolated.shape}", display=True)
-			images_data: Dict[str, xa.DataArray] = dict(interpolated=interpolated, input=model_input, target=target)
-			images_data[self.result_plot_label] = prediction
 			lgm().log(f"update_tile_data ---> images = {list(images_data.keys())}")
 			return images_data
 
