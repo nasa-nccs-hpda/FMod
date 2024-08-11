@@ -396,23 +396,24 @@ class ModelTrainer(object):
 		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, grid_shape{grid_shape}, itypes={itypes}")
 
 		for ii, image_type in enumerate(itypes):
-			batch_grid = None
+			block_grid = None
 			for ib in range(nb):
 				batch: np.ndarray = batches[ib][image_type]
 				tile_shape = list(batch.shape[-2:])
 				bsize = batch.shape[0]
-				if batch_grid is None:
+				if block_grid is None:
 					empty_tile = np.full(tile_shape, np.nan)
-					batch_grid: List[List[np.ndarray]] = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
-					print( f"Creating batch_grid[{len(batch_grid)}][{len(batch_grid[0])}]")
+					block_grid: List[List[np.ndarray]] = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
+					print( f"Creating batch_grid[{len(block_grid)}][{len(block_grid[0])}]")
 				tidx1 = tidx0 + bsize
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
 					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
-					print( f" ---> bidx={bidx} tidx={tidx} tid={tid} tc={tc} batch{list(batch.shape)}")
-					batch_grid[tc['y']][tc['x']] = batch[bidx]
+					block: np.ndarray = batch[bidx]
+					print( f" ---> bidx={bidx} tidx={tidx} tid={tid} tc={tc} block{list(block.shape)}")
+					block_grid[tc['y']][tc['x']] = block
 				tidx0 = tidx1
-			assembled_images[image_type] = np.block( batch_grid )
+			assembled_images[image_type] = np.block( block_grid )
 
 		return assembled_images
 
