@@ -130,6 +130,8 @@ class ResultImagePlot(Plot):
 	def generate_subplot(self, iplot: int):
 		ax: Axes = self.axs[iplot]
 		ax.set_aspect(0.5)
+		ax.set_xlim([0, 100])
+		ax.set_ylim([0, 100])
 		ptype: str = self.plot_titles[iplot]
 		image: xa.DataArray = self.images_data[ptype]
 		vrange = cscale(image, 2.0)
@@ -140,10 +142,10 @@ class ResultImagePlot(Plot):
 		self.ims[ iplot ] = iplot
 
 	def get_subplot_title(self, ptype: str) -> str:
-		loss: float = self.losses.get(ptype,0.0)
-		rmserror = f"{loss*1000:.3f}"
-		title = f"{ptype} {rmserror}"
-		return title
+		loss: float = None
+		if   ptype == "interp": loss = self.losses.get("interp",0.0)
+		elif ptype == "output": loss = self.losses.get('model', 0.0)
+		return ptype if (loss is None) else f"{ptype} {loss*1000:.3f}"
 
 
 
