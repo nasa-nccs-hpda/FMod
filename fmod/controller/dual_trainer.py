@@ -388,7 +388,7 @@ class ModelTrainer(object):
 		losses = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return images, losses
 
-	def assemble_images(self, batches: List[Dict[str,np.ndarray]], varid: int, tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
+	def assemble_images(self, batches: List[Dict[str,np.ndarray]], ivar: int, tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
 		assembled_images = {}
 		vbatches: Dict[str,np.ndarray]
 		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
@@ -398,7 +398,8 @@ class ModelTrainer(object):
 		for ii, image_type in enumerate(itypes):
 			block_grid = None
 			for ib in range(nb):
-				batch: np.ndarray = batches[ib][image_type]
+				vbatch: np.ndarray = batches[ib][image_type]
+				batch: np.ndarray = vbatch[:,ivar,:,:] # .squeeze()
 				print(f"Loaded batch[{ib}]: shape={batch.shape}")
 				tile_shape = list(batch.shape[-2:])
 				bsize = batch.shape[0]
