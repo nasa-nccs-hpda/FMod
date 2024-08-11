@@ -378,7 +378,7 @@ class ModelTrainer(object):
 				ibatch = ibatch + 1
 				batches.append( dict(input=npa(binput), target=npa(btarget), interp=npa(binterp), output=npa(boutput)) )
 
-		images = self.assemble_images( batches, timeslice.coords['tiles'] )
+		images = self.assemble_images( batches, timeslice.coords['tiles'], timeslice.attrs['grid_shape'] )
 		proc_time = time.time() - proc_start
 		lgm().log(f" --- batch_model_losses = {batch_model_losses}")
 		lgm().log(f" --- batch_interp_losses = {batch_interp_losses}")
@@ -388,12 +388,12 @@ class ModelTrainer(object):
 		losses = dict( model=model_loss, interp=np.array(batch_interp_losses).mean() )
 		return images, losses
 
-	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_ids: np.ndarray) -> Dict[str,xa.DataArray]:
+	def assemble_images(self, batches: List[Dict[str,np.ndarray]], tile_ids: np.ndarray, grid_shape: Dict[str, int] ) -> Dict[str,xa.DataArray]:
 		assembled_images = {}
 		vbatches: Dict[str,np.ndarray]
 		bsize, tidx0, tidx1, tids, nb = None, 0, 0, None, len(batches)
 		itypes: List[str] = list(batches[0].keys())
-		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, itypes={itypes}")
+		print(f"Assembling {nb} batches with tile_idxs{tile_ids.shape}, grid_shape{grid_shape}, itypes={itypes}")
 
 		for ii, image_type in enumerate(itypes):
 			empty_tile, batch_grid = None, None
@@ -403,21 +403,18 @@ class ModelTrainer(object):
 				bsize = batch.shape[0]
 				if empty_tile is None:
 					empty_tile = np.full(tile_shape, np.nan)
-					batch_grid = [ [empty_tile]*gs1 ]*gs0
-
-
+					batch_grid = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
 				tidx1 = tidx0 + bsize
-				tids = tile_ids[tidx0:tidx1]
-				print( f"  --- tile batch[{image_type}][{ii}]: bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
-				tcoords = self.get_tcoords( tids, tile_shape )
-				batch_grid[tcoords[0]][tcoords[1]] = ...
+				for bidx, tidx in enumerate(range(tidx0, tidx1)):
+					tid = tile_ids[tidx]
+					print( f"  --- tile batch[{image_type}][{ii}]: bsize={bsize}. tidx=[{tidx0},{tidx1}], tids[{tids.shape}]")
+					tc = dict( y=tid//grid_shape['y'], x=tid%grid_shape['x'] )
+					batch_grid[tc['y']][tc['x']] = batch[bidx]
 				tidx0 = tidx1
-
 			assembled_images[image_type] = np.block( batch_grid )
 
-	def get_tcoords( self, tids: np.ndarray, tiledims: List[int] ) -> Tuple[int,int]:
-		print( f"  --- get_tcoords: tids{tids.shape}: {tiledims}")
-		return ( tids//tiledims[0], tids%tiledims[1] )
+		return assembled_images
+
 
 	def evaluate(self, tset: TSet, **kwargs) -> Dict[str,float]:
 		seed = kwargs.get('seed', 333)

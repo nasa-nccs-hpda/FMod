@@ -212,5 +212,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ctiles: np.ndarray = np.compress( msk, tiles,0)
 		tile_idxs: np.ndarray = np.compress(msk, np.arange(tiles.shape[0]), 0)
 		result: np.ndarray = ctiles.reshape( ctiles.shape[0]//ishape['c'], ishape['c'], tsize['y'], tsize['x'] )
+		attrs = dict( grid_shape=grid_shape )
 		lgm().log(f" ---- tiles{tiles.shape}, tile_idxs{tile_idxs.shape}, ctiles{ctiles.shape} -> result{result.shape}, mean={result.mean()}",display=True)
-		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs[0:result.shape[0]], channels=self.varnames) )
+		return xa.DataArray(result, dims=["tiles", "channels", "y", "x"], coords=dict(tiles=tile_idxs[0:result.shape[0]], channels=self.varnames), attrs=attrs )
