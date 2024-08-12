@@ -421,7 +421,7 @@ class ModelTrainer(object):
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
 					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
-					block: np.ndarray = batch[bidx]
+					block: np.ndarray = batch[bidx].squeeze()
 					print( f" ---> batch[{ib}][{bidx}] tidx={tidx} tid={tid} tc=[{tc['y']},{tc['x']}], block{list(block.shape)}")
 					block_grid[ tc['y'] ][ tc['x'] ] = block
 				tidx0 = tidx1
