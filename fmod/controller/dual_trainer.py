@@ -59,6 +59,16 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 	t = ts if type(ts) == Tensor else ts[-1]
 	return t.detach().cpu().numpy()
 
+def denorm( ts: TensorOrTensors, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
+	t = ts if type(ts) == Tensor else ts[-1]
+	normed: np.ndarray = t.detach().cpu().numpy()
+	if 'mean' in norm_data:
+		normed = (normed*norm_data['std']) + norm_data['mean']
+	if 'max' in norm_data:
+		rng: np.ndarray = norm_data['max']-norm_data['min']
+		normed = (normed*rng) + norm_data['min']
+	return normed
+
 def fmtfl( flist: List[float] ) -> str:
 	svals = ','.join( [ f"{fv:.4f}" for fv in flist ] )
 	return f"[{svals}]"
@@ -376,7 +386,7 @@ class ModelTrainer(object):
 				xyf = batch_data.attrs.get('xyflip', 0)
 				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}[F{xyf}]-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
 				ibatch = ibatch + 1
-				batches.append( dict(input=npa(binput), target=npa(btarget), interp=npa(binterp), output=npa(boutput)) )
+				batches.append( dict(input=denorm(binput,batch_data.attrs), target=denorm(btarget,batch_data.attrs), interp=denorm(binterp,batch_data.attrs), output=denorm(boutput,batch_data.attrs)) )
 
 		images = self.assemble_images( batches, ivar, timeslice.coords['tiles'].values, timeslice.attrs['grid_shape'] )
 		proc_time = time.time() - proc_start

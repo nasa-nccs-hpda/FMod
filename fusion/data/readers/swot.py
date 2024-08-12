@@ -232,10 +232,14 @@ class SWOTDataset(Dataset):
 			batch: xa.DataArray = batch_data.sel(channels=channel)
 			if ntype == 'lnorm':
 				bmean, bstd = batch.mean(dim=["x", "y"], skipna=True, keep_attrs=True), batch.std(dim=["x", "y"], skipna=True, keep_attrs=True)
-				channel_data.append( (batch - bmean) / bstd )
+				normed = (batch - bmean) / bstd
+				normed.attrs.update( mean=bmean.values, std=bstd.values )
+				channel_data.append( normed )
 			elif ntype == 'lscale':
 				bmax, bmin = batch.max(dim=["x", "y"], skipna=True, keep_attrs=True), batch.min(dim=["x", "y"], skipna=True, keep_attrs=True)
-				channel_data.append(  (batch - bmin) / (bmax-bmin) )
+				normed =  (batch - bmin) / (bmax-bmin)
+				normed.attrs.update(min=bmin.values,max=bmax.values)
+				channel_data.append( normed )
 			elif ntype == 'gnorm':
 				gstats: xa.DataArray = self.global_norm_stats.data_vars[channel]
 				gmean, gstd = gstats.sel(stat='mean'), np.sqrt( gstats.sel(stat='var') )
@@ -250,11 +254,15 @@ class SWOTDataset(Dataset):
 				tmean, tstd = tstats.sel(stat='mean').isel( tiles=slice(*tile_range) ), np.sqrt( tstats.sel(stat='var').isel( tiles=slice(*tile_range) ) )
 				cbatch: np.ndarray = batch.values - tmean.values.reshape(-1,1,1)
 				nbatch: np.ndarray = cbatch / tstd.values.reshape(-1,1,1)
-				channel_data.append( batch.copy( data=nbatch) )
+				normed = batch.copy( data=nbatch)
+				normed.attrs.update(mean=tmean.values, std=tstd.values)
+				channel_data.append( normed )
 			elif ntype == 'tscale':
 				tstats: xa.DataArray = self.norm_stats.data_vars[channel]
 				vmin, vmax = tstats.sel(stat='min'), tstats.sel(stat='max')
-				channel_data.append(  (batch - vmin) / (vmax - vmin) )
+				normed =  (batch - vmin) / (vmax - vmin)
+				normed.attrs.update(min=vmin.values,max=vmax.values)
+				channel_data.append( normed )
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
 		return result
