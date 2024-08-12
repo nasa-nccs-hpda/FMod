@@ -168,7 +168,6 @@ class SWOTRawDataLoader(SRRawDataLoader):
 		ncstats: Dict[str,List[np.ndarray]] = {}
 		channels: xa.DataArray = batch_data.coords['channels']
 		for channel in channels.values:
-			nstats = {}
 			batch: xa.DataArray = batch_data.sel(channels=channel)
 			bdims = [ batch.shape[0], 1, 1, 1]
 			if ntype == 'lnorm':
@@ -206,7 +205,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				ncstats.setdefault('min',[]).append(vmin.values.reshape(bdims))
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
-		stats = ncstats[0] if (channels.size == 1) else { sn: np.concatenate( sv, axis=1 ) for sn, sv in ncstats.items() }
+		stats = { sn: np.concatenate( sv, axis=1 ) for sn, sv in ncstats.items() }
 		result.attrs.update( stats )
 		return result
 
