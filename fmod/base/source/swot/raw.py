@@ -206,7 +206,7 @@ class SWOTRawDataLoader(SRRawDataLoader):
 				ncstats.setdefault('min',[]).append(vmin.values.reshape(bdims))
 			else: raise Exception( f"Unknown norm: {ntype}")
 		result = xa.concat( channel_data, channels ).transpose('tiles', 'channels', 'y', 'x')
-		stats = ncstats # { sn: np.stack( sv, axis=1 ) for sn, sv in ncstats.items() }
+		stats = ncstats[0] if (channels.size == 1) else { sn: np.concatenate( sv, axis=1 ) for sn, sv in ncstats.items() }
 		result.attrs.update( stats )
 		return result
 
