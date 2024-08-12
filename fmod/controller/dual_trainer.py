@@ -61,12 +61,13 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 
 def denorm( t: Tensor, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
 	normed: np.ndarray = t.detach().cpu().numpy()
+	print(f" ~~~~~~~~~~~~~~~~~~~ denorm->norm_data{normed.shape}" )
 	if 'mean' in norm_data:
 		normed = (normed*norm_data['std']) + norm_data['mean']
 	if 'max' in norm_data:
 		rng: np.ndarray = norm_data['max']-norm_data['min']
 		normed = (normed*rng) + norm_data['min']
-	print(f" ~~~~~~~~~~~~~~~~~~~ denorm norm_data{normed.shape}: keys={list(norm_data.keys())} mean{norm_data['mean'].shape}={normed.mean():.2f} std{norm_data['std'].shape}={normed.std():.2f} ")
+	print(f" ~~~~~~~~~~~~~~~~~~~ denorm_data{normed.shape}: keys={list(norm_data.keys())} mean{norm_data['mean'].shape}={normed.mean():.2f} std{norm_data['std'].shape}={normed.std():.2f} ")
 	return normed
 
 def fmtfl( flist: List[float] ) -> str:
@@ -384,7 +385,7 @@ class ModelTrainer(object):
 				[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
 				batch_interp_losses.append( interp_sloss )
 				xyf = batch_data.attrs.get('xyflip', 0)
-				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}] TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}[F{xyf}]-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
+				lgm().log(f" **  ** <{self.model_manager.model_name}:{tset.name}> BATCH[{ibatch:3}]{batch_data.shape} TIME[{itime:3}:{ctime:4}] TILES{list(ctile.values())}[F{xyf}]-> Loss= {batch_model_losses[-1]*1000:5.1f} ({interp_sloss*1000:5.1f})", display=True )
 				ibatch = ibatch + 1
 				batches.append( dict(input=denorm(binput,batch_data.attrs), target=denorm(btarget,batch_data.attrs), interp=denorm(binterp,batch_data.attrs), output=denorm(boutput,batch_data.attrs)) )
 
