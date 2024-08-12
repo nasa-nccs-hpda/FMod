@@ -404,15 +404,16 @@ class ModelTrainer(object):
 				bsize = batch.shape[0]
 				if block_grid is None:
 					empty_tile = np.full(tile_shape, np.nan)
-					block_grid = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
+					block_grid = [ [empty_tile]*grid_shape['y'] ]*grid_shape['x']
 				tidx1 = tidx0 + bsize
 				print(f"Loaded batch[{ii}][{ib}]: shape={batch.shape}, size={bsize}, tids=[{tidx0},{tidx1}]")
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
 					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
 					block: np.ndarray = batch[bidx]
-					print( f" ---> batch[{ib}][{bidx}] tidx={tidx} tid={tid} tc={tc} block{list(block.shape)}")
-					block_grid[tc['y']][tc['x']] = block
+					print( f" ---> batch[{ib}][{bidx}] tidx={tidx} tid={tid} tc=[{tc['y']},{tc['x']}], block{list(block.shape)}")
+					block_row: List[np.ndarray] = block_grid[ tc['x'] ]
+					block_row[ tc['y'] ] = block
 				tidx0 = tidx1
 			image_data = np.block( block_grid )
 			dims, bnds = ['y', 'x'], [0.0,100.0]
