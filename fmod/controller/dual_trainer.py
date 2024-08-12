@@ -61,7 +61,7 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 
 def denorm( t: Tensor, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
 	normed: np.ndarray = t.detach().cpu().numpy()
-	sshapes = { sn: sd.shape for sn, sd in norm_data.items() }
+	sshapes = { sn: sd.shape for sn, sd in norm_data.items() if (type(sd)==np.ndarray) }
 	print(f" ~~~~~~~~~~~~~~~~~~~ denorm->norm_data{normed.shape}, sshapes = {sshapes}" )
 	if 'mean' in norm_data:
 		normed = (normed*norm_data['std']) + norm_data['mean']
