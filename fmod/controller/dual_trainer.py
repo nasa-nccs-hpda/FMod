@@ -59,15 +59,14 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 	t = ts if type(ts) == Tensor else ts[-1]
 	return t.detach().cpu().numpy()
 
-def denorm( ts: TensorOrTensors, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
-	t = ts if type(ts) == Tensor else ts[-1]
+def denorm( t: Tensor, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
 	normed: np.ndarray = t.detach().cpu().numpy()
-	print( f" ~~~~~~~~~~~~~~~~~~~ denorm norm_data: {list(norm_data.keys())}  ~~~~~~~~~~~~~~~~~~~ " )
 	if 'mean' in norm_data:
 		normed = (normed*norm_data['std']) + norm_data['mean']
 	if 'max' in norm_data:
 		rng: np.ndarray = norm_data['max']-norm_data['min']
 		normed = (normed*rng) + norm_data['min']
+	print(f" ~~~~~~~~~~~~~~~~~~~ denorm norm_data{normed.shape}: keys={list(norm_data.keys())} mean{norm_data['mean'].shape}={normed.mean():.2f} std{norm_data['std'].shape}={normed.std():.2f} ")
 	return normed
 
 def fmtfl( flist: List[float] ) -> str:
