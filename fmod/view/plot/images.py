@@ -134,8 +134,9 @@ class ResultImagePlot(Plot):
 		ax.set_ylim([0, 100])
 		ptype: str = self.plot_titles[iplot]
 		image: xa.DataArray = self.images_data[ptype]
+		vrange = [image.values.min(), image.values.max()]
 		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}")
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=-1.5, vmax=1.5 )
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1] )
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(ptype) )
 		self.ims[ iplot ] = iplot
