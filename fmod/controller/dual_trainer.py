@@ -62,7 +62,7 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 def denorm( ts: TensorOrTensors, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
 	t = ts if type(ts) == Tensor else ts[-1]
 	normed: np.ndarray = t.detach().cpu().numpy()
-	print( f" ~~~~~~~~~~~~~~~~~~~ denorm norm_data: {list(norm_data.keys())} " )
+	print( f" ~~~~~~~~~~~~~~~~~~~ denorm norm_data: {list(norm_data.keys())}  ~~~~~~~~~~~~~~~~~~~ " )
 	if 'mean' in norm_data:
 		normed = (normed*norm_data['std']) + norm_data['mean']
 	if 'max' in norm_data:
