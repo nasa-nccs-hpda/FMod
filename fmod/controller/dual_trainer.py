@@ -409,11 +409,10 @@ class ModelTrainer(object):
 				print(f"Loaded batch[{ii}][{ib}]: shape={batch.shape}, size={bsize}, tids=[{tidx0},{tidx1}]")
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
 					tid = int(tile_ids[tidx])
-					tc = dict( y=tid//grid_shape['x'], x=tid%grid_shape['x'] )
+					tc = dict( y=tid%grid_shape['y'], x=tid//grid_shape['y'] )
 					block: np.ndarray = batch[bidx]
 					print( f" ---> batch[{ib}][{bidx}] tidx={tidx} tid={tid} tc=[{tc['y']},{tc['x']}], block{list(block.shape)}")
-					block_row: List[np.ndarray] = block_grid[ tc['y'] ]
-					block_row[ tc['x'] ] = block
+					block_grid[ tc['y'] ][ tc['x'] ] = block
 				tidx0 = tidx1
 			image_data = np.block( block_grid )
 			dims, bnds = ['y', 'x'], [0.0,100.0]
