@@ -137,7 +137,7 @@ class ResultImagePlot(Plot):
 		vrange = [np.nanmin(image.values), np.nanmax(image.values)]
 		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}, vrange={vrange}")
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True ) #, vmin=vrange[0], vmax=vrange[1] )
-		iplot.colorbar.remove()
+		# iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(ptype) )
 		self.ims[ iplot ] = iplot
 
