@@ -2,9 +2,11 @@ import torch, numpy as np
 import xarray as xa
 from typing  import List, Tuple, Optional, Dict
 from fmod.base.io.loader import TSet, batchDomain
+import matplotlib.pyplot as plt
 from fmod.base.util.config import cfg
 from fmod.base.util.array import array2tensor, downsample, upsample, xa_downsample, xa_upsample
 import ipywidgets as ipw
+import matplotlib as mpl
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from xarray.core.coordinates import DataArrayCoordinates
@@ -130,14 +132,16 @@ class ResultImagePlot(Plot):
 	def generate_subplot(self, iplot: int):
 		ax: Axes = self.axs[iplot]
 		ax.set_aspect(0.5)
-		ax.set_xlim([0, 100])
-		ax.set_ylim([0, 100])
+		#ax.set_xlim([0, 100])
+		#ax.set_ylim([0, 100])
 		ptype: str = self.plot_titles[iplot]
 		image: xa.DataArray = self.images_data[ptype]
 		vrange = [np.nanmin(image.values), np.nanmax(image.values)]
 		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}, vrange={vrange}")
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True ) #, vmin=vrange[0], vmax=vrange[1] )
+		# iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True ) #, vmin=vrange[0], vmax=vrange[1] )
 		# iplot.colorbar.remove()
+		iplot: AxesImage = ax.imshow( image.values, cmap='jet', origin="lower", interpolation="nearest" )
+		self.fig.colorbar( iplot, ax=ax )
 		ax.set_title( self.get_subplot_title(ptype) )
 		self.ims[ iplot ] = iplot
 
