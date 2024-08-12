@@ -415,8 +415,8 @@ class ModelTrainer(object):
 					block_row: List[np.ndarray] = block_grid[ tc['y'] ]
 					block_row[ tc['x'] ] = block
 				tidx0 = tidx1
-			block_rows = [ np.hstack(b) for b in block_grid ]
-			image_data = np.vstack( block_rows )
+			block_rows = [ np.vstack(b) for b in block_grid ]
+			image_data = np.hstack( block_rows )
 			dims, bnds = ['y', 'x'], [0.0,100.0]
 			coords = { cn: np.arange( bnds[0],bnds[1],(bnds[1]-bnds[0])/image_data.shape[ic]) for ic,cn in enumerate(dims) }
 			assembled_images[image_type] = xa.DataArray(  image_data, dims=dims, coords=coords )

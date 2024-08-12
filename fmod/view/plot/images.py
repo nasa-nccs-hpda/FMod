@@ -144,7 +144,7 @@ class ResultImagePlot(Plot):
 		loss: float = None
 		if   ptype == "interp": loss = self.losses.get("interp",0.0)
 		elif ptype == "output": loss = self.losses.get('model', 0.0)
-		return ptype if (loss is None) else f"{ptype} {loss*1000:.3f}"
+		return ptype if (loss is None) else f"{ptype}, loss={loss*1000:.3f}"
 
 
 
