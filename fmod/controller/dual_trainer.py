@@ -404,7 +404,7 @@ class ModelTrainer(object):
 				bsize = batch.shape[0]
 				if block_grid is None:
 					empty_tile = np.full(tile_shape, np.nan)
-					block_grid = [ [empty_tile]*grid_shape['x'] ]*grid_shape['y']
+					block_grid = [[empty_tile]*grid_shape['x'] for i in range(grid_shape['y'])]
 				tidx1 = tidx0 + bsize
 				print(f"Loaded batch[{ii}][{ib}]: shape={batch.shape}, size={bsize}, tids=[{tidx0},{tidx1}]")
 				for bidx, tidx in enumerate(range(tidx0, tidx1)):
@@ -415,8 +415,7 @@ class ModelTrainer(object):
 					block_row: List[np.ndarray] = block_grid[ tc['y'] ]
 					block_row[ tc['x'] ] = block
 				tidx0 = tidx1
-			block_rows = [ np.vstack(b) for b in block_grid ]
-			image_data = np.hstack( block_rows )
+			image_data = np.block( block_grid )
 			dims, bnds = ['y', 'x'], [0.0,100.0]
 			coords = { cn: np.arange( bnds[0],bnds[1],(bnds[1]-bnds[0])/image_data.shape[ic]) for ic,cn in enumerate(dims) }
 			assembled_images[image_type] = xa.DataArray(  image_data, dims=dims, coords=coords )
