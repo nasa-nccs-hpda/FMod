@@ -4,17 +4,6 @@ from torch import cuda
 import torch, os, time
 
 def set_device() -> torch.device:
-        gpu_index = cfg().pipeline.gpu
-        print('torch.cuda.is_available(?): ' + str(torch.cuda.is_available()))
-        device = torch.device(f'cuda:{gpu_index}' if torch.cuda.is_available() else 'cpu')
-        print('<device>:<index>:<device.index> ' + str(device) + ':' + str(gpu_index) + ':' + str(device.index))
-        # if torch.cuda.is_available():   torch.cuda.set_device(device.index)
-        # else:                           assert gpu_index == 0, "Can't run on multiple GPUs: No GPUs available"
-        if torch.cuda.is_available():  device = "cuda:0" 
-        print('<device>:<index>:<device.index> ' + str(device) + ':' + str(gpu_index) + ':' + str(device.index))
-        return device
-
-def _set_device() -> torch.device:
 	gpu_index = cfg().pipeline.gpu
 	device = torch.device(f'cuda:{gpu_index}' if cuda.is_available() else 'cpu')
 	if cuda.is_available():
