@@ -1,0 +1,9 @@
+root:      "/explore/nobackup/people/gtamkin/dev/super-resolution-sst/ilab/data/SR"
+results:   "${.root}/results"
+cache:     "${.root}/cache"
+processed: '${.root}/processed'
+
+
+
+
+
