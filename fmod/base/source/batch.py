@@ -30,9 +30,11 @@ class VarType(Enum):
 	Dynamic = 'dynamic'
 
 def xyflip(batch_data: xa.DataArray) -> xa.DataArray:
-	flip_index = random.randint(0, 3) if cfg().task.get('xyflip',False) else 0
-	if flip_index // 2 == 1: batch_data.reindex(x=batch_data.x[::-1])
-	if flip_index  % 2 == 1: batch_data.reindex(y=batch_data.y[::-1])
+	bflip, flip_index = cfg().task.get('xyflip',False), 0
+	if bflip:
+		flip_index = random.randint(0, 3)
+		if flip_index // 2 == 1: batch_data.reindex(x=batch_data.x[::-1])
+		if flip_index  % 2 == 1: batch_data.reindex(y=batch_data.y[::-1])
 	batch_data.attrs['xyflip'] = flip_index
 	return batch_data
 
