@@ -41,7 +41,7 @@ def subset_roi( global_data: np.ndarray ) -> np.ndarray:
 	x0, xs = roi.get('x0',0), roi.get( 'xs', global_data.shape[-1] )
 	y0, ys = roi.get('y0', 0), roi.get('ys', global_data.shape[-2])
 	result = global_data[..., y0:y0+ys, x0:x0+xs]
-	print( f"subset_roi: {global_data.shape} -> {result.shape}, roi = {roi}")
+	print( f"subset_roi: {global_data.shape} -> {result.shape}, origin=[{y0:.2f},{x0:.2f}], roi = {roi}")
 	return result
 class NormData:
 
