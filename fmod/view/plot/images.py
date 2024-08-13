@@ -127,6 +127,8 @@ class ResultImagePlot(Plot):
 				self.generate_subplot(iplot)
 		self.fig.canvas.draw_idle()
 
+	#	cbar.clim(vmin, vmax)
+
 	def generate_subplot(self, iplot: int):
 		ax: Axes = self.axs[iplot]
 		ax.set_aspect(0.5)

@@ -296,7 +296,7 @@ class SRBatch:
 			self.current_start_idx = ctime
 			self.current_origin = ctile
 			xf = cbatch.attrs.get('xyflip',0)
-			lgm().log( f" -----> load batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}[F{xf}], mean={cbatch.values.mean():.2f}, time = {time.time() - t0:.3f} sec", display=True )
+			lgm().log( f" -----> load batch[{ctile}][{self.current_start_idx}]:{self.current_batch.dims}{self.current_batch.shape}[F{xf}], mean={cbatch.values.mean():.2f}, time = {time.time() - t0:.3f} sec" )
 		return cbatch
 
 

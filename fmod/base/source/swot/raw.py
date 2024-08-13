@@ -40,7 +40,9 @@ def subset_roi( global_data: np.ndarray ) -> np.ndarray:
 	if roi is None: return global_data
 	x0, xs = roi.get('x0',0), roi.get( 'xs', global_data.shape[-1] )
 	y0, ys = roi.get('y0', 0), roi.get('ys', global_data.shape[-2])
-	return global_data[..., y0:y0+ys, x0:x0+xs]
+	result = global_data[..., y0:y0+ys, x0:x0+xs]
+	print( f"subset_roi: {global_data.shape} -> {result.shape}, roi = {roi}")
+	return result
 class NormData:
 
 	def __init__(self, itile: int):

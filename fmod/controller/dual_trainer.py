@@ -237,7 +237,7 @@ class ModelTrainer(object):
 			if shuffle:
 				batch_perm: Tensor = torch.randperm(btarget.shape[0])
 				btarget: xarray.DataArray = btarget[ batch_perm, ... ]
-			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}",display=True)
+			lgm().log(f" *** target{btarget.dims}{btarget.shape}, mean={btarget.mean():.3f}, std={btarget.std():.3f}")
 		return btarget
 
 	def get_ml_input(self, tset: TSet) -> xa.DataArray:
@@ -375,12 +375,12 @@ class ModelTrainer(object):
 		for itile, ctile in enumerate(iter(tile_iter)):
 			lgm().log(f"     -----------------    evaluate[{tset.name}]: ctime[{itime}]={ctime}, time_index={self.time_index}, ctile[{itile}]={ctile}", display=True)
 			batch_data: Optional[xa.DataArray] = self.get_srbatch(ctile, ctime, shuffle=False)
-			print( f" --> batch_data{list(batch_data.shape)} mean={batch_data.values.mean()}")
+			# print( f" --> batch_data{list(batch_data.shape)} mean={batch_data.values.mean()}")
 			if batch_data is None: break
 			binput, boutput, btarget = self.apply_network( batch_data )
 			if binput is not None:
 				binterp = upsample(binput)
-				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}", display=True)
+				lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}" )
 				[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 				batch_model_losses.append( model_sloss )
 				[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
@@ -464,7 +464,7 @@ class ModelTrainer(object):
 						if batch_data is None: break
 						binput, boutput, btarget = self.apply_network( batch_data )
 						binterp = upsample(binput)
-						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}", display=True)
+						lgm().log(f"  ->apply_network: inp{ts(binput)} target{ts(btarget)} prd{ts(boutput)} interp{ts(binterp)}")
 						[model_sloss, model_multilevel_loss] = self.loss(boutput, btarget)
 						batch_model_losses.append( model_sloss )
 						[interp_sloss, interp_multilevel_mloss] = self.loss(binterp,btarget)
