@@ -7,6 +7,6 @@ index: ???
 dataset_root:  "/explore/nobackup/projects/ilab/data/swot/super_resolution"
 dataset_files: "raw/${dataset.varname}/${dataset.varname}.000${dataset.index}.shrunk"
 template: "meta/hFacC_k0.data"
-roi:  {  y0: 2430, ys: 3240 }
+roi:  {  y0: 3500, ys: 3000 }
 
 
