@@ -1,0 +1,12 @@
+varname: ???
+res: ???
+tset: ???
+usf: ???
+index: ???
+
+dataset_root:  "/explore/nobackup/projects/ilab/data/swot/super_resolution"
+dataset_files: "raw/${dataset.varname}/${dataset.varname}.000${dataset.index}.shrunk"
+template: "meta/hFacC_k0.data"
+roi:  {  y0: 3500, ys: 3000, x0: 8797, xs: 7073 }
+
+
