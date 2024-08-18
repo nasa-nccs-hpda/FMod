@@ -151,7 +151,7 @@ class ResultTilePlot(Plot):
 
 	def plot( self ) -> ipw.Box:
 		# self.tile_grid.overlay_grid( self.axs[1,0] )
-		self.update_subplots()
+		self.generate_subplots()
 		print( f"Creating widget...")
 		return ipw.VBox(self.panels)
 
@@ -161,11 +161,18 @@ class ResultTilePlot(Plot):
 	#	ctime: datetime = self.time_coords[self.time_index]
 	#	return ctime.strftime("%m/%d/%Y:%H")
 
-	def update_subplots(self):
+	def generate_subplots(self):
 		self.fig.suptitle(f'Time: {self.display_time}, Tile: {self.tile_index}', fontsize=10, va="top", y=1.0)
 		for irow in [0, 1]:
 			for icol in [0, 1]:
 				self.generate_subplot(irow, icol)
+		self.fig.canvas.draw_idle()
+
+	def update_subplots(self):
+		self.fig.suptitle(f'Time: {self.display_time}, Tile: {self.tile_index}', fontsize=10, va="top", y=1.0)
+		for irow in [0, 1]:
+			for icol in [0, 1]:
+				self.update_subplot(irow, icol)
 		self.fig.canvas.draw_idle()
 
 	def generate_subplot(self, irow: int, icol: int):
@@ -182,6 +189,11 @@ class ResultTilePlot(Plot):
 		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,icol) )
 		self.ims[ (irow, icol) ] = iplot
+
+	def update_subplot(self, irow: int, icol: int):
+		ts: Dict[str, int] = self.tile_grid.tile_grid.get_full_tile_size()
+		image: xa.DataArray = self.get_subplot_image(irow, icol, ts)
+		self.ims[ (irow, icol) ].set_data(image.values)
 
 	def get_subplot_title(self,irow,icol) -> str:
 		label = self.plot_titles[irow][icol]

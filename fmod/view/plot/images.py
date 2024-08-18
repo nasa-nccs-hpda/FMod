@@ -111,7 +111,7 @@ class ResultImagePlot(Plot):
 
 
 	def plot( self ) -> ipw.Box:
-		self.update_subplots()
+		self.generate_subplots()
 		panels = [self.fig.canvas, self.tslider]
 		return ipw.VBox(panels)
 
@@ -121,10 +121,16 @@ class ResultImagePlot(Plot):
 	#	ctime: datetime = self.time_coords[self.time_index]
 	#	return ctime.strftime("%m/%d/%Y:%H")
 
-	def update_subplots(self):
+	def generate_subplots(self):
 		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
 		for iplot in range(4):
 				self.generate_subplot(iplot)
+		self.fig.canvas.draw_idle()
+
+	def update_subplots(self):
+		self.fig.suptitle(f'Time: {self.display_time}', fontsize=10, va="top", y=1.0)
+		for iplot in range(4):
+			self.update_subplot(iplot)
 		self.fig.canvas.draw_idle()
 
 	#	cbar.clim(vmin, vmax)
@@ -138,9 +144,14 @@ class ResultImagePlot(Plot):
 		image: xa.DataArray = self.images_data[ptype]
 		vrange = [np.nanmin(image.values), np.nanmax(image.values)]
 		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}, vrange={vrange}")
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, add_colorbar=True ) #, vmin=vrange[0], vmax=vrange[1] )
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, add_colorbar=False ) #, vmin=vrange[0], vmax=vrange[1] )
 		ax.set_title( self.get_subplot_title(ptype) )
 		self.ims[ iplot ] = iplot
+
+	def update_subplot(self, iplot: int):
+		ptype: str = self.plot_titles[iplot]
+		image: xa.DataArray = self.images_data[ptype]
+		self.ims[ iplot ].set_data(image.values)
 
 	def get_subplot_title(self, ptype: str) -> str:
 		loss: float = None
