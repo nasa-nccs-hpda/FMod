@@ -144,7 +144,7 @@ class ResultImagePlot(Plot):
 		image: xa.DataArray = self.images_data[ptype]
 		vrange = [np.nanmin(image.values), np.nanmax(image.values)]
 		print( f"subplot_image[{ptype}]: image{image.dims}{image.shape}, vrange={vrange}")
-		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, add_colorbar=False ) #, vmin=vrange[0], vmax=vrange[1] )
+		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, add_colorbar=True ) #, vmin=vrange[0], vmax=vrange[1] )
 		ax.set_title( self.get_subplot_title(ptype) )
 		self.ims[ iplot ] = iplot
 

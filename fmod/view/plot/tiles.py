@@ -186,7 +186,6 @@ class ResultTilePlot(Plot):
 
 		print( f"subplot_image[{irow}, {icol}]: image{image.dims}{image.shape}, vrange={vrange}")
 		iplot: AxesImage =  image.plot.imshow(ax=ax, x="x", y="y", cmap='jet', yincrease=True, vmin=vrange[0], vmax=vrange[1])
-		iplot.colorbar.remove()
 		ax.set_title( self.get_subplot_title(irow,icol) )
 		self.ims[ (irow, icol) ] = iplot
 
