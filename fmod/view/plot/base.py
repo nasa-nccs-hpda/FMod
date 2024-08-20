@@ -9,11 +9,11 @@ class Plot(ABC):
 	def __init__(self, trainer: ModelTrainer,  **kwargs):
 		self.trainer: ModelTrainer = trainer
 		self.model = self.trainer.model_name
-		self.fsize = kwargs.get('fsize', 10.0)
+		self.fsize = kwargs.get('fsize', 8.0)
 		self.yscale = kwargs.get('yscale', 'log' )
 		self.fig = None
 		self.axs = None
-		self.aspect = kwargs.get('aspect', 0.8 )
+		self.aspect = kwargs.get('aspect', 1.3 )
 
 	def create_figure(self, **kwargs):
 		sharex = kwargs.get('sharex', True)
