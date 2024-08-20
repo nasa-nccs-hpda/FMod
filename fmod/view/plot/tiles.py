@@ -199,8 +199,8 @@ class ResultTilePlot(Plot):
 		rmserror = ""
 		if irow == 1:
 			loss: float = self.losses.get(label,0.0)
-			rmserror = f"{loss*1000:.3f}"
-		title = f"{label} {rmserror}"
+			rmserror = f", RMSE: {loss*1000:.3f}"
+		title = f"{label}{rmserror}"
 		return title
 
 	def get_subplot_image(self, irow: int, icol: int, ts: Dict[str, int] ) -> xa.DataArray:
