@@ -62,13 +62,13 @@ def npa( ts: TensorOrTensors ) -> np.ndarray:
 def denorm( t: Tensor, norm_data: Dict[str,np.ndarray] ) -> np.ndarray:
 	normed: np.ndarray = t.detach().cpu().numpy()
 	sshapes = { sn: sd.shape for sn, sd in norm_data.items() if (type(sd)==np.ndarray) }
-	# print(f" ~~~~~~~~~~~~~~~~~~~ denorm->norm_data{normed.shape}, sshapes = {sshapes}" )
+	print(f" ~~~~~~~~~~~~~~~~~~~ denorm->norm_data{normed.shape}, sshapes = {sshapes}" )
 	if 'mean' in norm_data:
 		normed = (normed*norm_data['std']) + norm_data['mean']
 	if 'max' in norm_data:
 		rng: np.ndarray = norm_data['max']-norm_data['min']
 		normed = (normed*rng) + norm_data['min']
-	# print(f" ~~~~~~~~~~~~~~~~~~~ denorm_data{normed.shape}: keys={list(norm_data.keys())} mean{norm_data['mean'].shape}={normed.mean():.2f} std{norm_data['std'].shape}={normed.std():.2f} ")
+	print(f" ~~~~~~~~~~~~~~~~~~~ denorm_data{normed.shape}: keys={list(norm_data.keys())} mean{norm_data['mean'].shape}={normed.mean():.2f} std{norm_data['std'].shape}={normed.std():.2f} ")
 	return normed
 
 def fmtfl( flist: List[float] ) -> str:
